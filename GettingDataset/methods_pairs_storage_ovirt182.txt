@@ -1,0 +1,706 @@
+18
+#method_before
+private void initNetworkList(Guid dataCenterId) {
+    startProgress();
+    IdQueryParameters queryParams = new IdQueryParameters(dataCenterId);
+    Frontend.getInstance().runQuery(QueryType.GetAllNetworks, queryParams, new AsyncQuery<QueryReturnValue>(returnValue -> {
+        Collection<Network> networks = returnValue.getReturnValue();
+        getNetwork().setItems(networks.stream().filter(Network::isVmNetwork).collect(Collectors.toList()));
+        updateNetworks(networks);
+        stopProgress();
+    }));
+}
+#method_after
+private void initNetworkList(Guid dataCenterId) {
+    startProgress();
+    AsyncDataProvider.getInstance().getNetworkList(new AsyncQuery<>(returnValue -> {
+        Collection<Network> networks = returnValue.stream().filter(Network::isVmNetwork).collect(Collectors.toList());
+        getNetwork().setItems(networks);
+        updateNetworks(networks);
+        stopProgress();
+    }), dataCenterId);
+}
+#end_block
+
+#method_before
+protected Map<VmTemplate, List<DiskImage>> setUpTemplates(boolean notFound) {
+    return IntStream.range(0, NAMES.length).filter(x -> !notFound).boxed().collect(Collectors.toMap(this::getEntity, ArrayList::new));
+}
+#method_after
+protected Map<VmTemplate, List<DiskImage>> setUpTemplates(boolean notFound) {
+    if (notFound) {
+        return Collections.emptyMap();
+    }
+    return IntStream.range(0, NAMES.length).boxed().collect(Collectors.toMap(this::getEntity, ArrayList::new));
+}
+#end_block
+
+#method_before
+@Override
+protected void executeCommand() {
+    log.info("Creating ImageTransfer entity for command '{}'", getCommandId());
+    ImageTransfer entity = new ImageTransfer(getCommandId());
+    entity.setCommandType(getActionType());
+    entity.setPhase(ImageTransferPhase.INITIALIZING);
+    entity.setType(getParameters().getTransferType());
+    entity.setActive(false);
+    entity.setLastUpdated(new Date());
+    entity.setBytesTotal(getParameters().getTransferSize());
+    imageTransferDao.save(entity);
+    if (isImageProvided()) {
+        handleImageIsReadyForTransfer();
+    } else {
+        if (getParameters().getTransferType() == TransferType.Download) {
+            failValidation(EngineMessage.ACTION_TYPE_FAILED_IMAGE_NOT_SPECIFIED_FOR_DOWNLOAD);
+            setSucceeded(false);
+            return;
+        }
+        log.info("Creating {} image", getImageType());
+        createImage();
+    }
+    setActionReturnValue(getCommandId());
+    setSucceeded(true);
+}
+#method_after
+@Override
+protected void executeCommand() {
+    log.info("Creating ImageTransfer entity for command '{}'", getCommandId());
+    ImageTransfer entity = new ImageTransfer(getCommandId());
+    entity.setCommandType(getActionType());
+    entity.setPhase(ImageTransferPhase.INITIALIZING);
+    entity.setType(getParameters().getTransferType());
+    entity.setActive(false);
+    entity.setLastUpdated(new Date());
+    entity.setBytesTotal(getParameters().getTransferSize());
+    entity.setClientInactivityTimeout(getParameters().getClientInactivityTimeout() != null ? getParameters().getClientInactivityTimeout() : getTransferImageClientInactivityTimeoutInSeconds());
+    imageTransferDao.save(entity);
+    if (isImageProvided()) {
+        handleImageIsReadyForTransfer();
+    } else {
+        if (getParameters().getTransferType() == TransferType.Download) {
+            failValidation(EngineMessage.ACTION_TYPE_FAILED_IMAGE_NOT_SPECIFIED_FOR_DOWNLOAD);
+            setSucceeded(false);
+            return;
+        }
+        log.info("Creating {} image", getImageType());
+        createImage();
+    }
+    setActionReturnValue(getCommandId());
+    setSucceeded(true);
+}
+#end_block
+
+#method_before
+private void handleFinalizingSuccess(final StateContext context) {
+    log.info("Finalizing successful transfer for {}", getTransferDescription());
+    // If stopping the session did not succeed, don't change the transfer state.
+    if (stopImageTransferSession(context.entity)) {
+        Guid transferingVdsId = context.entity.getVdsId();
+        // Verify image is relevant only on upload
+        if (getParameters().getTransferType() == TransferType.Download) {
+            unLockImage();
+            updateEntityPhase(ImageTransferPhase.FINISHED_SUCCESS);
+            setAuditLogTypeFromPhase(ImageTransferPhase.FINISHED_SUCCESS);
+        } else // We want to use the transferring vds for image actions for having a coherent log when transferring.
+        if (verifyImage(transferingVdsId)) {
+            setVolumeLegalityInStorage(LEGAL_IMAGE);
+            if (getDiskImage().getVolumeFormat().equals(VolumeFormat.COW)) {
+                setQcowCompat(getDiskImage().getImage(), getStoragePool().getId(), getDiskImage().getId(), getDiskImage().getImageId(), getStorageDomainId(), transferingVdsId);
+                imageDao.update(getDiskImage().getImage());
+            }
+            unLockImage();
+            updateEntityPhase(ImageTransferPhase.FINISHED_SUCCESS);
+            setAuditLogTypeFromPhase(ImageTransferPhase.FINISHED_SUCCESS);
+        } else {
+            setImageStatus(ImageStatus.ILLEGAL);
+            updateEntityPhase(ImageTransferPhase.FINALIZING_FAILURE);
+        }
+        // Finished using the image, tear it down.
+        tearDownImage(context.entity.getVdsId());
+    }
+}
+#method_after
+private void handleFinalizingSuccess(final StateContext context) {
+    log.info("Finalizing successful transfer for {}", getTransferDescription());
+    // If stopping the session did not succeed, don't change the transfer state.
+    if (stopImageTransferSession(context.entity)) {
+        Guid transferingVdsId = context.entity.getVdsId();
+        // Verify image is relevant only on upload
+        if (getParameters().getTransferType() == TransferType.Download) {
+            unLockImage();
+            updateEntityPhase(ImageTransferPhase.FINISHED_SUCCESS);
+            setAuditLogTypeFromPhase(ImageTransferPhase.FINISHED_SUCCESS);
+        } else if (verifyImage(transferingVdsId)) {
+            // We want to use the transferring vds for image actions for having a coherent log when transferring.
+            setVolumeLegalityInStorage(LEGAL_IMAGE);
+            if (getDiskImage().getVolumeFormat().equals(VolumeFormat.COW)) {
+                setQcowCompat(getDiskImage().getImage(), getStoragePool().getId(), getDiskImage().getId(), getDiskImage().getImageId(), getStorageDomainId(), transferingVdsId);
+                imageDao.update(getDiskImage().getImage());
+            }
+            unLockImage();
+            updateEntityPhase(ImageTransferPhase.FINISHED_SUCCESS);
+            setAuditLogTypeFromPhase(ImageTransferPhase.FINISHED_SUCCESS);
+        } else {
+            setImageStatus(ImageStatus.ILLEGAL);
+            updateEntityPhase(ImageTransferPhase.FINALIZING_FAILURE);
+        }
+        // Finished using the image, tear it down.
+        tearDownImage(context.entity.getVdsId());
+    }
+}
+#end_block
+
+#method_before
+private boolean shouldAbortOnClientInactivityTimeout(ImageTransfer entity, long ts, Integer idleTimeFromTicket) {
+    int inactivityTimeout = getTransferImageClientInactivityTimeoutInSeconds();
+    // For new daemon (1.3.0), we check timeout according to 'idle_time' in ticket;
+    // otherwise, fallback to check according to entity's 'lastUpdated'.
+    boolean timeoutExceeded = idleTimeFromTicket != null ? idleTimeFromTicket > inactivityTimeout : ts > (entity.getLastUpdated().getTime() / 1000) + inactivityTimeout;
+    return inactivityTimeout > 0 && timeoutExceeded && !entity.getActive();
+}
+#method_after
+private boolean shouldAbortOnClientInactivityTimeout(ImageTransfer entity, long ts, Integer idleTimeFromTicket) {
+    int inactivityTimeout = entity.getClientInactivityTimeout();
+    // For new daemon (1.3.0), we check timeout according to 'idle_time' in ticket;
+    // otherwise, fallback to check according to entity's 'lastUpdated'.
+    boolean timeoutExceeded = idleTimeFromTicket != null ? idleTimeFromTicket > inactivityTimeout : ts > (entity.getLastUpdated().getTime() / 1000) + inactivityTimeout;
+    return inactivityTimeout > 0 && timeoutExceeded && !entity.getActive();
+}
+#end_block
+
+#method_before
+// Return a string describing the transfer, safe for use before the new image
+private String getTransferDescription() {
+    return String.format("%s %s '%s' (id '%s')", getParameters().getTransferType().name(), getImageType(), getImageAlias(), getImageGroupIdNullSafe());
+}
+#method_after
+// Return a string describing the transfer, safe for use before the new image
+private String getTransferDescription() {
+    return String.format("%s %s '%s' (id '%s')", getParameters().getTransferType().name(), getImageType(), getImageAlias(), getImageIdNullSafe());
+}
+#end_block
+
+#method_before
+@Override
+protected void endWithFailure() {
+    if (getParameters().getTransferType() == TransferType.Upload) {
+        // Do rollback only for upload - i.e. remove the disk added in 'createImage()'
+        removeImage();
+    }
+    setSucceeded(true);
+}
+#method_after
+@Override
+protected void endWithFailure() {
+    if (getParameters().getTransferType() == TransferType.Upload) {
+        // Do rollback only for upload - i.e. remove the disk added in 'createImage()'
+        runInternalAction(ActionType.RemoveDisk, new RemoveDiskParameters(getParameters().getImageGroupID()));
+    }
+    setSucceeded(true);
+}
+#end_block
+
+#method_before
+protected <P extends ActionParametersBase> P sessionize(P parameters) {
+    String sessionId = getCurrent().getSessionId();
+    parameters.setSessionId(sessionId);
+    return parameters;
+}
+#method_after
+protected <P extends QueryParametersBase> P sessionize(P parameters) {
+    String sessionId = getCurrent().getSessionId();
+    parameters.setSessionId(sessionId);
+    return parameters;
+}
+#end_block
+
+#method_before
+private void addHostNetworksAndUpdateInterfaces(VDS host, Map<String, String> vdsmNameMap, Map<String, Object> struct) {
+    Map<String, Map<String, Object>> bridges = (Map<String, Map<String, Object>>) struct.get(VdsProperties.NETWORK_BRIDGES);
+    final String hostActiveNicName = findActiveNicName(host, bridges);
+    host.setActiveNic(hostActiveNicName);
+    // Networks collection (name point to list of nics or bonds)
+    Map<String, Map<String, Object>> networks = (Map<String, Map<String, Object>>) struct.get(VdsProperties.NETWORKS);
+    Map<String, VdsNetworkInterface> vdsInterfaces = Entities.entitiesByName(host.getInterfaces());
+    if (networks != null) {
+        host.getNetworkNames().clear();
+        for (Entry<String, Map<String, Object>> entry : networks.entrySet()) {
+            Map<String, Object> networkProperties = entry.getValue();
+            String vdsmName = entry.getKey();
+            String networkName = vdsmNameMap.containsKey(vdsmName) ? vdsmNameMap.get(vdsmName) : vdsmName;
+            if (networkProperties != null) {
+                String interfaceName = (String) networkProperties.get(VdsProperties.INTERFACE);
+                Map<String, Object> bridgeProperties = (bridges == null) ? null : bridges.get(interfaceName);
+                boolean bridgedNetwork = isBridgedNetwork(networkProperties);
+                SwitchType switchType = getSwitchType(host.getSupportedClusterVersionsSet().stream().filter(v -> Version.getLast().compareTo(v) >= 0).max(Comparator.naturalOrder()).orElse(Version.getLowest()), networkProperties);
+                HostNetworkQos qos = new HostNetworkQosMapper(networkProperties).deserialize();
+                /**
+                 * TODO: remove overly-defensive code in 4.0 - IP address, subnet, gateway and boot protocol should
+                 * only be extracted for bridged networks and from bridge entries (not network entries)
+                 */
+                Map<String, Object> effectiveProperties = (bridgedNetwork && bridgeProperties != null) ? bridgeProperties : networkProperties;
+                String v4addr = extractAddress(effectiveProperties);
+                String v4Subnet = extractSubnet(effectiveProperties);
+                String v4gateway = (String) effectiveProperties.get(VdsProperties.GLOBAL_GATEWAY);
+                boolean v4DefaultRoute = assignBoolValue(effectiveProperties, VdsProperties.IPV4_DEFAULT_ROUTE);
+                final String rawIpv6Address = getIpv6Address(effectiveProperties);
+                String v6Addr = extractIpv6Address(rawIpv6Address);
+                Integer v6Prefix = extractIpv6Prefix(rawIpv6Address);
+                String v6gateway = (String) effectiveProperties.get(VdsProperties.IPV6_GLOBAL_GATEWAY);
+                List<VdsNetworkInterface> interfaces = findNetworkInterfaces(vdsInterfaces, interfaceName, bridgeProperties);
+                for (VdsNetworkInterface iface : interfaces) {
+                    iface.setNetworkName(networkName);
+                    iface.setIpv4Address(v4addr);
+                    iface.setIpv4Subnet(v4Subnet);
+                    iface.setIpv4DefaultRoute(v4DefaultRoute);
+                    iface.setIpv6Address(v6Addr);
+                    iface.setIpv6Prefix(v6Prefix);
+                    iface.setBridged(bridgedNetwork);
+                    iface.setReportedSwitchType(switchType);
+                    iface.setQos(qos);
+                    // set the management ip
+                    if (getManagementNetworkUtil().isManagementNetwork(iface.getNetworkName(), host.getClusterId())) {
+                        iface.setType(iface.getType() | VdsInterfaceType.MANAGEMENT.getValue());
+                    }
+                    if (StringUtils.isNotEmpty(v4gateway)) {
+                        iface.setIpv4Gateway(v4gateway);
+                    }
+                    if (StringUtils.isNotEmpty(v6gateway)) {
+                        iface.setIpv6Gateway(v6gateway);
+                    }
+                    if (bridgedNetwork) {
+                        addBootProtocol(effectiveProperties, iface);
+                    }
+                }
+                host.getNetworkNames().add(networkName);
+                reportInvalidInterfacesForNetwork(interfaces, networkName, host);
+            }
+        }
+    }
+}
+#method_after
+private void addHostNetworksAndUpdateInterfaces(VDS host, Map<String, String> vdsmNameMap, Map<String, Object> struct) {
+    Map<String, Map<String, Object>> bridges = (Map<String, Map<String, Object>>) struct.get(VdsProperties.NETWORK_BRIDGES);
+    final String hostActiveNicName = findActiveNicName(host, bridges);
+    host.setActiveNic(hostActiveNicName);
+    // Networks collection (name point to list of nics or bonds)
+    Map<String, Map<String, Object>> networks = (Map<String, Map<String, Object>>) struct.get(VdsProperties.NETWORKS);
+    Map<String, VdsNetworkInterface> vdsInterfaces = Entities.entitiesByName(host.getInterfaces());
+    if (networks != null) {
+        host.getNetworkNames().clear();
+        for (Entry<String, Map<String, Object>> entry : networks.entrySet()) {
+            Map<String, Object> networkProperties = entry.getValue();
+            String vdsmName = entry.getKey();
+            String networkName = vdsmNameMap.containsKey(vdsmName) ? vdsmNameMap.get(vdsmName) : vdsmName;
+            if (networkProperties != null) {
+                String interfaceName = (String) networkProperties.get(VdsProperties.INTERFACE);
+                Map<String, Object> bridgeProperties = (bridges == null) ? null : bridges.get(interfaceName);
+                boolean bridgedNetwork = isBridgedNetwork(networkProperties);
+                SwitchType switchType = getSwitchType(host.getSupportedClusterVersionsSet().stream().filter(v -> Version.getLast().compareTo(v) >= 0).max(Comparator.naturalOrder()).orElse(Version.getLowest()), networkProperties);
+                HostNetworkQos qos = new HostNetworkQosMapper(networkProperties).deserialize();
+                /**
+                 * TODO: remove overly-defensive code in 4.0 - IP address, subnet, gateway and boot protocol should
+                 * only be extracted for bridged networks and from bridge entries (not network entries)
+                 */
+                Map<String, Object> effectiveProperties = (bridgedNetwork && bridgeProperties != null) ? bridgeProperties : networkProperties;
+                String v4addr = extractAddress(effectiveProperties);
+                String v4Subnet = extractSubnet(effectiveProperties);
+                String v4gateway = extractGateway(effectiveProperties);
+                boolean v4DefaultRoute = assignBoolValue(effectiveProperties, VdsProperties.IPV4_DEFAULT_ROUTE);
+                final String rawIpv6Address = getIpv6Address(effectiveProperties);
+                String v6Addr = extractIpv6Address(rawIpv6Address);
+                Integer v6Prefix = extractIpv6Prefix(rawIpv6Address);
+                String v6gateway = extractIpv6Gateway(effectiveProperties);
+                List<VdsNetworkInterface> interfaces = findNetworkInterfaces(vdsInterfaces, interfaceName, bridgeProperties);
+                for (VdsNetworkInterface iface : interfaces) {
+                    iface.setNetworkName(networkName);
+                    iface.setIpv4Address(v4addr);
+                    iface.setIpv4Subnet(v4Subnet);
+                    iface.setIpv4Gateway(v4gateway);
+                    iface.setIpv4DefaultRoute(v4DefaultRoute);
+                    iface.setIpv6Address(v6Addr);
+                    iface.setIpv6Gateway(v6gateway);
+                    iface.setIpv6Prefix(v6Prefix);
+                    iface.setBridged(bridgedNetwork);
+                    iface.setReportedSwitchType(switchType);
+                    iface.setQos(qos);
+                    // set the management ip
+                    if (getManagementNetworkUtil().isManagementNetwork(iface.getNetworkName(), host.getClusterId())) {
+                        iface.setType(iface.getType() | VdsInterfaceType.MANAGEMENT.getValue());
+                    }
+                    if (bridgedNetwork) {
+                        addBootProtocol(effectiveProperties, iface);
+                    }
+                }
+                host.getNetworkNames().add(networkName);
+                reportInvalidInterfacesForNetwork(interfaces, networkName, host);
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+private static String extractAddress(Map<String, Object> properties) {
+    return (String) properties.get("addr");
+}
+#method_after
+String extractAddress(Map<String, Object> properties) {
+    return extractNonEmptyProperty(properties, VdsProperties.ADDR);
+}
+#end_block
+
+#method_before
+private static String extractSubnet(Map<String, Object> properties) {
+    return (String) properties.get("netmask");
+}
+#method_after
+String extractSubnet(Map<String, Object> properties) {
+    return extractNonEmptyProperty(properties, VdsProperties.NETMASK);
+}
+#end_block
+
+#method_before
+public void proceedCommandExecution(Guid childCmdId) {
+    ImageTransfer entity = imageTransferDao.get(getCommandId());
+    if (entity == null || entity.getPhase() == null) {
+        log.error("Image transfer status entity corrupt or missing from database" + " for image transfer command '{}'", getCommandId());
+        setCommandStatus(CommandStatus.FAILED);
+        return;
+    }
+    if (entity.getDiskId() != null) {
+        // Make the disk id available for all states below.  If the transfer is still
+        // initializing, this may be set below in the INITIALIZING block instead.
+        setImageGroupId(entity.getDiskId());
+    }
+    // Check conditions for pausing the transfer (ie UI is MIA)
+    long ts = System.currentTimeMillis() / 1000;
+    if (stopTransferIfNecessary(entity, ts)) {
+        return;
+    }
+    executeStateHandler(entity, ts, childCmdId);
+}
+#method_after
+public void proceedCommandExecution(Guid childCmdId) {
+    ImageTransfer entity = imageTransferDao.get(getCommandId());
+    if (entity == null || entity.getPhase() == null) {
+        log.error("Image transfer status entity corrupt or missing from database" + " for image transfer command '{}'", getCommandId());
+        setCommandStatus(CommandStatus.FAILED);
+        return;
+    }
+    if (entity.getDiskId() != null) {
+        // Make the disk id available for all states below.  If the transfer is still
+        // initializing, this may be set below in the INITIALIZING block instead.
+        setImageGroupId(entity.getDiskId());
+    }
+    long ts = System.currentTimeMillis() / 1000;
+    executeStateHandler(entity, ts, childCmdId);
+}
+#end_block
+
+#method_before
+private void pollTransferStatus(final StateContext context) {
+    if (context.entity.getVdsId() == null || context.entity.getImagedTicketId() == null || !FeatureSupported.getImageTicketSupported(vdsDao.get(context.entity.getVdsId()).getClusterCompatibilityVersion())) {
+        // Old engines update the transfer status in UploadImageHandler::updateBytesSent.
+        return;
+    }
+    ImageTicketInformation ticketInfo;
+    try {
+        ticketInfo = (ImageTicketInformation) runVdsCommand(VDSCommandType.GetImageTicket, new GetImageTicketVDSCommandParameters(context.entity.getVdsId(), context.entity.getImagedTicketId())).getReturnValue();
+    } catch (EngineException e) {
+        log.error("Could not get image ticket '{}' from vdsm", context.entity.getImagedTicketId(), e);
+        updateEntityPhaseToPausedBySystem(AuditLogType.TRANSFER_IMAGE_PAUSED_BY_SYSTEM_MISSING_TICKET);
+        return;
+    }
+    ImageTransfer upToDateImageTransfer = updateTransferStatusWithTicketInformation(context.entity, ticketInfo);
+    if (getParameters().getTransferType() == TransferType.Download) {
+        finalizeDownloadIfNecessary(context, upToDateImageTransfer);
+    }
+}
+#method_after
+private void pollTransferStatus(final StateContext context) {
+    if (context.entity.getVdsId() == null || context.entity.getImagedTicketId() == null || !FeatureSupported.getImageTicketSupported(vdsDao.get(context.entity.getVdsId()).getClusterCompatibilityVersion())) {
+        // Old engines update the transfer status in UploadImageHandler::updateBytesSent.
+        return;
+    }
+    ImageTicketInformation ticketInfo;
+    try {
+        ticketInfo = (ImageTicketInformation) runVdsCommand(VDSCommandType.GetImageTicket, new GetImageTicketVDSCommandParameters(context.entity.getVdsId(), context.entity.getImagedTicketId())).getReturnValue();
+    } catch (EngineException e) {
+        log.error("Could not get image ticket '{}' from vdsm", context.entity.getImagedTicketId(), e);
+        updateEntityPhaseToPausedBySystem(AuditLogType.TRANSFER_IMAGE_PAUSED_BY_SYSTEM_MISSING_TICKET);
+        return;
+    }
+    ImageTransfer upToDateImageTransfer = updateTransferStatusWithTicketInformation(context.entity, ticketInfo);
+    if (getParameters().getTransferType() == TransferType.Download) {
+        finalizeDownloadIfNecessary(context, upToDateImageTransfer);
+    }
+    // Check conditions for pausing the transfer (ie UI is MIA)
+    stopTransferIfNecessary(upToDateImageTransfer, context.iterationTimestamp, ticketInfo.getIdleTime());
+}
+#end_block
+
+#method_before
+private boolean stopTransferIfNecessary(ImageTransfer entity, long ts) {
+    if (getTransferImageClientInactivityTimeoutInSeconds() > 0 && (entity.getPhase() == ImageTransferPhase.INITIALIZING || entity.getPhase() == ImageTransferPhase.TRANSFERRING) && (entity.getLastUpdated().getTime() / 1000) + getTransferImageClientInactivityTimeoutInSeconds() < ts) {
+        if (getParameters().getTransferType() == TransferType.Download) {
+            // In download flows, we can cancel the transfer if there was no activity
+            // for a while, as the download is handled by the client.
+            auditLog(this, AuditLogType.DOWNLOAD_IMAGE_CANCELED_TIMEOUT);
+            updateEntityPhase(ImageTransferPhase.CANCELLED);
+        } else {
+            updateEntityPhaseToPausedBySystem(AuditLogType.UPLOAD_IMAGE_PAUSED_BY_SYSTEM_TIMEOUT);
+        }
+        return true;
+    }
+    return false;
+}
+#method_after
+private void stopTransferIfNecessary(ImageTransfer entity, long ts, Integer idleTimeFromTicket) {
+    if (shouldAbortOnClientInactivityTimeout(entity, ts, idleTimeFromTicket)) {
+        if (getParameters().getTransferType() == TransferType.Download) {
+            // In download flows, we can cancel the transfer if there was no activity
+            // for a while, as the download is handled by the client.
+            auditLog(this, AuditLogType.DOWNLOAD_IMAGE_CANCELED_TIMEOUT);
+            updateEntityPhase(ImageTransferPhase.CANCELLED);
+        } else {
+            updateEntityPhaseToPausedBySystem(AuditLogType.UPLOAD_IMAGE_PAUSED_BY_SYSTEM_TIMEOUT);
+        }
+    }
+}
+#end_block
+
+#method_before
+@Override
+public Response addFromVm(Template template) {
+    validateParameters(template, "name", "vm.id|name");
+    validateIconParameters(template);
+    Guid clusterId = null;
+    Cluster cluster = null;
+    if (namedCluster(template)) {
+        clusterId = getClusterId(template);
+        cluster = lookupCluster(clusterId);
+    }
+    if (template.getVersion() != null) {
+        validateParameters(template.getVersion(), "baseTemplate");
+    }
+    VmStatic originalVm = getVm(cluster, template);
+    VmStatic staticVm = getMapper(Template.class, VmStatic.class).map(template, originalVm);
+    if (namedCluster(template)) {
+        staticVm.setClusterId(clusterId);
+    }
+    // REVISIT: powershell has a IsVmTemlateWithSameNameExist safety check
+    AddVmTemplateParameters params = new AddVmTemplateParameters(staticVm, template.getName(), template.getDescription());
+    if (template.getVersion() != null) {
+        params.setBaseTemplateId(Guid.createGuidFromString(template.getVersion().getBaseTemplate().getId()));
+        params.setTemplateVersionName(template.getVersion().getVersionName());
+    }
+    params.setConsoleEnabled(template.getConsole() != null && template.getConsole().isSetEnabled() ? template.getConsole().isEnabled() : !getConsoleDevicesForEntity(originalVm.getId()).isEmpty());
+    params.setVirtioScsiEnabled(template.isSetVirtioScsi() && template.getVirtioScsi().isSetEnabled() ? template.getVirtioScsi().isEnabled() : null);
+    params.setSoundDeviceEnabled(template.isSetSoundcardEnabled() ? template.isSoundcardEnabled() : !VmHelper.getSoundDevicesForEntity(this, originalVm.getId()).isEmpty());
+    if (template.isSetRngDevice()) {
+        params.setUpdateRngDevice(true);
+        params.setRngDevice(RngDeviceMapper.map(template.getRngDevice(), null));
+    }
+    DisplayHelper.setGraphicsToParams(template.getDisplay(), params);
+    boolean domainSet = template.isSetStorageDomain() && template.getStorageDomain().isSetId();
+    if (domainSet) {
+        params.setDestinationStorageDomainId(asGuid(template.getStorageDomain().getId()));
+    }
+    params.setDiskInfoDestinationMap(getDestinationTemplateDiskMap(template.getVm(), originalVm.getId(), params.getDestinationStorageDomainId(), domainSet));
+    setupOptionalParameters(params);
+    IconHelper.setIconToParams(template, params);
+    Response response = performCreate(ActionType.AddVmTemplate, params, new QueryIdResolver<Guid>(QueryType.GetVmTemplate, GetVmTemplateParameters.class));
+    Template result = (Template) response.getEntity();
+    if (result != null) {
+        DisplayHelper.adjustDisplayData(this, result);
+    }
+    return response;
+}
+#method_after
+@Override
+public Response addFromVm(Template template) {
+    validateIconParameters(template);
+    Guid clusterId = null;
+    Cluster cluster = null;
+    if (namedCluster(template)) {
+        clusterId = getClusterId(template);
+        cluster = lookupCluster(clusterId);
+    }
+    if (template.getVersion() != null) {
+        validateParameters(template.getVersion(), "baseTemplate");
+    }
+    VmStatic originalVm = getVm(cluster, template);
+    VmStatic staticVm = getMapper(Template.class, VmStatic.class).map(template, originalVm);
+    if (namedCluster(template)) {
+        staticVm.setClusterId(clusterId);
+    }
+    // REVISIT: powershell has a IsVmTemlateWithSameNameExist safety check
+    AddVmTemplateParameters params = new AddVmTemplateParameters(staticVm, template.getName(), template.getDescription());
+    if (template.getVersion() != null) {
+        params.setBaseTemplateId(Guid.createGuidFromString(template.getVersion().getBaseTemplate().getId()));
+        params.setTemplateVersionName(template.getVersion().getVersionName());
+    }
+    params.setConsoleEnabled(template.getConsole() != null && template.getConsole().isSetEnabled() ? template.getConsole().isEnabled() : !getConsoleDevicesForEntity(originalVm.getId()).isEmpty());
+    params.setVirtioScsiEnabled(template.isSetVirtioScsi() && template.getVirtioScsi().isSetEnabled() ? template.getVirtioScsi().isEnabled() : null);
+    params.setSoundDeviceEnabled(template.isSetSoundcardEnabled() ? template.isSoundcardEnabled() : !VmHelper.getSoundDevicesForEntity(this, originalVm.getId()).isEmpty());
+    if (template.isSetRngDevice()) {
+        params.setUpdateRngDevice(true);
+        params.setRngDevice(RngDeviceMapper.map(template.getRngDevice(), null));
+    }
+    DisplayHelper.setGraphicsToParams(template.getDisplay(), params);
+    boolean domainSet = template.isSetStorageDomain() && template.getStorageDomain().isSetId();
+    if (domainSet) {
+        params.setDestinationStorageDomainId(asGuid(template.getStorageDomain().getId()));
+    }
+    params.setDiskInfoDestinationMap(getDestinationTemplateDiskMap(template.getVm(), originalVm.getId(), params.getDestinationStorageDomainId(), domainSet));
+    setupOptionalParameters(params);
+    IconHelper.setIconToParams(template, params);
+    Response response = performCreate(ActionType.AddVmTemplate, params, new QueryIdResolver<Guid>(QueryType.GetVmTemplate, GetVmTemplateParameters.class));
+    Template result = (Template) response.getEntity();
+    if (result != null) {
+        DisplayHelper.adjustDisplayData(this, result);
+    }
+    return response;
+}
+#end_block
+
+#method_before
+private void writeFeatures() {
+    if (vm.getClusterArch().getFamily() != ArchitectureType.x86) {
+        return;
+    }
+    // Currently only
+    // <features>
+    // <acpi/>
+    // <features/>
+    // for hyperv:
+    // <features>
+    // <acpi/>
+    // <hyperv>
+    // <relaxed state='on'/>
+    // </hyperv>
+    // <features/>
+    boolean acpiEnabled = vm.getAcpiEnable();
+    boolean kaslr = vmInfoBuildUtils.isKASLRDumpEnabled(vm.getVmOsId());
+    if (!acpiEnabled && !hypervEnabled && !kaslr) {
+        return;
+    }
+    writer.writeStartElement("features");
+    if (acpiEnabled) {
+        writer.writeStartElement("acpi");
+        writer.writeEndElement();
+    }
+    if (hypervEnabled) {
+        writer.writeStartElement("hyperv");
+        writer.writeStartElement("relaxed");
+        writer.writeAttributeString("state", "on");
+        writer.writeEndElement();
+        writer.writeStartElement("vapic");
+        writer.writeAttributeString("state", "on");
+        writer.writeEndElement();
+        writer.writeStartElement("spinlocks");
+        writer.writeAttributeString("state", "on");
+        writer.writeAttributeString("retries", "8191");
+        writer.writeEndElement();
+        writer.writeEndElement();
+    }
+    if (kaslr) {
+        writer.writeStartElement("vmcoreinfo");
+        writer.writeEndElement();
+    }
+    writer.writeEndElement();
+}
+#method_after
+private void writeFeatures() {
+    if (vm.getClusterArch().getFamily() != ArchitectureType.x86) {
+        return;
+    }
+    // Currently only
+    // <features>
+    // <acpi/>
+    // <features/>
+    // for hyperv:
+    // <features>
+    // <acpi/>
+    // <hyperv>
+    // <relaxed state='on'/>
+    // </hyperv>
+    // <features/>
+    boolean acpiEnabled = vm.getAcpiEnable();
+    boolean kaslr = vmInfoBuildUtils.isKASLRDumpEnabled(vm.getVmOsId());
+    if (!acpiEnabled && !hypervEnabled && !kaslr) {
+        return;
+    }
+    writer.writeStartElement("features");
+    if (acpiEnabled) {
+        writer.writeStartElement("acpi");
+        writer.writeEndElement();
+    }
+    if (hypervEnabled) {
+        writer.writeStartElement("hyperv");
+        writer.writeStartElement("relaxed");
+        writer.writeAttributeString("state", "on");
+        writer.writeEndElement();
+        writer.writeStartElement("vapic");
+        writer.writeAttributeString("state", "on");
+        writer.writeEndElement();
+        writer.writeStartElement("spinlocks");
+        writer.writeAttributeString("state", "on");
+        writer.writeAttributeString("retries", "8191");
+        writer.writeEndElement();
+        writer.writeEndElement();
+    }
+    if (kaslr) {
+        writer.writeElement("vmcoreinfo");
+    }
+    writer.writeEndElement();
+}
+#end_block
+
+#method_before
+public boolean isKASLRDumpEnabled(int osId) {
+    return osRepository.isLinux(osId) && Config.getValue(ConfigValues.EnableKASLRDump);
+}
+#method_after
+public boolean isKASLRDumpEnabled(int osId) {
+    return osRepository.isLinux(osId) && Config.<Boolean>getValue(ConfigValues.EnableKASLRDump);
+}
+#end_block
+
+#method_before
+@Override
+protected IsWidget createIcon() {
+    Span iconSpan = new Span();
+    iconSpan.addStyleName(Styles.FONT_AWESOME_BASE);
+    if (SnapshotStatus.IN_PREVIEW.equals(getEntity().getStatus())) {
+        iconSpan.addStyleName(IconType.EYE.getCssName());
+    } else if (SnapshotStatus.LOCKED.equals(getEntity().getStatus())) {
+        iconSpan.addStyleName(IconType.LOCK.getCssName());
+    } else {
+        iconSpan.addStyleName(getEntity().containsMemory() ? IconType.MICROCHIP.getCssName() : IconType.CAMERA.getCssName());
+    }
+    iconSpan.addStyleName(PatternflyConstants.PF_LIST_VIEW_ICON_SM);
+    iconPanel.add(iconSpan);
+    return iconPanel;
+}
+#method_after
+@Override
+protected IsWidget createIcon() {
+    Span iconSpan = new Span();
+    iconSpan.addStyleName(Styles.FONT_AWESOME_BASE);
+    if (SnapshotStatus.IN_PREVIEW.equals(getEntity().getStatus())) {
+        iconSpan.addStyleName(IconType.EYE.getCssName());
+    } else if (SnapshotStatus.LOCKED.equals(getEntity().getStatus())) {
+        iconSpan.addStyleName(IconType.LOCK.getCssName());
+    } else if (getEntity().containsMemory()) {
+        iconSpan.addStyleName(IconType.MICROCHIP.getCssName());
+    } else {
+        iconSpan.addStyleName(IconType.CAMERA.getCssName());
+    }
+    iconSpan.addStyleName(PatternflyConstants.PF_LIST_VIEW_ICON_SM);
+    iconPanel.add(iconSpan);
+    return iconPanel;
+}
+#end_block
+

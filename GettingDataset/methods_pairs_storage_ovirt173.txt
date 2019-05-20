@@ -1,0 +1,1119 @@
+20
+#method_before
+public static SsoSession getSsoSession(HttpServletRequest request, String clientId, String token, boolean mustExist) {
+    TokenCleanupUtility.cleanupExpiredTokens(request.getServletContext());
+    SsoSession ssoSession = null;
+    if (StringUtils.isNotEmpty(token)) {
+        ssoSession = getSsoContext(request).getSsoSession(token);
+        if (ssoSession != null) {
+            ssoSession.touch();
+        }
+    }
+    if (mustExist && ssoSession == null) {
+        throw new OAuthException(SsoConstants.ERR_CODE_INVALID_GRANT, "The provided authorization grant for the auth code has expired");
+    }
+    if (StringUtils.isNotEmpty(clientId) && StringUtils.isNotEmpty(ssoSession.getClientId()) && !ssoSession.getClientId().equals(clientId)) {
+        throw new OAuthException(SsoConstants.ERR_CODE_UNAUTHORIZED_CLIENT, SsoConstants.ERR_CODE_UNAUTHORIZED_CLIENT);
+    }
+    return ssoSession;
+}
+#method_after
+public static SsoSession getSsoSession(HttpServletRequest request, String clientId, String token, boolean mustExist) {
+    TokenCleanupUtility.cleanupExpiredTokens(request.getServletContext());
+    SsoContext ssoContext = getSsoContext(request);
+    SsoSession ssoSession = null;
+    if (StringUtils.isNotEmpty(token)) {
+        ssoSession = getSsoContext(request).getSsoSession(token);
+        if (ssoSession != null) {
+            ssoSession.touch();
+        }
+    }
+    if (mustExist && ssoSession == null) {
+        throw new OAuthException(SsoConstants.ERR_CODE_INVALID_GRANT, ssoContext.getLocalizationUtils().localize(SsoConstants.APP_ERROR_INVALID_GRANT, (Locale) request.getAttribute(SsoConstants.LOCALE)));
+    }
+    if (StringUtils.isNotEmpty(clientId) && StringUtils.isNotEmpty(ssoSession.getClientId()) && !ssoSession.getClientId().equals(clientId)) {
+        throw new OAuthException(SsoConstants.ERR_CODE_UNAUTHORIZED_CLIENT, SsoConstants.ERR_CODE_UNAUTHORIZED_CLIENT);
+    }
+    return ssoSession;
+}
+#end_block
+
+#method_before
+public static SsoSession getSsoSession(HttpServletRequest request) {
+    SsoSession ssoSession = request.getSession(false) == null ? null : (SsoSession) request.getSession().getAttribute(SsoConstants.OVIRT_SSO_SESSION);
+    // If the session has expired, attempt to extract the session from SsoContext persisted session
+    if (ssoSession == null) {
+        try {
+            ssoSession = getSsoContext(request).getSsoSessionById(getFormParameter(request, "sessionIdToken"));
+            // If the server is restarted the session will be missing from SsoContext
+            if (ssoSession == null) {
+                throw new OAuthException(SsoConstants.ERR_CODE_INVALID_GRANT, "Session expired please try again.");
+            }
+            HttpSession session = request.getSession(true);
+            session.setAttribute(SsoConstants.OVIRT_SSO_SESSION, ssoSession);
+            ssoSession.setHttpSession(session);
+        } catch (UnsupportedEncodingException ex) {
+            throw new OAuthException(SsoConstants.ERR_CODE_SERVER_ERROR, "Unable to decode sessionIdToken.");
+        }
+    }
+    return ssoSession;
+}
+#method_after
+public static SsoSession getSsoSession(HttpServletRequest request) {
+    SsoContext ssoContext = getSsoContext(request);
+    SsoSession ssoSession = request.getSession(false) == null ? null : (SsoSession) request.getSession().getAttribute(SsoConstants.OVIRT_SSO_SESSION);
+    // If the session has expired, attempt to extract the session from SsoContext persisted session
+    if (ssoSession == null) {
+        try {
+            ssoSession = getSsoContext(request).getSsoSessionById(getFormParameter(request, "sessionIdToken"));
+            // If the server is restarted the session will be missing from SsoContext
+            if (ssoSession == null) {
+                throw new OAuthException(SsoConstants.ERR_CODE_INVALID_GRANT, ssoContext.getLocalizationUtils().localize(SsoConstants.APP_ERROR_SESSION_EXPIRED, (Locale) request.getAttribute(SsoConstants.LOCALE)));
+            }
+            HttpSession session = request.getSession(true);
+            session.setAttribute(SsoConstants.OVIRT_SSO_SESSION, ssoSession);
+            ssoSession.setHttpSession(session);
+        } catch (UnsupportedEncodingException ex) {
+            throw new OAuthException(SsoConstants.ERR_CODE_SERVER_ERROR, ssoContext.getLocalizationUtils().localize(SsoConstants.APP_ERROR_UNABLE_TO_DECODE_SESSION_ID_TOKEN, (Locale) request.getAttribute(SsoConstants.LOCALE)));
+        }
+    }
+    return ssoSession;
+}
+#end_block
+
+#method_before
+private void queryDowntime() {
+    if (actualDowntime != null) {
+        return;
+    }
+    try {
+        VDSReturnValue retVal = runVdsCommand(VDSCommandType.MigrateStatus, new MigrateStatusVDSCommandParameters(getDestinationVdsId(), getVmId()));
+        if (retVal != null) {
+            setActualDowntime((Integer) retVal.getReturnValue());
+        }
+    } catch (EngineException e) {
+        migrationErrorCode = e.getErrorCode();
+    }
+}
+#method_after
+private void queryDowntime() {
+    if (actualDowntime != null) {
+        return;
+    }
+    try {
+        VDSReturnValue retVal = runVdsCommand(VDSCommandType.MigrateStatus, new MigrateStatusVDSCommandParameters(getDestinationVdsId(), getVmId()));
+        if (retVal != null && retVal.getReturnValue() != null) {
+            setActualDowntime((int) retVal.getReturnValue());
+        }
+    } catch (EngineException e) {
+        migrationErrorCode = e.getErrorCode();
+    }
+}
+#end_block
+
+#method_before
+private void updateVmAfterMigrationToDifferentCluster() {
+    if (getParameters().getTargetClusterId() != null || getVm().getClusterId().equals(getParameters().getTargetClusterId())) {
+        return;
+    }
+    ChangeVMClusterParameters params = new ChangeVMClusterParameters(getParameters().getTargetClusterId(), getVmId(), getVm().getCustomCompatibilityVersion());
+    setSucceeded(getBackend().runInternalAction(VdcActionType.ChangeVMCluster, params).getSucceeded());
+}
+#method_after
+private void updateVmAfterMigrationToDifferentCluster() {
+    if (getParameters().getTargetClusterId() == null || getVm().getClusterId().equals(getParameters().getTargetClusterId())) {
+        return;
+    }
+    ChangeVMClusterParameters params = new ChangeVMClusterParameters(getParameters().getTargetClusterId(), getVmId(), getVm().getCustomCompatibilityVersion());
+    setSucceeded(getBackend().runInternalAction(VdcActionType.ChangeVMCluster, params).getSucceeded());
+}
+#end_block
+
+#method_before
+public void setActualDowntime(Integer actualDowntime) {
+    synchronized (actualDowntimeLock) {
+        if (this.actualDowntime == null && actualDowntime != null) {
+            this.actualDowntime = actualDowntime;
+        }
+    }
+}
+#method_after
+private void setActualDowntime(int actualDowntime) {
+    synchronized (actualDowntimeLock) {
+        if (this.actualDowntime == null) {
+            this.actualDowntime = actualDowntime;
+        }
+    }
+}
+#end_block
+
+#method_before
+public static void main(String[] args) throws Exception {
+    // Create the connection to the server:
+    Connection connection = connection().url("https://engine/ovirt-engine/api").user("admin@internal").password("redhat123").trustStoreFile("truststore.jks").build();
+    // Get the reference to the "StorageDomains" service:
+    StorageDomainsService storageDomainsService = connection.systemService().storageDomainsService();
+    // Find the storage domain with unregistered VM:
+    StorageDomain sd = storageDomainsService.list().search("name=mysd").send().storageDomains().get(0);
+    // Locate the service that manages the storage domain, as that is where the action methods are defined:
+    StorageDomainService storageDomainService = storageDomainsService.storageDomainService(sd.id());
+    // Locate the service that manages the VMs in storage domain:
+    StorageDomainVmsService storageDomainVmsService = storageDomainService.vmsService();
+    // Find the the unregistered VM we want to register:
+    List<Vm> unregisteredVms = storageDomainVmsService.list().unregistered(true).send().vm();
+    Vm vm = null;
+    for (Vm x : unregisteredVms) {
+        if ("myvm".equals(x.name())) {
+            vm = x;
+            break;
+        }
+    }
+    // Locate the service that manages virtual machine in the storage domain, as that is where the action methods
+    // are defined:
+    StorageDomainVmService storageDomainVmService = storageDomainVmsService.vmService(vm.id());
+    // Register the VM into the system:
+    storageDomainVmService.register().vm(vm().name("exported_myvm")).cluster(cluster().name("mycluster")).vnicProfileMappings(vnicProfileMapping().sourceNetworkName("mynetwork").sourceNetworkProfileName("mynetwork").targetVnicProfile(vnicProfile().name("mynetwork"))).reassignBadMacs(Boolean.TRUE).send();
+    // Close the connection to the server:
+    connection.close();
+}
+#method_after
+public static void main(String[] args) throws Exception {
+    // Create the connection to the server:
+    Connection connection = connection().url("https://engine/ovirt-engine/api").user("admin@internal").password("redhat123").trustStoreFile("truststore.jks").build();
+    // Get the reference to the "StorageDomains" service:
+    StorageDomainsService storageDomainsService = connection.systemService().storageDomainsService();
+    // Find the storage domain with unregistered VM:
+    StorageDomain sd = storageDomainsService.list().search("name=mysd").send().storageDomains().get(0);
+    // Locate the service that manages the storage domain, as that is where the action methods are defined:
+    StorageDomainService storageDomainService = storageDomainsService.storageDomainService(sd.id());
+    // Locate the service that manages the VMs in storage domain:
+    StorageDomainVmsService storageDomainVmsService = storageDomainService.vmsService();
+    // Find the the unregistered VM we want to register:
+    List<Vm> unregisteredVms = storageDomainVmsService.list().unregistered(true).send().vm();
+    Vm vm = null;
+    for (Vm x : unregisteredVms) {
+        if ("myvm".equals(x.name())) {
+            vm = x;
+            break;
+        }
+    }
+    // Locate the service that manages virtual machine in the storage domain, as that is where the action methods
+    // are defined:
+    StorageDomainVmService storageDomainVmService = storageDomainVmsService.vmService(vm.id());
+    // Register the VM into the system:
+    storageDomainVmService.register().vm(vm().name("exported_myvm")).cluster(cluster().name("mycluster")).vnicProfileMappings(vnicProfileMapping().sourceNetworkName("mynetwork").sourceNetworkProfileName("mynetwork").targetVnicProfile(vnicProfile().name("mynetwork"))).reassignBadMacs(true).send();
+    // Close the connection to the server:
+    connection.close();
+}
+#end_block
+
+#method_before
+public Map getVdsStats() {
+    AppConfig appConfig = AppConfig.getInstance();
+    final Host host = getActiveHost();
+    try {
+        Map resultMap = getDoneStatus();
+        Map infoMap = map();
+        infoMap.put("memShared", Integer.valueOf(0));
+        infoMap.put("thpState", "always");
+        infoMap.put("netConfigDirty", "False");
+        infoMap.put("rxRate", "0.00");
+        int nTotal = 0;
+        for (VM vm : getActiveHost().getRunningVMs().values()) {
+            if (!vm.isForDelete()) {
+                nTotal++;
+            }
+        }
+        infoMap.put("vmCount", nTotal);
+        String memUsedPercent = Utils.rangeParsser(appConfig.getMemLoad());
+        infoMap.put("memUsed", memUsedPercent);
+        double memUsedInMB = TOTAL_MEMORY_SIZE - (Double.valueOf(memUsedPercent) / 100);
+        int memFree = (int) (TOTAL_MEMORY_SIZE - memUsedInMB);
+        infoMap.put("memFree", Integer.toString(memFree));
+        infoMap.put("storageDomains", getStorageDomainsStatsMap());
+        infoMap.put("network", getNetworkStatMap(host.getMacAddress()));
+        infoMap.put("txDropped", "0");
+        infoMap.put("cpuUser", Utils.rangeParsser(appConfig.getCpuLoad()));
+        infoMap.put("ksmPages", Integer.valueOf(100));
+        infoMap.put("elapsedTime", host.getElapsedTimeInSeconds() + "");
+        infoMap.put("cpuLoad", Utils.rangeParsser(appConfig.getCpuLoad()));
+        infoMap.put("cpuSys", Utils.rangeParsser(appConfig.getCpuLoad()));
+        infoMap.put("diskStats", getDiskStatsMap());
+        infoMap.put("memCommitted", Integer.valueOf(0));
+        // boolean..0
+        infoMap.put("ksmState", Boolean.FALSE);
+        int nMigrating = 0;
+        for (VM vm : host.getRunningVMs().values()) {
+            if (vm.getStatus() == VM.VMStatus.MigratingFrom || vm.getStatus() == VM.VMStatus.MigratingTo) {
+                nMigrating++;
+            }
+        }
+        infoMap.put("vmMigrating", nMigrating);
+        infoMap.put("ksmCpu", Integer.valueOf(0));
+        infoMap.put("memAvailable", Integer.valueOf(6435));
+        infoMap.put("txRate", "");
+        infoMap.put("cpuUserVdsmd", "0.50");
+        infoMap.put("momStatus", "active");
+        // 28f88125-6e5e-4804-8c5d-b4620f80bc9c
+        infoMap.put("generationID", host.getUuid("GENERATION_ID"));
+        infoMap.put("rxDropped", "14965");
+        infoMap.put("swapTotal", Integer.valueOf(20031));
+        infoMap.put("swapFree", Integer.valueOf(20031));
+        infoMap.put("statsAge", "0.43");
+        // 2013-02-10T19:09:11 GMT
+        infoMap.put("dateTime", host.getDateTimeGMT());
+        infoMap.put("anonHugePages", "662");
+        infoMap.put("cpuIdle", Utils.getCpuIdle(infoMap.get("cpuUser").toString()));
+        int nActive = 0;
+        for (VM vm : getActiveHost().getRunningVMs().values()) {
+            if (vm.getStatus() == VM.VMStatus.Up) {
+                nActive++;
+            }
+        }
+        infoMap.put("vmActive", nActive);
+        infoMap.put("cpuSysVdsmd", "0.25");
+        infoMap.put("numaNodeMemFree", getNumaNodeMemFreeMap(memFree, memUsedPercent));
+        resultMap.put("info", infoMap);
+        Utils.getLatency();
+        return resultMap;
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#method_after
+public Map getVdsStats() {
+    AppConfig appConfig = AppConfig.getInstance();
+    final Host host = getActiveHost();
+    try {
+        Map resultMap = getDoneStatus();
+        Map infoMap = map();
+        infoMap.put("memShared", Integer.valueOf(0));
+        infoMap.put("thpState", "always");
+        infoMap.put("netConfigDirty", "False");
+        infoMap.put("rxRate", "0.00");
+        int nTotal = 0;
+        for (VM vm : getActiveHost().getRunningVMs().values()) {
+            if (!vm.isForDelete()) {
+                nTotal++;
+            }
+        }
+        infoMap.put("vmCount", nTotal);
+        String memUsedPercent = Utils.rangeParsser(appConfig.getMemLoad());
+        infoMap.put("memUsed", memUsedPercent);
+        double memUsedInMB = TOTAL_MEMORY_SIZE * (Double.valueOf(memUsedPercent) / 100);
+        int memFree = (int) (TOTAL_MEMORY_SIZE - memUsedInMB);
+        infoMap.put("memFree", Integer.toString(memFree));
+        infoMap.put("storageDomains", getStorageDomainsStatsMap());
+        infoMap.put("network", getNetworkStatMap(host.getMacAddress()));
+        infoMap.put("txDropped", "0");
+        infoMap.put("cpuUser", Utils.rangeParsser(appConfig.getCpuLoad()));
+        infoMap.put("ksmPages", Integer.valueOf(100));
+        infoMap.put("elapsedTime", host.getElapsedTimeInSeconds() + "");
+        infoMap.put("cpuLoad", Utils.rangeParsser(appConfig.getCpuLoad()));
+        infoMap.put("cpuSys", Utils.rangeParsser(appConfig.getCpuLoad()));
+        infoMap.put("diskStats", getDiskStatsMap());
+        infoMap.put("memCommitted", Integer.valueOf(0));
+        // boolean..0
+        infoMap.put("ksmState", Boolean.FALSE);
+        int nMigrating = 0;
+        for (VM vm : host.getRunningVMs().values()) {
+            if (vm.getStatus() == VM.VMStatus.MigratingFrom || vm.getStatus() == VM.VMStatus.MigratingTo) {
+                nMigrating++;
+            }
+        }
+        infoMap.put("vmMigrating", nMigrating);
+        infoMap.put("ksmCpu", Integer.valueOf(0));
+        infoMap.put("memAvailable", Integer.valueOf(6435));
+        infoMap.put("txRate", "");
+        infoMap.put("cpuUserVdsmd", "0.50");
+        infoMap.put("momStatus", "active");
+        // 28f88125-6e5e-4804-8c5d-b4620f80bc9c
+        infoMap.put("generationID", host.getUuid("GENERATION_ID"));
+        infoMap.put("rxDropped", "14965");
+        infoMap.put("swapTotal", Integer.valueOf(20031));
+        infoMap.put("swapFree", Integer.valueOf(20031));
+        infoMap.put("statsAge", "0.43");
+        // 2013-02-10T19:09:11 GMT
+        infoMap.put("dateTime", host.getDateTimeGMT());
+        infoMap.put("anonHugePages", "662");
+        infoMap.put("cpuIdle", Utils.getCpuIdle(infoMap.get("cpuUser").toString()));
+        int nActive = 0;
+        for (VM vm : getActiveHost().getRunningVMs().values()) {
+            if (vm.getStatus() == VM.VMStatus.Up) {
+                nActive++;
+            }
+        }
+        infoMap.put("vmActive", nActive);
+        infoMap.put("cpuSysVdsmd", "0.25");
+        infoMap.put("numaNodeMemFree", getNumaNodeMemFreeMap(memFree, memUsedPercent));
+        resultMap.put("info", infoMap);
+        Utils.getLatency();
+        return resultMap;
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#end_block
+
+#method_before
+public static int getCdDeviceIndex(String cdInterface) {
+    switch(cdInterface) {
+        case "scsi":
+            return 2;
+        case "ide":
+            return 2;
+        case "sata":
+            return 2;
+        default:
+            return -1;
+    }
+}
+#method_after
+public static int getCdDeviceIndex(String cdInterface) {
+    switch(cdInterface) {
+        case "scsi":
+        case "ide":
+        case "sata":
+            return 2;
+        default:
+            return -1;
+    }
+}
+#end_block
+
+#method_before
+@Test
+public void testDoNotValidateNameSizeImport() {
+    checkTemplateName(false, string100);
+}
+#method_after
+@Test
+public void testDoNotValidateNameSizeImport() {
+    checkTemplateName(false, string500);
+}
+#end_block
+
+#method_before
+protected static QemuImageInfo getQemuImageInfoFromVdsm(Guid storagePoolId, Guid newStorageDomainID, Guid newImageGroupId, Guid newImageId, Guid vdsId, boolean shouldPrepareAndTeardown) {
+    if (vdsId == null) {
+        vdsId = VdsCommandsHelper.getHostForExecution(storagePoolId, Collections.EMPTY_LIST);
+    }
+    QemuImageInfo qemuImageInfo = null;
+    if (shouldPrepareAndTeardown) {
+        prepareImage(storagePoolId, newStorageDomainID, newImageGroupId, newImageId, vdsId);
+    }
+    try {
+        qemuImageInfo = (QemuImageInfo) Backend.getInstance().getResourceManager().runVdsCommand(VDSCommandType.GetQemuImageInfo, new GetVolumeInfoVDSCommandParameters(vdsId, storagePoolId, newStorageDomainID, newImageGroupId, newImageId)).getReturnValue();
+    } catch (Exception e) {
+        log.error("Unable to get qemu image info from storage", e);
+    } finally {
+        if (shouldPrepareAndTeardown) {
+            teardownImage(storagePoolId, newStorageDomainID, newImageGroupId, newImageId, vdsId);
+        }
+    }
+    return qemuImageInfo;
+}
+#method_after
+protected static QemuImageInfo getQemuImageInfoFromVdsm(Guid storagePoolId, Guid newStorageDomainID, Guid newImageGroupId, Guid newImageId, Guid vdsId, boolean shouldPrepareAndTeardown) {
+    if (vdsId == null) {
+        vdsId = VdsCommandsHelper.getHostForExecution(storagePoolId, Collections.emptyList());
+    }
+    QemuImageInfo qemuImageInfo = null;
+    if (shouldPrepareAndTeardown) {
+        prepareImage(storagePoolId, newStorageDomainID, newImageGroupId, newImageId, vdsId);
+    }
+    try {
+        qemuImageInfo = (QemuImageInfo) Backend.getInstance().getResourceManager().runVdsCommand(VDSCommandType.GetQemuImageInfo, new GetVolumeInfoVDSCommandParameters(vdsId, storagePoolId, newStorageDomainID, newImageGroupId, newImageId)).getReturnValue();
+    } catch (Exception e) {
+        log.error("Unable to get qemu image info from storage", e);
+    } finally {
+        if (shouldPrepareAndTeardown) {
+            teardownImage(storagePoolId, newStorageDomainID, newImageGroupId, newImageId, vdsId);
+        }
+    }
+    return qemuImageInfo;
+}
+#end_block
+
+#method_before
+private void handleFinalizingSuccess(final StateContext context) {
+    log.info("Finalizing successful transfer for {}", getTransferDescription());
+    // If stopping the session did not succeed, don't change the transfer state.
+    if (stopImageTransferSession(context.entity)) {
+        // We want to use the transferring vds for image actions for having a coherent log when transferring.
+        Guid transferingVdsId = context.entity.getVdsId();
+        if (verifyImage(transferingVdsId)) {
+            setVolumeLegalityInStorage(LEGAL_IMAGE);
+            if (getImage().getVolumeFormat().equals(VolumeFormat.COW)) {
+                setQcowCompat(getImage().getImage(), getStoragePool().getId(), getImage().getImage().getDiskId(), getImage().getImageId(), getStorageDomainId(), null, false);
+                imageDao.update(getImage().getImage());
+            }
+            unLockImage();
+            updateEntityPhase(ImageTransferPhase.FINISHED_SUCCESS);
+        } else {
+            setImageStatus(ImageStatus.ILLEGAL);
+            updateEntityPhase(ImageTransferPhase.FINALIZING_FAILURE);
+        }
+        // Finished using the image, tear it down.
+        tearDownImage(context.entity.getVdsId());
+    }
+}
+#method_after
+private void handleFinalizingSuccess(final StateContext context) {
+    log.info("Finalizing successful transfer for {}", getTransferDescription());
+    // If stopping the session did not succeed, don't change the transfer state.
+    if (stopImageTransferSession(context.entity)) {
+        // We want to use the transferring vds for image actions for having a coherent log when transferring.
+        Guid transferingVdsId = context.entity.getVdsId();
+        if (verifyImage(transferingVdsId)) {
+            setVolumeLegalityInStorage(LEGAL_IMAGE);
+            if (getImage().getVolumeFormat().equals(VolumeFormat.COW)) {
+                setQcowCompat(getImage().getImage(), getStoragePool().getId(), getImage().getImage().getDiskId(), getImage().getImageId(), getStorageDomainId(), transferingVdsId);
+                imageDao.update(getImage().getImage());
+            }
+            unLockImage();
+            updateEntityPhase(ImageTransferPhase.FINISHED_SUCCESS);
+        } else {
+            setImageStatus(ImageStatus.ILLEGAL);
+            updateEntityPhase(ImageTransferPhase.FINALIZING_FAILURE);
+        }
+        // Finished using the image, tear it down.
+        tearDownImage(context.entity.getVdsId());
+    }
+}
+#end_block
+
+#method_before
+protected boolean isDataOperationsByHSM(StorageDomainStatic targetSd) {
+    return FeatureSupported.dataOperationsByHSM(getStoragePool().getCompatibilityVersion()) && !targetSd.getStorageType().isLocal() && targetSd.getStorageDomainType().isDataDomain();
+}
+#method_after
+protected boolean isDataOperationsByHSM(StorageDomainStatic targetSd) {
+    return FeatureSupported.dataOperationsByHSM(getStoragePool().getCompatibilityVersion()) && targetSd.getStorageDomainType().isDataDomain();
+}
+#end_block
+
+#method_before
+private void setQcowCompatByQemuImageInfo(Guid storagePoolId, Guid newImageGroupId, Guid newImageId, Guid newStorageDomainID) {
+    // If the VM is running then the volume is already prepared in the guest's host so there
+    // is no need for prepare and teardown.
+    Guid hostIdToExecuteQemuImageInfo = null;
+    List<Pair<VM, VmDevice>> attachedVmsInfo = vmDao.getVmsWithPlugInfo(getDestinationDiskImage().getId());
+    for (Pair<VM, VmDevice> pair : attachedVmsInfo) {
+        VM vm = pair.getFirst();
+        if (Boolean.TRUE.equals(pair.getSecond().isPlugged())) {
+            if (vm.isStartingOrUp()) {
+                hostIdToExecuteQemuImageInfo = vm.getRunOnVds();
+                break;
+            }
+        }
+    }
+    setQcowCompat(getDestinationDiskImage().getImage(), storagePoolId, newImageGroupId, newImageId, newStorageDomainID, hostIdToExecuteQemuImageInfo, hostIdToExecuteQemuImageInfo == null);
+}
+#method_after
+private void setQcowCompatByQemuImageInfo(Guid storagePoolId, Guid newImageGroupId, Guid newImageId, Guid newStorageDomainID) {
+    // If the VM is running then the volume is already prepared in the guest's host so there
+    // is no need for prepare and teardown.
+    Guid hostIdToExecuteQemuImageInfo = null;
+    List<Pair<VM, VmDevice>> attachedVmsInfo = vmDao.getVmsWithPlugInfo(getDestinationDiskImage().getId());
+    for (Pair<VM, VmDevice> pair : attachedVmsInfo) {
+        VM vm = pair.getFirst();
+        if (Boolean.TRUE.equals(pair.getSecond().isPlugged())) {
+            if (vm.isStartingOrUp()) {
+                hostIdToExecuteQemuImageInfo = vm.getRunOnVds();
+                break;
+            }
+        }
+    }
+    setQcowCompat(getDestinationDiskImage().getImage(), storagePoolId, newImageGroupId, newImageId, newStorageDomainID, hostIdToExecuteQemuImageInfo);
+}
+#end_block
+
+#method_before
+protected void setQcowCompat(Image diskImage, Guid storagePoolId, Guid newImageGroupId, Guid newImageId, Guid newStorageDomainID, Guid hostIdForExecution, boolean shouldPrepareAndTeardown) {
+    diskImage.setQcowCompat(QcowCompat.QCOW2_V2);
+    if (FeatureSupported.qcowCompatSupported(getStoragePool().getCompatibilityVersion())) {
+        QemuImageInfo qemuImageInfo = ImagesHandler.getQemuImageInfoFromVdsm(storagePoolId, newStorageDomainID, newImageGroupId, newImageId, hostIdForExecution, shouldPrepareAndTeardown);
+        if (qemuImageInfo != null) {
+            diskImage.setQcowCompat(qemuImageInfo.getQcowCompat());
+        }
+    }
+}
+#method_after
+protected void setQcowCompat(Image diskImage, Guid storagePoolId, Guid newImageGroupId, Guid newImageId, Guid newStorageDomainID, Guid hostIdForExecution) {
+    diskImage.setQcowCompat(QcowCompat.QCOW2_V2);
+    if (FeatureSupported.qcowCompatSupported(getStoragePool().getCompatibilityVersion())) {
+        QemuImageInfo qemuImageInfo = ImagesHandler.getQemuImageInfoFromVdsm(storagePoolId, newStorageDomainID, newImageGroupId, newImageId, hostIdForExecution, hostIdForExecution == null);
+        if (qemuImageInfo != null) {
+            diskImage.setQcowCompat(qemuImageInfo.getQcowCompat());
+        }
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void edit(final AbstractDiskModel disk) {
+    driver.edit(disk);
+    disk.getIsDirectLunDiskAvaialable().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            boolean isDirectLunDiskAvaialable = ((EntityModel<Boolean>) sender).getEntity();
+            externalDiskPanel.setVisible(isDirectLunDiskAvaialable);
+        }
+    });
+    disk.getIsUsingScsiReservation().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            scsiReservationInfoIcon.setVisible(disk.getIsUsingScsiReservation().getEntity());
+        }
+    });
+    disk.getIsVirtioScsiEnabled().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            if (disk.getVm() == null) {
+                // not relevant for floating disks
+                return;
+            }
+            boolean isVirtioScsiEnabled = Boolean.TRUE.equals(((EntityModel) sender).getEntity());
+            // Show the info icon if VirtIO-SCSI is supported by the cluster but disabled for the VM
+            interfaceInfoIcon.setVisible(!isVirtioScsiEnabled);
+        }
+    });
+    disk.getCinderVolumeType().getItemsChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            Collection<String> volumeTypes = disk.getCinderVolumeType().getItems();
+            cinderVolumeTypeInfoIcon.setVisible(volumeTypes == null || volumeTypes.isEmpty());
+        }
+    });
+    disk.getIsModelDisabled().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            if (disk.getIsModelDisabled().getEntity()) {
+                disableWidget(getWidget());
+                enableWidget(radioButtonsPanel);
+                enableWidget(datacenterEditor);
+                disk.getDefaultCommand().setIsExecutionAllowed(false);
+                disk.setIsChangeable(false);
+            } else {
+                enableWidget(getWidget());
+                disk.getDefaultCommand().setIsExecutionAllowed(true);
+                disk.setIsChangeable(true);
+                driver.edit(disk);
+            }
+        }
+    });
+    radioButtonsPanel.addRadioButton(constants.imageDisk(), disk.getDisk() == null || disk.getDisk().getDiskStorageType() == DiskStorageType.IMAGE, disk.getIsNew(), new ValueChangeHandler<Boolean>() {
+
+        @Override
+        public void onValueChange(ValueChangeEvent<Boolean> event) {
+            if (disk.getIsNew()) {
+                disk.getDiskStorageType().setEntity(DiskStorageType.IMAGE);
+                revealDiskPanel(disk);
+            }
+        }
+    });
+    radioButtonsPanel.addRadioButton(constants.directLunDisk(), disk.getDisk() != null && disk.getDisk().getDiskStorageType() == DiskStorageType.LUN, disk.getIsNew(), new ValueChangeHandler<Boolean>() {
+
+        @Override
+        public void onValueChange(ValueChangeEvent<Boolean> event) {
+            if (disk.getIsNew()) {
+                disk.getDiskStorageType().setEntity(DiskStorageType.LUN);
+                revealStorageView(disk);
+                revealDiskPanel(disk);
+            }
+        }
+    });
+    radioButtonsPanel.addRadioButton(constants.cinderDisk(), disk.getDisk() != null && disk.getDisk().getDiskStorageType() == DiskStorageType.CINDER, disk.getIsNew(), new ValueChangeHandler<Boolean>() {
+
+        @Override
+        public void onValueChange(ValueChangeEvent<Boolean> event) {
+            if (disk.getIsNew()) {
+                disk.getDiskStorageType().setEntity(DiskStorageType.CINDER);
+                revealDiskPanel(disk);
+            }
+        }
+    });
+    if (disk.getStorageModel() == null) {
+        storageModel = new StorageModel(new NewEditStorageModelBehavior());
+        // Create IscsiStorageModel
+        iscsiStorageModel = new IscsiStorageModel();
+        iscsiStorageModel.setContainer(storageModel);
+        iscsiStorageModel.setIsGrouppedByTarget(true);
+        iscsiStorageModel.setIgnoreGrayedOut(true);
+        // Create FcpStorageModel
+        fcpStorageModel = new FcpStorageModel();
+        fcpStorageModel.setContainer(storageModel);
+        fcpStorageModel.setIsGrouppedByTarget(false);
+        fcpStorageModel.setIgnoreGrayedOut(true);
+        // Set 'StorageModel' items
+        ArrayList<IStorageModel> items = new ArrayList<>();
+        items.add(iscsiStorageModel);
+        items.add(fcpStorageModel);
+        storageModel.setStorageModels(items);
+        storageModel.setHost(disk.getHost());
+        disk.setStorageModel(storageModel);
+    } else {
+        storageModel = disk.getStorageModel();
+        iscsiStorageModel = Linq.findByType(storageModel.getStorageModels(), IscsiStorageModel.class);
+        iscsiStorageModel.getPropertyChangedEvent().clearListeners();
+        fcpStorageModel = Linq.findByType(storageModel.getStorageModels(), FcpStorageModel.class);
+        fcpStorageModel.getPropertyChangedEvent().clearListeners();
+    }
+    iscsiStorageView = new IscsiStorageView(false, 196, 304, 244, 275, 142, 55, -67);
+    iscsiStorageView.setBarTop(0, Unit.PX);
+    iscsiStorageView.edit(iscsiStorageModel);
+    fcpStorageView = new FcpStorageView(false, 278, 240);
+    fcpStorageView.edit(fcpStorageModel);
+    // SelectedItemChangedEvent handlers
+    disk.getStorageType().getSelectedItemChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            revealStorageView(disk);
+        }
+    });
+    disk.getHost().getSelectedItemChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            revealStorageView(disk);
+        }
+    });
+    disk.getDiskStorageType().getPropertyChangedEvent().addListener(new IEventListener<PropertyChangedEventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends PropertyChangedEventArgs> ev, Object sender, PropertyChangedEventArgs args) {
+            String propName = args.propertyName;
+            if ("IsChangable".equals(propName)) {
+                // $NON-NLS-1$
+                if (disk.getDiskStorageType().getIsChangable() && disk.isEditEnabled()) {
+                    enableWidget(radioButtonsPanel);
+                } else {
+                    disableWidget(radioButtonsPanel);
+                }
+            }
+        }
+    });
+    revealStorageView(disk);
+    revealDiskPanel(disk);
+}
+#method_after
+@Override
+public void edit(final AbstractDiskModel disk) {
+    driver.edit(disk);
+    disk.getIsDirectLunDiskAvaialable().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            boolean isDirectLunDiskAvaialable = ((EntityModel<Boolean>) sender).getEntity();
+            externalDiskPanel.setVisible(isDirectLunDiskAvaialable);
+        }
+    });
+    disk.getIsUsingScsiReservation().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            scsiReservationInfoIcon.setVisible(disk.getIsUsingScsiReservation().getEntity());
+        }
+    });
+    disk.getIsVirtioScsiEnabled().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            if (disk.getVm() == null) {
+                // not relevant for floating disks
+                return;
+            }
+            boolean isVirtioScsiEnabled = Boolean.TRUE.equals(((EntityModel) sender).getEntity());
+            // Show the info icon if VirtIO-SCSI is supported by the cluster but disabled for the VM
+            interfaceInfoIcon.setVisible(!isVirtioScsiEnabled);
+        }
+    });
+    disk.getCinderVolumeType().getItemsChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            Collection<String> volumeTypes = disk.getCinderVolumeType().getItems();
+            cinderVolumeTypeInfoIcon.setVisible(volumeTypes == null || volumeTypes.isEmpty());
+        }
+    });
+    disk.getIsModelDisabled().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            if (disk.getIsModelDisabled().getEntity()) {
+                disableWidget(getWidget());
+                enableWidget(radioButtonPanel);
+                enableWidget(datacenterEditor);
+                disk.getDefaultCommand().setIsExecutionAllowed(false);
+                disk.setIsChangeable(false);
+            } else {
+                enableWidget(getWidget());
+                disk.getDefaultCommand().setIsExecutionAllowed(true);
+                disk.setIsChangeable(true);
+                driver.edit(disk);
+            }
+        }
+    });
+    radioButtonPanel.addRadioButton(constants.imageDisk(), disk.getDisk() == null || disk.getDisk().getDiskStorageType() == DiskStorageType.IMAGE, disk.getIsNew(), new ValueChangeHandler<Boolean>() {
+
+        @Override
+        public void onValueChange(ValueChangeEvent<Boolean> event) {
+            if (disk.getIsNew()) {
+                disk.getDiskStorageType().setEntity(DiskStorageType.IMAGE);
+                revealDiskPanel(disk);
+            }
+        }
+    });
+    radioButtonPanel.addRadioButton(constants.directLunDisk(), disk.getDisk() != null && disk.getDisk().getDiskStorageType() == DiskStorageType.LUN, disk.getIsNew(), new ValueChangeHandler<Boolean>() {
+
+        @Override
+        public void onValueChange(ValueChangeEvent<Boolean> event) {
+            if (disk.getIsNew()) {
+                disk.getDiskStorageType().setEntity(DiskStorageType.LUN);
+                revealStorageView(disk);
+                revealDiskPanel(disk);
+            }
+        }
+    });
+    radioButtonPanel.addRadioButton(constants.cinderDisk(), disk.getDisk() != null && disk.getDisk().getDiskStorageType() == DiskStorageType.CINDER, disk.getIsNew(), new ValueChangeHandler<Boolean>() {
+
+        @Override
+        public void onValueChange(ValueChangeEvent<Boolean> event) {
+            if (disk.getIsNew()) {
+                disk.getDiskStorageType().setEntity(DiskStorageType.CINDER);
+                revealDiskPanel(disk);
+            }
+        }
+    });
+    if (disk.getStorageModel() == null) {
+        storageModel = new StorageModel(new NewEditStorageModelBehavior());
+        // Create IscsiStorageModel
+        iscsiStorageModel = new IscsiStorageModel();
+        iscsiStorageModel.setContainer(storageModel);
+        iscsiStorageModel.setIsGrouppedByTarget(true);
+        iscsiStorageModel.setIgnoreGrayedOut(true);
+        // Create FcpStorageModel
+        fcpStorageModel = new FcpStorageModel();
+        fcpStorageModel.setContainer(storageModel);
+        fcpStorageModel.setIsGrouppedByTarget(false);
+        fcpStorageModel.setIgnoreGrayedOut(true);
+        // Set 'StorageModel' items
+        ArrayList<IStorageModel> items = new ArrayList<>();
+        items.add(iscsiStorageModel);
+        items.add(fcpStorageModel);
+        storageModel.setStorageModels(items);
+        storageModel.setHost(disk.getHost());
+        disk.setStorageModel(storageModel);
+    } else {
+        storageModel = disk.getStorageModel();
+        iscsiStorageModel = Linq.findByType(storageModel.getStorageModels(), IscsiStorageModel.class);
+        iscsiStorageModel.getPropertyChangedEvent().clearListeners();
+        fcpStorageModel = Linq.findByType(storageModel.getStorageModels(), FcpStorageModel.class);
+        fcpStorageModel.getPropertyChangedEvent().clearListeners();
+    }
+    iscsiStorageView = new IscsiStorageView(false, 196, 304, 244, 275, 142, 55, -67);
+    iscsiStorageView.setBarTop(0, Unit.PX);
+    iscsiStorageView.edit(iscsiStorageModel);
+    fcpStorageView = new FcpStorageView(false, 278, 240);
+    fcpStorageView.edit(fcpStorageModel);
+    // SelectedItemChangedEvent handlers
+    disk.getStorageType().getSelectedItemChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            revealStorageView(disk);
+        }
+    });
+    disk.getHost().getSelectedItemChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            revealStorageView(disk);
+        }
+    });
+    disk.getDiskStorageType().getPropertyChangedEvent().addListener(new IEventListener<PropertyChangedEventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends PropertyChangedEventArgs> ev, Object sender, PropertyChangedEventArgs args) {
+            String propName = args.propertyName;
+            if ("IsChangable".equals(propName)) {
+                // $NON-NLS-1$
+                if (disk.getDiskStorageType().getIsChangable() && disk.isEditEnabled()) {
+                    enableWidget(radioButtonPanel);
+                } else {
+                    disableWidget(radioButtonPanel);
+                }
+            }
+        }
+    });
+    revealStorageView(disk);
+    revealDiskPanel(disk);
+}
+#end_block
+
+#method_before
+private void revealDiskPanel(final AbstractDiskModel disk) {
+    boolean isInVm = disk.getVm() != null;
+    // Disk type (internal/external) selection panel is visible only when
+    // 'Attach disk' mode is enabled or new LunDisk creation is enabled
+    radioButtonsPanel.setVisible(isNewLunDiskEnabled);
+    externalDiskPanel.setVisible(isNewLunDiskEnabled && disk.getDiskStorageType().getEntity() == DiskStorageType.LUN);
+    aliasEditor.setFocus(!isInVm);
+}
+#method_after
+private void revealDiskPanel(final AbstractDiskModel disk) {
+    boolean isInVm = disk.getVm() != null;
+    // Disk type (internal/external) selection panel is visible only when
+    // 'Attach disk' mode is enabled or new LunDisk creation is enabled
+    radioButtonPanel.setVisible(isNewLunDiskEnabled);
+    externalDiskPanel.setVisible(isNewLunDiskEnabled && disk.getDiskStorageType().getEntity() == DiskStorageType.LUN);
+    aliasEditor.setFocus(!isInVm);
+}
+#end_block
+
+#method_before
+/*
+     * USB slot
+     */
+public void updateUsbSlots(VmBase oldVm, VmBase newVm) {
+    Objects.requireNonNull(oldVm);
+    Objects.requireNonNull(newVm);
+    final UsbPolicy oldUsbPolicy = oldVm.getUsbPolicy();
+    final UsbPolicy newUsbPolicy = newVm.getUsbPolicy();
+    final int oldNumberOfSlots = getUsbSlots(oldVm.getId()).size();
+    final int newNumberOfUsbSlots = Config.<Integer>getValue(ConfigValues.NumberOfUSBSlots);
+    if (UsbPolicy.DISABLED == oldUsbPolicy && UsbPolicy.ENABLED_NATIVE == newUsbPolicy) {
+        disableNormalUsb(newVm.getId());
+        enableSpiceUsb(newVm.getId(), newNumberOfUsbSlots);
+        return;
+    }
+    if (UsbPolicy.ENABLED_NATIVE == oldUsbPolicy && UsbPolicy.ENABLED_NATIVE == newUsbPolicy) {
+        updateSpiceUsb(newVm.getId(), oldNumberOfSlots, newNumberOfUsbSlots);
+        return;
+    }
+    if (UsbPolicy.ENABLED_NATIVE == oldUsbPolicy && UsbPolicy.DISABLED == newUsbPolicy) {
+        disableSpiceUsb(newVm.getId());
+        enableNormalUsb(newVm);
+        return;
+    }
+    if (UsbPolicy.DISABLED == oldUsbPolicy && UsbPolicy.DISABLED == newUsbPolicy) {
+        updateNormalUsb(newVm);
+        return;
+    }
+    throw new RuntimeException(format("Unexpected state: oldUsbPolicy=%s, newUsbPolicy=%s", oldUsbPolicy, newUsbPolicy));
+}
+#method_after
+/*
+     * USB slot
+     */
+public void updateUsbSlots(VmBase oldVm, VmBase newVm) {
+    final UsbPolicy oldUsbPolicy = oldVm.getUsbPolicy();
+    final UsbPolicy newUsbPolicy = newVm.getUsbPolicy();
+    final int oldNumberOfSlots = getUsbSlots(oldVm.getId()).size();
+    final int newNumberOfUsbSlots = Config.<Integer>getValue(ConfigValues.NumberOfUSBSlots);
+    if (UsbPolicy.DISABLED == oldUsbPolicy && UsbPolicy.ENABLED_NATIVE == newUsbPolicy) {
+        disableNormalUsb(newVm.getId());
+        enableSpiceUsb(newVm.getId(), newNumberOfUsbSlots);
+        return;
+    }
+    if (UsbPolicy.ENABLED_NATIVE == oldUsbPolicy && UsbPolicy.ENABLED_NATIVE == newUsbPolicy) {
+        updateSpiceUsb(newVm.getId(), oldNumberOfSlots, newNumberOfUsbSlots);
+        return;
+    }
+    if (UsbPolicy.ENABLED_NATIVE == oldUsbPolicy && UsbPolicy.DISABLED == newUsbPolicy) {
+        disableSpiceUsb(newVm.getId());
+        enableNormalUsb(newVm);
+        return;
+    }
+    if (UsbPolicy.DISABLED == oldUsbPolicy && UsbPolicy.DISABLED == newUsbPolicy) {
+        updateNormalUsb(newVm);
+        return;
+    }
+    throw new RuntimeException(format("Unexpected state: oldUsbPolicy=%s, newUsbPolicy=%s", oldUsbPolicy, newUsbPolicy));
+}
+#end_block
+
+#method_before
+private boolean isHostSwapping(VDS host, int allowedSwapUsage) {
+    if (host.getSwapTotal() == null || host.getSwapFree() == null || host.getMemFree() == null || host.getMemAvailable() <= 0 || host.getPhysicalMemMb() == null || host.getPhysicalMemMb() <= 0) {
+        // No swap information available
+        return false;
+    }
+    long swapTotal = host.getSwapTotal();
+    long swapFree = host.getSwapFree();
+    long memFree = host.getMemFree();
+    long physicalMemMb = host.getPhysicalMemMb();
+    // RAM) as a percentage from physical memory
+    return ((swapTotal - swapFree - memFree) * 100 / physicalMemMb) > allowedSwapUsage;
+}
+#method_after
+private boolean isHostSwapping(VDS host, int allowedSwapUsage) {
+    if (host.getSwapTotal() == null || host.getSwapFree() == null || host.getMemFree() == null || host.getMemFree() <= 0 || host.getPhysicalMemMb() == null || host.getPhysicalMemMb() <= 0) {
+        // No swap information available
+        return false;
+    }
+    long swapTotal = host.getSwapTotal();
+    long swapFree = host.getSwapFree();
+    long memFree = host.getMemFree();
+    long physicalMemMb = host.getPhysicalMemMb();
+    // RAM) as a percentage from physical memory
+    return ((swapTotal - swapFree - memFree) * 100 / physicalMemMb) > allowedSwapUsage;
+}
+#end_block
+
+#method_before
+private void setDiskProfilesList(List<DiskProfile> diskProfiles) {
+    // set disk profiles
+    if (diskProfiles != null && !diskProfiles.isEmpty()) {
+        getDiskProfile().setItems(diskProfiles);
+    }
+    // handle disk profile selected item
+    Guid defaultProfileId = (getDisk() != null && isExistingDisk() && getDisk().getDiskStorageType() == DiskStorageType.IMAGE) ? ((DiskImage) getDisk()).getDiskProfileId() : null;
+    if (defaultProfileId != null) {
+        for (DiskProfile profile : diskProfiles) {
+            if (profile.getId().equals(defaultProfileId)) {
+                getDiskProfile().setSelectedItem(profile);
+                return;
+            }
+        }
+        // set dummy disk profile (if not fetched because of permissions, and it's attached to disk.
+        DiskProfile diskProfile = new DiskProfile();
+        diskProfile.setId(defaultProfileId);
+        if (getDisk() != null) {
+            diskProfile.setName(getDiskImage().getDiskProfileName());
+        }
+        diskProfiles.add(diskProfile);
+        getDiskProfile().setItems(diskProfiles);
+        getDiskProfile().setSelectedItem(diskProfile);
+    }
+}
+#method_after
+private void setDiskProfilesList(List<DiskProfile> diskProfiles) {
+    // set disk profiles
+    if (diskProfiles != null && !diskProfiles.isEmpty()) {
+        getDiskProfile().setItems(diskProfiles);
+    }
+    // handle disk profile selected item
+    Guid defaultProfileId = (getDisk() != null && !getIsNew() && getDisk().getDiskStorageType() == DiskStorageType.IMAGE) ? ((DiskImage) getDisk()).getDiskProfileId() : null;
+    if (defaultProfileId != null) {
+        for (DiskProfile profile : diskProfiles) {
+            if (profile.getId().equals(defaultProfileId)) {
+                getDiskProfile().setSelectedItem(profile);
+                return;
+            }
+        }
+        // set dummy disk profile (if not fetched because of permissions, and it's attached to disk.
+        DiskProfile diskProfile = new DiskProfile();
+        diskProfile.setId(defaultProfileId);
+        if (getDisk() != null) {
+            diskProfile.setName(getDiskImage().getDiskProfileName());
+        }
+        diskProfiles.add(diskProfile);
+        getDiskProfile().setItems(diskProfiles);
+        getDiskProfile().setSelectedItem(diskProfile);
+    }
+}
+#end_block
+
+#method_before
+@Mapping(from = VmPool.class, to = org.ovirt.engine.core.common.businessentities.VmPool.class)
+public static org.ovirt.engine.core.common.businessentities.VmPool map(VmPool model, org.ovirt.engine.core.common.businessentities.VmPool template) {
+    org.ovirt.engine.core.common.businessentities.VmPool entity = template != null ? template : new org.ovirt.engine.core.common.businessentities.VmPool();
+    if (model.isSetId()) {
+        entity.setVmPoolId(GuidUtils.asGuid(model.getId()));
+    }
+    if (model.isSetName()) {
+        entity.setName(model.getName());
+    }
+    if (model.isSetDescription()) {
+        entity.setVmPoolDescription(model.getDescription());
+    }
+    if (model.isSetComment()) {
+        entity.setComment(model.getComment());
+    }
+    if (model.isSetSize()) {
+        entity.setAssignedVmsCount(model.getSize());
+    }
+    if (model.isSetCluster()) {
+        if (model.getCluster().isSetId()) {
+            entity.setClusterId(GuidUtils.asGuid(model.getCluster().getId()));
+        } else if (model.getCluster().isSetName()) {
+            entity.setClusterName(model.getCluster().getName());
+        }
+    }
+    if (model.isSetPrestartedVms()) {
+        entity.setPrestartedVms(model.getPrestartedVms());
+    }
+    if (model.isSetMaxUserVms()) {
+        entity.setMaxAssignedVmsPerUser(model.getMaxUserVms());
+    }
+    if (model.isSetDisplay() && model.getDisplay().isSetProxy()) {
+        entity.setSpiceProxy("".equals(model.getDisplay().getProxy()) ? null : model.getDisplay().getProxy());
+    }
+    if (model.isSetType()) {
+        entity.setVmPoolType(map(model.getType(), null));
+    }
+    if (model.isSetStateful()) {
+        entity.setStateful(model.isStateful());
+    }
+    if (model.isAutoStorageSelect()) {
+        entity.setAutoStorageSelect(model.isAutoStorageSelect());
+    }
+    return entity;
+}
+#method_after
+@Mapping(from = VmPool.class, to = org.ovirt.engine.core.common.businessentities.VmPool.class)
+public static org.ovirt.engine.core.common.businessentities.VmPool map(VmPool model, org.ovirt.engine.core.common.businessentities.VmPool template) {
+    org.ovirt.engine.core.common.businessentities.VmPool entity = template != null ? template : new org.ovirt.engine.core.common.businessentities.VmPool();
+    if (model.isSetId()) {
+        entity.setVmPoolId(GuidUtils.asGuid(model.getId()));
+    }
+    if (model.isSetName()) {
+        entity.setName(model.getName());
+    }
+    if (model.isSetDescription()) {
+        entity.setVmPoolDescription(model.getDescription());
+    }
+    if (model.isSetComment()) {
+        entity.setComment(model.getComment());
+    }
+    if (model.isSetSize()) {
+        entity.setAssignedVmsCount(model.getSize());
+    }
+    if (model.isSetCluster()) {
+        if (model.getCluster().isSetId()) {
+            entity.setClusterId(GuidUtils.asGuid(model.getCluster().getId()));
+        } else if (model.getCluster().isSetName()) {
+            entity.setClusterName(model.getCluster().getName());
+        }
+    }
+    if (model.isSetPrestartedVms()) {
+        entity.setPrestartedVms(model.getPrestartedVms());
+    }
+    if (model.isSetMaxUserVms()) {
+        entity.setMaxAssignedVmsPerUser(model.getMaxUserVms());
+    }
+    if (model.isSetDisplay() && model.getDisplay().isSetProxy()) {
+        entity.setSpiceProxy("".equals(model.getDisplay().getProxy()) ? null : model.getDisplay().getProxy());
+    }
+    if (model.isSetType()) {
+        entity.setVmPoolType(map(model.getType(), null));
+    }
+    if (model.isSetStateful()) {
+        entity.setStateful(model.isStateful());
+    }
+    if (model.isSetAutoStorageSelect()) {
+        entity.setAutoStorageSelect(model.isAutoStorageSelect());
+    }
+    return entity;
+}
+#end_block
+

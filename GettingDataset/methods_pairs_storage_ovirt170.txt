@@ -1,0 +1,2125 @@
+27
+#method_before
+@SuppressWarnings("unchecked")
+@Override
+protected TreeItem createLeafNode(ListModel leafModel) {
+    TreeItem item = new TreeItem();
+    List<LunModel> items = (List<LunModel>) leafModel.getItems();
+    if (hideLeaf || items.isEmpty()) {
+        item.setUserObject(Boolean.TRUE);
+        return item;
+    }
+    SortedListModel sortedLeafModel = new SortedListModel();
+    sortedLeafModel.setItems(items);
+    final EntityModelCellTable<ListModel<LunModel>> table = new EntityModelCellTable<>(multiSelection, (Resources) GWT.create(SanStorageListLunTableResources.class));
+    table.initModelSortHandler(sortedLeafModel);
+    AbstractLunSelectionColumn lunSelectionColumn = new AbstractLunSelectionColumn(multiSelection) {
+
+        @Override
+        public LunModel getValue(LunModel object) {
+            return object;
+        }
+    };
+    // $NON-NLS-1$
+    table.setCustomSelectionColumn(lunSelectionColumn, "30px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getLunId();
+        }
+    }, constants.lunIdSanStorage());
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            // $NON-NLS-1$
+            return String.valueOf(model.getSize()) + "GB";
+        }
+    }, constants.devSizeSanStorage(), // $NON-NLS-1$
+    "70px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return String.valueOf(model.getMultipathing());
+        }
+    }, constants.pathSanStorage(), // $NON-NLS-1$
+    "55px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getVendorId();
+        }
+    }, constants.vendorIdSanStorage(), // $NON-NLS-1$
+    "100px");
+    AbstractLunTextColumn productIdColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getProductId();
+        }
+    };
+    productIdColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(productIdColumn, constants.productIdSanStorage(), "100px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getSerial();
+        }
+    }, constants.serialSanStorage(), // $NON-NLS-1$
+    "120px");
+    table.setRowData(items);
+    Object selectedItem = sortedLeafModel.getSelectedItem();
+    sortedLeafModel.setSelectedItem(null);
+    table.asEditor().edit(sortedLeafModel);
+    sortedLeafModel.setSelectedItem(selectedItem);
+    // $NON-NLS-1$
+    table.setWidth("100%", true);
+    if (!multiSelection) {
+        for (LunModel lunModel : items) {
+            if (lunModel.getIsSelected()) {
+                table.getSelectionModel().setSelected(lunModel, true);
+            }
+        }
+        table.getSelectionModel().addSelectionChangeHandler(new Handler() {
+
+            @Override
+            public void onSelectionChange(SelectionChangeEvent event) {
+                SingleSelectionModel SingleSelectionModel = (SingleSelectionModel) event.getSource();
+                LunModel selectedLunModel = (LunModel) SingleSelectionModel.getSelectedObject();
+                if (selectedLunModel != null) {
+                    updateSelectedLunWarning(selectedLunModel);
+                }
+            }
+        });
+    } else {
+        for (LunModel lunModel : items) {
+            table.getSelectionModel().setSelected(lunModel, lunModel.getIsSelected());
+        }
+    }
+    ScrollPanel panel = new ScrollPanel();
+    panel.add(table);
+    item.setWidget(panel);
+    // Display LUNs as grayed-out if needed
+    for (LunModel lunModel : items) {
+        if (lunModel.getIsGrayedOut()) {
+            grayOutItem(lunModel.getGrayedOutReasons(), lunModel, table);
+        }
+    }
+    return item;
+}
+#method_after
+@SuppressWarnings("unchecked")
+@Override
+protected TreeItem createLeafNode(ListModel leafModel) {
+    TreeItem item = new TreeItem();
+    List<LunModel> items = (List<LunModel>) leafModel.getItems();
+    if (hideLeaf || items.isEmpty()) {
+        item.setUserObject(Boolean.TRUE);
+        return item;
+    }
+    final SortedListModel sortedLeafModel = new SortedListModel();
+    sortedLeafModel.setItems(items);
+    final EntityModelCellTable<ListModel<LunModel>> table = new EntityModelCellTable<>(multiSelection, (Resources) GWT.create(SanStorageListLunTableResources.class));
+    table.initModelSortHandler(sortedLeafModel);
+    AbstractLunSelectionColumn lunSelectionColumn = new AbstractLunSelectionColumn(multiSelection) {
+
+        @Override
+        public LunModel getValue(LunModel object) {
+            return object;
+        }
+    };
+    // $NON-NLS-1$
+    table.setCustomSelectionColumn(lunSelectionColumn, "30px");
+    AbstractLunTextColumn lunIdColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getLunId();
+        }
+    };
+    lunIdColumn.makeSortable();
+    table.addColumn(lunIdColumn, constants.lunIdSanStorage());
+    AbstractLunTextColumn devSizeColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            // $NON-NLS-1$
+            return String.valueOf(model.getSize()) + "GB";
+        }
+    };
+    devSizeColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(devSizeColumn, constants.devSizeSanStorage(), "70px");
+    AbstractLunTextColumn path = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return String.valueOf(model.getMultipathing());
+        }
+    };
+    path.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(path, constants.pathSanStorage(), "55px");
+    AbstractLunTextColumn vendorIdColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getVendorId();
+        }
+    };
+    vendorIdColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(vendorIdColumn, constants.vendorIdSanStorage(), "100px");
+    AbstractLunTextColumn productIdColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getProductId();
+        }
+    };
+    productIdColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(productIdColumn, constants.productIdSanStorage(), "100px");
+    AbstractLunTextColumn serialNumColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getSerial();
+        }
+    };
+    serialNumColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(serialNumColumn, constants.serialSanStorage(), "120px");
+    table.setRowData(items);
+    final Object selectedItem = sortedLeafModel.getSelectedItem();
+    sortedLeafModel.setSelectedItem(null);
+    table.asEditor().edit(sortedLeafModel);
+    sortedLeafModel.setSelectedItem(selectedItem);
+    // $NON-NLS-1$
+    table.setWidth("100%", true);
+    if (!multiSelection) {
+        for (LunModel lunModel : items) {
+            if (lunModel.getIsSelected()) {
+                table.getSelectionModel().setSelected(lunModel, true);
+            }
+        }
+        table.getSelectionModel().addSelectionChangeHandler(new Handler() {
+
+            @Override
+            public void onSelectionChange(SelectionChangeEvent event) {
+                SingleSelectionModel SingleSelectionModel = (SingleSelectionModel) event.getSource();
+                selectedLunModel = SingleSelectionModel.getSelectedObject() == null ? selectedLunModel : (LunModel) SingleSelectionModel.getSelectedObject();
+                if (selectedLunModel != null) {
+                    updateSelectedLunWarning(selectedLunModel);
+                    sortedLeafModel.setSelectedItem(selectedLunModel);
+                }
+            }
+        });
+    } else {
+        for (LunModel lunModel : items) {
+            table.getSelectionModel().setSelected(lunModel, lunModel.getIsSelected());
+        }
+    }
+    ScrollPanel panel = new ScrollPanel();
+    panel.add(table);
+    item.setWidget(panel);
+    // Display LUNs as grayed-out if needed
+    for (LunModel lunModel : items) {
+        if (lunModel.getIsGrayedOut()) {
+            grayOutItem(lunModel.getGrayedOutReasons(), lunModel, table);
+        }
+    }
+    return item;
+}
+#end_block
+
+#method_before
+@Override
+protected void proceedProxyReturnValue() {
+    try {
+        super.proceedProxyReturnValue();
+    } catch (VDSNetworkException ignored) {
+    }
+}
+#method_after
+@Override
+protected void proceedProxyReturnValue() {
+    try {
+        super.proceedProxyReturnValue();
+    } catch (VDSNetworkException ignored) {
+        log.debug("VDSNetworkException was caught and ignored", ignored);
+    }
+}
+#end_block
+
+#method_before
+@Override
+public String buildConditionSql(String objName, String fieldName, String customizedValue, String customizedRelation, String tableName, boolean caseSensitive) {
+    Pair<String, String> pair = new Pair<>();
+    pair.setFirst(customizedRelation);
+    pair.setSecond(customizedValue);
+    formatValue(fieldName, pair, caseSensitive);
+    if (("''".equals(pair.getSecond()) || "'null'".equalsIgnoreCase(pair.getSecond())) && ("=".equals(pair.getFirst()) || "!=".equals(pair.getFirst()))) {
+        String nullRelation = "=".equals(pair.getFirst()) ? "IS" : "IS NOT";
+        return StringFormat.format("(%1$s.%2$s %3$s  NULL)", tableName, getDbFieldName(fieldName), nullRelation);
+    } else {
+        SearchObjectAutoCompleter.EntitySearchInfo info = SearchObjectAutoCompleter.getEntitySearchInfo(objName);
+        // Check if value is comma delimited list, this apply for example to shared disk or shared ISO domain
+        if (info.commaDelimitedListColumns != null && info.commaDelimitedListColumns.contains(fieldName.toLowerCase())) {
+            return StringFormat.format("%1$s %2$s ANY(string_to_array(%3$s.%4$s, ','))", pair.getSecond(), pair.getFirst(), tableName, getDbFieldName(fieldName));
+        }
+        String formatString = " %1$s.%2$s %3$s %4$s ";
+        if (pair.getFirst().equalsIgnoreCase("LIKE") || pair.getFirst().equalsIgnoreCase("ILIKE")) {
+            formatString = " (%1$s.%2$s IS NULL OR %1$s.%2$s %3$s %4$s) ";
+        }
+        return StringFormat.format(formatString, tableName, getDbFieldName(fieldName), pair.getFirst(), SyntaxChecker.escapeUnderScore(pair.getSecond(), customizedRelation));
+    }
+}
+#method_after
+@Override
+public String buildConditionSql(String objName, String fieldName, String customizedValue, String customizedRelation, String tableName, boolean caseSensitive) {
+    Pair<String, String> pair = new Pair<>();
+    pair.setFirst(customizedRelation);
+    pair.setSecond(customizedValue);
+    formatValue(fieldName, pair, caseSensitive);
+    if (("''".equals(pair.getSecond()) || "'null'".equalsIgnoreCase(pair.getSecond())) && ("=".equals(pair.getFirst()) || "!=".equals(pair.getFirst()))) {
+        String nullRelation = "=".equals(pair.getFirst()) ? "IS" : "IS NOT";
+        return StringFormat.format("(%1$s.%2$s %3$s  NULL)", tableName, getDbFieldName(fieldName), nullRelation);
+    } else {
+        SearchObjectAutoCompleter.EntitySearchInfo info = SearchObjectAutoCompleter.getEntitySearchInfo(objName);
+        // Check if value is comma delimited list, this apply for example to shared disk or shared ISO domain
+        if (info.commaDelimitedListColumns != null && info.commaDelimitedListColumns.contains(fieldName.toLowerCase())) {
+            return StringFormat.format("%1$s %2$s ANY(string_to_array(%3$s.%4$s, ','))", pair.getSecond(), pair.getFirst(), tableName, getDbFieldName(fieldName));
+        }
+        String formatString;
+        if (pair.getFirst().equalsIgnoreCase("LIKE") || pair.getFirst().equalsIgnoreCase("ILIKE")) {
+            formatString = " (%1$s.%2$s IS NULL OR %1$s.%2$s %3$s %4$s) ";
+        } else {
+            formatString = " %1$s.%2$s %3$s %4$s ";
+        }
+        return StringFormat.format(formatString, tableName, getDbFieldName(fieldName), pair.getFirst(), SyntaxChecker.escapeUnderScore(pair.getSecond(), customizedRelation));
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected void executeVmCommand() {
+    if (shouldAddLease(getVm())) {
+        if (FeatureSupported.isVmLeasesSupported(getVm().getCompatibilityVersion())) {
+            if (!addVmLease(getVm().getLeaseStorageDomainId(), getVm().getId())) {
+                getVm().setLeaseStorageDomainId(null);
+            }
+        } else {
+            getVm().setLeaseStorageDomainId(null);
+            auditLogDirector.log(this, AuditLogType.CANNOT_IMPORT_VM_WITH_LEASE_COMPAT_VERSION);
+        }
+    }
+    super.executeVmCommand();
+}
+#method_after
+@Override
+protected void executeVmCommand() {
+    if (shouldAddLease(getVm())) {
+        if (FeatureSupported.isVmLeasesSupported(getEffectiveCompatibilityVersion())) {
+            if (!addVmLease(getVm().getLeaseStorageDomainId(), getVm().getId())) {
+                getVm().setLeaseStorageDomainId(null);
+            }
+        } else {
+            getVm().setLeaseStorageDomainId(null);
+            auditLogDirector.log(this, AuditLogType.CANNOT_IMPORT_VM_WITH_LEASE_COMPAT_VERSION);
+        }
+    }
+    super.executeVmCommand();
+}
+#end_block
+
+#method_before
+@Override
+protected void init() {
+    super.init();
+    T parameters = getParameters();
+    if (parameters.getVmStaticData() != null) {
+        Guid templateIdToUse = getParameters().getVmStaticData().getVmtGuid();
+        if (parameters.getVmStaticData().isUseLatestVersion()) {
+            VmTemplate latest = vmTemplateDao.getTemplateWithLatestVersionInChain(templateIdToUse);
+            if (latest != null) {
+                // as it may have different set of disks
+                if (!templateIdToUse.equals(latest.getId())) {
+                    getParameters().setDiskInfoDestinationMap(new HashMap<>());
+                }
+                setVmTemplate(latest);
+                templateIdToUse = latest.getId();
+                getParameters().getVmStaticData().setVmtGuid(templateIdToUse);
+            }
+        }
+        setVmTemplateId(templateIdToUse);
+        // API backward compatibility
+        if (getVmDeviceUtils().shouldOverrideSoundDevice(getParameters().getVmStaticData(), getEffectiveCompatibilityVersion(), getParameters().isSoundDeviceEnabled())) {
+            parameters.setSoundDeviceEnabled(true);
+        }
+        if (parameters.isConsoleEnabled() == null) {
+            parameters.setConsoleEnabled(false);
+        }
+        vmDevicesSourceId = (getInstanceTypeId() != null) ? getInstanceTypeId() : parameters.getVmStaticData().getVmtGuid();
+        imageTypeId = parameters.getVmStaticData().getImageTypeId();
+        vmInterfacesSourceId = parameters.getVmStaticData().getVmtGuid();
+        vmDisksSource = getVmTemplate();
+    }
+    parameters.setEntityInfo(new EntityInfo(VdcObjectType.VM, getVmId()));
+    // override values here for validate to run with correct values, has to come before init-disks
+    updateVmObject();
+    if (getParameters().getVmStaticData().getDefaultDisplayType() == DisplayType.none && !parameters.isConsoleEnabled()) {
+        parameters.getVmStaticData().setUsbPolicy(UsbPolicy.DISABLED);
+    }
+    initTemplateDisks();
+    initStoragePoolId();
+    diskInfoDestinationMap = getParameters().getDiskInfoDestinationMap();
+    if (diskInfoDestinationMap == null) {
+        diskInfoDestinationMap = new HashMap<>();
+    }
+    vmHandler.updateDefaultTimeZone(parameters.getVmStaticData());
+    // Fill the migration policy if it was omitted
+    if (getParameters().getVmStaticData() != null && getParameters().getVmStaticData().getMigrationSupport() == null) {
+        setDefaultMigrationPolicy();
+    }
+    if (vmDisksSource != null) {
+        parameters.setUseCinderCommandCallback(!vmDisksSource.getDiskTemplateMap().isEmpty());
+    }
+}
+#method_after
+@Override
+protected void init() {
+    super.init();
+    T parameters = getParameters();
+    if (parameters.getVmStaticData() != null) {
+        Guid templateIdToUse = getParameters().getVmStaticData().getVmtGuid();
+        if (parameters.getVmStaticData().isUseLatestVersion()) {
+            VmTemplate latest = vmTemplateDao.getTemplateWithLatestVersionInChain(templateIdToUse);
+            if (latest != null) {
+                // as it may have different set of disks
+                if (!templateIdToUse.equals(latest.getId())) {
+                    getParameters().setDiskInfoDestinationMap(new HashMap<>());
+                }
+                setVmTemplate(latest);
+                templateIdToUse = latest.getId();
+                getParameters().getVmStaticData().setVmtGuid(templateIdToUse);
+            }
+        }
+        setVmTemplateId(templateIdToUse);
+        // API backward compatibility
+        if (getVmDeviceUtils().shouldOverrideSoundDevice(getParameters().getVmStaticData(), getEffectiveCompatibilityVersion(), getParameters().isSoundDeviceEnabled())) {
+            parameters.setSoundDeviceEnabled(true);
+        }
+        if (parameters.isConsoleEnabled() == null) {
+            parameters.setConsoleEnabled(false);
+        }
+        vmDevicesSourceId = (getInstanceTypeId() != null) ? getInstanceTypeId() : parameters.getVmStaticData().getVmtGuid();
+        imageTypeId = parameters.getVmStaticData().getImageTypeId();
+        vmInterfacesSourceId = parameters.getVmStaticData().getVmtGuid();
+        vmDisksSource = getVmTemplate();
+    }
+    parameters.setEntityInfo(new EntityInfo(VdcObjectType.VM, getVmId()));
+    // override values here for validate to run with correct values, has to come before init-disks
+    if (isCompatibilityVersionSupportedByCluster(getEffectiveCompatibilityVersion())) {
+        updateVmObject();
+    }
+    if (getParameters().getVmStaticData().getDefaultDisplayType() == DisplayType.none && !parameters.isConsoleEnabled()) {
+        parameters.getVmStaticData().setUsbPolicy(UsbPolicy.DISABLED);
+    }
+    initTemplateDisks();
+    initStoragePoolId();
+    diskInfoDestinationMap = getParameters().getDiskInfoDestinationMap();
+    if (diskInfoDestinationMap == null) {
+        diskInfoDestinationMap = new HashMap<>();
+    }
+    vmHandler.updateDefaultTimeZone(parameters.getVmStaticData());
+    // Fill the migration policy if it was omitted
+    if (getParameters().getVmStaticData() != null && getParameters().getVmStaticData().getMigrationSupport() == null) {
+        setDefaultMigrationPolicy();
+    }
+    if (vmDisksSource != null) {
+        parameters.setUseCinderCommandCallback(!vmDisksSource.getDiskTemplateMap().isEmpty());
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected boolean validate() {
+    if (getCluster() == null) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_CLUSTER_CAN_NOT_BE_EMPTY);
+    }
+    if (getVmTemplate() == null) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_DOES_NOT_EXIST);
+    }
+    if (getVmTemplate().isDisabled()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_IS_DISABLED);
+    }
+    if (getStoragePool() == null) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_STORAGE_POOL_NOT_EXIST);
+    }
+    if (!isExternalVM() && getStoragePool().getStatus() != StoragePoolStatus.Up) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_IMAGE_REPOSITORY_NOT_FOUND);
+    }
+    if (!isTemplateInValidDc()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_NOT_EXISTS_IN_CURRENT_DC);
+    }
+    if (!isDisksVolumeFormatValid()) {
+        return false;
+    }
+    // A VM cannot be added in a cluster without a defined architecture
+    if (getCluster().getArchitecture() == ArchitectureType.undefined) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_CLUSTER_UNDEFINED_ARCHITECTURE);
+    }
+    if (verifySourceDomains() && buildAndCheckDestStorageDomains()) {
+        chooseDisksSourceDomains();
+    } else {
+        return false;
+    }
+    if (isBalloonEnabled() && !osRepository.isBalloonEnabled(getParameters().getVmStaticData().getOsId(), getEffectiveCompatibilityVersion())) {
+        addValidationMessageVariable("clusterArch", getCluster().getArchitecture());
+        return failValidation(EngineMessage.BALLOON_REQUESTED_ON_NOT_SUPPORTED_ARCH);
+    }
+    if (isSoundDeviceEnabled() && !osRepository.isSoundDeviceEnabled(getParameters().getVmStaticData().getOsId(), getEffectiveCompatibilityVersion())) {
+        addValidationMessageVariable("clusterArch", getCluster().getArchitecture());
+        return failValidation(EngineMessage.SOUND_DEVICE_REQUESTED_ON_NOT_SUPPORTED_ARCH);
+    }
+    if (!validateQuota(getParameters().getVmStaticData().getQuotaId())) {
+        return false;
+    }
+    // otherwise..
+    storageToDisksMap = ImagesHandler.buildStorageToDiskMap(getImagesToCheckDestinationStorageDomains(), diskInfoDestinationMap);
+    if (!validateAddVmCommand()) {
+        return false;
+    }
+    VM vmFromParams = getParameters().getVm();
+    // check if the selected template is compatible with Cluster architecture.
+    if (!getVmTemplate().getId().equals(VmTemplateHandler.BLANK_VM_TEMPLATE_ID) && getCluster().getArchitecture() != getVmTemplate().getClusterArch()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_IS_INCOMPATIBLE);
+    }
+    if (StringUtils.isEmpty(vmFromParams.getName())) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_NAME_MAY_NOT_BE_EMPTY);
+    }
+    // check that VM name is not too long
+    if (!isVmNameValidLength(vmFromParams)) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_NAME_LENGTH_IS_TOO_LONG);
+    }
+    // check for Vm Payload
+    if (getParameters().getVmPayload() != null) {
+        if (!checkPayload(getParameters().getVmPayload(), getParameters().getVmStaticData().getIsoPath())) {
+            return false;
+        }
+        // otherwise, we save the content in base64 string
+        for (Map.Entry<String, String> entry : getParameters().getVmPayload().getFiles().entrySet()) {
+            entry.setValue(new String(BASE_64.encode(entry.getValue().getBytes()), Charset.forName(CharEncoding.UTF_8)));
+        }
+    }
+    // check for Vm Watchdog Model
+    if (getParameters().getWatchdog() != null) {
+        if (!validate(new VmWatchdogValidator(vmFromParams.getOs(), getParameters().getWatchdog(), getEffectiveCompatibilityVersion()).isValid())) {
+            return false;
+        }
+    }
+    // check if the OS type is supported
+    if (!vmHandler.isOsTypeSupported(vmFromParams.getOs(), getCluster().getArchitecture(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    if (!vmHandler.isCpuSupported(vmFromParams.getVmOsId(), getEffectiveCompatibilityVersion(), getCluster().getCpuName(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    // Check if the graphics and display from parameters are supported
+    if (!vmHandler.isGraphicsAndDisplaySupported(getParameters().getVmStaticData().getOsId(), vmHandler.getResultingVmGraphics(getVmDeviceUtils().getGraphicsTypesOfEntity(getVmTemplateId()), getParameters().getGraphicsDevices()), vmFromParams.getDefaultDisplayType(), getReturnValue().getValidationMessages(), getEffectiveCompatibilityVersion())) {
+        return false;
+    }
+    if (!FeatureSupported.isMigrationSupported(getCluster().getArchitecture(), getEffectiveCompatibilityVersion()) && vmFromParams.getMigrationSupport() != MigrationSupport.PINNED_TO_HOST) {
+        return failValidation(EngineMessage.VM_MIGRATION_IS_NOT_SUPPORTED);
+    }
+    // check cpuPinning if the check haven't failed yet
+    if (!validate(isCpuPinningValid(vmFromParams.getCpuPinning(), vmFromParams.getStaticData()))) {
+        return false;
+    }
+    if (vmFromParams.isUseHostCpuFlags() && vmFromParams.getMigrationSupport() != MigrationSupport.PINNED_TO_HOST) {
+        return failValidation(EngineMessage.VM_HOSTCPU_MUST_BE_PINNED_TO_HOST);
+    }
+    if (vmFromParams.isUseHostCpuFlags() && (ArchitectureType.ppc == getCluster().getArchitecture().getFamily())) {
+        return failValidation(EngineMessage.USE_HOST_CPU_REQUESTED_ON_UNSUPPORTED_ARCH);
+    }
+    if (!validateMemoryAlignment(getParameters().getVmStaticData())) {
+        return false;
+    }
+    if (getInstanceTypeId() != null && getInstanceType() == null) {
+        // invalid instance type
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_INSTANCE_TYPE_DOES_NOT_EXIST);
+    }
+    if (imageTypeId != null && getImageType() == null) {
+        // invalid image type
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_IMAGE_TYPE_DOES_NOT_EXIST);
+    }
+    if (!validate(VmValidator.validateCpuSockets(getParameters().getVmStaticData(), getEffectiveCompatibilityVersion().toString()))) {
+        return false;
+    }
+    if (!isCpuSharesValid(vmFromParams)) {
+        return failValidation(EngineMessage.QOS_CPU_SHARES_OUT_OF_RANGE);
+    }
+    if (Boolean.TRUE.equals(getParameters().isVirtioScsiEnabled())) {
+        // Verify OS compatibility
+        if (!VmHandler.isOsTypeSupportedForVirtioScsi(vmFromParams.getOs(), getEffectiveCompatibilityVersion(), getReturnValue().getValidationMessages())) {
+            return false;
+        }
+    }
+    if (vmFromParams.getMinAllocatedMem() > vmFromParams.getMemSizeMb()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_MIN_MEMORY_CANNOT_EXCEED_MEMORY_SIZE);
+    }
+    if (!setAndValidateDiskProfiles()) {
+        return false;
+    }
+    if (!setAndValidateCpuProfile()) {
+        return false;
+    }
+    if (getVmId() != null && vmStaticDao.get(getVmId()) != null) {
+        return failValidation(EngineMessage.VM_ID_EXISTS);
+    }
+    List<CinderDisk> cinderDisks = DisksFilter.filterCinderDisks(diskInfoDestinationMap.values());
+    CinderDisksValidator cinderDisksValidator = new CinderDisksValidator(cinderDisks);
+    if (!validate(cinderDisksValidator.validateCinderDiskLimits())) {
+        return false;
+    }
+    if (getParameters().getVmLargeIcon() != null && !validate(IconValidator.validate(IconValidator.DimensionsType.LARGE_CUSTOM_ICON, getParameters().getVmLargeIcon()))) {
+        return false;
+    }
+    if (getSmallIconId() != null && // icon id is ignored if large icon is sent
+    getParameters().getVmLargeIcon() == null && !validate(IconValidator.validateIconId(getSmallIconId(), "Small"))) {
+        return false;
+    }
+    if (getLargeIconId() != null && // icon id is ignored if large icon is sent
+    getParameters().getVmLargeIcon() == null && !validate(IconValidator.validateIconId(getLargeIconId(), "Large"))) {
+        return false;
+    }
+    if (!validate(getNumaValidator().checkVmNumaNodesIntegrity(getParameters().getVm(), getParameters().getVm().getvNumaNodeList()))) {
+        return false;
+    }
+    if (getCluster().isInUpgradeMode()) {
+        getParameters().getVm().setClusterCompatibilityVersion(getCluster().getCompatibilityVersion());
+        if (!validate(getClusterUpgradeValidator().isVmReadyForUpgrade(getParameters().getVm()))) {
+            return false;
+        }
+    }
+    if (!validate(VmHandler.validateMaxMemorySize(getParameters().getVmStaticData(), getEffectiveCompatibilityVersion()))) {
+        return false;
+    }
+    if (shouldAddLease(getVm()) && !FeatureSupported.isVmLeasesSupported(getCluster().getCompatibilityVersion())) {
+        return failValidation(EngineMessage.VM_LEASES_ARE_NOT_SUPPORTED);
+    }
+    return true;
+}
+#method_after
+@Override
+protected boolean validate() {
+    if (getCluster() == null) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_CLUSTER_CAN_NOT_BE_EMPTY);
+    }
+    if (getVmTemplate() == null) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_DOES_NOT_EXIST);
+    }
+    if (getVmTemplate().isDisabled()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_IS_DISABLED);
+    }
+    if (getStoragePool() == null) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_STORAGE_POOL_NOT_EXIST);
+    }
+    if (!isExternalVM() && getStoragePool().getStatus() != StoragePoolStatus.Up) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_IMAGE_REPOSITORY_NOT_FOUND);
+    }
+    if (!isTemplateInValidDc()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_NOT_EXISTS_IN_CURRENT_DC);
+    }
+    if (!isDisksVolumeFormatValid()) {
+        return false;
+    }
+    Version customCompatibilityVersionFromParams = getParameters().getVmStaticData().getCustomCompatibilityVersion();
+    if (customCompatibilityVersionFromParams != null && !isCompatibilityVersionSupportedByCluster(customCompatibilityVersionFromParams)) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_CUSTOM_COMPATIBILITY_VERSION_NOT_SUPPORTED, String.format("$Ccv %s", customCompatibilityVersionFromParams));
+    }
+    // A VM cannot be added in a cluster without a defined architecture
+    if (getCluster().getArchitecture() == ArchitectureType.undefined) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_CLUSTER_UNDEFINED_ARCHITECTURE);
+    }
+    if (verifySourceDomains() && buildAndCheckDestStorageDomains()) {
+        chooseDisksSourceDomains();
+    } else {
+        return false;
+    }
+    if (isBalloonEnabled() && !osRepository.isBalloonEnabled(getParameters().getVmStaticData().getOsId(), getEffectiveCompatibilityVersion())) {
+        addValidationMessageVariable("clusterArch", getCluster().getArchitecture());
+        return failValidation(EngineMessage.BALLOON_REQUESTED_ON_NOT_SUPPORTED_ARCH);
+    }
+    if (isSoundDeviceEnabled() && !osRepository.isSoundDeviceEnabled(getParameters().getVmStaticData().getOsId(), getEffectiveCompatibilityVersion())) {
+        addValidationMessageVariable("clusterArch", getCluster().getArchitecture());
+        return failValidation(EngineMessage.SOUND_DEVICE_REQUESTED_ON_NOT_SUPPORTED_ARCH);
+    }
+    if (!validateQuota(getParameters().getVmStaticData().getQuotaId())) {
+        return false;
+    }
+    // otherwise..
+    storageToDisksMap = ImagesHandler.buildStorageToDiskMap(getImagesToCheckDestinationStorageDomains(), diskInfoDestinationMap);
+    if (!validateAddVmCommand()) {
+        return false;
+    }
+    VM vmFromParams = getParameters().getVm();
+    // check if the selected template is compatible with Cluster architecture.
+    if (!getVmTemplate().getId().equals(VmTemplateHandler.BLANK_VM_TEMPLATE_ID) && getCluster().getArchitecture() != getVmTemplate().getClusterArch()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_IS_INCOMPATIBLE);
+    }
+    if (StringUtils.isEmpty(vmFromParams.getName())) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_NAME_MAY_NOT_BE_EMPTY);
+    }
+    // check that VM name is not too long
+    if (!isVmNameValidLength(vmFromParams)) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_NAME_LENGTH_IS_TOO_LONG);
+    }
+    // check for Vm Payload
+    if (getParameters().getVmPayload() != null) {
+        if (!checkPayload(getParameters().getVmPayload(), getParameters().getVmStaticData().getIsoPath())) {
+            return false;
+        }
+        // otherwise, we save the content in base64 string
+        for (Map.Entry<String, String> entry : getParameters().getVmPayload().getFiles().entrySet()) {
+            entry.setValue(new String(BASE_64.encode(entry.getValue().getBytes()), Charset.forName(CharEncoding.UTF_8)));
+        }
+    }
+    // check for Vm Watchdog Model
+    if (getParameters().getWatchdog() != null) {
+        if (!validate(new VmWatchdogValidator(vmFromParams.getOs(), getParameters().getWatchdog(), getEffectiveCompatibilityVersion()).isValid())) {
+            return false;
+        }
+    }
+    // check if the OS type is supported
+    if (!vmHandler.isOsTypeSupported(vmFromParams.getOs(), getCluster().getArchitecture(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    if (!vmHandler.isCpuSupported(vmFromParams.getVmOsId(), getEffectiveCompatibilityVersion(), getCluster().getCpuName(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    // Check if the graphics and display from parameters are supported
+    if (!vmHandler.isGraphicsAndDisplaySupported(getParameters().getVmStaticData().getOsId(), vmHandler.getResultingVmGraphics(getVmDeviceUtils().getGraphicsTypesOfEntity(getVmTemplateId()), getParameters().getGraphicsDevices()), vmFromParams.getDefaultDisplayType(), getReturnValue().getValidationMessages(), getEffectiveCompatibilityVersion())) {
+        return false;
+    }
+    if (!FeatureSupported.isMigrationSupported(getCluster().getArchitecture(), getEffectiveCompatibilityVersion()) && vmFromParams.getMigrationSupport() != MigrationSupport.PINNED_TO_HOST) {
+        return failValidation(EngineMessage.VM_MIGRATION_IS_NOT_SUPPORTED);
+    }
+    // check cpuPinning if the check haven't failed yet
+    if (!validate(isCpuPinningValid(vmFromParams.getCpuPinning(), vmFromParams.getStaticData()))) {
+        return false;
+    }
+    if (vmFromParams.isUseHostCpuFlags() && vmFromParams.getMigrationSupport() != MigrationSupport.PINNED_TO_HOST) {
+        return failValidation(EngineMessage.VM_HOSTCPU_MUST_BE_PINNED_TO_HOST);
+    }
+    if (vmFromParams.isUseHostCpuFlags() && (ArchitectureType.ppc == getCluster().getArchitecture().getFamily())) {
+        return failValidation(EngineMessage.USE_HOST_CPU_REQUESTED_ON_UNSUPPORTED_ARCH);
+    }
+    if (!validateMemoryAlignment(getParameters().getVmStaticData())) {
+        return false;
+    }
+    if (getInstanceTypeId() != null && getInstanceType() == null) {
+        // invalid instance type
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_INSTANCE_TYPE_DOES_NOT_EXIST);
+    }
+    if (imageTypeId != null && getImageType() == null) {
+        // invalid image type
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_IMAGE_TYPE_DOES_NOT_EXIST);
+    }
+    if (!validate(VmValidator.validateCpuSockets(getParameters().getVmStaticData(), getEffectiveCompatibilityVersion().toString()))) {
+        return false;
+    }
+    if (!isCpuSharesValid(vmFromParams)) {
+        return failValidation(EngineMessage.QOS_CPU_SHARES_OUT_OF_RANGE);
+    }
+    if (Boolean.TRUE.equals(getParameters().isVirtioScsiEnabled())) {
+        // Verify OS compatibility
+        if (!VmHandler.isOsTypeSupportedForVirtioScsi(vmFromParams.getOs(), getEffectiveCompatibilityVersion(), getReturnValue().getValidationMessages())) {
+            return false;
+        }
+    }
+    if (vmFromParams.getMinAllocatedMem() > vmFromParams.getMemSizeMb()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_MIN_MEMORY_CANNOT_EXCEED_MEMORY_SIZE);
+    }
+    if (!setAndValidateDiskProfiles()) {
+        return false;
+    }
+    if (!setAndValidateCpuProfile()) {
+        return false;
+    }
+    if (getVmId() != null && vmStaticDao.get(getVmId()) != null) {
+        return failValidation(EngineMessage.VM_ID_EXISTS);
+    }
+    List<CinderDisk> cinderDisks = DisksFilter.filterCinderDisks(diskInfoDestinationMap.values());
+    CinderDisksValidator cinderDisksValidator = new CinderDisksValidator(cinderDisks);
+    if (!validate(cinderDisksValidator.validateCinderDiskLimits())) {
+        return false;
+    }
+    if (getParameters().getVmLargeIcon() != null && !validate(IconValidator.validate(IconValidator.DimensionsType.LARGE_CUSTOM_ICON, getParameters().getVmLargeIcon()))) {
+        return false;
+    }
+    if (getSmallIconId() != null && // icon id is ignored if large icon is sent
+    getParameters().getVmLargeIcon() == null && !validate(IconValidator.validateIconId(getSmallIconId(), "Small"))) {
+        return false;
+    }
+    if (getLargeIconId() != null && // icon id is ignored if large icon is sent
+    getParameters().getVmLargeIcon() == null && !validate(IconValidator.validateIconId(getLargeIconId(), "Large"))) {
+        return false;
+    }
+    if (!validate(getNumaValidator().checkVmNumaNodesIntegrity(getParameters().getVm(), getParameters().getVm().getvNumaNodeList()))) {
+        return false;
+    }
+    if (getCluster().isInUpgradeMode()) {
+        getParameters().getVm().setClusterCompatibilityVersion(getCluster().getCompatibilityVersion());
+        if (!validate(getClusterUpgradeValidator().isVmReadyForUpgrade(getParameters().getVm()))) {
+            return false;
+        }
+    }
+    if (!validate(VmHandler.validateMaxMemorySize(getParameters().getVmStaticData(), getEffectiveCompatibilityVersion()))) {
+        return false;
+    }
+    if (shouldAddLease(getVm()) && !FeatureSupported.isVmLeasesSupported(getEffectiveCompatibilityVersion())) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_VM_LEASES_ARE_NOT_SUPPORTED);
+    }
+    return true;
+}
+#end_block
+
+#method_before
+@Override
+protected void init() {
+    super.init();
+    if (getCluster() != null) {
+        setStoragePoolId(getCluster().getStoragePoolId());
+    }
+    if (isVmExist()) {
+        Version compatibilityVersion = getEffectiveCompatibilityVersion();
+        getVmPropertiesUtils().separateCustomPropertiesToUserAndPredefined(compatibilityVersion, getParameters().getVmStaticData());
+        getVmPropertiesUtils().separateCustomPropertiesToUserAndPredefined(compatibilityVersion, getVm().getStaticData());
+    }
+    vmHandler.updateDefaultTimeZone(getParameters().getVmStaticData());
+    vmHandler.autoSelectUsbPolicy(getParameters().getVmStaticData());
+    vmHandler.autoSelectDefaultDisplayType(getVmId(), getParameters().getVmStaticData(), getCluster(), getParameters().getGraphicsDevices());
+    updateParametersVmFromInstanceType();
+    // we always need to verify new or existing numa nodes with the updated VM configuration
+    if (!getParameters().isUpdateNuma()) {
+        getParameters().getVm().setvNumaNodeList(vmNumaNodeDao.getAllVmNumaNodeByVmId(getParameters().getVmId()));
+    }
+    if (getParameters().getVmStaticData().getDefaultDisplayType() == DisplayType.none && !getParameters().isConsoleEnabled()) {
+        getParameters().getVmStaticData().setUsbPolicy(UsbPolicy.DISABLED);
+    }
+}
+#method_after
+@Override
+protected void init() {
+    super.init();
+    if (getCluster() != null) {
+        setStoragePoolId(getCluster().getStoragePoolId());
+    }
+    if (isVmExist() && isCompatibilityVersionSupportedByCluster(getEffectiveCompatibilityVersion())) {
+        Version compatibilityVersion = getEffectiveCompatibilityVersion();
+        getVmPropertiesUtils().separateCustomPropertiesToUserAndPredefined(compatibilityVersion, getParameters().getVmStaticData());
+        getVmPropertiesUtils().separateCustomPropertiesToUserAndPredefined(compatibilityVersion, getVm().getStaticData());
+    }
+    vmHandler.updateDefaultTimeZone(getParameters().getVmStaticData());
+    vmHandler.autoSelectUsbPolicy(getParameters().getVmStaticData());
+    vmHandler.autoSelectDefaultDisplayType(getVmId(), getParameters().getVmStaticData(), getCluster(), getParameters().getGraphicsDevices());
+    updateParametersVmFromInstanceType();
+    // we always need to verify new or existing numa nodes with the updated VM configuration
+    if (!getParameters().isUpdateNuma()) {
+        getParameters().getVm().setvNumaNodeList(vmNumaNodeDao.getAllVmNumaNodeByVmId(getParameters().getVmId()));
+    }
+    if (getParameters().getVmStaticData().getDefaultDisplayType() == DisplayType.none && !getParameters().isConsoleEnabled()) {
+        getParameters().getVmStaticData().setUsbPolicy(UsbPolicy.DISABLED);
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected boolean validate() {
+    if (!super.validate()) {
+        return false;
+    }
+    VM vmFromDB = getVm();
+    VM vmFromParams = getParameters().getVm();
+    // check if VM was changed to use latest
+    if (vmFromDB.isUseLatestVersion() != vmFromParams.isUseLatestVersion() && vmFromParams.isUseLatestVersion()) {
+        // check if a version change is actually required or just let the local command to update this field
+        vmFromParams.setVmtGuid(vmTemplateDao.getTemplateWithLatestVersionInChain(getVm().getVmtGuid()).getId());
+    }
+    // It is not allowed to edit hosted engine VM until it is imported to the engine properly
+    if (vmFromDB.isHostedEngine() && !vmFromDB.isManagedHostedEngine()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_UNMANAGED_HOSTED_ENGINE);
+    }
+    // pool VMs are allowed to change template id, this verifies that the change is only between template versions.
+    if (!vmFromDB.getVmtGuid().equals(vmFromParams.getVmtGuid())) {
+        VmTemplate origTemplate = vmTemplateDao.get(vmFromDB.getVmtGuid());
+        VmTemplate newTemplate = vmTemplateDao.get(vmFromParams.getVmtGuid());
+        if (newTemplate == null) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_DOES_NOT_EXIST);
+        } else if (origTemplate != null && !origTemplate.getBaseTemplateId().equals(newTemplate.getBaseTemplateId())) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_IS_ON_DIFFERENT_CHAIN);
+        } else if (vmFromDB.getVmPoolId() != null) {
+            isUpdateVmTemplateVersion = true;
+            // no more tests are needed because no more changes are allowed in this state
+            return true;
+        } else {
+            // template id can be changed for pool VMs only
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_ID_CANT_BE_CHANGED);
+        }
+    }
+    if (getCluster() == null) {
+        addValidationMessage(EngineMessage.ACTION_TYPE_FAILED_CLUSTER_CAN_NOT_BE_EMPTY);
+        return false;
+    }
+    if (vmFromDB.getClusterId() == null) {
+        failValidation(EngineMessage.ACTION_TYPE_FAILED_CLUSTER_CAN_NOT_BE_EMPTY);
+        return false;
+    }
+    if (!isVmExist()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_VM_NOT_FOUND);
+    }
+    if (!canRunActionOnNonManagedVm()) {
+        return false;
+    }
+    if (StringUtils.isEmpty(vmFromParams.getName())) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_NAME_MAY_NOT_BE_EMPTY);
+    }
+    // check that VM name is not too long
+    boolean vmNameValidLength = isVmNameValidLength(vmFromParams);
+    if (!vmNameValidLength) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_NAME_LENGTH_IS_TOO_LONG);
+    }
+    // Checking if a desktop with same name already exists
+    if (!StringUtils.equals(vmFromDB.getName(), vmFromParams.getName())) {
+        boolean exists = isVmWithSameNameExists(vmFromParams.getName(), getStoragePoolId());
+        if (exists) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_NAME_ALREADY_USED);
+        }
+    }
+    if (!validateCustomProperties(vmFromParams.getStaticData(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    if (!vmHandler.isOsTypeSupported(vmFromParams.getOs(), getCluster().getArchitecture(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    if (!vmHandler.isCpuSupported(vmFromParams.getVmOsId(), getEffectiveCompatibilityVersion(), getCluster().getCpuName(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    if (getParameters().getVmStaticData().getDefaultDisplayType() != DisplayType.none && vmFromParams.getSingleQxlPci() && !vmHandler.isSingleQxlDeviceLegal(vmFromParams.getDefaultDisplayType(), vmFromParams.getOs(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    if (vmFromParams.isAutoStartup() && vmFromDB.isHostedEngine()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_VM_CANNOT_BE_HIGHLY_AVAILABLE_AND_HOSTED_ENGINE);
+    }
+    if (!areUpdatedFieldsLegal()) {
+        return failValidation(vmFromDB.isHostedEngine() ? EngineMessage.VM_CANNOT_UPDATE_HOSTED_ENGINE_FIELD : EngineMessage.VM_CANNOT_UPDATE_ILLEGAL_FIELD);
+    }
+    if (!vmFromDB.getClusterId().equals(vmFromParams.getClusterId())) {
+        return failValidation(EngineMessage.VM_CANNOT_UPDATE_CLUSTER);
+    }
+    if (!isDedicatedVdsExistOnSameCluster(vmFromParams.getStaticData(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    // Check if number of monitors passed is legal
+    if (getParameters().getVmStaticData().getDefaultDisplayType() != DisplayType.none && !vmHandler.isNumOfMonitorsLegal(vmHandler.getResultingVmGraphics(getVmDeviceUtils().getGraphicsTypesOfEntity(getVmId()), getParameters().getGraphicsDevices()), getParameters().getVmStaticData().getNumOfMonitors(), getReturnValue().getValidationMessages())) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_ILLEGAL_NUM_OF_MONITORS);
+    }
+    // Check PCI and IDE limits are ok
+    if (!isValidPciAndIdeLimit(vmFromParams)) {
+        return false;
+    }
+    if (!VmHandler.isVmPriorityValueLegal(vmFromParams.getPriority(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    if (!validate(VmValidator.validateCpuSockets(vmFromParams.getStaticData(), getEffectiveCompatibilityVersion().toString()))) {
+        return false;
+    }
+    // check for Vm Payload
+    if (getParameters().getVmPayload() != null) {
+        if (!checkPayload(getParameters().getVmPayload(), vmFromParams.getIsoPath())) {
+            return false;
+        }
+        // we save the content in base64 string
+        for (Map.Entry<String, String> entry : getParameters().getVmPayload().getFiles().entrySet()) {
+            entry.setValue(new String(BASE_64.encode(entry.getValue().getBytes()), Charset.forName(CharEncoding.UTF_8)));
+        }
+    }
+    // check for Vm Watchdog Model
+    if (getParameters().getWatchdog() != null) {
+        if (!validate(new VmWatchdogValidator(vmFromParams.getOs(), getParameters().getWatchdog(), getEffectiveCompatibilityVersion()).isValid())) {
+            return false;
+        }
+    }
+    // Check if the graphics and display from parameters are supported
+    if (!vmHandler.isGraphicsAndDisplaySupported(vmFromParams.getOs(), vmHandler.getResultingVmGraphics(getVmDeviceUtils().getGraphicsTypesOfEntity(getVmId()), getParameters().getGraphicsDevices()), vmFromParams.getDefaultDisplayType(), getReturnValue().getValidationMessages(), getEffectiveCompatibilityVersion())) {
+        return false;
+    }
+    if (!FeatureSupported.isMigrationSupported(getCluster().getArchitecture(), getEffectiveCompatibilityVersion()) && vmFromParams.getMigrationSupport() != MigrationSupport.PINNED_TO_HOST) {
+        return failValidation(EngineMessage.VM_MIGRATION_IS_NOT_SUPPORTED);
+    }
+    // check cpuPinning
+    if (!validate(isCpuPinningValid(vmFromParams.getCpuPinning(), vmFromParams.getStaticData()))) {
+        return false;
+    }
+    if (!validatePinningAndMigration(getReturnValue().getValidationMessages(), getParameters().getVm().getStaticData(), getParameters().getVm().getCpuPinning())) {
+        return false;
+    }
+    if (vmFromParams.isUseHostCpuFlags() && vmFromParams.getMigrationSupport() != MigrationSupport.PINNED_TO_HOST) {
+        return failValidation(EngineMessage.VM_HOSTCPU_MUST_BE_PINNED_TO_HOST);
+    }
+    if (!isCpuSharesValid(vmFromParams)) {
+        return failValidation(EngineMessage.QOS_CPU_SHARES_OUT_OF_RANGE);
+    }
+    if (vmFromParams.isUseHostCpuFlags() && (ArchitectureType.ppc == getCluster().getArchitecture().getFamily())) {
+        return failValidation(EngineMessage.USE_HOST_CPU_REQUESTED_ON_UNSUPPORTED_ARCH);
+    }
+    if (!validateCPUHotplug(getParameters().getVmStaticData())) {
+        return failValidation(EngineMessage.CPU_HOTPLUG_TOPOLOGY_INVALID);
+    }
+    if (!validateMemoryAlignment(getParameters().getVmStaticData())) {
+        return false;
+    }
+    if (isVirtioScsiEnabled()) {
+        // Verify OS compatibility
+        if (!VmHandler.isOsTypeSupportedForVirtioScsi(vmFromParams.getOs(), getEffectiveCompatibilityVersion(), getReturnValue().getValidationMessages())) {
+            return false;
+        }
+    }
+    VmValidator vmValidator = createVmValidator(vmFromParams);
+    // A pinned VM, must run on one of its hosts
+    if (!validate(vmValidator.isPinnedVmRunningOnDedicatedHost(vmFromDB, vmFromParams.getStaticData()))) {
+        return false;
+    }
+    if (Boolean.FALSE.equals(getParameters().isVirtioScsiEnabled()) && !validate(vmValidator.canDisableVirtioScsi(null))) {
+        return false;
+    }
+    if (vmFromParams.getMinAllocatedMem() > vmFromParams.getMemSizeMb()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_MIN_MEMORY_CANNOT_EXCEED_MEMORY_SIZE);
+    }
+    if (vmFromParams.getCpuProfileId() == null || !Objects.equals(vmFromDB.getCpuProfileId(), vmFromParams.getCpuProfileId())) {
+        if (!setAndValidateCpuProfile()) {
+            return false;
+        }
+    }
+    if (isBalloonEnabled() && !osRepository.isBalloonEnabled(getParameters().getVmStaticData().getOsId(), getEffectiveCompatibilityVersion())) {
+        addValidationMessageVariable("clusterArch", getCluster().getArchitecture());
+        return failValidation(EngineMessage.BALLOON_REQUESTED_ON_NOT_SUPPORTED_ARCH);
+    }
+    if (isSoundDeviceEnabled() && !osRepository.isSoundDeviceEnabled(getParameters().getVmStaticData().getOsId(), getEffectiveCompatibilityVersion())) {
+        addValidationMessageVariable("clusterArch", getCluster().getArchitecture());
+        return failValidation(EngineMessage.SOUND_DEVICE_REQUESTED_ON_NOT_SUPPORTED_ARCH);
+    }
+    if (!validate(getNumaValidator().checkVmNumaNodesIntegrity(getParameters().getVm(), getParameters().getVm().getvNumaNodeList()))) {
+        return false;
+    }
+    if (getParameters().getVmLargeIcon() != null && !validate(IconValidator.validate(IconValidator.DimensionsType.LARGE_CUSTOM_ICON, getParameters().getVmLargeIcon()))) {
+        return false;
+    }
+    if (getParameters().getVmStaticData() != null && getParameters().getVmStaticData().getSmallIconId() != null && // icon id is ignored if large icon is sent
+    getParameters().getVmLargeIcon() == null && !validate(IconValidator.validateIconId(getParameters().getVmStaticData().getSmallIconId(), "Small"))) {
+        return false;
+    }
+    if (getParameters().getVmStaticData() != null && getParameters().getVmStaticData().getLargeIconId() != null && // icon id is ignored if large icon is sent
+    getParameters().getVmLargeIcon() == null && !validate(IconValidator.validateIconId(getParameters().getVmStaticData().getLargeIconId(), "Large"))) {
+        return false;
+    }
+    if (vmFromParams.getProviderId() != null) {
+        Provider<?> provider = providerDao.get(vmFromParams.getProviderId());
+        if (provider == null) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_PROVIDER_DOESNT_EXIST);
+        }
+        if (provider.getType() != ProviderType.FOREMAN) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_HOST_PROVIDER_TYPE_MISMATCH);
+        }
+    }
+    if (getCluster().isInUpgradeMode()) {
+        getParameters().getVm().setClusterCompatibilityVersion(getCluster().getCompatibilityVersion());
+        if (!validate(getClusterUpgradeValidator().isVmReadyForUpgrade(getParameters().getVm()))) {
+            return false;
+        }
+    }
+    if (!validateQuota(getParameters().getVmStaticData().getQuotaId())) {
+        return false;
+    }
+    if (!validate(VmHandler.validateMaxMemorySize(getParameters().getVmStaticData(), getEffectiveCompatibilityVersion()))) {
+        return false;
+    }
+    if (shouldAddLease(getVm()) && !FeatureSupported.isVmLeasesSupported(getCluster().getCompatibilityVersion())) {
+        return failValidation(EngineMessage.VM_LEASES_ARE_NOT_SUPPORTED);
+    }
+    return true;
+}
+#method_after
+@Override
+protected boolean validate() {
+    if (!super.validate()) {
+        return false;
+    }
+    VM vmFromDB = getVm();
+    VM vmFromParams = getParameters().getVm();
+    // check if VM was changed to use latest
+    if (vmFromDB.isUseLatestVersion() != vmFromParams.isUseLatestVersion() && vmFromParams.isUseLatestVersion()) {
+        // check if a version change is actually required or just let the local command to update this field
+        vmFromParams.setVmtGuid(vmTemplateDao.getTemplateWithLatestVersionInChain(getVm().getVmtGuid()).getId());
+    }
+    // It is not allowed to edit hosted engine VM until it is imported to the engine properly
+    if (vmFromDB.isHostedEngine() && !vmFromDB.isManagedHostedEngine()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_UNMANAGED_HOSTED_ENGINE);
+    }
+    // pool VMs are allowed to change template id, this verifies that the change is only between template versions.
+    if (!vmFromDB.getVmtGuid().equals(vmFromParams.getVmtGuid())) {
+        VmTemplate origTemplate = vmTemplateDao.get(vmFromDB.getVmtGuid());
+        VmTemplate newTemplate = vmTemplateDao.get(vmFromParams.getVmtGuid());
+        if (newTemplate == null) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_DOES_NOT_EXIST);
+        } else if (origTemplate != null && !origTemplate.getBaseTemplateId().equals(newTemplate.getBaseTemplateId())) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_IS_ON_DIFFERENT_CHAIN);
+        } else if (vmFromDB.getVmPoolId() != null) {
+            isUpdateVmTemplateVersion = true;
+            // no more tests are needed because no more changes are allowed in this state
+            return true;
+        } else {
+            // template id can be changed for pool VMs only
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_ID_CANT_BE_CHANGED);
+        }
+    }
+    if (getCluster() == null) {
+        addValidationMessage(EngineMessage.ACTION_TYPE_FAILED_CLUSTER_CAN_NOT_BE_EMPTY);
+        return false;
+    }
+    if (vmFromDB.getClusterId() == null) {
+        failValidation(EngineMessage.ACTION_TYPE_FAILED_CLUSTER_CAN_NOT_BE_EMPTY);
+        return false;
+    }
+    if (!isVmExist()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_VM_NOT_FOUND);
+    }
+    if (!canRunActionOnNonManagedVm()) {
+        return false;
+    }
+    if (StringUtils.isEmpty(vmFromParams.getName())) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_NAME_MAY_NOT_BE_EMPTY);
+    }
+    // check that VM name is not too long
+    boolean vmNameValidLength = isVmNameValidLength(vmFromParams);
+    if (!vmNameValidLength) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_NAME_LENGTH_IS_TOO_LONG);
+    }
+    // Checking if a desktop with same name already exists
+    if (!StringUtils.equals(vmFromDB.getName(), vmFromParams.getName())) {
+        boolean exists = isVmWithSameNameExists(vmFromParams.getName(), getStoragePoolId());
+        if (exists) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_NAME_ALREADY_USED);
+        }
+    }
+    Version customCompatibilityVersionFromParams = vmFromParams.getStaticData().getCustomCompatibilityVersion();
+    if (customCompatibilityVersionFromParams != null && !isCompatibilityVersionSupportedByCluster(customCompatibilityVersionFromParams)) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_CUSTOM_COMPATIBILITY_VERSION_NOT_SUPPORTED, String.format("$Ccv %s", customCompatibilityVersionFromParams));
+    }
+    if (!validateCustomProperties(vmFromParams.getStaticData(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    if (!vmHandler.isOsTypeSupported(vmFromParams.getOs(), getCluster().getArchitecture(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    if (!vmHandler.isCpuSupported(vmFromParams.getVmOsId(), getEffectiveCompatibilityVersion(), getCluster().getCpuName(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    if (getParameters().getVmStaticData().getDefaultDisplayType() != DisplayType.none && vmFromParams.getSingleQxlPci() && !vmHandler.isSingleQxlDeviceLegal(vmFromParams.getDefaultDisplayType(), vmFromParams.getOs(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    if (vmFromParams.isAutoStartup() && vmFromDB.isHostedEngine()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_VM_CANNOT_BE_HIGHLY_AVAILABLE_AND_HOSTED_ENGINE);
+    }
+    if (!areUpdatedFieldsLegal()) {
+        return failValidation(vmFromDB.isHostedEngine() ? EngineMessage.VM_CANNOT_UPDATE_HOSTED_ENGINE_FIELD : EngineMessage.VM_CANNOT_UPDATE_ILLEGAL_FIELD);
+    }
+    if (!vmFromDB.getClusterId().equals(vmFromParams.getClusterId())) {
+        return failValidation(EngineMessage.VM_CANNOT_UPDATE_CLUSTER);
+    }
+    if (!isDedicatedVdsExistOnSameCluster(vmFromParams.getStaticData(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    // Check if number of monitors passed is legal
+    if (getParameters().getVmStaticData().getDefaultDisplayType() != DisplayType.none && !vmHandler.isNumOfMonitorsLegal(vmHandler.getResultingVmGraphics(getVmDeviceUtils().getGraphicsTypesOfEntity(getVmId()), getParameters().getGraphicsDevices()), getParameters().getVmStaticData().getNumOfMonitors(), getReturnValue().getValidationMessages())) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_ILLEGAL_NUM_OF_MONITORS);
+    }
+    // Check PCI and IDE limits are ok
+    if (!isValidPciAndIdeLimit(vmFromParams)) {
+        return false;
+    }
+    if (!VmHandler.isVmPriorityValueLegal(vmFromParams.getPriority(), getReturnValue().getValidationMessages())) {
+        return false;
+    }
+    if (!validate(VmValidator.validateCpuSockets(vmFromParams.getStaticData(), getEffectiveCompatibilityVersion().toString()))) {
+        return false;
+    }
+    // check for Vm Payload
+    if (getParameters().getVmPayload() != null) {
+        if (!checkPayload(getParameters().getVmPayload(), vmFromParams.getIsoPath())) {
+            return false;
+        }
+        // we save the content in base64 string
+        for (Map.Entry<String, String> entry : getParameters().getVmPayload().getFiles().entrySet()) {
+            entry.setValue(new String(BASE_64.encode(entry.getValue().getBytes()), Charset.forName(CharEncoding.UTF_8)));
+        }
+    }
+    // check for Vm Watchdog Model
+    if (getParameters().getWatchdog() != null) {
+        if (!validate(new VmWatchdogValidator(vmFromParams.getOs(), getParameters().getWatchdog(), getEffectiveCompatibilityVersion()).isValid())) {
+            return false;
+        }
+    }
+    // Check if the graphics and display from parameters are supported
+    if (!vmHandler.isGraphicsAndDisplaySupported(vmFromParams.getOs(), vmHandler.getResultingVmGraphics(getVmDeviceUtils().getGraphicsTypesOfEntity(getVmId()), getParameters().getGraphicsDevices()), vmFromParams.getDefaultDisplayType(), getReturnValue().getValidationMessages(), getEffectiveCompatibilityVersion())) {
+        return false;
+    }
+    if (!FeatureSupported.isMigrationSupported(getCluster().getArchitecture(), getEffectiveCompatibilityVersion()) && vmFromParams.getMigrationSupport() != MigrationSupport.PINNED_TO_HOST) {
+        return failValidation(EngineMessage.VM_MIGRATION_IS_NOT_SUPPORTED);
+    }
+    // check cpuPinning
+    if (!validate(isCpuPinningValid(vmFromParams.getCpuPinning(), vmFromParams.getStaticData()))) {
+        return false;
+    }
+    if (!validatePinningAndMigration(getReturnValue().getValidationMessages(), getParameters().getVm().getStaticData(), getParameters().getVm().getCpuPinning())) {
+        return false;
+    }
+    if (vmFromParams.isUseHostCpuFlags() && vmFromParams.getMigrationSupport() != MigrationSupport.PINNED_TO_HOST) {
+        return failValidation(EngineMessage.VM_HOSTCPU_MUST_BE_PINNED_TO_HOST);
+    }
+    if (!isCpuSharesValid(vmFromParams)) {
+        return failValidation(EngineMessage.QOS_CPU_SHARES_OUT_OF_RANGE);
+    }
+    if (vmFromParams.isUseHostCpuFlags() && (ArchitectureType.ppc == getCluster().getArchitecture().getFamily())) {
+        return failValidation(EngineMessage.USE_HOST_CPU_REQUESTED_ON_UNSUPPORTED_ARCH);
+    }
+    if (!validateCPUHotplug(getParameters().getVmStaticData())) {
+        return failValidation(EngineMessage.CPU_HOTPLUG_TOPOLOGY_INVALID);
+    }
+    if (!validateMemoryAlignment(getParameters().getVmStaticData())) {
+        return false;
+    }
+    if (isVirtioScsiEnabled()) {
+        // Verify OS compatibility
+        if (!VmHandler.isOsTypeSupportedForVirtioScsi(vmFromParams.getOs(), getEffectiveCompatibilityVersion(), getReturnValue().getValidationMessages())) {
+            return false;
+        }
+    }
+    VmValidator vmValidator = createVmValidator(vmFromParams);
+    // A pinned VM, must run on one of its hosts
+    if (!validate(vmValidator.isPinnedVmRunningOnDedicatedHost(vmFromDB, vmFromParams.getStaticData()))) {
+        return false;
+    }
+    if (Boolean.FALSE.equals(getParameters().isVirtioScsiEnabled()) && !validate(vmValidator.canDisableVirtioScsi(null))) {
+        return false;
+    }
+    if (vmFromParams.getMinAllocatedMem() > vmFromParams.getMemSizeMb()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_MIN_MEMORY_CANNOT_EXCEED_MEMORY_SIZE);
+    }
+    if (vmFromParams.getCpuProfileId() == null || !Objects.equals(vmFromDB.getCpuProfileId(), vmFromParams.getCpuProfileId())) {
+        if (!setAndValidateCpuProfile()) {
+            return false;
+        }
+    }
+    if (isBalloonEnabled() && !osRepository.isBalloonEnabled(getParameters().getVmStaticData().getOsId(), getEffectiveCompatibilityVersion())) {
+        addValidationMessageVariable("clusterArch", getCluster().getArchitecture());
+        return failValidation(EngineMessage.BALLOON_REQUESTED_ON_NOT_SUPPORTED_ARCH);
+    }
+    if (isSoundDeviceEnabled() && !osRepository.isSoundDeviceEnabled(getParameters().getVmStaticData().getOsId(), getEffectiveCompatibilityVersion())) {
+        addValidationMessageVariable("clusterArch", getCluster().getArchitecture());
+        return failValidation(EngineMessage.SOUND_DEVICE_REQUESTED_ON_NOT_SUPPORTED_ARCH);
+    }
+    if (!validate(getNumaValidator().checkVmNumaNodesIntegrity(getParameters().getVm(), getParameters().getVm().getvNumaNodeList()))) {
+        return false;
+    }
+    if (getParameters().getVmLargeIcon() != null && !validate(IconValidator.validate(IconValidator.DimensionsType.LARGE_CUSTOM_ICON, getParameters().getVmLargeIcon()))) {
+        return false;
+    }
+    if (getParameters().getVmStaticData() != null && getParameters().getVmStaticData().getSmallIconId() != null && // icon id is ignored if large icon is sent
+    getParameters().getVmLargeIcon() == null && !validate(IconValidator.validateIconId(getParameters().getVmStaticData().getSmallIconId(), "Small"))) {
+        return false;
+    }
+    if (getParameters().getVmStaticData() != null && getParameters().getVmStaticData().getLargeIconId() != null && // icon id is ignored if large icon is sent
+    getParameters().getVmLargeIcon() == null && !validate(IconValidator.validateIconId(getParameters().getVmStaticData().getLargeIconId(), "Large"))) {
+        return false;
+    }
+    if (vmFromParams.getProviderId() != null) {
+        Provider<?> provider = providerDao.get(vmFromParams.getProviderId());
+        if (provider == null) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_PROVIDER_DOESNT_EXIST);
+        }
+        if (provider.getType() != ProviderType.FOREMAN) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_HOST_PROVIDER_TYPE_MISMATCH);
+        }
+    }
+    if (getCluster().isInUpgradeMode()) {
+        getParameters().getVm().setClusterCompatibilityVersion(getCluster().getCompatibilityVersion());
+        if (!validate(getClusterUpgradeValidator().isVmReadyForUpgrade(getParameters().getVm()))) {
+            return false;
+        }
+    }
+    if (!validateQuota(getParameters().getVmStaticData().getQuotaId())) {
+        return false;
+    }
+    if (!validate(VmHandler.validateMaxMemorySize(getParameters().getVmStaticData(), getEffectiveCompatibilityVersion()))) {
+        return false;
+    }
+    if (shouldAddLease(getVm()) && !FeatureSupported.isVmLeasesSupported(getEffectiveCompatibilityVersion())) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_VM_LEASES_ARE_NOT_SUPPORTED);
+    }
+    return true;
+}
+#end_block
+
+#method_before
+private boolean isDedicatedVmForVdsChanged() {
+    List<Guid> paramList = getParameters().getVmStaticData().getDedicatedVmForVdsList();
+    List<Guid> vmList = getVm().getDedicatedVmForVdsList();
+    if (vmList == null && paramList == null) {
+        return false;
+    }
+    if (vmList == null || paramList == null) {
+        return true;
+    }
+    // vmList.equals(paramList) not good enough, the lists order could change
+    if (vmList.size() != paramList.size()) {
+        return true;
+    }
+    for (Guid origGuid : vmList) {
+        if (paramList.contains(origGuid) == false) {
+            return true;
+        }
+    }
+    return false;
+}
+#method_after
+private boolean isDedicatedVmForVdsChanged() {
+    List<Guid> paramList = getParameters().getVmStaticData().getDedicatedVmForVdsList();
+    List<Guid> vmList = getVm().getDedicatedVmForVdsList();
+    if (vmList == null && paramList == null) {
+        return false;
+    }
+    if (vmList == null || paramList == null) {
+        return true;
+    }
+    // vmList.equals(paramList) not good enough, the lists order could change
+    if (vmList.size() != paramList.size()) {
+        return true;
+    }
+    return !paramList.containsAll(vmList);
+}
+#end_block
+
+#method_before
+protected void addVmInterfaces() {
+    VmInterfaceManager vmInterfaceManager = new VmInterfaceManager(macPool);
+    VnicProfileHelper vnicProfileHelper = new VnicProfileHelper(getClusterId(), getStoragePoolId(), AuditLogType.IMPORTEXPORT_IMPORT_VM_INVALID_INTERFACES);
+    List<VmNetworkInterface> nics = getVm().getInterfaces();
+    vmInterfaceManager.sortVmNics(nics, getVm().getStaticData().getManagedDeviceMap());
+    // If we import it as a new entity, then we allocate all MAC addresses in advance
+    if (getParameters().isImportAsNewEntity()) {
+        List<String> macAddresses = macPool.allocateMacAddresses(nics.size());
+        for (int i = 0; i < nics.size(); ++i) {
+            nics.get(i).setMacAddress(macAddresses.get(i));
+        }
+    } else {
+        if (isExternalMacsToBeReported()) {
+            reportExternalMacs();
+        }
+    }
+    for (VmNetworkInterface iface : getVm().getInterfaces()) {
+        initInterface(iface);
+        vnicProfileHelper.updateNicWithVnicProfileForUser(iface, getCurrentUser());
+        vmInterfaceManager.add(iface, getCompensationContext(), !getParameters().isImportAsNewEntity(), vnicHasBadMac(iface), getVm().getOs(), getEffectiveCompatibilityVersion());
+        macsAdded.add(iface.getMacAddress());
+    }
+    vnicProfileHelper.auditInvalidInterfaces(getVmName());
+}
+#method_after
+protected void addVmInterfaces() {
+    VmInterfaceManager vmInterfaceManager = new VmInterfaceManager(macPool);
+    VnicProfileHelper vnicProfileHelper = new VnicProfileHelper(getClusterId(), getStoragePoolId(), AuditLogType.IMPORTEXPORT_IMPORT_VM_INVALID_INTERFACES);
+    List<VmNetworkInterface> nics = getVm().getInterfaces();
+    vmInterfaceManager.sortVmNics(nics, getVm().getStaticData().getManagedDeviceMap());
+    // If we import it as a new entity, then we allocate all MAC addresses in advance
+    if (getParameters().isImportAsNewEntity()) {
+        List<String> macAddresses = macPool.allocateMacAddresses(nics.size());
+        for (int i = 0; i < nics.size(); ++i) {
+            nics.get(i).setMacAddress(macAddresses.get(i));
+        }
+    } else {
+        if (isExternalMacsToBeReported()) {
+            reportExternalMacs();
+        }
+    }
+    for (VmNetworkInterface iface : getVm().getInterfaces()) {
+        initInterface(iface);
+        vnicProfileHelper.updateNicWithVnicProfileForUser(iface, getCurrentUser());
+        final boolean badMac = vnicHasBadMac(iface);
+        final boolean reserveExistingMac = !(badMac || getParameters().isImportAsNewEntity());
+        vmInterfaceManager.add(iface, getCompensationContext(), reserveExistingMac, badMac, getVm().getOs(), getEffectiveCompatibilityVersion());
+        macsAdded.add(iface.getMacAddress());
+    }
+    vnicProfileHelper.auditInvalidInterfaces(getVmName());
+}
+#end_block
+
+#method_before
+@Before
+@SuppressWarnings("unchecked")
+public void setupMocks() {
+    vmInterfaceManager = spy(new VmInterfaceManager(macPool));
+    doReturn(vmNetworkStatisticsDao).when(vmInterfaceManager).getVmNetworkStatisticsDao();
+    doReturn(vmNetworkInterfaceDao).when(vmInterfaceManager).getVmNetworkInterfaceDao();
+    doReturn(vmNicDao).when(vmInterfaceManager).getVmNicDao();
+    doReturn(vmDao).when(vmInterfaceManager).getVmDao();
+    doNothing().when(vmInterfaceManager).auditLogMacInUseUnplug(any(VmNic.class));
+    doNothing().when(vmInterfaceManager).removeFromExternalNetworks(anyList());
+    doNothing().when(vmInterfaceManager).log(any(AuditLogableBase.class), any(AuditLogType.class));
+}
+#method_after
+@Before
+@SuppressWarnings("unchecked")
+public void setupMocks() {
+    vmInterfaceManager = spy(new VmInterfaceManager(macPool));
+    doReturn(vmNetworkStatisticsDao).when(vmInterfaceManager).getVmNetworkStatisticsDao();
+    doReturn(vmNicDao).when(vmInterfaceManager).getVmNicDao();
+    doNothing().when(vmInterfaceManager).removeFromExternalNetworks(anyList());
+}
+#end_block
+
+#method_before
+@Override
+protected void childCommandsExecutionEnded(CommandBase<?> command, boolean anyFailed, List<Guid> childCmdIds, CommandExecutionStatus status, int completedChildren) {
+    Guid cmdId = command.getCommandId();
+    CommandEntity commandEntity = CommandCoordinatorUtil.getCommandEntity(cmdId);
+    StorageJobCommandParameters cmdParams = (StorageJobCommandParameters) commandEntity.getCommandParameters();
+    Guid job = cmdParams.getStorageJobId();
+    Guid vdsId = cmdParams.getVdsRunningOn();
+    HostJobStatus jobStatus = null;
+    VDS vds = getVdsDao().get(vdsId);
+    boolean jobsReportedByHost = false;
+    if (vds.getStatus() == VDSStatus.Up) {
+        HostJobInfo jobInfo;
+        try {
+            jobInfo = pollStorageJob(job, vdsId);
+        } catch (Exception e) {
+            // We shouldn't get an error when polling the host job (as it access the local storage only).
+            // If we got an error, it will usually be a network error - so the host will either move
+            // to Non Responsive or the polling will succeed on the next attempt.
+            log.warn("Command {} id: '{}': Failed to poll the job '{}' on host '{}' (id: '{}'), will retry soon", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+            return;
+        }
+        if (jobInfo != null) {
+            handlePolledJobInfo((StorageJobCommand<?>) getCommand(cmdId), jobInfo);
+            jobStatus = jobInfo.getStatus();
+            updateStepProgress(commandEntity.getStepId(), jobInfo.getProgress());
+        }
+        jobsReportedByHost = true;
+    } else {
+        log.warn("Command {} id: '{}': can't poll the job '{}' as host '{}' (id: '{}') isn't in status UP", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+    }
+    // If we couldn't determine job status by polling the host, we can try to determine it using different methods.
+    if (jobStatus == null) {
+        jobStatus = handleUndeterminedJobStatus((StorageJobCommand<?>) getCommand(cmdId), jobsReportedByHost);
+    }
+    if (jobStatus == null) {
+        log.info("Command {} id: '{}': couldn't get the status of job '{}' on host '{}' (id: '{}'), assuming it's " + "still running", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+        return;
+    }
+    if (jobStatus.isAlive()) {
+        log.info("Command {} id: '{}': waiting for job '{}' on host '{}' (id: '{}') to complete", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+        return;
+    }
+    log.info("Command {} id: '{}': job '{}' execution was completed with VDSM job status '{}'", commandEntity.getCommandType(), cmdId, job, jobStatus);
+    if (command.shouldUpdateStepProgress() && jobStatus == HostJobStatus.done) {
+        updateStepProgress(commandEntity.getStepId(), MAX_PROGRESS);
+    }
+    command.getParameters().setTaskGroupSuccess(status == CommandExecutionStatus.EXECUTED && jobStatus == HostJobStatus.done);
+    command.setCommandStatus(command.getParameters().getTaskGroupSuccess() ? CommandStatus.SUCCEEDED : CommandStatus.FAILED);
+    log.info("Command {} id: '{}': execution was completed, the command status is '{}'", command.getActionType(), command.getCommandId(), command.getCommandStatus());
+}
+#method_after
+@Override
+protected void childCommandsExecutionEnded(CommandBase<?> command, boolean anyFailed, List<Guid> childCmdIds, CommandExecutionStatus status, int completedChildren) {
+    Guid cmdId = command.getCommandId();
+    CommandEntity commandEntity = CommandCoordinatorUtil.getCommandEntity(cmdId);
+    StorageJobCommandParameters cmdParams = (StorageJobCommandParameters) commandEntity.getCommandParameters();
+    Guid job = cmdParams.getStorageJobId();
+    Guid vdsId = cmdParams.getVdsRunningOn();
+    HostJobStatus jobStatus = null;
+    VDS vds = getVdsDao().get(vdsId);
+    boolean jobsReportedByHost = false;
+    if (vds.getStatus() == VDSStatus.Up) {
+        HostJobInfo jobInfo;
+        try {
+            jobInfo = pollStorageJob(job, vdsId);
+        } catch (Exception e) {
+            // We shouldn't get an error when polling the host job (as it access the local storage only).
+            // If we got an error, it will usually be a network error - so the host will either move
+            // to Non Responsive or the polling will succeed on the next attempt.
+            log.warn("Command {} id: '{}': Failed to poll the job '{}' on host '{}' (id: '{}'), will retry soon", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+            return;
+        }
+        if (jobInfo != null) {
+            handlePolledJobInfo((StorageJobCommand<?>) getCommand(cmdId), jobInfo);
+            jobStatus = jobInfo.getStatus();
+            updateStepProgress(commandEntity.getCommandContext().getStepId(), jobInfo.getProgress());
+        }
+        jobsReportedByHost = true;
+    } else {
+        log.warn("Command {} id: '{}': can't poll the job '{}' as host '{}' (id: '{}') isn't in status UP", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+    }
+    // If we couldn't determine job status by polling the host, we can try to determine it using different methods.
+    if (jobStatus == null) {
+        jobStatus = handleUndeterminedJobStatus((StorageJobCommand<?>) getCommand(cmdId), jobsReportedByHost);
+    }
+    if (jobStatus == null) {
+        log.info("Command {} id: '{}': couldn't get the status of job '{}' on host '{}' (id: '{}'), assuming it's " + "still running", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+        return;
+    }
+    if (jobStatus.isAlive()) {
+        log.info("Command {} id: '{}': waiting for job '{}' on host '{}' (id: '{}') to complete", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+        return;
+    }
+    log.info("Command {} id: '{}': job '{}' execution was completed with VDSM job status '{}'", commandEntity.getCommandType(), cmdId, job, jobStatus);
+    if (command.shouldUpdateStepProgress() && jobStatus == HostJobStatus.done) {
+        updateStepProgress(commandEntity.getCommandContext().getStepId(), MAX_PROGRESS);
+    }
+    command.getParameters().setTaskGroupSuccess(status == CommandExecutionStatus.EXECUTED && jobStatus == HostJobStatus.done);
+    command.setCommandStatus(command.getParameters().getTaskGroupSuccess() ? CommandStatus.SUCCEEDED : CommandStatus.FAILED);
+    log.info("Command {} id: '{}': execution was completed, the command status is '{}'", command.getActionType(), command.getCommandId(), command.getCommandStatus());
+}
+#end_block
+
+#method_before
+private void handlePolledJobInfo(StorageJobCommand<?> cmd, HostJobInfo jobInfo) {
+    if (jobInfo.getStatus() == HostJobStatus.running && !cmd.getParameters().getJobStarted()) {
+        cmd.getParameters().setJobStarted(true);
+        cmd.persistCommand(cmd.getParameters().getParentCommand(), true);
+    }
+    if (jobInfo.getStatus() != HostJobStatus.failed) {
+        return;
+    }
+    // if needed.
+    if (jobInfo.getError() != null) {
+        jobInfo.setStatus(cmd.handleJobError(jobInfo.getError().getCode()));
+        if (jobInfo.getStatus() == HostJobStatus.done) {
+            // if the error inspection led us to decide to the job actual status is done, we can set the progress
+            // to null so the progress will be considered as 100 for the command step (if present), it's better than
+            // setting to 100 as we don't know if progress is actually reported for the operation.
+            jobInfo.setProgress(null);
+        }
+    }
+}
+#method_after
+private void handlePolledJobInfo(StorageJobCommand<?> cmd, HostJobInfo jobInfo) {
+    handlePolledJobStatus(cmd, jobInfo.getStatus());
+    if (jobInfo.getStatus() != HostJobStatus.failed) {
+        return;
+    }
+    // if needed.
+    if (jobInfo.getError() != null) {
+        jobInfo.setStatus(cmd.handleJobError(jobInfo.getError().getCode()));
+        if (jobInfo.getStatus() == HostJobStatus.done) {
+            // if the error inspection led us to decide to the job actual status is done, we can set the progress
+            // to null so the progress will be considered as 100 for the command step (if present), it's better than
+            // setting to 100 as we don't know if progress is actually reported for the operation.
+            jobInfo.setProgress(null);
+        }
+    }
+}
+#end_block
+
+#method_before
+private HostJobStatus handleUndeterminedJobStatus(StorageJobCommand<?> cmd, boolean jobsReportedByHost) {
+    // If the command supports entity polling, we can use it in order to determine the status.
+    if (isEntityPollingSupported(cmd)) {
+        log.info("Command {} id: '{}': attempting to determine the job status by polling the entity.", cmd.getActionType(), cmd.getCommandId());
+        HostJobStatus status = pollEntity(cmd);
+        if (status != null) {
+            return status;
+        }
+        EntityPollingCommand entityPollingCommand = (EntityPollingCommand) cmd;
+        if (!cmd.getParameters().getJobStarted()) {
+            // If the command job may not have been started and the command supports job fencing, we can attempt
+            // to fence the job - which means that the host will never be able to execute it.
+            // Fencing the operation will usually be performed by executing an asynchronous fencing command on the
+            // entity the job is supposed to be performed on.
+            // If a fencing command was executed, the callback will wait for it to end and then will try to poll the
+            // entity again (it'll be detected as a running child command). On synchronous fencing/no fencing we
+            // will attempt to poll the entity again.
+            log.info("Command {} id: '{}': attempting to fence job {}", cmd.getActionType(), cmd.getCommandId(), cmd.getJobId());
+            entityPollingCommand.attemptToFenceJob();
+        }
+        return null;
+    }
+    // (as the command doesn't support entity polling - so we don't have any way to poll it).
+    if (jobsReportedByHost) {
+        log.error("Command {} id: '{}': entity polling isn't supported and the job isn't reported by the host," + "assuming it failed so that the command execution will end.", cmd.getActionType(), cmd.getCommandId());
+        return HostJobStatus.failed;
+    }
+    if (cmd.failJobWithUndeterminedStatus()) {
+        log.error("Command {} id: '{}': failed to determine the actual job status, considering as failed as per" + " the command implementation", cmd.getActionType(), cmd.getCommandId());
+        return HostJobStatus.failed;
+    }
+    // if we couldn't determine the job status, we'll retry to poll it.
+    log.error("Command {} id: '{}': failed to determine the actual job status, will retry to poll the job soon", cmd.getActionType(), cmd.getCommandId());
+    return null;
+}
+#method_after
+private HostJobStatus handleUndeterminedJobStatus(StorageJobCommand<?> cmd, boolean jobsReportedByHost) {
+    // If the command supports entity polling, we can use it in order to determine the status.
+    if (isEntityPollingSupported(cmd)) {
+        log.info("Command {} id: '{}': attempting to determine the job status by polling the entity.", cmd.getActionType(), cmd.getCommandId());
+        HostJobStatus jobStatus = pollEntity(cmd);
+        handlePolledJobStatus(cmd, jobStatus);
+        if (jobStatus != null) {
+            return jobStatus;
+        }
+        EntityPollingCommand entityPollingCommand = (EntityPollingCommand) cmd;
+        if (!cmd.getParameters().getJobStarted()) {
+            // If the command job may not have been started and the command supports job fencing, we can attempt
+            // to fence the job - which means that the host will never be able to execute it.
+            // Fencing the operation will usually be performed by executing an asynchronous fencing command on the
+            // entity the job is supposed to be performed on.
+            // If a fencing command was executed, the callback will wait for it to end and then will try to poll the
+            // entity again (it'll be detected as a running child command). On synchronous fencing/no fencing we
+            // will attempt to poll the entity again.
+            entityPollingCommand.attemptToFenceJob();
+        }
+        return null;
+    }
+    if (cmd.failJobWithUndeterminedStatus()) {
+        log.error("Command {} id: '{}': failed to determine the actual job status, considering as failed as per" + " the command implementation", cmd.getActionType(), cmd.getCommandId());
+        return HostJobStatus.failed;
+    }
+    // (as the command doesn't support entity polling - so we don't have any way to poll it).
+    if (jobsReportedByHost) {
+        log.error("Command {} id: '{}': entity polling isn't supported and the job isn't reported by the host," + "assuming it failed so that the command execution will end.", cmd.getActionType(), cmd.getCommandId());
+        return HostJobStatus.failed;
+    }
+    // if we couldn't determine the job status, we'll retry to poll it.
+    log.error("Command {} id: '{}': failed to determine the actual job status, will retry to poll the job soon", cmd.getActionType(), cmd.getCommandId());
+    return null;
+}
+#end_block
+
+#method_before
+private void reorderNics() {
+    Map<Guid, VmDevice> vmInterfaceDevices = getVmInterfaceDevices();
+    List<VmNic> nics = vmNicDao.getAllForVm(getParameters().getVmId());
+    List<VmNic> nicsToReorder = new ArrayList<>();
+    List<String> macsToReorder = new ArrayList<>();
+    for (VmNic nic : nics) {
+        VmDevice nicDevice = vmInterfaceDevices.get(nic.getId());
+        // If there is not device, or the PCI address is empty
+        if (nicDevice == null || StringUtils.isEmpty(nicDevice.getAddress())) {
+            nicsToReorder.add(nic);
+            // We know that all the NICs have a MAC address
+            macsToReorder.add(nic.getMacAddress());
+        }
+    }
+    // Sorting the NICs to reorder by name
+    Collections.sort(nicsToReorder, new NumericSuffixNameableComparator());
+    // Sorting the MAC addresses to reorder
+    Collections.sort(macsToReorder);
+    for (int i = 0; i < nicsToReorder.size(); ++i) {
+        VmNic nic = nicsToReorder.get(i);
+        nic.setMacAddress(macsToReorder.get(i));
+        vmNicDao.update(nic);
+    }
+}
+#method_after
+private void reorderNics() {
+    Map<Guid, VmDevice> vmInterfaceDevices = getVmInterfaceDevices();
+    List<VmNic> nics = vmNicDao.getAllForVm(getParameters().getVmId());
+    List<VmNic> nicsToReorder = new ArrayList<>();
+    List<String> macsToReorder = new ArrayList<>();
+    for (VmNic nic : nics) {
+        VmDevice nicDevice = vmInterfaceDevices.get(nic.getId());
+        // If there is not device, or the PCI address is empty
+        if (nicDevice == null || StringUtils.isEmpty(nicDevice.getAddress())) {
+            nicsToReorder.add(nic);
+            // We know that all the NICs have a MAC address
+            macsToReorder.add(nic.getMacAddress());
+        }
+    }
+    // Sorting the NICs to reorder by name
+    Collections.sort(nicsToReorder, numericSuffixNameableComparator);
+    // Sorting the MAC addresses to reorder
+    Collections.sort(macsToReorder);
+    for (int i = 0; i < nicsToReorder.size(); ++i) {
+        VmNic nic = nicsToReorder.get(i);
+        nic.setMacAddress(macsToReorder.get(i));
+        vmNicDao.update(nic);
+    }
+}
+#end_block
+
+#method_before
+@Override
+public int compare(Nameable nameable1, Nameable nameable2) {
+    final String name1 = nameable1.getName();
+    final String name2 = nameable2.getName();
+    final NumericSuffixNormalizer numericSuffixNormalizer = new NumericSuffixNormalizer();
+    final List<String> normalizedNames = numericSuffixNormalizer.normalize(name1, name2);
+    return ObjectUtils.compare(normalizedNames.get(0), normalizedNames.get(1));
+}
+#method_after
+@Override
+public int compare(Nameable nameable1, Nameable nameable2) {
+    final String name1 = nameable1.getName();
+    final String name2 = nameable2.getName();
+    final List<String> normalizedNames = numericSuffixNormalizer.normalize(name1, name2);
+    return ObjectUtils.compare(normalizedNames.get(0), normalizedNames.get(1));
+}
+#end_block
+
+#method_before
+@Override
+public Step getStep(Guid stepId, boolean includeSubjectEntities) {
+    Step step = stepDao.get(stepId);
+    if (includeSubjectEntities) {
+        step.setSubjectEntities(stepSubjectEntityDao.getStepSubjectEntitiesByStepId(stepId));
+    }
+    return step;
+}
+#method_after
+@Override
+public Step getStep(Guid stepId, boolean loadSubjectEntities) {
+    Step step = stepDao.get(stepId);
+    if (step != null && loadSubjectEntities) {
+        step.setSubjectEntities(stepSubjectEntityDao.getStepSubjectEntitiesByStepId(stepId));
+    }
+    return step;
+}
+#end_block
+
+#method_before
+private CommandContext buildCommandContext(CommandEntity cmdEntity) {
+    ExecutionContext executionContext = new ExecutionContext();
+    if (!Guid.isNullOrEmpty(cmdEntity.getJobId())) {
+        executionContext.setJob(jobRepository.getJobWithSteps(cmdEntity.getJobId()));
+    } else if (!Guid.isNullOrEmpty(cmdEntity.getStepId())) {
+        executionContext.setStep(jobRepository.getStep(cmdEntity.getStepId(), false));
+    }
+    return new CommandContext(new EngineContext()).withExecutionContext(executionContext);
+}
+#method_after
+private CommandContext buildCommandContext(CommandEntity cmdEntity) {
+    ExecutionContext executionContext = new ExecutionContext();
+    PersistedCommandContext persistedCommandContext = cmdEntity.getCommandContext();
+    if (!Guid.isNullOrEmpty(persistedCommandContext.getJobId())) {
+        executionContext.setJob(jobRepository.getJobWithSteps(persistedCommandContext.getJobId()));
+    } else if (!Guid.isNullOrEmpty(persistedCommandContext.getStepId())) {
+        executionContext.setStep(jobRepository.getStep(persistedCommandContext.getStepId(), false));
+    }
+    executionContext.setExecutionMethod(persistedCommandContext.getExecutionMethod());
+    executionContext.setCompleted(persistedCommandContext.isCompleted());
+    executionContext.setJobRequired(persistedCommandContext.isJobRequired());
+    executionContext.setMonitored(persistedCommandContext.isMonitored());
+    executionContext.setShouldEndJob(persistedCommandContext.shouldEndJob());
+    executionContext.setTasksMonitored(persistedCommandContext.isTasksMonitored());
+    return new CommandContext(new EngineContext()).withExecutionContext(executionContext);
+}
+#end_block
+
+#method_before
+private CommandEntity buildCommandEntity(Guid rootCommandId, boolean enableCallback) {
+    return CommandEntity.buildCommandEntity(getUserId(), getSessionSeqId(), getCommandId(), getParameters().getParentParameters() == null ? Guid.Empty : getParameters().getParentParameters().getCommandId(), rootCommandId, getExecutionContext() == null || getExecutionContext().getJob() == null ? Guid.Empty : getExecutionContext().getJob().getId(), getExecutionContext() == null || getExecutionContext().getStep() == null ? Guid.Empty : getExecutionContext().getStep().getId(), getActionType(), getParameters(), commandStatus, enableCallback, getReturnValue(), getCommandData());
+}
+#method_after
+private CommandEntity buildCommandEntity(Guid rootCommandId, boolean enableCallback) {
+    return CommandEntity.buildCommandEntity(getUserId(), getSessionSeqId(), getCommandId(), getParameters().getParentParameters() == null ? Guid.Empty : getParameters().getParentParameters().getCommandId(), rootCommandId, buildPersistedCommandContext(), getActionType(), getParameters(), commandStatus, enableCallback, getReturnValue(), getCommandData());
+}
+#end_block
+
+#method_before
+private static String getMessageToLog(String loggerString, AuditLog auditLog) {
+    String message;
+    if (loggerString.isEmpty()) {
+        message = auditLog.toStringForLogging();
+    } else {
+        message = MessageFormat.format(loggerString, auditLog.getMessage());
+    }
+    return MessageFormat.format("Audit Log ID: {0}, {1}", auditLog.getAuditLogId(), message);
+}
+#method_after
+private static String getMessageToLog(String loggerString, AuditLog auditLog) {
+    String message;
+    if (loggerString.isEmpty()) {
+        message = auditLog.toStringForLogging();
+    } else {
+        message = MessageFormat.format(loggerString, auditLog.getMessage());
+    }
+    return MessageFormat.format("EVENT_ID: {0}({1}), {2}", auditLog.getLogType(), auditLog.getLogType().getValue(), message);
+}
+#end_block
+
+#method_before
+@Override
+public Map<String, String> getJobMessageProperties() {
+    DiskImage diskImage = diskImageDao.getSnapshotById(getParameters().getSubchainInfo().getTopImageId());
+    DiskImage destDiskImage = diskImageDao.getSnapshotById(getParameters().getSubchainInfo().getBaseImageId());
+    if (jobProperties == null) {
+        jobProperties = super.getJobMessageProperties();
+        Map<String, String> jobMsgProperties = RemoveSnapshotHelper.getJobMessageProperties(diskImage.getDiskAlias(), snapshotDao.get(diskImage.getVmSnapshotId()), snapshotDao.get(destDiskImage.getVmSnapshotId()));
+        jobProperties.putAll(jobMsgProperties);
+    }
+    return jobProperties;
+}
+#method_after
+@Override
+public Map<String, String> getJobMessageProperties() {
+    if (jobProperties == null) {
+        DiskImage diskImage = diskImageDao.getSnapshotById(getParameters().getSubchainInfo().getTopImageId());
+        DiskImage destDiskImage = diskImageDao.getSnapshotById(getParameters().getSubchainInfo().getBaseImageId());
+        jobProperties = super.getJobMessageProperties();
+        jobProperties.put(VdcObjectType.Disk.name().toLowerCase(), diskImage.getDiskAlias());
+        jobProperties.put("sourcesnapshot", Optional.ofNullable(snapshotDao.get(diskImage.getVmSnapshotId()).getDescription()).orElse(""));
+        jobProperties.put("destinationsnapshot", Optional.ofNullable(snapshotDao.get(destDiskImage.getVmSnapshotId()).getDescription()).orElse(""));
+    }
+    return jobProperties;
+}
+#end_block
+
+#method_before
+protected void executeSPMMergeCommand(VDSCommandType vdsCommandType) {
+    getParameters().setEntityInfo(new EntityInfo(VdcObjectType.Disk, getParameters().getSubchainInfo().getBaseImageId()));
+    SPMColdMergeVDSCommandParameters parameters = new SPMColdMergeVDSCommandParameters(getParameters().getStoragePoolId(), getParameters().getSubchainInfo());
+    VDSReturnValue vdsReturnValue = runVdsCommand(vdsCommandType, parameters);
+    if (vdsReturnValue.getSucceeded()) {
+        Guid taskId = persistAsyncTaskPlaceHolder(getParameters().getParentCommand());
+        getTaskIdList().add(createTask(taskId, vdsReturnValue.getCreationInfo(), getParameters().getParentCommand(), VdcObjectType.Storage, getParameters().getStorageDomainId()));
+        setSucceeded(true);
+    }
+}
+#method_after
+protected void executeSPMMergeCommand(VDSCommandType vdsCommandType) {
+    getParameters().setEntityInfo(new EntityInfo(VdcObjectType.Disk, getParameters().getSubchainInfo().getImageGroupId()));
+    SPMColdMergeVDSCommandParameters parameters = new SPMColdMergeVDSCommandParameters(getParameters().getStoragePoolId(), getParameters().getSubchainInfo());
+    VDSReturnValue vdsReturnValue = runVdsCommand(vdsCommandType, parameters);
+    if (vdsReturnValue.getSucceeded()) {
+        Guid taskId = persistAsyncTaskPlaceHolder(getParameters().getParentCommand());
+        getTaskIdList().add(createTask(taskId, vdsReturnValue.getCreationInfo(), getParameters().getParentCommand(), VdcObjectType.Storage, getParameters().getStorageDomainId()));
+        setSucceeded(true);
+    }
+}
+#end_block
+
+#method_before
+public ResponseBuilder run(JsonNode params, ResponseBuilder builder) {
+    Object result = null;
+    try {
+        Map apiResult = activateApi(params);
+        if (fieldName() != null) {
+            result = apiResult.get(fieldName());
+        } else {
+            result = apiResult;
+        }
+    } catch (Exception e) {
+        log.error("Can't run api call", e);
+        Map<String, Object> error = new HashMap<>();
+        // General exception
+        error.put("code", 100);
+        error.put("message", e.getMessage());
+        return builder.withError(error);
+    }
+    if (result instanceof Map) {
+        builder = builder.withResult((Map) result);
+    } else if (result instanceof List) {
+        builder = builder.withResult((List) result);
+    } else if (result instanceof String) {
+        builder = builder.withResult((String) result);
+    } else if (result != null && result.getClass().isArray()) {
+        List tempList = new ArrayList();
+        Collections.addAll(tempList, (Object[]) result);
+        builder = builder.withResult(tempList);
+    } else {
+        log.error("Unknown response data --> " + result, new Exception());
+    }
+    return builder;
+}
+#method_after
+public ResponseBuilder run(JsonNode params, ResponseBuilder builder) {
+    Object result = null;
+    try {
+        Map apiResult = activateApi(params);
+        if (fieldName() != null) {
+            result = apiResult.get(fieldName());
+        } else {
+            result = apiResult;
+        }
+    } catch (Exception e) {
+        log.error("Can't run api call", e);
+        Map<String, Object> error = new HashMap<>();
+        // General exception
+        error.put("code", 100);
+        error.put("message", e.getMessage());
+        return builder.withError(error);
+    }
+    if (result instanceof Map) {
+        builder = builder.withResult((Map) result);
+    } else if (result instanceof List) {
+        builder = builder.withResult((List) result);
+    } else if (result instanceof String) {
+        builder = builder.withResult((String) result);
+    } else if (result != null && result.getClass().isArray()) {
+        List tempList = new ArrayList();
+        Collections.addAll(tempList, (Object[]) result);
+        builder = builder.withResult(tempList);
+    } else {
+        log.error("Unknown response data --> " + result, new Exception());
+        Map<String, Object> error = new HashMap<>();
+        // General exception
+        error.put("code", 100);
+        error.put("message", "Unknown response data");
+        builder.withError(error);
+    }
+    return builder;
+}
+#end_block
+
+#method_before
+void initTable() {
+    getTable().enableColumnResizing();
+    BrickStatusColumn brickStatusColumn = new BrickStatusColumn();
+    brickStatusColumn.setContextMenuTitle(constants.statusVolumeBrick());
+    brickStatusColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(brickStatusColumn, constants.empty(), "30px");
+    AbstractTextColumn<GlusterBrickEntity> serverColumn = new AbstractTextColumn<GlusterBrickEntity>() {
+
+        @Override
+        public String getValue(GlusterBrickEntity brick) {
+            return brick.getServerName();
+        }
+    };
+    serverColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(serverColumn, constants.serverVolumeBrick(), "300px");
+    AbstractTextColumn<GlusterBrickEntity> directoryColumn = new AbstractTextColumn<GlusterBrickEntity>() {
+
+        @Override
+        public String getValue(GlusterBrickEntity brick) {
+            String qualifiedName = brick.getQualifiedName();
+            if (brick.getIsArbiter()) {
+                // $NON-NLS-1$
+                qualifiedName += " " + constants.arbiter();
+            }
+            return qualifiedName;
+        }
+    };
+    directoryColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(directoryColumn, constants.brickDirectoryVolumeBrick(), "400px");
+    getTable().addColumn(new Column<GlusterBrickEntity, BrickProperties>(new BrickCapacityCell()) {
+
+        @Override
+        public BrickProperties getValue(GlusterBrickEntity object) {
+            return object.getBrickProperties();
+        }
+    }, constants.volumeCapacity(), // $NON-NLS-1$
+    "100px");
+    BrickHealInfoColumn healInfoColumn = new BrickHealInfoColumn();
+    // $NON-NLS-1$
+    getTable().addColumn(healInfoColumn, constants.healInfo(), "110px");
+    getTable().addColumn(new VolumeActivityColumn<GlusterBrickEntity>(getActivityCell()), constants.activitiesOnVolume(), // $NON-NLS-1$
+    "100px");
+    getTable().addActionButton(new WebAdminButtonDefinition<GlusterBrickEntity>(constants.addBricksBrick()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getAddBricksCommand();
+        }
+    });
+    getTable().addActionButton(new WebAdminButtonDefinition<GlusterBrickEntity>(constants.removeBricksBrick()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getRemoveBricksCommand();
+        }
+    });
+    getTable().addActionButton(new WebAdminButtonDefinition<GlusterBrickEntity>(constants.replaceBrickBrick()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getReplaceBrickCommand();
+        }
+    });
+    getTable().addActionButton(new WebAdminButtonDefinition<GlusterBrickEntity>(constants.advancedDetailsBrick()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getBrickAdvancedDetailsCommand();
+        }
+    });
+}
+#method_after
+void initTable() {
+    getTable().enableColumnResizing();
+    BrickStatusColumn brickStatusColumn = new BrickStatusColumn();
+    brickStatusColumn.setContextMenuTitle(constants.statusVolumeBrick());
+    brickStatusColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(brickStatusColumn, constants.empty(), "30px");
+    AbstractTextColumn<GlusterBrickEntity> serverColumn = new AbstractTextColumn<GlusterBrickEntity>() {
+
+        @Override
+        public String getValue(GlusterBrickEntity brick) {
+            return brick.getServerName();
+        }
+    };
+    serverColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(serverColumn, constants.serverVolumeBrick(), "300px");
+    AbstractTextColumn<GlusterBrickEntity> directoryColumn = new AbstractTextColumn<GlusterBrickEntity>() {
+
+        @Override
+        public String getValue(GlusterBrickEntity brick) {
+            String qualifiedName = brick.getQualifiedName();
+            if (brick.getIsArbiter()) {
+                // $NON-NLS-1$ //$NON-NLS-2$
+                qualifiedName += " (" + constants.arbiter() + ")";
+            }
+            return qualifiedName;
+        }
+    };
+    directoryColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(directoryColumn, constants.brickDirectoryVolumeBrick(), "400px");
+    getTable().addColumn(new Column<GlusterBrickEntity, BrickProperties>(new BrickCapacityCell()) {
+
+        @Override
+        public BrickProperties getValue(GlusterBrickEntity object) {
+            return object.getBrickProperties();
+        }
+    }, constants.volumeCapacity(), // $NON-NLS-1$
+    "100px");
+    BrickHealInfoColumn healInfoColumn = new BrickHealInfoColumn();
+    // $NON-NLS-1$
+    getTable().addColumn(healInfoColumn, constants.healInfo(), "110px");
+    getTable().addColumn(new VolumeActivityColumn<GlusterBrickEntity>(getActivityCell()), constants.activitiesOnVolume(), // $NON-NLS-1$
+    "100px");
+    getTable().addActionButton(new WebAdminButtonDefinition<GlusterBrickEntity>(constants.addBricksBrick()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getAddBricksCommand();
+        }
+    });
+    getTable().addActionButton(new WebAdminButtonDefinition<GlusterBrickEntity>(constants.removeBricksBrick()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getRemoveBricksCommand();
+        }
+    });
+    getTable().addActionButton(new WebAdminButtonDefinition<GlusterBrickEntity>(constants.replaceBrickBrick()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getReplaceBrickCommand();
+        }
+    });
+    getTable().addActionButton(new WebAdminButtonDefinition<GlusterBrickEntity>(constants.advancedDetailsBrick()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getBrickAdvancedDetailsCommand();
+        }
+    });
+}
+#end_block
+
+#method_before
+private void translateVolumeType(GlusterVolumeEntity volumeEntity) {
+    EnumTranslator translator = EnumTranslator.getInstance();
+    if (translator.containsKey(volumeEntity.getVolumeType())) {
+        String volumeType = translator.translate(volumeEntity.getVolumeType());
+        if (volumeEntity.getIsArbiter()) {
+            // $NON-NLS-1$
+            volumeType += " " + ConstantsManager.getInstance().getConstants().arbiter();
+        }
+        getDetailModel().setVolumeTypeSilently(volumeType);
+    }
+}
+#method_after
+private void translateVolumeType(GlusterVolumeEntity volumeEntity) {
+    EnumTranslator translator = EnumTranslator.getInstance();
+    if (translator.containsKey(volumeEntity.getVolumeType())) {
+        String volumeType = translator.translate(volumeEntity.getVolumeType());
+        if (volumeEntity.getIsArbiter()) {
+            // $NON-NLS-1$ //$NON-NLS-2$
+            volumeType += " (" + ConstantsManager.getInstance().getConstants().arbiter() + ")";
+        }
+        getDetailModel().setVolumeTypeSilently(volumeType);
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected void executeIrsBrokerCommand() {
+    if (getParameters().getForce()) {
+        try {
+            Guid storagePoolId = getParameters().getStoragePoolId();
+            if (getParameters().isDetachFromOldStoragePool()) {
+                storagePoolId = Guid.Empty;
+            }
+            status = getIrsProxy().forcedDetachStorageDomain(getParameters().getStorageDomainId().toString(), storagePoolId.toString());
+            proceedProxyReturnValue();
+        } catch (RuntimeException ex) {
+            printReturnValue();
+            log.error("Could not force detach domain '{}' on pool '{}'. error: {}", getParameters().getStorageDomainId(), getParameters().getStoragePoolId(), ex.getMessage());
+            log.debug("Exception", ex);
+            if (ex instanceof VDSExceptionBase) {
+                getVDSReturnValue().setVdsError(((VDSExceptionBase) ex).getVdsError());
+            }
+            getVDSReturnValue().setSucceeded(false);
+        }
+    } else {
+        status = getIrsProxy().detachStorageDomain(getParameters().getStorageDomainId().toString(), getParameters().getStoragePoolId().toString(), getParameters().getMasterStorageDomainId().toString(), getParameters().getMasterVersion());
+        proceedProxyReturnValue();
+    }
+}
+#method_after
+@Override
+protected void executeIrsBrokerCommand() {
+    if (getParameters().getForce()) {
+        Guid storagePoolId = getParameters().getStoragePoolId();
+        if (getParameters().isDetachFromOldStoragePool()) {
+            storagePoolId = Guid.Empty;
+        }
+        status = getIrsProxy().forcedDetachStorageDomain(getParameters().getStorageDomainId().toString(), storagePoolId.toString());
+        proceedProxyReturnValue();
+    } else {
+        status = getIrsProxy().detachStorageDomain(getParameters().getStorageDomainId().toString(), getParameters().getStoragePoolId().toString(), getParameters().getMasterStorageDomainId().toString(), getParameters().getMasterVersion());
+        proceedProxyReturnValue();
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected ToStringBuilder appendAttributes(ToStringBuilder tsb) {
+    return super.appendAttributes(tsb).append("srcHost", getSrcHost()).append("dstVdsId", getDstVdsId()).append("dstHost", getDstHost()).append("migrationMethod", getMigrationMethod()).append("tunnelMigration", isTunnelMigration()).append("migrationDowntime", getMigrationDowntime()).append("autoConverge", getAutoConverge()).append("migrateCompressed", getMigrateCompressed()).append("consoleAddress", getConsoleAddress()).append("maxBandwidth", getMaxBandwidth()).append("enableGuestEvents", isEnableGuestEvents()).append("convergenceSchedule", getConvergenceSchedule());
+}
+#method_after
+@Override
+protected ToStringBuilder appendAttributes(ToStringBuilder tsb) {
+    return super.appendAttributes(tsb).append("srcHost", getSrcHost()).append("dstVdsId", getDstVdsId()).append("dstHost", getDstHost()).append("migrationMethod", getMigrationMethod()).append("tunnelMigration", isTunnelMigration()).append("migrationDowntime", getMigrationDowntime()).append("autoConverge", getAutoConverge()).append("migrateCompressed", getMigrateCompressed()).append("consoleAddress", getConsoleAddress()).append("maxBandwidth", getMaxBandwidth()).append("enableGuestEvents", isEnableGuestEvents()).append("maxIncomingMigrations", getMaxIncomingMigrations()).append("maxOutgoingMigrations", getMaxOutgoingMigrations()).append("convergenceSchedule", getConvergenceSchedule());
+}
+#end_block
+

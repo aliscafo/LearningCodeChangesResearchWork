@@ -1,0 +1,2163 @@
+37
+#method_before
+private void initUI() {
+    try {
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    } catch (Exception e) {
+    // What to do here
+    }
+    ta = new JTextArea();
+    ta.setTabSize(4);
+    ta.setRows(15);
+    ta.setColumns(40);
+    ta.setLineWrap(false);
+    ta.insert(model.getText(), 0);
+    ta.setFont(new Font(Font.MONOSPACED, ta.getFont().getStyle(), ta.getFont().getSize()));
+    undoManager = new UndoManager();
+    ta.getDocument().addUndoableEditListener(new UndoableEditListener() {
+
+        @Override
+        public void undoableEditHappened(UndoableEditEvent editEvent) {
+            if (compoundEdit == null) {
+                compoundEdit = new CompoundEdit();
+            }
+            compoundEdit.addEdit(editEvent.getEdit());
+        }
+    });
+    ta.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK), undoKey);
+    ta.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_MASK), redoKey);
+    ta.addKeyListener(new KeyAdapter() {
+
+        @Override
+        public void keyReleased(KeyEvent ke) {
+            if (ke.getKeyCode() == KeyEvent.VK_SPACE || ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                compoundEdit.end();
+                undoManager.addEdit(compoundEdit);
+                compoundEdit = null;
+            }
+        }
+    });
+    ta.getActionMap().put(undoKey, new AbstractAction(undoKey) {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public void actionPerformed(ActionEvent event) {
+            if (compoundEdit != null) {
+                compoundEdit.end();
+                undoManager.addEdit(compoundEdit);
+                compoundEdit = null;
+            }
+            if (undoManager.canUndo()) {
+                undoManager.undo();
+            }
+        }
+    });
+    ta.getActionMap().put(redoKey, new AbstractAction(redoKey) {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public void actionPerformed(ActionEvent event) {
+            if (undoManager.canRedo()) {
+                undoManager.redo();
+            }
+        }
+    });
+    linecount = ta.getLineCount();
+    gg = new GlyphGutter(this);
+    setViewportView(ta);
+    setRowHeaderView(gg);
+    ta.getDocument().addDocumentListener(this);
+}
+#method_after
+private void initUI() {
+    try {
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    } catch (Exception e) {
+    // What to do here
+    }
+    ta = new JTextArea();
+    ta.setTabSize(4);
+    ta.setRows(15);
+    ta.setColumns(40);
+    ta.setLineWrap(false);
+    ta.insert(model.getText(), 0);
+    ta.setFont(new Font(Font.MONOSPACED, ta.getFont().getStyle(), ta.getFont().getSize()));
+    undoManager = new UndoManager();
+    ta.getDocument().addUndoableEditListener(new UndoableEditListener() {
+
+        @Override
+        public void undoableEditHappened(UndoableEditEvent editEvent) {
+            if (compoundEdit == null) {
+                compoundEdit = new CompoundEdit();
+            }
+            compoundEdit.addEdit(editEvent.getEdit());
+        }
+    });
+    ta.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_MASK), undoKey);
+    ta.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_MASK), redoKey);
+    ta.addKeyListener(new KeyAdapter() {
+
+        @Override
+        public void keyReleased(KeyEvent ke) {
+            if (ke.getKeyCode() == KeyEvent.VK_SPACE || ke.getKeyCode() == KeyEvent.VK_ENTER) {
+                compoundEdit.end();
+                undoManager.addEdit(compoundEdit);
+                compoundEdit = null;
+            }
+        }
+    });
+    ta.getActionMap().put(undoKey, new AbstractAction(undoKey) {
+
+        @Override
+        public void actionPerformed(ActionEvent event) {
+            if (compoundEdit != null) {
+                compoundEdit.end();
+                undoManager.addEdit(compoundEdit);
+                compoundEdit = null;
+            }
+            if (undoManager.canUndo()) {
+                undoManager.undo();
+            }
+        }
+    });
+    ta.getActionMap().put(redoKey, new AbstractAction(redoKey) {
+
+        @Override
+        public void actionPerformed(ActionEvent event) {
+            if (undoManager.canRedo()) {
+                undoManager.redo();
+            }
+        }
+    });
+    linecount = ta.getLineCount();
+    gg = new GlyphGutter(this);
+    setViewportView(ta);
+    setRowHeaderView(gg);
+    ta.getDocument().addDocumentListener(this);
+}
+#end_block
+
+#method_before
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // Load the preferences from an XML resource
+    addPreferencesFromResource(R.xml.documentprovider_preferences);
+    PreferenceScreen extSDPreference = (PreferenceScreen) findPreference(KEY_PREF_EXTERNAL_SD_PATH_URI);
+    PreferenceScreen otgPreference = (PreferenceScreen) findPreference(KEY_PREF_OTG_PATH_URI);
+    extSDPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+
+        @Override
+        public boolean onPreferenceClick(Preference preference) {
+            startDocumentSelectorActivity(KEY_PREF_EXTERNAL_SD_PATH_URI, DirectorySelectorActivity.MODE_EXT_SD);
+            return true;
+        }
+    });
+    otgPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+
+        @Override
+        public boolean onPreferenceClick(Preference preference) {
+            startDocumentSelectorActivity(KEY_PREF_OTG_PATH_URI, DirectorySelectorActivity.MODE_OTG);
+            return true;
+        }
+    });
+}
+#method_after
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // Load the preferences from an XML resource
+    addPreferencesFromResource(R.xml.documentprovider_preferences);
+    PreferenceScreen extSDPreference = (PreferenceScreen) findPreference(KEY_PREF_EXTERNAL_SD_PATH_URI);
+    PreferenceScreen otgPreference = (PreferenceScreen) findPreference(KEY_PREF_OTG_PATH_URI);
+    extSDPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+
+        @Override
+        public boolean onPreferenceClick(Preference preference) {
+            startBrowserSelectorActivity(KEY_PREF_EXTERNAL_SD_PATH_URI, BrowserSelectorActivity.MODE_EXT_SD);
+            return true;
+        }
+    });
+    otgPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+
+        @Override
+        public boolean onPreferenceClick(Preference preference) {
+            startBrowserSelectorActivity(KEY_PREF_OTG_PATH_URI, BrowserSelectorActivity.MODE_OTG);
+            return true;
+        }
+    });
+}
+#end_block
+
+#method_before
+private void writeQueuedReleases() throws IOException {
+    for (int i = releaseQueue.size(); i > 0; ) {
+        --i;
+        QueuedRelease r = releaseQueue.get(i);
+        if (r != null)
+            writeRequest(r.internal, r.objectId, r.type, r.method, r.threadId, null, false);
+        releaseQueue.remove(i);
+    }
+}
+#method_after
+private void writeQueuedReleases() throws IOException {
+    for (int i = releaseQueue.size(); i > 0; ) {
+        --i;
+        QueuedRelease r = releaseQueue.get(i);
+        if (r == null)
+            throw new IOException("releaseQueue unexpected empty");
+        writeRequest(r.internal, r.objectId, r.type, r.method, r.threadId, null, false);
+        releaseQueue.remove(i);
+    }
+}
+#end_block
+
+#method_before
+public void _getIndexAtPoint() {
+    // requiredMethod("getCharacterBounds()");
+    boolean res = true;
+    log.print("getIndexAtPoint(-1, -1):");
+    Point pt = new Point(-1, -1);
+    int index = oObj.getIndexAtPoint(pt);
+    log.println(index);
+    res &= (index == -1);
+    int lastIndex = chCount;
+    if (LimitedBounds != null) {
+        if (LimitedBounds instanceof Integer) {
+            lastIndex = ((Integer) LimitedBounds).intValue();
+        } else {
+            lastIndex = chCount - 1;
+        }
+        log.println(LimitedBounds);
+    }
+    for (int i = 0; i < lastIndex; i++) {
+        Rectangle aRect = null;
+        String text = "empty";
+        try {
+            aRect = oObj.getCharacterBounds(i);
+            text = oObj.getTextAtIndex(i, (short) 1).SegmentText;
+        } catch (com.sun.star.lang.IndexOutOfBoundsException e) {
+        } catch (com.sun.star.lang.IllegalArgumentException e) {
+        }
+        int x;
+        int y;
+        if (aRect == null) {
+            x = 0;
+            y = 0;
+        } else {
+            x = aRect.X + (aRect.Width / 2);
+            y = aRect.Y + (aRect.Height / 2);
+        }
+        Point aPoint = new Point(x, y);
+        int nIndex = oObj.getIndexAtPoint(aPoint);
+        x = aRect.X;
+        y = aRect.Y + (aRect.Height / 2);
+        aPoint = new Point(x, y);
+        int left = oObj.getIndexAtPoint(aPoint);
+        int[] previous = (int[]) tEnv.getObjRelation("PreviousUsed");
+        if (previous != null) {
+            for (int k = 0; k < previous.length; k++) {
+                if (i == previous[k]) {
+                    nIndex++;
+                }
+            }
+        }
+        if (nIndex != i) {
+            // returns the correct value.
+            if (left != i) {
+                log.println("## Method didn't work for Point (" + x + "," + y + ")");
+                log.println("Expected Index " + i);
+                log.println("Gained Index: " + nIndex);
+                log.println("Left Border: " + left);
+                log.println("CharacterAtIndex: " + text);
+                res &= false;
+            }
+        }
+    }
+    tRes.tested("getIndexAtPoint()", res);
+}
+#method_after
+public void _getIndexAtPoint() {
+    // requiredMethod("getCharacterBounds()");
+    boolean res = true;
+    log.print("getIndexAtPoint(-1, -1):");
+    Point pt = new Point(-1, -1);
+    int index = oObj.getIndexAtPoint(pt);
+    log.println(index);
+    res &= (index == -1);
+    int lastIndex = chCount;
+    if (LimitedBounds != null) {
+        if (LimitedBounds instanceof Integer) {
+            lastIndex = ((Integer) LimitedBounds).intValue();
+        } else {
+            lastIndex = chCount - 1;
+        }
+        log.println(LimitedBounds);
+    }
+    for (int i = 0; i < lastIndex; i++) {
+        Rectangle aRect = null;
+        String text = "empty";
+        try {
+            aRect = oObj.getCharacterBounds(i);
+            text = oObj.getTextAtIndex(i, (short) 1).SegmentText;
+        } catch (com.sun.star.lang.IndexOutOfBoundsException e) {
+        } catch (com.sun.star.lang.IllegalArgumentException e) {
+        }
+        if (aRect == null) {
+            res = false;
+            log.print("aRect unexpected null");
+            break;
+        }
+        int x = aRect.X + (aRect.Width / 2);
+        int y = aRect.Y + (aRect.Height / 2);
+        Point aPoint = new Point(x, y);
+        int nIndex = oObj.getIndexAtPoint(aPoint);
+        x = aRect.X;
+        y = aRect.Y + (aRect.Height / 2);
+        aPoint = new Point(x, y);
+        int left = oObj.getIndexAtPoint(aPoint);
+        int[] previous = (int[]) tEnv.getObjRelation("PreviousUsed");
+        if (previous != null) {
+            for (int k = 0; k < previous.length; k++) {
+                if (i == previous[k]) {
+                    nIndex++;
+                }
+            }
+        }
+        if (nIndex != i) {
+            // returns the correct value.
+            if (left != i) {
+                log.println("## Method didn't work for Point (" + x + "," + y + ")");
+                log.println("Expected Index " + i);
+                log.println("Gained Index: " + nIndex);
+                log.println("Left Border: " + left);
+                log.println("CharacterAtIndex: " + text);
+                res &= false;
+            }
+        }
+    }
+    tRes.tested("getIndexAtPoint()", res);
+}
+#end_block
+
+#method_before
+private void convert(com.sun.star.io.XInputStream xml, com.sun.star.io.XOutputStream device, boolean convertFromOffice, String pluginUrl, String FileName, String offMime, String sdMime) throws com.sun.star.uno.RuntimeException, IOException {
+    String jarName = pluginUrl;
+    String name = getFileName(FileName);
+    Iterator<ConverterInfo> ciEnum = null;
+    XInputStreamToInputStreamAdapter xis = new XInputStreamToInputStreamAdapter(xml);
+    XOutputStreamToOutputStreamAdapter newxos = new XOutputStreamToOutputStreamAdapter(device);
+    /* make sure newxos and xis get closed */
+    try {
+        try {
+            ConverterInfoReader cir = new ConverterInfoReader(jarName, false);
+            ciEnum = cir.getConverterInfoEnumeration();
+        } catch (ParserConfigurationException pexc) {
+            System.out.println("Error:" + pexc);
+        } catch (org.xml.sax.SAXException pexc) {
+            System.out.println("Error:" + pexc);
+        } catch (Exception e) {
+            System.out.println("Error:" + e);
+        }
+        ConverterInfoMgr.removeByJar(jarName);
+        if (convertFromOffice) {
+            try {
+                // Check to see if jar contains a plugin Impl
+                ConverterInfoMgr.addPlugIn(ciEnum);
+                ConverterFactory cf = new ConverterFactory();
+                Convert cv = cf.getConverter(ConverterInfoMgr.findConverterInfo(sdMime, offMime), false);
+                if (cv == null) {
+                    System.out.println("\nNo plug-in exists to convert from <staroffice/sxw> to <specified format> ");
+                } else {
+                    cv.addInputStream(name, xis, false);
+                    ConvertData dataOut = cv.convert();
+                    Iterator<Object> docEnum = dataOut.getDocumentEnumeration();
+                    if (docEnum.hasNext()) {
+                        Document docOut = (Document) docEnum.next();
+                        docOut.write(newxos);
+                        newxos.flush();
+                        newxos.close();
+                        int i = 1;
+                        while (docEnum.hasNext() && sURL.startsWith("file:")) {
+                            URI uri = new URI(sURL);
+                            String newFileName = getPath(uri);
+                            File newFile;
+                            if (newFileName.lastIndexOf(".") != -1) {
+                                newFile = new File(newFileName.substring(0, newFileName.lastIndexOf(".")) + String.valueOf(i) + newFileName.substring(newFileName.lastIndexOf(".")));
+                            } else {
+                                newFile = new File(newFileName.concat(String.valueOf(i)));
+                            }
+                            FileOutputStream fos = new FileOutputStream(newFile);
+                            docOut = (Document) docEnum.next();
+                            docOut.write(fos);
+                            fos.flush();
+                            fos.close();
+                            i++;
+                        }
+                    }
+                }
+                ConverterInfoMgr.removeByJar(jarName);
+            } catch (Exception ex1) {
+                IOException ex2 = new IOException();
+                ex2.initCause(ex1);
+                throw ex2;
+            }
+        } else {
+            try {
+                // Check to see if jar contains a plugin Impl
+                ConverterInfoMgr.addPlugIn(ciEnum);
+                ConverterFactory cf = new ConverterFactory();
+                Convert cv = cf.getConverter(ConverterInfoMgr.findConverterInfo(sdMime, offMime), true);
+                if (cv == null) {
+                    System.out.println("\nNo plug-in exists to convert to <staroffice/sxw> from <specified format>");
+                } else {
+                    cv.addInputStream(name, xis, false);
+                    ConvertData dataIn = cv.convert();
+                    Iterator<Object> docEnum = dataIn.getDocumentEnumeration();
+                    while (docEnum.hasNext()) {
+                        OfficeDocument docIn = (OfficeDocument) docEnum.next();
+                        docIn.write(newxos, false);
+                    }
+                    newxos.close();
+                }
+                ConverterInfoMgr.removeByJar(jarName);
+            } catch (StackOverflowError sOE) {
+                System.out.println("\nERROR : Stack Overflow. \n Increase of the JRE by adding the following line to the end of the javarc file \n \"-Xss1m\"\n");
+            } catch (Exception ex1) {
+                IOException ex2 = new IOException();
+                ex2.initCause(ex1);
+                throw ex2;
+            }
+        }
+    } finally {
+        if (newxos != null) {
+            newxos.flush();
+            newxos.close();
+        }
+        if (xis != null) {
+            xis.close();
+        }
+    }
+}
+#method_after
+private void convert(com.sun.star.io.XInputStream xml, com.sun.star.io.XOutputStream device, boolean convertFromOffice, String pluginUrl, String FileName, String offMime, String sdMime) throws com.sun.star.uno.RuntimeException, IOException {
+    String jarName = pluginUrl;
+    String name = getFileName(FileName);
+    Iterator<ConverterInfo> ciEnum = null;
+    XInputStreamToInputStreamAdapter xis = new XInputStreamToInputStreamAdapter(xml);
+    XOutputStreamToOutputStreamAdapter newxos = new XOutputStreamToOutputStreamAdapter(device);
+    /* make sure newxos and xis get closed */
+    try {
+        try {
+            ConverterInfoReader cir = new ConverterInfoReader(jarName, false);
+            ciEnum = cir.getConverterInfoEnumeration();
+        } catch (ParserConfigurationException pexc) {
+            System.out.println("Error:" + pexc);
+        } catch (org.xml.sax.SAXException pexc) {
+            System.out.println("Error:" + pexc);
+        } catch (Exception e) {
+            System.out.println("Error:" + e);
+        }
+        ConverterInfoMgr.removeByJar(jarName);
+        if (convertFromOffice) {
+            try {
+                // Check to see if jar contains a plugin Impl
+                ConverterInfoMgr.addPlugIn(ciEnum);
+                ConverterFactory cf = new ConverterFactory();
+                Convert cv = cf.getConverter(ConverterInfoMgr.findConverterInfo(sdMime, offMime), false);
+                if (cv == null) {
+                    System.out.println("\nNo plug-in exists to convert from <staroffice/sxw> to <specified format> ");
+                } else {
+                    cv.addInputStream(name, xis, false);
+                    ConvertData dataOut = cv.convert();
+                    Iterator<Object> docEnum = dataOut.getDocumentEnumeration();
+                    if (docEnum.hasNext()) {
+                        Document docOut = (Document) docEnum.next();
+                        docOut.write(newxos);
+                        newxos.flush();
+                        newxos.close();
+                        newxos = null;
+                        int i = 1;
+                        while (docEnum.hasNext() && sURL.startsWith("file:")) {
+                            URI uri = new URI(sURL);
+                            String newFileName = getPath(uri);
+                            File newFile;
+                            if (newFileName.lastIndexOf(".") != -1) {
+                                newFile = new File(newFileName.substring(0, newFileName.lastIndexOf(".")) + String.valueOf(i) + newFileName.substring(newFileName.lastIndexOf(".")));
+                            } else {
+                                newFile = new File(newFileName.concat(String.valueOf(i)));
+                            }
+                            FileOutputStream fos = new FileOutputStream(newFile);
+                            docOut = (Document) docEnum.next();
+                            docOut.write(fos);
+                            fos.flush();
+                            fos.close();
+                            i++;
+                        }
+                    }
+                }
+                ConverterInfoMgr.removeByJar(jarName);
+            } catch (Exception ex1) {
+                IOException ex2 = new IOException();
+                ex2.initCause(ex1);
+                throw ex2;
+            }
+        } else {
+            try {
+                // Check to see if jar contains a plugin Impl
+                ConverterInfoMgr.addPlugIn(ciEnum);
+                ConverterFactory cf = new ConverterFactory();
+                Convert cv = cf.getConverter(ConverterInfoMgr.findConverterInfo(sdMime, offMime), true);
+                if (cv == null) {
+                    System.out.println("\nNo plug-in exists to convert to <staroffice/sxw> from <specified format>");
+                } else {
+                    cv.addInputStream(name, xis, false);
+                    ConvertData dataIn = cv.convert();
+                    Iterator<Object> docEnum = dataIn.getDocumentEnumeration();
+                    while (docEnum.hasNext()) {
+                        OfficeDocument docIn = (OfficeDocument) docEnum.next();
+                        docIn.write(newxos, false);
+                    }
+                    newxos.close();
+                    newxos = null;
+                }
+                ConverterInfoMgr.removeByJar(jarName);
+            } catch (StackOverflowError sOE) {
+                System.out.println("\nERROR : Stack Overflow. \n Increase of the JRE by adding the following line to the end of the javarc file \n \"-Xss1m\"\n");
+            } catch (Exception ex1) {
+                IOException ex2 = new IOException();
+                ex2.initCause(ex1);
+                throw ex2;
+            }
+        }
+    } finally {
+        if (newxos != null) {
+            newxos.flush();
+            newxos.close();
+        }
+        xis.close();
+    }
+}
+#end_block
+
+#method_before
+public void summarize() {
+    boolean result = true;
+    XDrawPages oDrawPages = (XDrawPages) tEnv.getObjRelation("DrawPages");
+    if (oDrawPages == null) {
+        // SKIPPED.FAILED - the ObjectRelation is not available
+        return;
+    }
+    log.println("testing summarize() ... ");
+    oObj.summarize(oDrawPages);
+    result = true;
+    tRes.tested("summarize()", result);
+}
+#method_after
+public void summarize() {
+    boolean result = true;
+    XDrawPages oDrawPages = (XDrawPages) tEnv.getObjRelation("DrawPages");
+    if (oDrawPages == null) {
+        // SKIPPED.FAILED - the ObjectRelation is not available
+        throw new StatusException(Status.failed("ObjectRelation('DrawPages') XDrawPages n.a."));
+    }
+    log.println("testing summarize() ... ");
+    oObj.summarize(oDrawPages);
+    result = true;
+    tRes.tested("summarize()", result);
+}
+#end_block
+
+#method_before
+public static com.sun.star.lang.XComponent loadDocument(com.sun.star.frame.XFrame xFrame, String sURL, com.sun.star.beans.PropertyValue[] lProperties) {
+    com.sun.star.lang.XComponent xDocument = null;
+    String sOldName = null;
+    try {
+        com.sun.star.uno.XComponentContext xCtx = OfficeConnect.getOfficeContext();
+        // First prepare frame for loading
+        // We must address it inside the frame tree without any complications.
+        // So we set an unambigous (we hope it) name and use it later.
+        // Don't forget to reset original name after that.
+        sOldName = xFrame.getName();
+        String sTarget = "odk_officedev_desk";
+        xFrame.setName(sTarget);
+        // Get access to the global component loader of the office
+        // for synchronous loading the document.
+        com.sun.star.frame.XComponentLoader xLoader = UnoRuntime.queryInterface(com.sun.star.frame.XComponentLoader.class, xCtx.getServiceManager().createInstanceWithContext("com.sun.star.frame.Desktop", xCtx));
+        // Load the document into the target frame by using his name and
+        // special search flags.
+        xDocument = xLoader.loadComponentFromURL(sURL, sTarget, com.sun.star.frame.FrameSearchFlag.CHILDREN, lProperties);
+        // don't forget to restore old frame name ...
+        xFrame.setName(sOldName);
+    } catch (com.sun.star.io.IOException exIO) {
+        // Can be thrown by "loadComponentFromURL()" call.
+        // The only thing we should do then is to reset changed frame name!
+        exIO.printStackTrace();
+        xDocument = null;
+        if (sOldName != null)
+            xFrame.setName(sOldName);
+    } catch (com.sun.star.lang.IllegalArgumentException exIllegal) {
+        // Can be thrown by "loadComponentFromURL()" call.
+        // The only thing we should do then is to reset changed frame name!
+        exIllegal.printStackTrace();
+        xDocument = null;
+        if (sOldName != null)
+            xFrame.setName(sOldName);
+    } catch (com.sun.star.uno.RuntimeException exRuntime) {
+        // Any UNO method of this scope can throw this exception.
+        // The only thing we can try(!) is to reset changed frame name.
+        exRuntime.printStackTrace();
+        xDocument = null;
+        if (sOldName != null)
+            xFrame.setName(sOldName);
+    } catch (com.sun.star.uno.Exception exUno) {
+        // "createInstance()" method of used service manager can throw it.
+        // The only thing we should do then is to reset changed frame name!
+        exUno.printStackTrace();
+        xDocument = null;
+        if (sOldName != null)
+            xFrame.setName(sOldName);
+    }
+    return xDocument;
+}
+#method_after
+public static com.sun.star.lang.XComponent loadDocument(com.sun.star.frame.XFrame xFrame, String sURL, com.sun.star.beans.PropertyValue[] lProperties) {
+    com.sun.star.lang.XComponent xDocument = null;
+    String sOldName = null;
+    try {
+        com.sun.star.uno.XComponentContext xCtx = OfficeConnect.getOfficeContext();
+        // First prepare frame for loading
+        // We must address it inside the frame tree without any complications.
+        // So we set an unambigous (we hope it) name and use it later.
+        // Don't forget to reset original name after that.
+        sOldName = xFrame.getName();
+        String sTarget = "odk_officedev_desk";
+        xFrame.setName(sTarget);
+        // Get access to the global component loader of the office
+        // for synchronous loading the document.
+        com.sun.star.frame.XComponentLoader xLoader = UnoRuntime.queryInterface(com.sun.star.frame.XComponentLoader.class, xCtx.getServiceManager().createInstanceWithContext("com.sun.star.frame.Desktop", xCtx));
+        // Load the document into the target frame by using his name and
+        // special search flags.
+        xDocument = xLoader.loadComponentFromURL(sURL, sTarget, com.sun.star.frame.FrameSearchFlag.CHILDREN, lProperties);
+        // don't forget to restore old frame name...
+        xFrame.setName(sOldName);
+    } catch (com.sun.star.io.IOException exIO) {
+        // Can be thrown by "loadComponentFromURL()" call.
+        // The only thing we should do then is to reset changed frame name!
+        exIO.printStackTrace();
+        xDocument = null;
+        if (sOldName != null)
+            xFrame.setName(sOldName);
+    } catch (com.sun.star.lang.IllegalArgumentException exIllegal) {
+        // Can be thrown by "loadComponentFromURL()" call.
+        // The only thing we should do then is to reset changed frame name!
+        exIllegal.printStackTrace();
+        xDocument = null;
+        if (sOldName != null)
+            xFrame.setName(sOldName);
+    } catch (com.sun.star.uno.RuntimeException exRuntime) {
+        // Any UNO method of this scope can throw this exception.
+        // The only thing we can try(!) is to reset changed frame name.
+        exRuntime.printStackTrace();
+        xDocument = null;
+        if (sOldName != null)
+            xFrame.setName(sOldName);
+    } catch (com.sun.star.uno.Exception exUno) {
+        // "createInstance()" method of used service manager can throw it.
+        // The only thing we should do then is to reset changed frame name!
+        exUno.printStackTrace();
+        xDocument = null;
+        if (sOldName != null)
+            xFrame.setName(sOldName);
+    }
+    return xDocument;
+}
+#end_block
+
+#method_before
+private void impl_checkPropertyPersistence() throws com.sun.star.uno.Exception {
+    // store the document
+    XStorable store = UnoRuntime.queryInterface(XStorable.class, m_document.getDocument());
+    String documentURL = util.utils.getOfficeTemp(m_orb) + "document.odt";
+    PropertyValue[] storeArguments = new PropertyValue[] { new PropertyValue() };
+    storeArguments[0].Name = "FilterName";
+    storeArguments[0].Value = "writer8";
+    store.storeAsURL(documentURL, storeArguments);
+    // close and re-load it
+    impl_closeDoc();
+    m_document = DocumentHelper.loadDocument(m_orb, documentURL);
+    m_formLayer = new FormLayer(m_document);
+    XPropertySet textFieldModel = m_formLayer.getControlModel(new int[] { 0, 0 });
+    // all persistent properties should have the expected values
+    assure("persistent properties did not survive reload (1)!", ((String) textFieldModel.getPropertyValue("SomeBoundText")).equals("ChangedBoundText"));
+    assure("persistent properties did not survive reload (2)!", ((String) textFieldModel.getPropertyValue("SomeReadonlyText")).equals("InitialReadonlyText"));
+    // assure( "persistent properties did not survive reload (3)!", ((Integer)textFieldModel.getPropertyValue( "SomeNumericValue" )).equals( Integer.valueOf( 42 ) ) );
+    // cannot check this until the types really service - at the moment, integers are converted to doubles...
+    // the transient property should not have survived
+    boolean caughtExpected = false;
+    try {
+        textFieldModel.getPropertyValue("SomeTransientText");
+    } catch (UnknownPropertyException e) {
+        caughtExpected = true;
+    }
+    assure("transient property did survive reload!", caughtExpected);
+// There would be more things to check.
+// For instance, it would be desirable of the property attributes would have survived
+// the reload, and the property defaults (XPropertyState).
+// However, the file format currently doesn't allow for this, so those information
+// is lost when saving the document.
+}
+#method_after
+private void impl_checkPropertyPersistence() throws com.sun.star.uno.Exception {
+    // store the document
+    XStorable store = UnoRuntime.queryInterface(XStorable.class, m_document.getDocument());
+    String documentURL = util.utils.getOfficeTemp(m_orb) + "document.odt";
+    PropertyValue[] storeArguments = new PropertyValue[] { new PropertyValue() };
+    storeArguments[0].Name = "FilterName";
+    storeArguments[0].Value = "writer8";
+    store.storeAsURL(documentURL, storeArguments);
+    // close and re-load it
+    impl_closeDoc();
+    m_document = DocumentHelper.loadDocument(m_orb, documentURL);
+    m_formLayer = new FormLayer(m_document);
+    XPropertySet textFieldModel = m_formLayer.getControlModel(new int[] { 0, 0 });
+    // all persistent properties should have the expected values
+    assure("persistent properties did not survive reload (1)!", ((String) textFieldModel.getPropertyValue("SomeBoundText")).equals("ChangedBoundText"));
+    assure("persistent properties did not survive reload (2)!", ((String) textFieldModel.getPropertyValue("SomeReadonlyText")).equals("InitialReadonlyText"));
+    // assure( "persistent properties did not survive reload (3)!", ((Integer)textFieldModel.getPropertyValue( "SomeNumericValue" )).equals( Integer.valueOf( 42 ) ) );
+    // cannot check this until the types really survive - at the moment, integers are converted to doubles...
+    // the transient property should not have survived
+    boolean caughtExpected = false;
+    try {
+        textFieldModel.getPropertyValue("SomeTransientText");
+    } catch (UnknownPropertyException e) {
+        caughtExpected = true;
+    }
+    assure("transient property did survive reload!", caughtExpected);
+// There would be more things to check.
+// For instance, it would be desirable of the property attributes would have survived
+// the reload, and the property defaults (XPropertyState).
+// However, the file format currently doesn't allow for this, so those information
+// is lost when saving the document.
+}
+#end_block
+
+#method_before
+public static byte[] writeShort(short value) {
+    byte[] leShort = new byte[2];
+    leShort[0] = (byte) value;
+    leShort[1] = (byte) (value >>> 8);
+    return leShort;
+}
+#method_after
+public static byte[] writeShort(short value) {
+    return ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).putShort(value).array();
+}
+#end_block
+
+#method_before
+public static byte[] writeInt(int value) {
+    byte[] leInt = new byte[4];
+    leInt[0] = (byte) value;
+    leInt[1] = (byte) (value >>> 8);
+    leInt[2] = (byte) (value >>> 16);
+    leInt[3] = (byte) (value >>> 24);
+    return leInt;
+}
+#method_after
+public static byte[] writeInt(int value) {
+    return ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(value).array();
+}
+#end_block
+
+#method_before
+public static byte[] writeDouble(double value) {
+    return ByteBuffer.allocate(8).putLong(Long.reverseBytes(Double.doubleToLongBits(value))).array();
+}
+#method_after
+public static byte[] writeDouble(double value) {
+    return ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(Double.doubleToLongBits(value)).array();
+}
+#end_block
+
+#method_before
+public static short readShort(byte[] value) {
+    int high, low;
+    high = value[1] & 0xFF;
+    low = value[0] & 0xFF;
+    return (short) (high << 8 | low);
+}
+#method_after
+public static short readShort(byte[] value) {
+    return ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).put(value).getShort(0);
+}
+#end_block
+
+#method_before
+public static int readInt(byte[] value) {
+    int number = 0;
+    for (int i = 0; i < 4; i++) {
+        number |= (value[i] & 0xFF) << (i * 8);
+    }
+    return number;
+}
+#method_after
+public static int readInt(byte[] value) {
+    return ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).put(value).getInt(0);
+}
+#end_block
+
+#method_before
+public static double readDouble(byte[] value) {
+    long lvalue = (((long) (value[7]) << 56) + ((long) (value[6] & 0xFF) << 48) + ((long) (value[5] & 0xFF) << 40) + ((long) (value[4] & 0xFF) << 32) + ((long) (value[3] & 0xFF) << 24) + ((long) (value[2] & 0xFF) << 16) + ((long) (value[1] & 0xFF) << 8) + (value[0] & 0xFF));
+    return Double.longBitsToDouble(lvalue);
+}
+#method_after
+public static double readDouble(byte[] value) {
+    return Double.longBitsToDouble(ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).put(value).getLong(0));
+}
+#end_block
+
+#method_before
+private boolean isNextMonthsDate(com.sun.star.util.Date dateValue) {
+    java.util.Calendar cal = java.util.Calendar.getInstance();
+    return dateValue.Year == cal.get(java.util.Calendar.YEAR) && dateValue.Month - 1 == cal.get(java.util.Calendar.MONTH);
+}
+#method_after
+private boolean isNextMonthsDate(com.sun.star.util.Date dateValue) {
+    java.util.Calendar today = java.util.Calendar.getInstance();
+    java.util.Calendar date = (java.util.Calendar) today.clone();
+    today.set(java.util.Calendar.DATE, 1);
+    date.set(dateValue.Year, dateValue.Month, 1);
+    date.add(java.util.Calendar.MONTH, -1);
+    return date.compareTo(today) == 0;
+}
+#end_block
+
+#method_before
+@Test
+public void queryAdapter() throws Exception {
+    logger.log(Level.INFO, "Testing WeakBase.queryAdapter, XAdapter tests");
+    SomeClass comp = new SomeClass();
+    XAdapter adapter = comp.queryAdapter();
+    MyRef aRef1 = new MyRef();
+    MyRef aRef2 = new MyRef();
+    adapter.addReference(aRef1);
+    adapter.addReference(aRef2);
+    assertSame(adapter.queryAdapted(), comp);
+    comp = null;
+    logger.log(Level.FINE, "Wait 51ms (-XX:MaxGCPauseMillis=50)");
+    System.gc();
+    System.runFinalization();
+    Thread.sleep(51);
+    assertEquals(aRef1.nDisposeCalled, 1);
+    assertEquals(aRef2.nDisposeCalled, 1);
+    assertSame(adapter.queryAdapted(), null);
+    // should not do any harm
+    adapter.removeReference(aRef1);
+    adapter.removeReference(aRef2);
+    comp = new SomeClass();
+    adapter = comp.queryAdapter();
+    aRef1.nDisposeCalled = 0;
+    aRef2.nDisposeCalled = 0;
+    adapter.addReference(aRef1);
+    adapter.addReference(aRef2);
+    adapter.removeReference(aRef1);
+    logger.log(Level.FINE, "Wait 51ms (-XX:MaxGCPauseMillis=50)");
+    comp = null;
+    System.gc();
+    System.runFinalization();
+    Thread.sleep(51);
+    assertEquals(aRef1.nDisposeCalled, 0);
+    assertEquals(aRef2.nDisposeCalled, 1);
+}
+#method_after
+@Test
+public void queryAdapter() throws Exception {
+    logger.log(Level.INFO, "Testing WeakBase.queryAdapter, XAdapter tests");
+    SomeClass comp = new SomeClass();
+    XAdapter adapter = comp.queryAdapter();
+    MyRef aRef1 = new MyRef();
+    MyRef aRef2 = new MyRef();
+    adapter.addReference(aRef1);
+    adapter.addReference(aRef2);
+    assertSame(adapter.queryAdapted(), comp);
+    comp = null;
+    logger.log(Level.FINE, "Wait 51ms (-XX:MaxGCPauseMillis=50)");
+    System.gc();
+    System.runFinalization();
+    Thread.sleep(51);
+    assertEquals(aRef1.nDisposeCalled, 1);
+    assertEquals(aRef2.nDisposeCalled, 1);
+    assertNull(adapter.queryAdapted());
+    // should not do any harm
+    adapter.removeReference(aRef1);
+    adapter.removeReference(aRef2);
+    comp = new SomeClass();
+    adapter = comp.queryAdapter();
+    aRef1.nDisposeCalled = 0;
+    aRef2.nDisposeCalled = 0;
+    adapter.addReference(aRef1);
+    adapter.addReference(aRef2);
+    adapter.removeReference(aRef1);
+    logger.log(Level.FINE, "Wait 51ms (-XX:MaxGCPauseMillis=50)");
+    comp = null;
+    System.gc();
+    System.runFinalization();
+    Thread.sleep(51);
+    assertEquals(aRef1.nDisposeCalled, 0);
+    assertEquals(aRef2.nDisposeCalled, 1);
+}
+#end_block
+
+#method_before
+@Test
+public void get() throws Exception {
+    logger.log(Level.INFO, "Testing List.add(int index, Object element), List.get(int index)");
+    InterfaceContainer cont = new InterfaceContainer();
+    cont.add(0, obj1);
+    cont.add(1, obj2);
+    cont.add(1, proxyObj3Weak1);
+    cont.add(3, obj3);
+    assertSame(cont.get(0), obj1);
+    assertSame(cont.get(1), proxyObj3Weak1);
+    assertSame(cont.get(2), obj2);
+    assertSame(cont.get(3), obj3);
+    Exception exception = null;
+    try {
+        cont.add(5, obj1);
+    } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
+        exception = indexOutOfBoundsException;
+    }
+    assertNotNull(exception);
+}
+#method_after
+@Test
+public void get() throws Exception {
+    logger.log(Level.INFO, "Testing List.add(int index, Object element), List.get(int index)");
+    InterfaceContainer cont = new InterfaceContainer();
+    cont.add(0, obj1);
+    cont.add(1, obj2);
+    cont.add(1, proxyObj3Weak1);
+    cont.add(3, obj3);
+    assertSame(cont.get(0), obj1);
+    assertSame(cont.get(1), proxyObj3Weak1);
+    assertSame(cont.get(2), obj2);
+    assertSame(cont.get(3), obj3);
+    try {
+        cont.add(5, obj1);
+        fail("IndexOutOfBoundsException expected");
+    } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
+        logger.log(Level.FINE, "IndexOutOfBoundsException caught");
+    }
+}
+#end_block
+
+#method_before
+@Test
+public void Iterator_next() throws Exception {
+    logger.log(Level.INFO, "Testing InterfaceContainer.iterator, Iterator.next()");
+    InterfaceContainer cont = new InterfaceContainer();
+    cont.addAll(list1);
+    Iterator it = cont.iterator();
+    assertSame(it.next(), list1.get(0));
+    assertSame(it.next(), list1.get(1));
+    assertSame(it.next(), list1.get(2));
+    Exception exception = null;
+    try {
+        it.next();
+    } catch (NoSuchElementException noSuchElementException) {
+        exception = noSuchElementException;
+    }
+    assertNotNull(exception);
+}
+#method_after
+@Test
+public void Iterator_next() throws Exception {
+    logger.log(Level.INFO, "Testing InterfaceContainer.iterator, Iterator.next()");
+    InterfaceContainer cont = new InterfaceContainer();
+    cont.addAll(list1);
+    Iterator it = cont.iterator();
+    assertSame(it.next(), list1.get(0));
+    assertSame(it.next(), list1.get(1));
+    assertSame(it.next(), list1.get(2));
+    try {
+        it.next();
+        fail("NoSuchElementException expected");
+    } catch (NoSuchElementException noSuchElementException) {
+        logger.log(Level.FINE, "NoSuchElementException caught");
+    }
+}
+#end_block
+
+#method_before
+@Test
+public void Iterator_remove() throws Exception {
+    logger.log(Level.INFO, "Testing, Iterator.remove()");
+    InterfaceContainer cont = new InterfaceContainer();
+    Iterator it = cont.iterator();
+    Exception exception = null;
+    try {
+        it.remove();
+    } catch (IllegalStateException illegalStateException) {
+        exception = illegalStateException;
+    }
+    assertNotNull(exception);
+    exception = null;
+    cont.add(obj1);
+    it = cont.iterator();
+    it.next();
+    it.remove();
+    assertTrue(cont.isEmpty());
+    exception = null;
+    try {
+        it.remove();
+    } catch (IllegalStateException illegalStateException) {
+        exception = illegalStateException;
+    }
+    assertNotNull(exception);
+    cont.clear();
+    cont.addAll(list1);
+    it = cont.iterator();
+    while (it.hasNext()) {
+        it.next();
+        it.remove();
+    }
+    assertTrue(cont.isEmpty());
+    // 2 iterators, remove must not impair the other iterator
+    cont.clear();
+    cont.addAll(list1);
+    int size = cont.size();
+    it = cont.iterator();
+    Iterator it2 = cont.iterator();
+    while (it.hasNext()) {
+        it.next();
+        it.remove();
+    }
+    for (int c = 0; c < size; c++) it2.next();
+    assertEquals(cont.size(), 0);
+}
+#method_after
+@Test
+public void Iterator_remove() throws Exception {
+    logger.log(Level.INFO, "Testing, Iterator.remove()");
+    InterfaceContainer cont = new InterfaceContainer();
+    Iterator it = cont.iterator();
+    try {
+        it.remove();
+        fail("IllegalStateException expected");
+    } catch (IllegalStateException illegalStateException) {
+        logger.log(Level.FINE, "IllegalStateException caught");
+    }
+    cont.add(obj1);
+    it = cont.iterator();
+    it.next();
+    it.remove();
+    assertTrue(cont.isEmpty());
+    try {
+        it.remove();
+        fail("IllegalStateException expected");
+    } catch (IllegalStateException illegalStateException) {
+        logger.log(Level.FINE, "IllegalStateException caught");
+    }
+    cont.clear();
+    cont.addAll(list1);
+    it = cont.iterator();
+    while (it.hasNext()) {
+        it.next();
+        it.remove();
+    }
+    assertTrue(cont.isEmpty());
+    // 2 iterators, remove must not impair the other iterator
+    cont.clear();
+    cont.addAll(list1);
+    int size = cont.size();
+    it = cont.iterator();
+    Iterator it2 = cont.iterator();
+    while (it.hasNext()) {
+        it.next();
+        it.remove();
+    }
+    for (int c = 0; c < size; c++) it2.next();
+    assertEquals(cont.size(), 0);
+}
+#end_block
+
+#method_before
+@Test
+public void ListIterator_next() throws Exception {
+    logger.log(Level.INFO, "Testing InterfaceContainer.listIerator, ListIterator.next()");
+    InterfaceContainer cont = new InterfaceContainer();
+    cont.addAll(list1);
+    Iterator it = cont.listIterator();
+    assertSame(it.next(), list1.get(0));
+    assertSame(it.next(), list1.get(1));
+    assertSame(it.next(), list1.get(2));
+    Exception exception = null;
+    try {
+        it.next();
+    } catch (NoSuchElementException noSuchElementException) {
+        exception = noSuchElementException;
+    }
+    assertNotNull(exception);
+}
+#method_after
+@Test
+public void ListIterator_next() throws Exception {
+    logger.log(Level.INFO, "Testing InterfaceContainer.listIerator, ListIterator.next()");
+    InterfaceContainer cont = new InterfaceContainer();
+    cont.addAll(list1);
+    Iterator it = cont.listIterator();
+    assertSame(it.next(), list1.get(0));
+    assertSame(it.next(), list1.get(1));
+    assertSame(it.next(), list1.get(2));
+    try {
+        it.next();
+        fail("NoSuchElementException expected");
+    } catch (NoSuchElementException noSuchElementException) {
+        logger.log(Level.FINE, "NoSuchElementException caught");
+    }
+}
+#end_block
+
+#method_before
+@Test
+public void ListIterator_remove() throws Exception {
+    logger.log(Level.INFO, "Testing ListIterator.remove()");
+    InterfaceContainer cont = new InterfaceContainer();
+    ListIterator it = cont.listIterator();
+    Exception exception = null;
+    try {
+        it.remove();
+    } catch (IllegalStateException illegalStateException) {
+        exception = illegalStateException;
+    }
+    assertNotNull(exception);
+    cont.add(obj1);
+    it = cont.listIterator();
+    it.next();
+    it.remove();
+    assertTrue(cont.isEmpty());
+    exception = null;
+    try {
+        it.remove();
+    } catch (IllegalStateException illegalStateException) {
+        exception = illegalStateException;
+    }
+    assertNotNull(exception);
+    cont.clear();
+    cont.addAll(list1);
+    it = cont.listIterator();
+    while (it.hasNext()) {
+        it.next();
+        it.remove();
+    }
+    assertTrue(cont.isEmpty());
+    // 2 iterators, remove must not impair the other iterator
+    cont.clear();
+    cont.addAll(list1);
+    int size = cont.size();
+    it = cont.listIterator();
+    Iterator it2 = cont.listIterator();
+    while (it.hasNext()) {
+        it.next();
+        it.remove();
+    }
+    for (int c = 0; c < size; c++) it2.next();
+    assertEquals(cont.size(), 0);
+}
+#method_after
+@Test
+public void ListIterator_remove() throws Exception {
+    logger.log(Level.INFO, "Testing ListIterator.remove()");
+    InterfaceContainer cont = new InterfaceContainer();
+    ListIterator it = cont.listIterator();
+    try {
+        it.remove();
+        fail("IllegalStateException expected");
+    } catch (IllegalStateException illegalStateException) {
+        logger.log(Level.FINE, "IllegalStateException caught");
+    }
+    cont.add(obj1);
+    it = cont.listIterator();
+    it.next();
+    it.remove();
+    assertTrue(cont.isEmpty());
+    try {
+        it.remove();
+        fail("IllegalStateException expected");
+    } catch (IllegalStateException illegalStateException) {
+        logger.log(Level.FINE, "IllegalStateException caught");
+    }
+    cont.clear();
+    cont.addAll(list1);
+    it = cont.listIterator();
+    while (it.hasNext()) {
+        it.next();
+        it.remove();
+    }
+    assertTrue(cont.isEmpty());
+    // 2 iterators, remove must not impair the other iterator
+    cont.clear();
+    cont.addAll(list1);
+    int size = cont.size();
+    it = cont.listIterator();
+    Iterator it2 = cont.listIterator();
+    while (it.hasNext()) {
+        it.next();
+        it.remove();
+    }
+    for (int c = 0; c < size; c++) it2.next();
+    assertEquals(cont.size(), 0);
+}
+#end_block
+
+#method_before
+@Test
+public void ListIterator_previous() throws Exception {
+    logger.log(Level.INFO, "Testing ListIterator.previous()");
+    InterfaceContainer cont = new InterfaceContainer();
+    cont.addAll(list1);
+    // go to the end of our list and list1
+    ListIterator it = cont.listIterator();
+    while (it.hasNext()) it.next();
+    ListIterator it_list1 = list1.listIterator();
+    while (it_list1.hasNext()) it_list1.next();
+    while (it.hasPrevious()) {
+        assertSame(it.previous(), it_list1.previous());
+    }
+    Exception exception = null;
+    try {
+        it.previous();
+    } catch (NoSuchElementException noSuchElementException) {
+        exception = noSuchElementException;
+    }
+    assertNotNull(exception);
+}
+#method_after
+@Test
+public void ListIterator_previous() throws Exception {
+    logger.log(Level.INFO, "Testing ListIterator.previous()");
+    InterfaceContainer cont = new InterfaceContainer();
+    cont.addAll(list1);
+    // go to the end of our list and list1
+    ListIterator it = cont.listIterator();
+    while (it.hasNext()) it.next();
+    ListIterator it_list1 = list1.listIterator();
+    while (it_list1.hasNext()) it_list1.next();
+    while (it.hasPrevious()) {
+        assertSame(it.previous(), it_list1.previous());
+    }
+    try {
+        it.previous();
+        fail("NoSuchElementException expected");
+    } catch (NoSuchElementException noSuchElementException) {
+        logger.log(Level.FINE, "NoSuchElementException caught");
+    }
+}
+#end_block
+
+#method_before
+public boolean test_finalize() throws Exception {
+    logger.log(Level.INFO, "Testing ComponentBase");
+    ComponentBase comp = new ComponentBase();
+    obj1.nDisposingCalled = 0;
+    comp.addEventListener(obj1);
+    comp = null;
+    System.gc();
+    System.runFinalization();
+    logger.log(Level.FINE, "Waiting 51ms (-XX:MaxGCPauseMillis=50)");
+    Thread.sleep(51);
+    assertEquals(obj1.nDisposingCalled, 1);
+    return true;
+}
+#method_after
+@Test
+public void test_finalize() throws Exception {
+    logger.log(Level.INFO, "Testing ComponentBase: test_finalize()");
+    ComponentBase comp = new ComponentBase();
+    obj1.nDisposingCalled = 0;
+    comp.addEventListener(obj1);
+    comp = null;
+    System.gc();
+    System.runFinalization();
+    logger.log(Level.FINE, "Waiting 51ms (-XX:MaxGCPauseMillis=50)");
+    Thread.sleep(51);
+    assertEquals(obj1.nDisposingCalled, 1);
+}
+#end_block
+
+#method_before
+public void removeByName(String Name) throws com.sun.star.container.NoSuchElementException, com.sun.star.lang.WrappedTargetException {
+    try {
+        ScriptMetaData script = null;
+        if ((script = (ScriptMetaData) getByName(Name)) != null) {
+            {
+                if (!script.removeSourceFile()) {
+                    LogUtils.DEBUG("** Parcel.removeByName Failed to remove script " + Name);
+                    throw new com.sun.star.lang.WrappedTargetException("Failed to remove script " + Name);
+                }
+                LogUtils.DEBUG("** Parcel.removeByName have removed script source file " + Name);
+            }
+            m_descriptor.removeScriptEntry(script);
+            writeParcelDescriptor();
+        } else {
+            throw new com.sun.star.container.NoSuchElementException("No script named " + Name);
+        }
+    } catch (Exception e) {
+        LogUtils.DEBUG("** Parcel.removeByName Exception: " + e);
+        throw new com.sun.star.lang.WrappedTargetException(e.toString());
+    }
+}
+#method_after
+public void removeByName(String Name) throws com.sun.star.container.NoSuchElementException, com.sun.star.lang.WrappedTargetException {
+    try {
+        ScriptMetaData script = (ScriptMetaData) getByName(Name);
+        if (script != null) {
+            if (!script.removeSourceFile()) {
+                LogUtils.DEBUG("** Parcel.removeByName Failed to remove script " + Name);
+                throw new com.sun.star.lang.WrappedTargetException("Failed to remove script " + Name);
+            }
+            LogUtils.DEBUG("** Parcel.removeByName have removed script source file " + Name);
+            m_descriptor.removeScriptEntry(script);
+            writeParcelDescriptor();
+        } else {
+            throw new com.sun.star.container.NoSuchElementException("No script named " + Name);
+        }
+    } catch (Exception e) {
+        LogUtils.DEBUG("** Parcel.removeByName Exception: " + e);
+        throw new com.sun.star.lang.WrappedTargetException(e.toString());
+    }
+}
+#end_block
+
+#method_before
+protected void processCellData(Element cellElement, String type, String contents) {
+    // Set cell value-type attribute
+    cellElement.setAttribute(ATTRIBUTE_TABLE_VALUE_TYPE, type);
+    // Does the cell contain a formula?
+    if (contents.startsWith("=")) {
+        cellElement.setAttribute(ATTRIBUTE_TABLE_FORMULA, contents);
+        cellElement.setAttribute(ATTRIBUTE_TABLE_VALUE, decoder.getCellValue());
+    // String data does not require any additional attributes
+    } else if (!type.equals(CELLTYPE_STRING)) {
+        if (type.equals(CELLTYPE_TIME)) {
+            // Data returned in StarOffice XML format, so store in
+            // attribute
+            cellElement.setAttribute(ATTRIBUTE_TABLE_TIME_VALUE, contents);
+        } else if (type.equals(CELLTYPE_DATE)) {
+            // Data returned in StarOffice XML format, so store in
+            // attribute
+            cellElement.setAttribute(ATTRIBUTE_TABLE_DATE_VALUE, contents);
+        } else if (type.equals(CELLTYPE_BOOLEAN)) {
+            // StarOffice XML format requires stored boolean value
+            // to be in lower case
+            cellElement.setAttribute(ATTRIBUTE_TABLE_BOOLEAN_VALUE, contents.toLowerCase());
+        } else if (type.equals(CELLTYPE_CURRENCY)) {
+            // ToDo - StarOffice XML format requires a correct style to
+            // display currencies correctly.  Need to implement styles.
+            // ToDo - USD is for US currencies.  Need to pick up
+            // the correct currency location from the source file.
+            cellElement.setAttribute(ATTRIBUTE_TABLE_CURRENCY, "USD");
+            // Data comes stripped of currency symbols
+            cellElement.setAttribute(ATTRIBUTE_TABLE_VALUE, contents);
+        } else if (type.equals(CELLTYPE_PERCENT)) {
+            // Data comes stripped of percent signs
+            cellElement.setAttribute(ATTRIBUTE_TABLE_VALUE, contents);
+        } else {
+            // Remaining data types use table-value attribute
+            cellElement.setAttribute(ATTRIBUTE_TABLE_VALUE, contents);
+        }
+    }
+}
+#method_after
+protected void processCellData(Element cellElement, String type, String contents) {
+    // Set cell value-type attribute
+    cellElement.setAttribute(ATTRIBUTE_TABLE_VALUE_TYPE, type);
+    // Does the cell contain a formula?
+    if (contents.startsWith("=")) {
+        cellElement.setAttribute(ATTRIBUTE_TABLE_FORMULA, contents);
+        cellElement.setAttribute(ATTRIBUTE_TABLE_VALUE, decoder.getCellValue());
+    // String data does not require any additional attributes
+    } else if (!type.equals(CELLTYPE_STRING)) {
+        if (type.equals(CELLTYPE_TIME)) {
+            // Data returned in StarOffice XML format, so store in
+            // attribute
+            cellElement.setAttribute(ATTRIBUTE_TABLE_TIME_VALUE, contents);
+        } else if (type.equals(CELLTYPE_DATE)) {
+            // Data returned in StarOffice XML format, so store in
+            // attribute
+            cellElement.setAttribute(ATTRIBUTE_TABLE_DATE_VALUE, contents);
+        } else if (type.equals(CELLTYPE_BOOLEAN)) {
+            // StarOffice XML format requires stored boolean value
+            // to be in lower case
+            cellElement.setAttribute(ATTRIBUTE_TABLE_BOOLEAN_VALUE, contents.toLowerCase());
+        } else if (type.equals(CELLTYPE_CURRENCY)) {
+            // TODO - StarOffice XML format requires a correct style to
+            // display currencies correctly.  Need to implement styles.
+            // TODO - USD is for US currencies.  Need to pick up
+            // the correct currency location from the source file.
+            cellElement.setAttribute(ATTRIBUTE_TABLE_CURRENCY, "USD");
+            // Data comes stripped of currency symbols
+            cellElement.setAttribute(ATTRIBUTE_TABLE_VALUE, contents);
+        } else if (type.equals(CELLTYPE_PERCENT)) {
+            // Data comes stripped of percent signs
+            cellElement.setAttribute(ATTRIBUTE_TABLE_VALUE, contents);
+        } else {
+            // Remaining data types use table-value attribute
+            cellElement.setAttribute(ATTRIBUTE_TABLE_VALUE, contents);
+        }
+    }
+}
+#end_block
+
+#method_before
+public static String[] removefromList(String[] _sbaselist, String[] _sdellist) {
+    String[] sretlist = null;
+    ArrayList<String> tempbaselist = new ArrayList<String>();
+    for (String _sbase : _sbaselist) {
+        if (FieldInList(_sdellist, _sbase) == -1) {
+            tempbaselist.add(_sbase);
+        }
+    }
+    if (tempbaselist.size() > 0) {
+        sretlist = new String[tempbaselist.size()];
+        tempbaselist.toArray(sretlist);
+    }
+    return sretlist;
+}
+#method_after
+public static String[] removefromList(String[] _sbaselist, String[] _sdellist) {
+    ArrayList<String> tempbaselist = new ArrayList<String>();
+    for (String _sbase : _sbaselist) {
+        if (FieldInList(_sdellist, _sbase) == -1) {
+            tempbaselist.add(_sbase);
+        }
+    }
+    String[] sretlist = new String[tempbaselist.size()];
+    tempbaselist.toArray(sretlist);
+    return sretlist;
+}
+#end_block
+
+#method_before
+String getFileName(String origName) {
+    String name = null;
+    if (origName != null) {
+        if (origName.equalsIgnoreCase(""))
+            name = "OutFile";
+        else {
+            if (origName.lastIndexOf("/") >= 0) {
+                origName = origName.substring(origName.lastIndexOf("/") + 1, origName.length());
+            }
+            if (origName.lastIndexOf(".") >= 0) {
+                name = origName.substring(0, (origName.lastIndexOf(".")));
+            } else {
+                name = origName;
+            }
+        }
+    } else {
+        name = "OutFile";
+    }
+    return name;
+}
+#method_after
+String getFileName(String origName) {
+    String name;
+    if (origName != null) {
+        if (origName.equalsIgnoreCase(""))
+            name = "OutFile";
+        else {
+            if (origName.lastIndexOf("/") >= 0) {
+                origName = origName.substring(origName.lastIndexOf("/") + 1, origName.length());
+            }
+            if (origName.lastIndexOf(".") >= 0) {
+                name = origName.substring(0, (origName.lastIndexOf(".")));
+            } else {
+                name = origName;
+            }
+        }
+    } else {
+        name = "OutFile";
+    }
+    return name;
+}
+#end_block
+
+#method_before
+public String needsMask(String origString) {
+    if (origString.contains("&")) {
+        origString = origString.replace((CharSequence) "&", (CharSequence) "&amp;");
+    }
+    if (origString.contains("\"")) {
+        origString = origString.replace((CharSequence) "\"", (CharSequence) "&quot;");
+    }
+    if (origString.contains("<")) {
+        origString = origString.replace((CharSequence) "<", (CharSequence) "&lt;");
+    }
+    if (origString.contains(">")) {
+        origString = origString.replace((CharSequence) ">", (CharSequence) "&gt;");
+    }
+    return origString;
+}
+#method_after
+public String needsMask(String origString) {
+    if (origString.contains("&")) {
+        origString = origString.replace("&", "&amp;");
+    }
+    if (origString.contains("\"")) {
+        origString = origString.replace("\"", "&quot;");
+    }
+    if (origString.contains("<")) {
+        origString = origString.replace("<", "&lt;");
+    }
+    if (origString.contains(">")) {
+        origString = origString.replace(">", "&gt;");
+    }
+    return origString;
+}
+#end_block
+
+#method_before
+public void convert(com.sun.star.io.XInputStream xml, com.sun.star.io.XOutputStream device, boolean convertFromOffice, String pluginUrl, String FileName, String offMime, String sdMime) throws com.sun.star.uno.RuntimeException, IOException {
+    String jarName = pluginUrl;
+    String name = getFileName(FileName);
+    Iterator<ConverterInfo> ciEnum = null;
+    XInputStreamToInputStreamAdapter xis = new XInputStreamToInputStreamAdapter(xml);
+    XOutputStreamToOutputStreamAdapter newxos = new XOutputStreamToOutputStreamAdapter(device);
+    try {
+        ConverterInfoReader cir = new ConverterInfoReader(jarName, false);
+        ciEnum = cir.getConverterInfoEnumeration();
+    } catch (ParserConfigurationException pexc) {
+        System.out.println("Error:" + pexc);
+    } catch (org.xml.sax.SAXException pexc) {
+        System.out.println("Error:" + pexc);
+    } catch (Exception e) {
+        System.out.println("Error:" + e);
+    }
+    ConverterInfoMgr.removeByJar(jarName);
+    if (convertFromOffice) {
+        try {
+            // Check to see if jar contains a plugin Impl
+            ConverterInfoMgr.addPlugIn(ciEnum);
+            ConverterFactory cf = new ConverterFactory();
+            Convert cv = cf.getConverter(ConverterInfoMgr.findConverterInfo(sdMime, offMime), false);
+            if (cv == null) {
+                System.out.println("\nNo plug-in exists to convert from <staroffice/sxw> to <specified format> ");
+            } else {
+                cv.addInputStream(name, xis, false);
+                ConvertData dataOut = cv.convert();
+                Iterator<Object> docEnum = dataOut.getDocumentEnumeration();
+                if (docEnum.hasNext()) {
+                    Document docOut = (Document) docEnum.next();
+                    docOut.write(newxos);
+                    newxos.flush();
+                    newxos.close();
+                    int i = 1;
+                    while (docEnum.hasNext() && sURL.startsWith("file:")) {
+                        URI uri = new URI(sURL);
+                        String newFileName = getPath(uri);
+                        File newFile = null;
+                        if (newFileName.lastIndexOf(".") != -1) {
+                            newFile = new File(newFileName.substring(0, newFileName.lastIndexOf(".")) + String.valueOf(i) + newFileName.substring(newFileName.lastIndexOf(".")));
+                        } else {
+                            newFile = new File(newFileName.concat(String.valueOf(i)));
+                        }
+                        FileOutputStream fos = new FileOutputStream(newFile);
+                        docOut = (Document) docEnum.next();
+                        docOut.write(fos);
+                        fos.flush();
+                        fos.close();
+                        i++;
+                    }
+                }
+            }
+            ConverterInfoMgr.removeByJar(jarName);
+        } catch (StackOverflowError sOE) {
+            System.out.println("\nERROR : Stack Overflow. \n Increase of the JRE by adding the following line to the end of the javarc file \n \"-Xss1m\"\n");
+        } catch (Exception e) {
+            System.out.println("Error:" + e);
+            throw new IOException("Xmerge Exception");
+        }
+    } else {
+        try {
+            // Check to see if jar contains a plugin Impl
+            ConverterInfoMgr.addPlugIn(ciEnum);
+            ConverterFactory cf = new ConverterFactory();
+            Convert cv = cf.getConverter(ConverterInfoMgr.findConverterInfo(sdMime, offMime), true);
+            if (cv == null) {
+                System.out.println("\nNo plug-in exists to convert to <staroffice/sxw> from <specified format>");
+            } else {
+                cv.addInputStream(name, xis, false);
+                ConvertData dataIn = cv.convert();
+                Iterator<Object> docEnum = dataIn.getDocumentEnumeration();
+                while (docEnum.hasNext()) {
+                    OfficeDocument docIn = (OfficeDocument) docEnum.next();
+                    docIn.write(newxos, false);
+                }
+                newxos.close();
+            }
+            ConverterInfoMgr.removeByJar(jarName);
+        } catch (StackOverflowError sOE) {
+            System.out.println("\nERROR : Stack Overflow. \n Increase of the JRE by adding the following line to the end of the javarc file \n \"-Xss1m\"\n");
+        } catch (Exception e) {
+            System.out.println("Error:" + e);
+            throw new IOException("Xmerge Exception");
+        }
+    }
+}
+#method_after
+public void convert(com.sun.star.io.XInputStream xml, com.sun.star.io.XOutputStream device, boolean convertFromOffice, String pluginUrl, String FileName, String offMime, String sdMime) throws com.sun.star.uno.RuntimeException, IOException {
+    String jarName = pluginUrl;
+    String name = getFileName(FileName);
+    Iterator<ConverterInfo> ciEnum = null;
+    XInputStreamToInputStreamAdapter xis = new XInputStreamToInputStreamAdapter(xml);
+    XOutputStreamToOutputStreamAdapter newxos = new XOutputStreamToOutputStreamAdapter(device);
+    try {
+        ConverterInfoReader cir = new ConverterInfoReader(jarName, false);
+        ciEnum = cir.getConverterInfoEnumeration();
+    } catch (ParserConfigurationException pexc) {
+        System.out.println("Error:" + pexc);
+    } catch (org.xml.sax.SAXException pexc) {
+        System.out.println("Error:" + pexc);
+    } catch (Exception e) {
+        System.out.println("Error:" + e);
+    }
+    ConverterInfoMgr.removeByJar(jarName);
+    if (convertFromOffice) {
+        try {
+            // Check to see if jar contains a plugin Impl
+            ConverterInfoMgr.addPlugIn(ciEnum);
+            ConverterFactory cf = new ConverterFactory();
+            Convert cv = cf.getConverter(ConverterInfoMgr.findConverterInfo(sdMime, offMime), false);
+            if (cv == null) {
+                System.out.println("\nNo plug-in exists to convert from <staroffice/sxw> to <specified format> ");
+            } else {
+                cv.addInputStream(name, xis, false);
+                ConvertData dataOut = cv.convert();
+                Iterator<Object> docEnum = dataOut.getDocumentEnumeration();
+                if (docEnum.hasNext()) {
+                    Document docOut = (Document) docEnum.next();
+                    docOut.write(newxos);
+                    newxos.flush();
+                    newxos.close();
+                    int i = 1;
+                    while (docEnum.hasNext() && sURL.startsWith("file:")) {
+                        URI uri = new URI(sURL);
+                        String newFileName = getPath(uri);
+                        File newFile;
+                        if (newFileName.lastIndexOf(".") != -1) {
+                            newFile = new File(newFileName.substring(0, newFileName.lastIndexOf(".")) + String.valueOf(i) + newFileName.substring(newFileName.lastIndexOf(".")));
+                        } else {
+                            newFile = new File(newFileName.concat(String.valueOf(i)));
+                        }
+                        FileOutputStream fos = new FileOutputStream(newFile);
+                        docOut = (Document) docEnum.next();
+                        docOut.write(fos);
+                        fos.flush();
+                        fos.close();
+                        i++;
+                    }
+                }
+            }
+            ConverterInfoMgr.removeByJar(jarName);
+        } catch (StackOverflowError sOE) {
+            System.out.println("\nERROR : Stack Overflow. \n Increase of the JRE by adding the following line to the end of the javarc file \n \"-Xss1m\"\n");
+        } catch (Exception e) {
+            System.out.println("Error:" + e);
+            throw new IOException("Xmerge Exception");
+        }
+    } else {
+        try {
+            // Check to see if jar contains a plugin Impl
+            ConverterInfoMgr.addPlugIn(ciEnum);
+            ConverterFactory cf = new ConverterFactory();
+            Convert cv = cf.getConverter(ConverterInfoMgr.findConverterInfo(sdMime, offMime), true);
+            if (cv == null) {
+                System.out.println("\nNo plug-in exists to convert to <staroffice/sxw> from <specified format>");
+            } else {
+                cv.addInputStream(name, xis, false);
+                ConvertData dataIn = cv.convert();
+                Iterator<Object> docEnum = dataIn.getDocumentEnumeration();
+                while (docEnum.hasNext()) {
+                    OfficeDocument docIn = (OfficeDocument) docEnum.next();
+                    docIn.write(newxos, false);
+                }
+                newxos.close();
+            }
+            ConverterInfoMgr.removeByJar(jarName);
+        } catch (StackOverflowError sOE) {
+            System.out.println("\nERROR : Stack Overflow. \n Increase of the JRE by adding the following line to the end of the javarc file \n \"-Xss1m\"\n");
+        } catch (Exception e) {
+            System.out.println("Error:" + e);
+            throw new IOException("Xmerge Exception");
+        }
+    }
+}
+#end_block
+
+#method_before
+public PalmDB parse(String fileName) throws IOException {
+    RandomAccessFile file = new RandomAccessFile(fileName, "r");
+    // read the PDB header
+    PdbHeader header = new PdbHeader();
+    header.read(file);
+    Record[] recArray = new Record[header.numRecords];
+    if (header.numRecords != 0) {
+        // read in the record indices + offsets
+        int[] recOffset = new int[header.numRecords];
+        byte[] recAttrs = new byte[header.numRecords];
+        for (int i = 0; i < header.numRecords; i++) {
+            recOffset[i] = file.readInt();
+            // read in attributes (1 byte) + unique id (3 bytes)
+            // take away the unique id, store the attributes
+            int attr = file.readInt();
+            recAttrs[i] = (byte) (attr >>> 24);
+        }
+        // read the records
+        int len;
+        byte[] bytes;
+        int lastIndex = header.numRecords - 1;
+        for (int i = 0; i < lastIndex; i++) {
+            file.seek(recOffset[i]);
+            len = recOffset[i + 1] - recOffset[i];
+            bytes = new byte[len];
+            file.readFully(bytes);
+            recArray[i] = new Record(bytes, recAttrs[i]);
+        }
+        // last record
+        file.seek(recOffset[lastIndex]);
+        len = (int) file.length() - recOffset[lastIndex];
+        bytes = new byte[len];
+        file.readFully(bytes);
+        recArray[lastIndex] = new Record(bytes, recAttrs[lastIndex]);
+    }
+    file.close();
+    // create PalmDB and return it
+    PalmDB pdb = new PalmDB(header.pdbName, header.creatorID, header.typeID, header.version, header.attribute, recArray);
+    return pdb;
+}
+#method_after
+public PalmDB parse(String fileName) throws IOException {
+    RandomAccessFile file = new RandomAccessFile(fileName, "r");
+    // read the PDB header
+    PdbHeader header = new PdbHeader();
+    header.read(file);
+    Record[] recArray = new Record[header.numRecords];
+    if (header.numRecords != 0) {
+        // read in the record indices + offsets
+        int[] recOffset = new int[header.numRecords];
+        byte[] recAttrs = new byte[header.numRecords];
+        for (int i = 0; i < header.numRecords; i++) {
+            recOffset[i] = file.readInt();
+            // read in attributes (1 byte) + unique id (3 bytes)
+            // take away the unique id, store the attributes
+            int attr = file.readInt();
+            recAttrs[i] = (byte) (attr >>> 24);
+        }
+        // read the records
+        int lastIndex = header.numRecords - 1;
+        for (int i = 0; i < lastIndex; i++) {
+            file.seek(recOffset[i]);
+            int len = recOffset[i + 1] - recOffset[i];
+            byte[] bytes = new byte[len];
+            file.readFully(bytes);
+            recArray[i] = new Record(bytes, recAttrs[i]);
+        }
+        // last record
+        file.seek(recOffset[lastIndex]);
+        int len = (int) file.length() - recOffset[lastIndex];
+        byte[] bytes = new byte[len];
+        file.readFully(bytes);
+        recArray[lastIndex] = new Record(bytes, recAttrs[lastIndex]);
+    }
+    file.close();
+    // create PalmDB and return it
+    PalmDB pdb = new PalmDB(header.pdbName, header.creatorID, header.typeID, header.version, header.attribute, recArray);
+    return pdb;
+}
+#end_block
+
+#method_before
+/**
+ *  <p>This method decodes a PDB file into a <code>PalmDB</code>
+ *  object.</p>
+ *
+ *  <p>First, the header data is read using the <code>PdbHeader</code>
+ *  <code>read</code> method.  Next, the RecordList section is
+ *  read and the <code>Record</code> offsets are stored for use when
+ *  parsing the Records.  Based on these offsets, the bytes
+ *  corresponding to each <code>Record</code> are read and each is
+ *  stored in a  <code>Record</code> object.  Lastly, the data is
+ *  used to create a <code>PalmDB</code> object.</p>
+ *
+ *  @param  b  <code>byte[]</code> containing PDB.
+ *
+ *  @throws  IOException  If I/O error occurs.
+ */
+public PalmDB parse(byte[] b) throws IOException {
+    ByteArrayInputStream bais = new ByteArrayInputStream(b);
+    DataInputStream dis = new DataInputStream(bais);
+    // read the PDB header
+    PdbHeader header = new PdbHeader();
+    header.read(dis);
+    Record[] recArray = new Record[header.numRecords];
+    if (header.numRecords != 0) {
+        // read in the record indices + offsets
+        int[] recOffset = new int[header.numRecords];
+        byte[] recAttrs = new byte[header.numRecords];
+        for (int i = 0; i < header.numRecords; i++) {
+            recOffset[i] = dis.readInt();
+            // read in attributes (1 byte) + unique id (3 bytes)
+            // take away the unique id, store the attributes
+            int attr = dis.readInt();
+            recAttrs[i] = (byte) (attr >>> 24);
+        }
+        // read the records
+        int len;
+        byte[] bytes;
+        int lastIndex = header.numRecords - 1;
+        for (int i = 0; i < lastIndex; i++) {
+            // dis.seek(recOffset[i]);
+            dis.reset();
+            dis.skip(recOffset[i]);
+            len = recOffset[i + 1] - recOffset[i];
+            bytes = new byte[len];
+            dis.readFully(bytes);
+            recArray[i] = new Record(bytes, recAttrs[i]);
+        }
+        // last record
+        dis.reset();
+        len = dis.available() - recOffset[lastIndex];
+        dis.skip(recOffset[lastIndex]);
+        bytes = new byte[len];
+        dis.readFully(bytes);
+        recArray[lastIndex] = new Record(bytes, recAttrs[lastIndex]);
+    }
+    // create PalmDB and return it
+    PalmDB pdb = new PalmDB(header.pdbName, header.creatorID, header.typeID, header.version, header.attribute, recArray);
+    return pdb;
+}
+#method_after
+/**
+ *  <p>This method decodes a PDB file into a <code>PalmDB</code>
+ *  object.</p>
+ *
+ *  <p>First, the header data is read using the <code>PdbHeader</code>
+ *  <code>read</code> method.  Next, the RecordList section is
+ *  read and the <code>Record</code> offsets are stored for use when
+ *  parsing the Records.  Based on these offsets, the bytes
+ *  corresponding to each <code>Record</code> are read and each is
+ *  stored in a  <code>Record</code> object.  Lastly, the data is
+ *  used to create a <code>PalmDB</code> object.</p>
+ *
+ *  @param  b  <code>byte[]</code> containing PDB.
+ *
+ *  @throws  IOException  If I/O error occurs.
+ */
+public PalmDB parse(byte[] b) throws IOException {
+    ByteArrayInputStream bais = new ByteArrayInputStream(b);
+    DataInputStream dis = new DataInputStream(bais);
+    // read the PDB header
+    PdbHeader header = new PdbHeader();
+    header.read(dis);
+    Record[] recArray = new Record[header.numRecords];
+    if (header.numRecords != 0) {
+        // read in the record indices + offsets
+        int[] recOffset = new int[header.numRecords];
+        byte[] recAttrs = new byte[header.numRecords];
+        for (int i = 0; i < header.numRecords; i++) {
+            recOffset[i] = dis.readInt();
+            // read in attributes (1 byte) + unique id (3 bytes)
+            // take away the unique id, store the attributes
+            int attr = dis.readInt();
+            recAttrs[i] = (byte) (attr >>> 24);
+        }
+        // read the records
+        int lastIndex = header.numRecords - 1;
+        for (int i = 0; i < lastIndex; i++) {
+            // dis.seek(recOffset[i]);
+            dis.reset();
+            dis.skip(recOffset[i]);
+            int len = recOffset[i + 1] - recOffset[i];
+            byte[] bytes = new byte[len];
+            dis.readFully(bytes);
+            recArray[i] = new Record(bytes, recAttrs[i]);
+        }
+        // last record
+        dis.reset();
+        int len = dis.available() - recOffset[lastIndex];
+        dis.skip(recOffset[lastIndex]);
+        byte[] bytes = new byte[len];
+        dis.readFully(bytes);
+        recArray[lastIndex] = new Record(bytes, recAttrs[lastIndex]);
+    }
+    // create PalmDB and return it
+    PalmDB pdb = new PalmDB(header.pdbName, header.creatorID, header.typeID, header.version, header.attribute, recArray);
+    return pdb;
+}
+#end_block
+
+#method_before
+public static int intID(String s) {
+    int id;
+    int temp;
+    // grab the first char and put it in the high bits
+    // note that we only want 8 lower bits of it.
+    temp = s.charAt(0);
+    id = temp << 24;
+    // grab the second char and add it in.
+    temp = s.charAt(1) & 0x00ff;
+    id += temp << 16;
+    // grab the second char and add it in.
+    temp = s.charAt(2) & 0x00ff;
+    id += temp << 8;
+    // grab the last char and add it in
+    id += s.charAt(3) & 0x00ff;
+    return id;
+}
+#method_after
+public static int intID(String s) {
+    // grab the first char and put it in the high bits
+    // note that we only want 8 lower bits of it.
+    int temp = s.charAt(0);
+    int id = temp << 24;
+    // grab the second char and add it in.
+    temp = s.charAt(1) & 0x00ff;
+    id += temp << 16;
+    // grab the second char and add it in.
+    temp = s.charAt(2) & 0x00ff;
+    id += temp << 8;
+    // grab the last char and add it in
+    id += s.charAt(3) & 0x00ff;
+    return id;
+}
+#end_block
+
+#method_before
+public static ConverterInfo findConverterInfo(String deviceMime, String officeMime) {
+    if (deviceMime == null || ConverterInfo.isValidOfficeType(officeMime) == false) {
+        return null;
+    }
+    // Loop over elements comparing with deviceFromMime
+    for (ConverterInfo converterInfo : converterInfoList) {
+        String toDeviceInfo = converterInfo.getOfficeMime();
+        Iterator<String> fromEnum = converterInfo.getDeviceMime();
+        // Loop over the deviceMime types.
+        while (fromEnum.hasNext()) {
+            String fromDeviceInfo = fromEnum.next();
+            if (deviceMime.trim().equals(fromDeviceInfo) && officeMime.trim().equals(toDeviceInfo)) {
+                return (converterInfo);
+            }
+        }
+    }
+    return null;
+}
+#method_after
+public static ConverterInfo findConverterInfo(String deviceMime, String officeMime) {
+    if (deviceMime == null || ConverterInfo.isValidOfficeType(officeMime) == false) {
+        return null;
+    }
+    // Loop over elements comparing with deviceFromMime
+    for (ConverterInfo converterInfo : converterInfoList) {
+        String toDeviceInfo = converterInfo.getOfficeMime();
+        Iterator<String> fromEnum = converterInfo.getDeviceMime();
+        while (fromEnum.hasNext()) {
+            String fromDeviceInfo = fromEnum.next();
+            if (deviceMime.trim().equals(fromDeviceInfo) && officeMime.trim().equals(toDeviceInfo)) {
+                return (converterInfo);
+            }
+        }
+    }
+    return null;
+}
+#end_block
+
+#method_before
+public Style getResolved() {
+    // Create a new object to return, which is a clone of this one.
+    TextStyle resolved = null;
+    try {
+        resolved = (TextStyle) this.clone();
+    } catch (Exception e) {
+        Debug.log(Debug.ERROR, "Can't clone", e);
+    }
+    // Look up the parentStyle.  (If there is no style catalog
+    // specified, we can't do any lookups.)
+    TextStyle parentStyle = null;
+    if (sc != null) {
+        if (parent != null) {
+            parentStyle = (TextStyle) sc.lookup(parent, family, null, this.getClass());
+            if (parentStyle == null)
+                Debug.log(Debug.ERROR, "parent style lookup of " + parent + " failed!");
+            else
+                parentStyle = (TextStyle) parentStyle.getResolved();
+        } else if (!name.equals("DEFAULT_STYLE")) {
+            parentStyle = (TextStyle) sc.lookup("DEFAULT_STYLE", null, null, this.getClass());
+        }
+    }
+    // set, try to get the values from the parent.
+    if (parentStyle != null) {
+        parentStyle = (TextStyle) parentStyle.getResolved();
+        if ((sizeInPoints == 0) && (parentStyle.sizeInPoints != 0))
+            resolved.sizeInPoints = parentStyle.sizeInPoints;
+        if ((fontName == null) && (parentStyle.fontName != null))
+            resolved.fontName = parentStyle.fontName;
+        if ((fontColor == null) && (parentStyle.fontColor != null))
+            resolved.fontColor = parentStyle.fontColor;
+        if ((bgColor == null) && (parentStyle.bgColor != null))
+            resolved.bgColor = parentStyle.bgColor;
+        for (int m = BOLD; m <= SUBSCRIPT; m = m << 1) {
+            if (((mask & m) == 0) && ((parentStyle.mask & m) != 0)) {
+                resolved.mask |= m;
+                resolved.values |= (parentStyle.mask & m);
+            }
+        }
+    }
+    return resolved;
+}
+#method_after
+@Override
+public Style getResolved() {
+    // Create a new object to return, which is a clone of this one.
+    TextStyle resolved = null;
+    try {
+        resolved = (TextStyle) this.clone();
+    } catch (Exception e) {
+        Debug.log(Debug.ERROR, "Can't clone", e);
+    }
+    // Look up the parentStyle.  (If there is no style catalog
+    // specified, we can't do any lookups.)
+    TextStyle parentStyle = null;
+    if (sc != null) {
+        if (parent != null) {
+            parentStyle = (TextStyle) sc.lookup(parent, family, null, this.getClass());
+            if (parentStyle == null)
+                Debug.log(Debug.ERROR, "parent style lookup of " + parent + " failed!");
+            else
+                parentStyle = (TextStyle) parentStyle.getResolved();
+        } else if (!name.equals("DEFAULT_STYLE")) {
+            parentStyle = (TextStyle) sc.lookup("DEFAULT_STYLE", null, null, this.getClass());
+        }
+    }
+    // set, try to get the values from the parent.
+    if (parentStyle != null) {
+        parentStyle = (TextStyle) parentStyle.getResolved();
+        if ((sizeInPoints == 0) && (parentStyle.sizeInPoints != 0))
+            resolved.sizeInPoints = parentStyle.sizeInPoints;
+        if ((fontName == null) && (parentStyle.fontName != null))
+            resolved.fontName = parentStyle.fontName;
+        if ((fontColor == null) && (parentStyle.fontColor != null))
+            resolved.fontColor = parentStyle.fontColor;
+        if ((bgColor == null) && (parentStyle.bgColor != null))
+            resolved.bgColor = parentStyle.bgColor;
+        for (int m = BOLD; m <= SUBSCRIPT; m = m << 1) {
+            if (((mask & m) == 0) && ((parentStyle.mask & m) != 0)) {
+                resolved.mask |= m;
+                resolved.values |= (parentStyle.mask & m);
+            }
+        }
+    }
+    return resolved;
+}
+#end_block
+
+#method_before
+public Node createNode(org.w3c.dom.Document parentDoc, String name) {
+    Element node = parentDoc.createElement(name);
+    writeAttributes(node);
+    return node;
+}
+#method_after
+@Override
+public Node createNode(org.w3c.dom.Document parentDoc, String name) {
+    Element node = parentDoc.createElement(name);
+    writeAttributes(node);
+    return node;
+}
+#end_block
+
+#method_before
+public boolean isSubset(Style style) {
+    if (style.getClass() != this.getClass())
+        return false;
+    TextStyle tStyle = (TextStyle) style;
+    if (tStyle.values != values)
+        return false;
+    if (tStyle.sizeInPoints != 0) {
+        if (sizeInPoints != tStyle.sizeInPoints)
+            return false;
+    }
+    if (tStyle.fontName != null) {
+        if (fontName == null)
+            return false;
+        if (!fontName.equals(tStyle.fontName))
+            return false;
+    }
+    if (tStyle.fontColor != null) {
+        if (fontColor == null)
+            return false;
+        if (!fontColor.equals(tStyle.fontColor))
+            return false;
+    }
+    if (tStyle.bgColor != null) {
+        if (bgColor == null)
+            return false;
+        if (!bgColor.equals(tStyle.bgColor))
+            return false;
+    }
+    return true;
+}
+#method_after
+@Override
+public boolean isSubset(Style style) {
+    if (style.getClass() != this.getClass())
+        return false;
+    TextStyle tStyle = (TextStyle) style;
+    if (tStyle.values != values)
+        return false;
+    if (tStyle.sizeInPoints != 0) {
+        if (sizeInPoints != tStyle.sizeInPoints)
+            return false;
+    }
+    if (tStyle.fontName != null) {
+        if (fontName == null)
+            return false;
+        if (!fontName.equals(tStyle.fontName))
+            return false;
+    }
+    if (tStyle.fontColor != null) {
+        if (fontColor == null)
+            return false;
+        if (!fontColor.equals(tStyle.fontColor))
+            return false;
+    }
+    if (tStyle.bgColor != null) {
+        if (bgColor == null)
+            return false;
+        if (!bgColor.equals(tStyle.bgColor))
+            return false;
+    }
+    return true;
+}
+#end_block
+
+#method_before
+public boolean supportsService(String serviceName) throws com.sun.star.uno.RuntimeException {
+    for (int i = 0; i < supportedServiceNames.length; i++) if (supportedServiceNames[i].equals(serviceName))
+        return true;
+    return getImplementationName().equals(serviceName);
+}
+#method_after
+public boolean supportsService(String serviceName) throws com.sun.star.uno.RuntimeException {
+    for (String supportedServiceName : supportedServiceNames) {
+        if (supportedServiceName.equals(serviceName)) {
+            return true;
+        }
+    }
+    return getImplementationName().equals(serviceName);
+}
+#end_block
+

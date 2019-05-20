@@ -1,0 +1,1219 @@
+18
+#method_before
+private static String getIommu(CpuVendor cpuVendor, boolean iommu) {
+    if (!iommu) {
+        return "";
+    }
+    switch(cpuVendor) {
+        case AMD:
+            // $NON-NLS-1$
+            return "amd_iommu=1 ";
+        case INTEL:
+            // $NON-NLS-1$
+            return "intel_iommu=1 ";
+        case IBM:
+            return "";
+        default:
+            // $NON-NLS-1$
+            throw new RuntimeException("Unknown CpuType: " + cpuVendor);
+    }
+}
+#method_after
+private static String getIommu(CpuVendor cpuVendor, boolean iommu) {
+    if (!iommu) {
+        return "";
+    }
+    switch(cpuVendor) {
+        case AMD:
+            // $NON-NLS-1$
+            return "amd_iommu=on ";
+        case INTEL:
+            // $NON-NLS-1$
+            return "intel_iommu=on ";
+        case IBM:
+            return "";
+        default:
+            // $NON-NLS-1$
+            throw new RuntimeException("Unknown CpuType: " + cpuVendor);
+    }
+}
+#end_block
+
+#method_before
+@Override
+public TemplateDiskAttachmentResource getAttachmentResource(@PathParam("id") String id) {
+    return inject(new BackendTemplateDiskAttachmentResource(templateId, id));
+}
+#method_after
+@Override
+public TemplateDiskAttachmentResource getAttachmentResource(String id) {
+    return inject(new BackendTemplateDiskAttachmentResource(templateId, id));
+}
+#end_block
+
+#method_before
+private void loadDc() {
+    if (cachedStoragePool == null) {
+        final Guid dcId = params.getStoragePoolId();
+        if (isEmptyGuid(dcId)) {
+            cachedStoragePool = getStoragePoolDao().getForCluster(params.getClusterId());
+        } else {
+            cachedStoragePool = getStoragePoolDao().get(dcId);
+        }
+    }
+}
+#method_after
+private void loadDc() {
+    if (cachedStoragePool == null) {
+        final Guid dcId = params.getStoragePoolId();
+        if (Guid.isNullOrEmpty(dcId)) {
+            cachedStoragePool = getStoragePoolDao().getForCluster(params.getClusterId());
+        } else {
+            cachedStoragePool = getStoragePoolDao().get(dcId);
+        }
+    }
+}
+#end_block
+
+#method_before
+public static void main(String[] args) throws Exception {
+    // Create the connection to the server:
+    Connection connection = connection().url("https://engine40.example.com/ovirt-engine/api").user("admin@internal").password("redhat123").trustStoreFile("truststore.jks").build();
+    // Get the reference to the service that manages virtual machines:
+    VmsService vmsService = connection.systemService().vmsService();
+    // Find the virtual machine:
+    Vm vm = vmsService.list().search("name=myvm").send().vms().get(0);
+    // When the server returns a virtual machine it will return links to related objects, like the cluster,
+    // template and permissions something like this:
+    // 
+    // <link href="/ovirt-engine/api/vms/123/permissions" rel="permissions"/>
+    // ...
+    // <cluster id="123" href="/api/clusters/123"/>
+    // <template id="456" href="/api/templates/456"/>
+    // 
+    // The SDK provides a "followLink" method that can be used to retrieve the complete content of these related
+    // objects.
+    Cluster cluster = connection.followLink(vm.cluster());
+    Template template = connection.followLink(vm.template());
+    List<Permission> permissions = connection.followLink(vm.permissions());
+    // Now we can use the details of the cluster, template and permissions:
+    System.out.printf("cluster: %s\n", cluster.name());
+    System.out.printf("template: %s\n", template.name());
+    for (Permission permission : permissions) {
+        System.out.printf("Permission role id: %s\n", permission.role().id());
+    }
+    // Close the connection to the server:
+    connection.close();
+}
+#method_after
+public static void main(String[] args) throws Exception {
+    // Create the connection to the server:
+    Connection connection = connection().url("https://engine40.example.com/ovirt-engine/api").user("admin@internal").password("redhat123").trustStoreFile("truststore.jks").build();
+    // Get the reference to the service that manages virtual machines:
+    VmsService vmsService = connection.systemService().vmsService();
+    // Find the virtual machine:
+    Vm vm = vmsService.list().search("name=myvm").send().vms().get(0);
+    // When the server returns a virtual machine it will return links to related objects, like the cluster,
+    // template and permissions something like this:
+    // 
+    // <link href="/api/vms/123/permissions" rel="permissions"/>
+    // ...
+    // <cluster id="123" href="/api/clusters/123"/>
+    // <template id="456" href="/api/templates/456"/>
+    // 
+    // The SDK provides a "followLink" method that can be used to retrieve the complete content of these related
+    // objects.
+    Cluster cluster = connection.followLink(vm.cluster());
+    Template template = connection.followLink(vm.template());
+    List<Permission> permissions = connection.followLink(vm.permissions());
+    // Now we can use the details of the cluster, template and permissions:
+    System.out.printf("cluster: %s\n", cluster.name());
+    System.out.printf("template: %s\n", template.name());
+    for (Permission permission : permissions) {
+        System.out.printf("role: %s\n", permission.role().id());
+    }
+    // Close the connection to the server:
+    connection.close();
+}
+#end_block
+
+#method_before
+public void setClientPolicy(ClientPolicy policy) {
+    this.policy = policy;
+    this.validate();
+    if (isOpen()) {
+        Future<Void> future = scheduleClose("Policy reset");
+        try {
+            future.get(2, TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            log.warn("Policy reset timoued");
+        }
+    }
+}
+#method_after
+public void setClientPolicy(ClientPolicy policy) {
+    this.policy = policy;
+    this.validate();
+    if (!isOpen()) {
+        return;
+    }
+    try (LockWrapper wrapper = new LockWrapper(this.lock)) {
+        if (isOpen() && !this.closing.get()) {
+            scheduleClose("Policy reset");
+            this.closing.set(true);
+        }
+    }
+}
+#end_block
+
+#method_before
+public void connect() throws ClientConnectionException {
+    if (isOpen()) {
+        return;
+    }
+    try (LockWrapper wrapper = new LockWrapper(this.lock)) {
+        if (isOpen() && isInInit()) {
+            getPostConnectCallback().await(policy.getRetryTimeOut(), policy.getTimeUnit());
+        }
+        if (isOpen()) {
+            return;
+        }
+        final FutureTask<SocketChannel> task = scheduleTask(new Retryable<SocketChannel>(new Callable<SocketChannel>() {
+
+            @Override
+            public SocketChannel call() throws IOException {
+                InetAddress address = InetAddress.getByName(hostname);
+                log.info("Connecting to " + address);
+                final InetSocketAddress addr = new InetSocketAddress(address, port);
+                final SocketChannel socketChannel = SocketChannel.open();
+                socketChannel.configureBlocking(false);
+                socketChannel.connect(addr);
+                return socketChannel;
+            }
+        }, this.policy));
+        this.channel = task.get();
+        while (!this.channel.finishConnect()) {
+            final long timeout = getTimeout(policy.getRetryTimeOut(), policy.getTimeUnit());
+            final FutureTask<SocketChannel> connectTask = scheduleTask(new Retryable<SocketChannel>(new Callable<SocketChannel>() {
+
+                @Override
+                public SocketChannel call() throws ConnectException {
+                    if (System.currentTimeMillis() >= timeout) {
+                        throw new ConnectException("Connection timeout");
+                    }
+                    return null;
+                }
+            }, this.policy));
+            connectTask.get();
+        }
+        updateLastIncomingHeartbeat();
+        updateLastOutgoingHeartbeat();
+        if (!isOpen()) {
+            throw new ClientConnectionException("Connection failed");
+        }
+        postConnect(getPostConnectCallback());
+    } catch (InterruptedException | ExecutionException e) {
+        logException(log, "Exception during connection", e);
+        final String message = "Connection issue " + e.getMessage();
+        scheduleClose(message);
+        throw new ClientConnectionException(e);
+    } catch (IOException e) {
+        closeChannel();
+        throw new ClientConnectionException("Connection failed");
+    }
+}
+#method_after
+public void connect() throws ClientConnectionException {
+    if (isOpen()) {
+        return;
+    }
+    try (LockWrapper wrapper = new LockWrapper(this.lock)) {
+        if (isOpen() && isInInit()) {
+            getPostConnectCallback().await(policy.getRetryTimeOut(), policy.getTimeUnit());
+        }
+        if (isOpen()) {
+            return;
+        }
+        final FutureTask<SocketChannel> task = scheduleTask(new Retryable<SocketChannel>(new Callable<SocketChannel>() {
+
+            @Override
+            public SocketChannel call() throws IOException {
+                InetAddress address = InetAddress.getByName(hostname);
+                log.info("Connecting to " + address);
+                final InetSocketAddress addr = new InetSocketAddress(address, port);
+                final SocketChannel socketChannel = SocketChannel.open();
+                socketChannel.configureBlocking(false);
+                socketChannel.connect(addr);
+                return socketChannel;
+            }
+        }, this.policy));
+        this.channel = task.get();
+        while (!this.channel.finishConnect()) {
+            final long timeout = getTimeout(policy.getRetryTimeOut(), policy.getTimeUnit());
+            final FutureTask<SocketChannel> connectTask = scheduleTask(new Retryable<SocketChannel>(new Callable<SocketChannel>() {
+
+                @Override
+                public SocketChannel call() throws ConnectException {
+                    if (System.currentTimeMillis() >= timeout) {
+                        throw new ConnectException("Connection timeout");
+                    }
+                    return null;
+                }
+            }, this.policy));
+            connectTask.get();
+        }
+        updateLastIncomingHeartbeat();
+        updateLastOutgoingHeartbeat();
+        if (!isOpen()) {
+            throw new ClientConnectionException("Connection failed");
+        }
+        postConnect(getPostConnectCallback());
+        this.closing.set(false);
+    } catch (InterruptedException | ExecutionException e) {
+        logException(log, "Exception during connection", e);
+        final String message = "Connection issue " + e.getMessage();
+        scheduleClose(message);
+        throw new ClientConnectionException(e);
+    } catch (IOException e) {
+        closeChannel();
+        throw new ClientConnectionException("Connection failed");
+    }
+}
+#end_block
+
+#method_before
+public void process() throws IOException, ClientConnectionException {
+    processIncoming();
+    processHeartbeat();
+    processOutgoing();
+}
+#method_after
+public void process() throws IOException, ClientConnectionException {
+    processIncoming();
+    if (this.closing.get()) {
+        return;
+    }
+    processHeartbeat();
+    if (this.closing.get()) {
+        return;
+    }
+    processOutgoing();
+}
+#end_block
+
+#method_before
+private boolean isSelectAsSpmCommandAllowed(List<VDS> selectedItems) {
+    if (selectedItems.size() != 1) {
+        return false;
+    }
+    VDS vds = selectedItems.get(0);
+    if (vds.getStatus() != VDSStatus.Up || vds.getSpmStatus() != VdsSpmStatus.None) {
+        return false;
+    }
+    if (vds.getVdsSpmPriority() == BusinessEntitiesDefinitions.HOST_MIN_SPM_PRIORITY) {
+        return false;
+    }
+    return true;
+}
+#method_after
+private boolean isSelectAsSpmCommandAllowed(List<VDS> selectedItems) {
+    if (selectedItems.size() != 1) {
+        return false;
+    }
+    VDS vds = selectedItems.get(0);
+    if (vds.getStatus() != VDSStatus.Up || !vds.getClusterSupportsVirtService() || vds.getSpmStatus() != VdsSpmStatus.None) {
+        return false;
+    }
+    if (vds.getVdsSpmPriority() == BusinessEntitiesDefinitions.HOST_MIN_SPM_PRIORITY) {
+        return false;
+    }
+    return true;
+}
+#end_block
+
+#method_before
+private void updateLabelList() {
+    AsyncQuery getLabelsQuery = new AsyncQuery();
+    getLabelsQuery.asyncCallback = new INewAsyncCallback() {
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void onSuccess(Object model, Object result) {
+            final List<Label> allLabels = (List<Label>) result;
+            if (getIsNew()) {
+                labelList.setItems(allLabels);
+                labelList.setSelectedItems(new ArrayList<Label>());
+            } else {
+                AsyncQuery getLabelsByVmIdQuery = new AsyncQuery();
+                getLabelsByVmIdQuery.asyncCallback = new INewAsyncCallback() {
+
+                    @Override
+                    public void onSuccess(Object model, Object returnValue) {
+                        List<Label> vmLabelsList = (List<Label>) returnValue;
+                        labelList.setItems(allLabels);
+                        labelList.setSelectedItems(vmLabelsList);
+                    }
+                };
+                Guid vmId = ((ExistingVmModelBehavior) getBehavior()).getVm().getId();
+                AsyncDataProvider.getInstance().getLabelListByEntityId(getLabelsByVmIdQuery, vmId);
+            }
+            labelList.setIsChangeable(false);
+        }
+    };
+    AsyncDataProvider.getInstance().getLabelList(getLabelsQuery);
+}
+#method_after
+private void updateLabelList() {
+    AsyncQuery getLabelsQuery = new AsyncQuery();
+    getLabelsQuery.asyncCallback = new INewAsyncCallback() {
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void onSuccess(Object model, Object result) {
+            final List<Label> allLabels = (List<Label>) result;
+            boolean isExistingVmBehavior = getBehavior() instanceof ExistingVmModelBehavior;
+            if (isExistingVmBehavior) {
+                AsyncQuery getLabelsByVmIdQuery = new AsyncQuery();
+                getLabelsByVmIdQuery.asyncCallback = new INewAsyncCallback() {
+
+                    @Override
+                    public void onSuccess(Object model, Object returnValue) {
+                        List<Label> vmLabelsList = (List<Label>) returnValue;
+                        labelList.setItems(allLabels);
+                        labelList.setSelectedItems(vmLabelsList);
+                    }
+                };
+                Guid vmId = ((ExistingVmModelBehavior) getBehavior()).getVm().getId();
+                AsyncDataProvider.getInstance().getLabelListByEntityId(getLabelsByVmIdQuery, vmId);
+            } else {
+                labelList.setItems(allLabels);
+                labelList.setSelectedItems(new ArrayList<Label>());
+            }
+            labelList.setIsChangeable(false);
+        }
+    };
+    AsyncDataProvider.getInstance().getLabelList(getLabelsQuery);
+}
+#end_block
+
+#method_before
+private void updateMigrationRelatedFields() {
+    Cluster cluster = getSelectedCluster();
+    boolean override = Boolean.TRUE.equals(getOverrideMigrationPolicy().getEntity());
+    boolean hasMigrationPolicy = true;
+    if (override) {
+        MigrationPolicy selectedPolicy = getMigrationPolicies().getSelectedItem();
+        if (selectedPolicy == null) {
+            // if had selected something which does not exist anymore
+            hasMigrationPolicy = false;
+        } else if (selectedPolicy.getId().equals(NoMigrationPolicy.ID)) {
+            // explicitly selected the empty
+            hasMigrationPolicy = false;
+        }
+    } else {
+        if (cluster == null) {
+            // for non-cluster entities (e.g. blank template, instance types)
+            hasMigrationPolicy = false;
+        } else if (cluster.getMigrationPolicyId() == null || cluster.getMigrationPolicyId().equals(NoMigrationPolicy.ID)) {
+            // explicitly selected the empty
+            hasMigrationPolicy = false;
+        }
+    }
+    getOverrideMigrationDowntime().setIsChangeable(!hasMigrationPolicy, constants.availableOnlyWithNoMigrationPolicy());
+    boolean overrideDowntime = Boolean.TRUE.equals(getOverrideMigrationDowntime().getEntity());
+    getMigrationDowntime().setIsChangeable(!hasMigrationPolicy && overrideDowntime, constants.availableOnlyWithNoMigrationPolicy());
+    getAutoConverge().setIsChangeable(!hasMigrationPolicy, constants.availableOnlyWithNoMigrationPolicy());
+    getMigrateCompressed().setIsChangeable(!hasMigrationPolicy, constants.availableOnlyWithNoMigrationPolicy());
+}
+#method_after
+private void updateMigrationRelatedFields() {
+    Cluster cluster = getSelectedCluster();
+    boolean override = Boolean.TRUE.equals(getOverrideMigrationPolicy().getEntity());
+    boolean hasMigrationPolicy = true;
+    if (override) {
+        MigrationPolicy selectedPolicy = getMigrationPolicies().getSelectedItem();
+        if (selectedPolicy == null) {
+            // if had selected something which does not exist anymore
+            hasMigrationPolicy = false;
+        } else if (selectedPolicy.getId().equals(NoMigrationPolicy.ID)) {
+            // explicitly selected the empty
+            hasMigrationPolicy = false;
+        }
+    } else {
+        if (cluster == null) {
+            // for non-cluster entities (e.g. blank template, instance types)
+            hasMigrationPolicy = false;
+        } else if (cluster.getMigrationPolicyId() == null || cluster.getMigrationPolicyId().equals(NoMigrationPolicy.ID)) {
+            // explicitly selected the empty
+            hasMigrationPolicy = false;
+        }
+    }
+    getOverrideMigrationDowntime().setIsChangeable(!hasMigrationPolicy, constants.availableOnlyWithLegacyPolicy());
+    boolean overrideDowntime = Boolean.TRUE.equals(getOverrideMigrationDowntime().getEntity());
+    getMigrationDowntime().setIsChangeable(!hasMigrationPolicy && overrideDowntime, constants.availableOnlyWithLegacyPolicy());
+    getAutoConverge().setIsChangeable(!hasMigrationPolicy, constants.availableOnlyWithLegacyPolicy());
+    getMigrateCompressed().setIsChangeable(!hasMigrationPolicy, constants.availableOnlyWithLegacyPolicy());
+}
+#end_block
+
+#method_before
+private void addStyles() {
+    providerSearchFilterEditor.addContentWidgetContainerStyleName(style.searchFilter());
+}
+#method_after
+private void addStyles() {
+    providerSearchFilterEditor.addContentWidgetContainerStyleName(style.searchFilter());
+    providerSearchFilterEditor.hideLabel();
+}
+#end_block
+
+#method_before
+private void initEditors() {
+    publicKeyEditor = new StringEntityModelTextAreaLabelEditor();
+    // List boxes
+    clusterEditor = new GroupedListModelListBoxEditor<>(new GroupedListModelListBox<Cluster>(new NameRenderer<Cluster>()) {
+
+        @Override
+        public SortedMap<String, List<Cluster>> getGroupedList(List<Cluster> acceptableValues) {
+            SortedMap<String, List<Cluster>> result = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+            Collections.sort(acceptableValues, new DataCenterClusterComparator());
+            String currentDataCenter = null;
+            List<Cluster> currentClusterList = null;
+            for (Cluster cluster : acceptableValues) {
+                if (currentDataCenter == null || !currentDataCenter.equals(cluster.getStoragePoolName())) {
+                    currentClusterList = new ArrayList<>();
+                    currentDataCenter = cluster.getStoragePoolName();
+                    if (currentDataCenter != null) {
+                        result.put(currentDataCenter, currentClusterList);
+                    }
+                }
+                if (currentClusterList != null) {
+                    currentClusterList.add(cluster);
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public String getModelLabel(Cluster model) {
+            return model.getName();
+        }
+
+        @Override
+        public String getGroupLabel(Cluster model) {
+            return messages.hostDataCenter(model.getStoragePoolName());
+        }
+
+        public Comparator<Cluster> getComparator() {
+            return new DataCenterClusterComparator();
+        }
+
+        /**
+         * Comparator that sorts on data center name first, and then cluster name. Ignoring case.
+         */
+        final class DataCenterClusterComparator implements Comparator<Cluster> {
+
+            @Override
+            public int compare(Cluster cluster1, Cluster cluster2) {
+                if (cluster1.getStoragePoolName() != null && cluster2.getStoragePoolName() == null) {
+                    return -1;
+                } else if (cluster2.getStoragePoolName() != null && cluster1.getStoragePoolName() == null) {
+                    return 1;
+                } else if (cluster1.getStoragePoolName() == null && cluster2.getStoragePoolName() == null) {
+                    return 0;
+                }
+                if (cluster1.getStoragePoolName().equals(cluster2.getStoragePoolName())) {
+                    return cluster1.getName().compareToIgnoreCase(cluster2.getName());
+                } else {
+                    return cluster1.getStoragePoolName().compareToIgnoreCase(cluster2.getStoragePoolName());
+                }
+            }
+        }
+    });
+    externalHostNameEditor = new ListModelListBoxEditor<>(new NameRenderer<VDS>());
+    providersEditor = new ListModelListBoxEditor<>(new NameRenderer<Provider<OpenstackNetworkProviderProperties>>());
+    externalDiscoveredHostsEditor = getListModelTypeAheadListBoxEditor();
+    externalHostGroupsEditor = getListModelTypeAheadListBoxEditor();
+    externalComputeResourceEditor = getListModelTypeAheadListBoxEditor();
+    labelEditor = new ListModelMultipleSelectListBoxEditor<>(new NameRenderer<org.ovirt.engine.core.common.businessentities.Label>(), new VisibilityRenderer.SimpleVisibilityRenderer());
+    labelEditor.asListBox().setVisibleItemCount(VISIBLE_ITEM_COUNT);
+    // Check boxes
+    pmEnabledEditor = new EntityModelCheckBoxEditor(Align.RIGHT);
+    pmEnabledEditor.setUsePatternFly(true);
+    pmKdumpDetectionEditor = new EntityModelCheckBoxEditor(Align.RIGHT);
+    pmKdumpDetectionEditor.setUsePatternFly(true);
+    disableAutomaticPowerManagementEditor = new EntityModelCheckBoxEditor(Align.RIGHT);
+    disableAutomaticPowerManagementEditor.setUsePatternFly(true);
+    externalHostProviderEnabledEditor = new EntityModelCheckBoxEditor(Align.RIGHT);
+    overrideIpTablesEditor = new EntityModelCheckBoxEditor(Align.RIGHT);
+    protocolEditor = new EntityModelCheckBoxEditor(Align.RIGHT);
+    // $NON-NLS-1$
+    rbPassword = new RadioButton("1");
+    // $NON-NLS-1$
+    rbPublicKey = new RadioButton("1");
+    // $NON-NLS-1$
+    rbDiscoveredHost = new RadioButton("2");
+    // $NON-NLS-1$
+    rbProvisionedHost = new RadioButton("2");
+    kernelCmdlineIommu = new EntityModelCheckBoxEditor(Align.RIGHT);
+    kernelCmdlineKvmNested = new EntityModelCheckBoxEditor(Align.RIGHT);
+    kernelCmdlineUnsafeInterrupts = new EntityModelCheckBoxEditor(Align.RIGHT);
+    kernelCmdlinePciRealloc = new EntityModelCheckBoxEditor(Align.RIGHT);
+}
+#method_after
+private void initEditors() {
+    publicKeyEditor = new StringEntityModelTextAreaLabelEditor();
+    // List boxes
+    clusterEditor = new GroupedListModelListBoxEditor<>(new GroupedListModelListBox<Cluster>(new NameRenderer<Cluster>()) {
+
+        @Override
+        public SortedMap<String, List<Cluster>> getGroupedList(List<Cluster> acceptableValues) {
+            SortedMap<String, List<Cluster>> result = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+            Collections.sort(acceptableValues, new DataCenterClusterComparator());
+            String currentDataCenter = null;
+            List<Cluster> currentClusterList = null;
+            for (Cluster cluster : acceptableValues) {
+                if (currentDataCenter == null || !currentDataCenter.equals(cluster.getStoragePoolName())) {
+                    currentClusterList = new ArrayList<>();
+                    currentDataCenter = cluster.getStoragePoolName();
+                    if (currentDataCenter != null) {
+                        result.put(currentDataCenter, currentClusterList);
+                    }
+                }
+                if (currentClusterList != null) {
+                    currentClusterList.add(cluster);
+                }
+            }
+            return result;
+        }
+
+        @Override
+        public String getModelLabel(Cluster model) {
+            return model.getName();
+        }
+
+        @Override
+        public String getGroupLabel(Cluster model) {
+            return messages.hostDataCenter(model.getStoragePoolName());
+        }
+
+        public Comparator<Cluster> getComparator() {
+            return new DataCenterClusterComparator();
+        }
+
+        /**
+         * Comparator that sorts on data center name first, and then cluster name. Ignoring case.
+         */
+        final class DataCenterClusterComparator implements Comparator<Cluster> {
+
+            @Override
+            public int compare(Cluster cluster1, Cluster cluster2) {
+                if (cluster1.getStoragePoolName() != null && cluster2.getStoragePoolName() == null) {
+                    return -1;
+                } else if (cluster2.getStoragePoolName() != null && cluster1.getStoragePoolName() == null) {
+                    return 1;
+                } else if (cluster1.getStoragePoolName() == null && cluster2.getStoragePoolName() == null) {
+                    return 0;
+                }
+                if (cluster1.getStoragePoolName().equals(cluster2.getStoragePoolName())) {
+                    return cluster1.getName().compareToIgnoreCase(cluster2.getName());
+                } else {
+                    return cluster1.getStoragePoolName().compareToIgnoreCase(cluster2.getStoragePoolName());
+                }
+            }
+        }
+    });
+    externalHostNameEditor = new ListModelListBoxEditor<>(new NameRenderer<VDS>());
+    providersEditor = new ListModelListBoxEditor<>(new NameRenderer<Provider<OpenstackNetworkProviderProperties>>());
+    externalDiscoveredHostsEditor = getListModelTypeAheadListBoxEditor();
+    externalHostGroupsEditor = getListModelTypeAheadListBoxEditor();
+    externalComputeResourceEditor = getListModelTypeAheadListBoxEditor();
+    labelEditor = new ListModelMultipleSelectListBoxEditor<>(new NameRenderer<org.ovirt.engine.core.common.businessentities.Label>(), new VisibilityRenderer.SimpleVisibilityRenderer());
+    labelEditor.asListBox().setVisibleItemCount(VISIBLE_ITEM_COUNT);
+    // Check boxes
+    pmEnabledEditor = new EntityModelCheckBoxEditor(Align.RIGHT);
+    pmEnabledEditor.setUsePatternFly(true);
+    pmKdumpDetectionEditor = new EntityModelCheckBoxEditor(Align.RIGHT);
+    pmKdumpDetectionEditor.setUsePatternFly(true);
+    disableAutomaticPowerManagementEditor = new EntityModelCheckBoxEditor(Align.RIGHT);
+    disableAutomaticPowerManagementEditor.setUsePatternFly(true);
+    externalHostProviderEnabledEditor = new EntityModelCheckBoxEditor(Align.RIGHT);
+    overrideIpTablesEditor = new EntityModelCheckBoxEditor(Align.RIGHT);
+    protocolEditor = new EntityModelCheckBoxEditor(Align.RIGHT);
+    // $NON-NLS-1$
+    rbPassword = new RadioButton("1");
+    // $NON-NLS-1$
+    rbPublicKey = new RadioButton("1");
+    // $NON-NLS-1$
+    rbDiscoveredHost = new RadioButton("2");
+    // $NON-NLS-1$
+    rbProvisionedHost = new RadioButton("2");
+    kernelCmdlineIommu = new EntityModelCheckBoxEditor(Align.RIGHT);
+    kernelCmdlineKvmNested = new EntityModelCheckBoxEditor(Align.RIGHT);
+    kernelCmdlineUnsafeInterrupts = new EntityModelCheckBoxEditor(Align.RIGHT);
+    kernelCmdlinePciRealloc = new EntityModelCheckBoxEditor(Align.RIGHT);
+    hostedEngineDeployActionsEditor = new ListModelRadioGroupEditor<>(new EnumRenderer<HostedEngineDeployConfiguration.Action>());
+}
+#end_block
+
+#method_before
+void localize() {
+    // General tab
+    generalTab.setLabel(constants.hostPopupGeneralTabLabel());
+    clusterEditor.setLabel(constants.hostPopupClusterLabel());
+    nameEditor.setLabel(constants.hostPopupNameLabel());
+    userNameEditor.setLabel(constants.hostPopupUsernameLabel());
+    commentEditor.setLabel(constants.commentLabel());
+    labelEditor.setLabel(constants.affinityLabels());
+    hostAddressEditor.setLabel(constants.hostPopupHostAddressLabel());
+    authSshPortEditor.setLabel(constants.hostPopupPortLabel());
+    authLabel.setText(constants.hostPopupAuthLabel());
+    rootPasswordLabel.setText(constants.hostPopupAuthLabelForExternalHost());
+    rbPasswordLabel.setText(constants.hostPopupPasswordLabel());
+    rbPublicKeyLabel.setText(constants.hostPopupPublicKeyLabel());
+    fingerprintLabel.setText(constants.hostPopupHostFingerprintLabel());
+    overrideIpTablesEditor.setLabel(constants.hostPopupOverrideIpTablesLabel());
+    protocolEditor.setLabel(constants.hostPopupProtocolLabel());
+    externalHostProviderEnabledEditor.setLabel(constants.hostPopupEnableExternalHostProvider());
+    externalHostNameEditor.setLabel(constants.hostPopupExternalHostName());
+    providerSearchFilterLabel.setLabel(constants.hostPopupProviderSearchFilter());
+    publicKeyEditor.setTitle(constants.publicKeyUsage());
+    // Power Management tab
+    powerManagementTab.setLabel(constants.hostPopupPowerManagementTabLabel());
+    pmEnabledEditor.setLabel(constants.hostPopupPmEnabledLabel());
+    // Auto PM
+    disableAutomaticPowerManagementEditor.setLabel(constants.hostPopupPmDisableAutoPM());
+    pmKdumpDetectionEditor.setLabel(constants.hostPopupPmKdumpDetection());
+    // SPM tab
+    spmTab.setLabel(constants.spmTestButtonLabel());
+    consoleTab.setLabel(constants.consoleButtonLabel());
+    // Network Provider Tab
+    networkProviderTab.setLabel(constants.networkProviderButtonLabel());
+    externalDiscoveredHostsEditor.setLabel(constants.discoveredHostsLabel());
+    externalHostGroupsEditor.setLabel(constants.hostGroupsLabel());
+    externalComputeResourceEditor.setLabel(constants.computeResourceLabel());
+    hostedEngineTab.setLabel(constants.hostedEngineLabel());
+}
+#method_after
+void localize() {
+    // General tab
+    generalTab.setLabel(constants.hostPopupGeneralTabLabel());
+    clusterEditor.setLabel(constants.hostPopupClusterLabel());
+    nameEditor.setLabel(constants.hostPopupNameLabel());
+    userNameEditor.setLabel(constants.hostPopupUsernameLabel());
+    commentEditor.setLabel(constants.commentLabel());
+    labelEditor.setLabel(constants.affinityLabels());
+    hostAddressEditor.setLabel(constants.hostPopupHostAddressLabel());
+    authSshPortEditor.setLabel(constants.hostPopupPortLabel());
+    authLabel.setText(constants.hostPopupAuthLabel());
+    rootPasswordLabel.setText(constants.hostPopupAuthLabelForExternalHost());
+    rbPasswordLabel.setText(constants.hostPopupPasswordLabel());
+    rbPublicKeyLabel.setText(constants.hostPopupPublicKeyLabel());
+    fingerprintLabel.setText(constants.hostPopupHostFingerprintLabel());
+    overrideIpTablesEditor.setLabel(constants.hostPopupOverrideIpTablesLabel());
+    protocolEditor.setLabel(constants.hostPopupProtocolLabel());
+    externalHostProviderEnabledEditor.setLabel(constants.hostPopupEnableExternalHostProvider());
+    externalHostNameEditor.setLabel(constants.hostPopupExternalHostName());
+    publicKeyEditor.setTitle(constants.publicKeyUsage());
+    // Power Management tab
+    powerManagementTab.setLabel(constants.hostPopupPowerManagementTabLabel());
+    pmEnabledEditor.setLabel(constants.hostPopupPmEnabledLabel());
+    // Auto PM
+    disableAutomaticPowerManagementEditor.setLabel(constants.hostPopupPmDisableAutoPM());
+    pmKdumpDetectionEditor.setLabel(constants.hostPopupPmKdumpDetection());
+    // SPM tab
+    spmTab.setLabel(constants.spmTestButtonLabel());
+    consoleTab.setLabel(constants.consoleButtonLabel());
+    // Network Provider Tab
+    networkProviderTab.setLabel(constants.networkProviderButtonLabel());
+    externalDiscoveredHostsEditor.setLabel(constants.discoveredHostsLabel());
+    externalHostGroupsEditor.setLabel(constants.hostGroupsLabel());
+    externalComputeResourceEditor.setLabel(constants.computeResourceLabel());
+    hostedEngineTab.setLabel(constants.hostedEngineLabel());
+}
+#end_block
+
+#method_before
+@Override
+public void edit(final HostModel object) {
+    driver.edit(object);
+    setTabIndexes(0);
+    object.getFetchResult().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            String fetchResultText = object.getFetchResult().getEntity();
+            if (ConstantsManager.getInstance().getConstants().errorLoadingFingerprint().equals(fetchResultText)) {
+                fetchResult.addStyleName(style.fetchResultErrorLabel());
+            } else {
+                fetchResult.removeStyleName(style.fetchResultErrorLabel());
+            }
+            fetchResult.setText(fetchResultText);
+        }
+    });
+    object.getPkSection().getPropertyChangedEvent().addListener(new IEventListener<PropertyChangedEventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends PropertyChangedEventArgs> ev, Object sender, PropertyChangedEventArgs args) {
+            if ("IsAvailable".equals(args.propertyName)) {
+                // $NON-NLS-1$
+                setPkPasswordSectionVisiblity(false);
+            }
+        }
+    });
+    object.getProviders().getSelectedItemChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            object.updateHosts();
+        }
+    });
+    object.getExternalHostProviderEnabled().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            boolean showForemanProviders = object.getExternalHostProviderEnabled().getEntity();
+            boolean doProvisioning = object.externalProvisionEnabled();
+            providersEditor.setVisible(showForemanProviders);
+            // showing or hiding radio buttons
+            provisionedHostSection.setVisible(showForemanProviders && doProvisioning);
+            discoveredHostSection.setVisible(showForemanProviders && doProvisioning);
+            // disabling ip and name textbox when using provisioned hosts
+            hostAddressEditor.setEnabled(!showForemanProviders && doProvisioning);
+            if (showForemanProviders && doProvisioning) {
+                object.updateHosts();
+                object.getIsDiscoveredHosts().setEntity(true);
+            } else {
+                if (doProvisioning) {
+                    object.cleanHostParametersFields();
+                }
+                hideProviderWidgets(object);
+                object.getIsDiscoveredHosts().setEntity(null);
+            }
+        }
+    });
+    object.getIsDiscoveredHosts().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            if (object.getIsDiscoveredHosts().getEntity() != null) {
+                if (object.getIsDiscoveredHosts().getEntity()) {
+                    rbDiscoveredHost.setValue(true);
+                    showDiscoveredHostsWidgets(true);
+                } else if (!object.getIsDiscoveredHosts().getEntity()) {
+                    rbProvisionedHost.setValue(true);
+                    showProvisionedHostsWidgets(true);
+                }
+            }
+        }
+    });
+    nameEditor.asValueBox().addKeyDownHandler(new KeyDownHandler() {
+
+        @Override
+        public void onKeyDown(KeyDownEvent event) {
+            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+
+                @Override
+                public void execute() {
+                    if (object.getExternalHostProviderEnabled().getEntity() && Boolean.TRUE.equals(object.getIsDiscoveredHosts().getEntity())) {
+                        ExternalHostGroup dhg = (ExternalHostGroup) object.getExternalHostGroups().getSelectedItem();
+                        if (dhg != null) {
+                            String base = nameEditor.asEditor().getSubEditor().getValue();
+                            if (base == null) {
+                                base = constants.empty();
+                            }
+                            String generatedHostName = // $NON-NLS-1$
+                            base + "." + (dhg.getDomainName() != null ? dhg.getDomainName() : constants.empty());
+                            object.getHost().setEntity(generatedHostName);
+                        }
+                    }
+                }
+            });
+        }
+    });
+    rbPassword.setValue(true);
+    rbPassword.setFocus(true);
+    displayPassPkWindow(true);
+    fetchSshFingerprint.hideLabel();
+    object.setAuthenticationMethod(AuthenticationMethod.Password);
+    rbPassword.addFocusHandler(new FocusHandler() {
+
+        @Override
+        public void onFocus(FocusEvent event) {
+            object.setAuthenticationMethod(AuthenticationMethod.Password);
+            displayPassPkWindow(true);
+        }
+    });
+    rbPublicKey.addFocusHandler(new FocusHandler() {
+
+        @Override
+        public void onFocus(FocusEvent event) {
+            object.setAuthenticationMethod(AuthenticationMethod.PublicKey);
+            displayPassPkWindow(false);
+        }
+    });
+    updateHostsButton.setResource(resources.searchButtonImage());
+    // Create SPM related controls.
+    IEventListener<EventArgs> spmListener = new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            createSpmControls(object);
+        }
+    };
+    object.getSpmPriority().getItemsChangedEvent().addListener(spmListener);
+    object.getSpmPriority().getSelectedItemChangedEvent().addListener(spmListener);
+    createSpmControls(object);
+    initExternalHostProviderWidgets(object.showExternalProviderPanel());
+    // TODO: remove setIsChangeable when configured ssh username is enabled
+    userNameEditor.setEnabled(false);
+    networkProviderTab.setVisible(object.showNetworkProviderTab());
+    networkProviderWidget.edit(object.getNetworkProviderModel());
+    this.fenceAgentsEditor.edit(object.getFenceAgentListModel());
+    this.proxySourceEditor.edit(object.getPmProxyPreferencesList());
+    addTextAndLinkAlert(fetchPanel, constants.fetchingHostFingerprint(), object.getSSHFingerPrint());
+    // don't show the hosted engine deployment tab on edit. It's only meant for installation.
+    hostedEngineTab.setVisible(object.getIsNew());
+    nameEditor.setFocus(true);
+}
+#method_after
+@Override
+public void edit(final HostModel object) {
+    driver.edit(object);
+    setTabIndexes(0);
+    object.getFetchResult().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            String fetchResultText = object.getFetchResult().getEntity();
+            if (ConstantsManager.getInstance().getConstants().errorLoadingFingerprint().equals(fetchResultText)) {
+                fetchResult.addStyleName(style.fetchResultErrorLabel());
+            } else {
+                fetchResult.removeStyleName(style.fetchResultErrorLabel());
+            }
+            fetchResult.setText(fetchResultText);
+        }
+    });
+    object.getPkSection().getPropertyChangedEvent().addListener(new IEventListener<PropertyChangedEventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends PropertyChangedEventArgs> ev, Object sender, PropertyChangedEventArgs args) {
+            if ("IsAvailable".equals(args.propertyName)) {
+                // $NON-NLS-1$
+                setPkPasswordSectionVisiblity(false);
+            }
+        }
+    });
+    object.getProviders().getSelectedItemChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            object.updateHosts();
+        }
+    });
+    object.getExternalHostProviderEnabled().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            boolean showForemanProviders = object.getExternalHostProviderEnabled().getEntity();
+            boolean doProvisioning = object.externalProvisionEnabled();
+            providersEditor.setVisible(showForemanProviders);
+            // showing or hiding radio buttons
+            provisionedHostSection.setVisible(showForemanProviders && doProvisioning);
+            discoveredHostSection.setVisible(showForemanProviders && doProvisioning);
+            // disabling ip and name textbox when using provisioned hosts
+            hostAddressEditor.setEnabled(!(showForemanProviders && doProvisioning));
+            if (showForemanProviders && doProvisioning) {
+                object.updateHosts();
+                object.getIsDiscoveredHosts().setEntity(true);
+            } else {
+                if (doProvisioning) {
+                    object.cleanHostParametersFields();
+                }
+                hideProviderWidgets(object);
+                object.getIsDiscoveredHosts().setEntity(null);
+            }
+        }
+    });
+    object.getIsDiscoveredHosts().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            if (object.getIsDiscoveredHosts().getEntity() != null) {
+                if (object.getIsDiscoveredHosts().getEntity()) {
+                    rbDiscoveredHost.setValue(true);
+                    showDiscoveredHostsWidgets(true);
+                } else if (!object.getIsDiscoveredHosts().getEntity()) {
+                    rbProvisionedHost.setValue(true);
+                    showProvisionedHostsWidgets(true);
+                }
+            }
+        }
+    });
+    nameEditor.asValueBox().addKeyDownHandler(new KeyDownHandler() {
+
+        @Override
+        public void onKeyDown(KeyDownEvent event) {
+            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+
+                @Override
+                public void execute() {
+                    if (object.getExternalHostProviderEnabled().getEntity() && Boolean.TRUE.equals(object.getIsDiscoveredHosts().getEntity())) {
+                        ExternalHostGroup dhg = (ExternalHostGroup) object.getExternalHostGroups().getSelectedItem();
+                        if (dhg != null) {
+                            String base = nameEditor.asEditor().getSubEditor().getValue();
+                            if (base == null) {
+                                base = constants.empty();
+                            }
+                            String generatedHostName = // $NON-NLS-1$
+                            base + "." + (dhg.getDomainName() != null ? dhg.getDomainName() : constants.empty());
+                            object.getHost().setEntity(generatedHostName);
+                        }
+                    }
+                }
+            });
+        }
+    });
+    rbPassword.setValue(true);
+    rbPassword.setFocus(true);
+    displayPassPkWindow(true);
+    fetchSshFingerprint.hideLabel();
+    object.setAuthenticationMethod(AuthenticationMethod.Password);
+    rbPassword.addFocusHandler(new FocusHandler() {
+
+        @Override
+        public void onFocus(FocusEvent event) {
+            object.setAuthenticationMethod(AuthenticationMethod.Password);
+            displayPassPkWindow(true);
+        }
+    });
+    rbPublicKey.addFocusHandler(new FocusHandler() {
+
+        @Override
+        public void onFocus(FocusEvent event) {
+            object.setAuthenticationMethod(AuthenticationMethod.PublicKey);
+            displayPassPkWindow(false);
+        }
+    });
+    updateHostsButton.setResource(resources.searchButtonImage());
+    // Create SPM related controls.
+    IEventListener<EventArgs> spmListener = new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            createSpmControls(object);
+        }
+    };
+    object.getSpmPriority().getItemsChangedEvent().addListener(spmListener);
+    object.getSpmPriority().getSelectedItemChangedEvent().addListener(spmListener);
+    createSpmControls(object);
+    initExternalHostProviderWidgets(object.showExternalProviderPanel());
+    // TODO: remove setIsChangeable when configured ssh username is enabled
+    userNameEditor.setEnabled(false);
+    networkProviderTab.setVisible(object.showNetworkProviderTab());
+    networkProviderWidget.edit(object.getNetworkProviderModel());
+    this.fenceAgentsEditor.edit(object.getFenceAgentListModel());
+    this.proxySourceEditor.edit(object.getPmProxyPreferencesList());
+    addTextAndLinkAlert(fetchPanel, constants.fetchingHostFingerprint(), object.getSSHFingerPrint());
+    // don't show the hosted engine deployment tab on edit. It's only meant for installation.
+    hostedEngineTab.setVisible(object.getIsNew());
+    providerSearchFilterLabel.setText(constants.hostPopupProviderSearchFilter());
+    nameEditor.setFocus(true);
+}
+#end_block
+
+#method_before
+private void hideProviderWidgets(final HostModel object) {
+    rbProvisionedHost.setValue(false);
+    rbDiscoveredHost.setValue(false);
+    usualFormToDiscover(false);
+    showExternalDiscoveredHost(false);
+    setHostProviderVisibility(false);
+    object.getIsDiscoveredHosts().setEntity(null);
+}
+#method_after
+private void hideProviderWidgets(final HostModel object) {
+    rbProvisionedHost.setValue(false);
+    rbDiscoveredHost.setValue(false);
+    usualFormToDiscover(false);
+    showExternalDiscoveredHost(false);
+    setHostProviderVisibility(false);
+}
+#end_block
+
+#method_before
+private void createSpmControls(final HostModel object) {
+    spmContainer.clear();
+    Iterable<?> items = object.getSpmPriority().getItems();
+    if (items == null) {
+        return;
+    }
+    int i = 0;
+    // Recreate SPM related controls.
+    for (Object item : items) {
+        @SuppressWarnings("unchecked")
+        final EntityModel<Integer> model = (EntityModel<Integer>) item;
+        // $//$NON-NLS-1$
+        RadioButton rb = new RadioButton("spm");
+        rb.setText(model.getTitle());
+        Element labelElement = (Element) rb.getElement().getChild(1);
+        labelElement.addClassName(style.patternFlyRadio());
+        rb.setValue(object.getSpmPriority().getSelectedItem() == model);
+        rb.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> e) {
+                object.getSpmPriority().setSelectedItem(model);
+            }
+        });
+        Row row = new Row();
+        if (i == 0) {
+            row.addStyleName(style.topElement());
+        }
+        Column column = new Column(ColumnSize.LG_12, rb);
+        row.add(column);
+        spmContainer.add(row);
+        i++;
+    }
+}
+#method_after
+private void createSpmControls(final HostModel object) {
+    Row labelRow = (Row) spmContainer.getWidget(0);
+    spmContainer.clear();
+    spmContainer.add(labelRow);
+    Iterable<?> items = object.getSpmPriority().getItems();
+    if (items == null) {
+        return;
+    }
+    int i = 0;
+    // Recreate SPM related controls.
+    for (Object item : items) {
+        @SuppressWarnings("unchecked")
+        final EntityModel<Integer> model = (EntityModel<Integer>) item;
+        // $//$NON-NLS-1$
+        RadioButton rb = new RadioButton("spm");
+        rb.setText(model.getTitle());
+        Element labelElement = (Element) rb.getElement().getChild(1);
+        labelElement.addClassName(style.patternFlyRadio());
+        rb.setValue(object.getSpmPriority().getSelectedItem() == model);
+        rb.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> e) {
+                object.getSpmPriority().setSelectedItem(model);
+            }
+        });
+        Row row = new Row();
+        Column column = new Column(ColumnSize.LG_12, rb);
+        row.add(column);
+        spmContainer.add(row);
+        i++;
+    }
+}
+#end_block
+
+#method_before
+@Override
+public int setTabIndexes(int nextTabIndex) {
+    // ==General Tab==
+    clusterEditor.setTabIndex(nextTabIndex++);
+    externalHostProviderEnabledEditor.setTabIndex(nextTabIndex++);
+    providersEditor.setTabIndex(nextTabIndex++);
+    rbProvisionedHost.setTabIndex(nextTabIndex++);
+    rbDiscoveredHost.setTabIndex(nextTabIndex++);
+    externalDiscoveredHostsEditor.setTabIndex(nextTabIndex++);
+    externalHostGroupsEditor.setTabIndex(nextTabIndex++);
+    externalComputeResourceEditor.setTabIndex(nextTabIndex++);
+    providerSearchFilterLabel.setTabIndex(nextTabIndex++);
+    nameEditor.setTabIndex(nextTabIndex++);
+    commentEditor.setTabIndex(nextTabIndex++);
+    hostAddressEditor.setTabIndex(nextTabIndex++);
+    authSshPortEditor.setTabIndex(nextTabIndex++);
+    userNameEditor.setTabIndex(nextTabIndex++);
+    rbPassword.setTabIndex(nextTabIndex++);
+    passwordEditor.setTabIndex(nextTabIndex++);
+    return nextTabIndex;
+}
+#method_after
+@Override
+public int setTabIndexes(int nextTabIndex) {
+    // ==General Tab==
+    clusterEditor.setTabIndex(nextTabIndex++);
+    externalHostProviderEnabledEditor.setTabIndex(nextTabIndex++);
+    providersEditor.setTabIndex(nextTabIndex++);
+    rbProvisionedHost.setTabIndex(nextTabIndex++);
+    rbDiscoveredHost.setTabIndex(nextTabIndex++);
+    externalDiscoveredHostsEditor.setTabIndex(nextTabIndex++);
+    externalHostGroupsEditor.setTabIndex(nextTabIndex++);
+    externalComputeResourceEditor.setTabIndex(nextTabIndex++);
+    nameEditor.setTabIndex(nextTabIndex++);
+    commentEditor.setTabIndex(nextTabIndex++);
+    hostAddressEditor.setTabIndex(nextTabIndex++);
+    authSshPortEditor.setTabIndex(nextTabIndex++);
+    userNameEditor.setTabIndex(nextTabIndex++);
+    rbPassword.setTabIndex(nextTabIndex++);
+    passwordEditor.setTabIndex(nextTabIndex++);
+    return nextTabIndex;
+}
+#end_block
+
+#method_before
+private void updateExternalHostModels(final Guid selected) {
+    AsyncQuery getProvidersQuery = new AsyncQuery();
+    getProvidersQuery.asyncCallback = new INewAsyncCallback() {
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void onSuccess(Object model, Object result) {
+            List<Provider<OpenstackNetworkProviderProperties>> providers = (List<Provider<OpenstackNetworkProviderProperties>>) result;
+            ListModel<Provider<OpenstackNetworkProviderProperties>> providersListModel = getProviders();
+            if (selected != null) {
+                for (Provider<OpenstackNetworkProviderProperties> provider : providers) {
+                    if (provider.getId().equals(selected)) {
+                        providersListModel.setItems(providers, provider);
+                        getExternalHostProviderEnabled().setEntity(true);
+                        break;
+                    }
+                }
+            }
+            if (providersListModel.getItems() == null || providersListModel.getItems().isEmpty() || providersListModel.getSelectedItem() == null) {
+                providersListModel.setItems(providers, Linq.firstOrNull(providers));
+            }
+            providersListModel.setIsChangeable(true);
+            getIsDiscoveredHosts().setEntity(null);
+        }
+    };
+    AsyncDataProvider.getInstance().getAllProvidersByType(getProvidersQuery, ProviderType.FOREMAN);
+}
+#method_after
+private void updateExternalHostModels(final Guid selected) {
+    AsyncQuery getProvidersQuery = new AsyncQuery();
+    getProvidersQuery.asyncCallback = new INewAsyncCallback() {
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void onSuccess(Object model, Object result) {
+            List<Provider<OpenstackNetworkProviderProperties>> providers = (List<Provider<OpenstackNetworkProviderProperties>>) result;
+            ListModel<Provider<OpenstackNetworkProviderProperties>> providersListModel = getProviders();
+            if (selected != null) {
+                for (Provider<OpenstackNetworkProviderProperties> provider : providers) {
+                    if (provider.getId().equals(selected)) {
+                        providersListModel.setItems(providers, provider);
+                        getExternalHostProviderEnabled().setEntity(true);
+                        break;
+                    }
+                }
+            }
+            if (providersListModel.getItems() == null || providersListModel.getItems().isEmpty() || providersListModel.getSelectedItem() == null) {
+                providersListModel.setItems(providers, Linq.firstOrNull(providers));
+            }
+            providersListModel.setIsChangeable(true);
+            if (!externalProvisionEnabled()) {
+                getIsDiscoveredHosts().setEntity(null);
+            }
+        }
+    };
+    AsyncDataProvider.getInstance().getAllProvidersByType(getProvidersQuery, ProviderType.FOREMAN);
+}
+#end_block
+

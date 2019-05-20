@@ -1,0 +1,2542 @@
+49
+#method_before
+@POST
+@Timed
+@Consumes(MediaType.APPLICATION_JSON)
+public void create(@Context UriInfo uriInfo, @HeaderParam("X-Tenant-Id") String tenantId, @HeaderParam("X-Roles") String roles, @QueryParam("tenant_id") String crossTenantId, @Valid CreateMetricCommand[] commands) {
+    boolean isDelegate = !Strings.isNullOrEmpty(roles) && COMMA_SPLITTER.splitToList(roles).contains(monitoring_delegate_role);
+    boolean isAdmin = !Strings.isNullOrEmpty(roles) && COMMA_SPLITTER.splitToList(roles).contains(admin_role);
+    List<Metric> metrics = new ArrayList<>(commands.length);
+    for (CreateMetricCommand command : commands) {
+        if (!isDelegate) {
+            if (command.dimensions != null) {
+                String service = command.dimensions.get(Services.SERVICE_DIMENSION);
+                if (service != null && Services.isReserved(service)) {
+                    throw Exceptions.forbidden("Project %s cannot POST metrics for the hpcs service", tenantId);
+                }
+            }
+            if (Validation.isCrossProjectRequest(crossTenantId, tenantId)) {
+                throw Exceptions.forbidden("Project %s cannot POST cross tenant metrics", tenantId);
+            }
+        }
+        if (isAdmin) {
+            command.validate(false);
+        } else {
+            command.validate(true);
+        }
+        metrics.add(command.toMetric());
+    }
+    service.create(metrics, tenantId, crossTenantId);
+}
+#method_after
+@POST
+@Timed
+@Consumes(MediaType.APPLICATION_JSON)
+public void create(@Context UriInfo uriInfo, @HeaderParam("X-Tenant-Id") String tenantId, @HeaderParam("X-Roles") String roles, @QueryParam("tenant_id") String crossTenantId, @Valid CreateMetricCommand[] commands) {
+    boolean isDelegate = !Strings.isNullOrEmpty(roles) && COMMA_SPLITTER.splitToList(roles).contains(monitoring_delegate_role);
+    boolean isAdmin = !Strings.isNullOrEmpty(roles) && COMMA_SPLITTER.splitToList(roles).contains(admin_role);
+    List<Metric> metrics = new ArrayList<>(commands.length);
+    for (CreateMetricCommand command : commands) {
+        if (!isDelegate) {
+            if (command.dimensions != null) {
+                String service = command.dimensions.get(Services.SERVICE_DIMENSION);
+                if (service != null && Services.isReserved(service)) {
+                    throw Exceptions.forbidden("Project %s cannot POST metrics for the hpcs service", tenantId);
+                }
+            }
+            if (Validation.isCrossProjectRequest(crossTenantId, tenantId)) {
+                throw Exceptions.forbidden("Project %s cannot POST cross tenant metrics", tenantId);
+            }
+        }
+        command.validate(!isAdmin);
+        metrics.add(command.toMetric());
+    }
+    service.create(metrics, tenantId, crossTenantId);
+}
+#end_block
+
+#method_before
+@Override
+public List<Statistics> find(String tenantId, String name, Map<String, String> dimensions, DateTime startTime, @Nullable DateTime endTime, List<String> statistics, int period, String offset, int limit, Boolean mergeMetricsFlag, List<String> groupBy) throws Exception {
+    String offsetTimePart = "";
+    if (!Strings.isNullOrEmpty(offset)) {
+        int indexOfUnderscore = offset.indexOf('_');
+        if (indexOfUnderscore > -1) {
+            offsetTimePart = offset.substring(indexOfUnderscore + 1);
+            // Add the period to the offset to ensure only the next group of points are returned
+            DateTime offsetDateTime = DateTime.parse(offsetTimePart).plusSeconds(period);
+            // leave out any ID, as influx doesn't understand it
+            offset = offsetDateTime.toString();
+        }
+    }
+    String q = buildQuery(tenantId, name, dimensions, startTime, endTime, statistics, period, offset, limit, mergeMetricsFlag, groupBy);
+    String r = this.influxV9RepoReader.read(q);
+    Series series = this.objectMapper.readValue(r, Series.class);
+    List<Statistics> statisticsList = statisticslist(series, offset, limit);
+    logger.debug("Found {} metric definitions matching query", statisticsList.size());
+    return statisticsList;
+}
+#method_after
+@Override
+public List<Statistics> find(String tenantId, String name, Map<String, String> dimensions, DateTime startTime, @Nullable DateTime endTime, List<String> statistics, int period, String offset, int limit, Boolean mergeMetricsFlag, List<String> groupBy) throws Exception {
+    String offsetTimePart = "";
+    if (!Strings.isNullOrEmpty(offset)) {
+        int indexOfUnderscore = offset.indexOf('_');
+        if (indexOfUnderscore > -1) {
+            offsetTimePart = offset.substring(indexOfUnderscore + 1);
+            // Add the period minus one millisecond to the offset
+            // to ensure only the next group of points are returned
+            DateTime offsetDateTime = DateTime.parse(offsetTimePart).plusSeconds(period).minusMillis(1);
+            // leave out any ID, as influx doesn't understand it
+            offset = offsetDateTime.toString();
+        }
+    }
+    String q = buildQuery(tenantId, name, dimensions, startTime, endTime, statistics, period, offset, limit, mergeMetricsFlag, groupBy);
+    String r = this.influxV9RepoReader.read(q);
+    Series series = this.objectMapper.readValue(r, Series.class);
+    List<Statistics> statisticsList = statisticslist(series, offset, limit);
+    logger.debug("Found {} metric definitions matching query", statisticsList.size());
+    return statisticsList;
+}
+#end_block
+
+#method_before
+private List<Statistics> statisticslist(Series series, String offsetStr, int limit) {
+    int offsetId = 0;
+    String offsetTimestamp = "1970-01-01T00:00:00.000Z";
+    if (offsetStr != null) {
+        List<String> offsets = influxV9Utils.parseMultiOffset(offsetStr);
+        if (offsets.size() > 1) {
+            offsetId = Integer.parseInt(offsets.get(0));
+            offsetTimestamp = offsets.get(1);
+        } else {
+            offsetId = 0;
+            offsetTimestamp = offsets.get(0);
+        }
+    }
+    List<Statistics> statisticsList = new LinkedList<>();
+    if (!series.isEmpty()) {
+        int remaining_limit = limit;
+        int index = 0;
+        for (Serie serie : series.getSeries()) {
+            if (index < offsetId || remaining_limit <= 0) {
+                index++;
+                continue;
+            }
+            Statistics statistics = new Statistics(serie.getName(), this.influxV9Utils.filterPrivateTags(serie.getTags()), Arrays.asList(translateNames(serie.getColumns())));
+            statistics.setId(Integer.toString(index));
+            for (Object[] valueObjects : serie.getValues()) {
+                if (remaining_limit <= 0) {
+                    break;
+                }
+                List<Object> values = buildValsList(valueObjects);
+                if (((String) values.get(0)).compareTo(offsetTimestamp) >= 0 || index > offsetId) {
+                    statistics.addMeasurement(values);
+                    remaining_limit--;
+                }
+            }
+            if (statistics.getMeasurements().size() > 0) {
+                statisticsList.add(statistics);
+            }
+            index++;
+        }
+    }
+    return statisticsList;
+}
+#method_after
+private List<Statistics> statisticslist(Series series, String offsetStr, int limit) {
+    int offsetId = 0;
+    String offsetTimestamp = "1970-01-01T00:00:00.000Z";
+    if (offsetStr != null) {
+        List<String> offsets = influxV9Utils.parseMultiOffset(offsetStr);
+        if (offsets.size() > 1) {
+            offsetId = Integer.parseInt(offsets.get(0));
+            offsetTimestamp = offsets.get(1);
+        } else {
+            offsetId = 0;
+            offsetTimestamp = offsets.get(0);
+        }
+    }
+    List<Statistics> statisticsList = new LinkedList<>();
+    if (!series.isEmpty()) {
+        int remaining_limit = limit;
+        int index = 0;
+        for (Serie serie : series.getSeries()) {
+            if (index < offsetId || remaining_limit <= 0) {
+                index++;
+                continue;
+            }
+            Statistics statistics = new Statistics(serie.getName(), this.influxV9Utils.filterPrivateTags(serie.getTags()), Arrays.asList(translateNames(serie.getColumns())));
+            statistics.setId(Integer.toString(index));
+            for (Object[] valueObjects : serie.getValues()) {
+                if (remaining_limit <= 0) {
+                    break;
+                }
+                List<Object> values = buildValsList(valueObjects);
+                if (values == null)
+                    continue;
+                if (((String) values.get(0)).compareTo(offsetTimestamp) >= 0 || index > offsetId) {
+                    statistics.addMeasurement(values);
+                    remaining_limit--;
+                }
+            }
+            if (statistics.getMeasurements().size() > 0) {
+                statisticsList.add(statistics);
+            }
+            index++;
+        }
+    }
+    return statisticsList;
+}
+#end_block
+
+#method_before
+private List<Object> buildValsList(Object[] values) {
+    ArrayList<Object> valObjArryList = new ArrayList<>();
+    // First value is the timestamp.
+    String timestamp = values[0].toString();
+    int index = timestamp.indexOf('.');
+    if (index > 0)
+        // In certain queries, timestamps will not align to second resolution,
+        // remove the sub-second values.
+        valObjArryList.add(timestamp.substring(0, index).concat("Z"));
+    else
+        valObjArryList.add(timestamp);
+    // All other values are doubles.
+    for (int i = 1; i < values.length; ++i) {
+        valObjArryList.add(Double.parseDouble((String) values[i]));
+    }
+    return valObjArryList;
+}
+#method_after
+private List<Object> buildValsList(Object[] values) {
+    ArrayList<Object> valObjArryList = new ArrayList<>();
+    // First value is the timestamp.
+    String timestamp = values[0].toString();
+    int index = timestamp.indexOf('.');
+    if (index > 0)
+        // In certain queries, timestamps will not align to second resolution,
+        // remove the sub-second values.
+        valObjArryList.add(timestamp.substring(0, index).concat("Z"));
+    else
+        valObjArryList.add(timestamp);
+    // All other values are doubles or nulls.
+    for (int i = 1; i < values.length; ++i) {
+        if (values[i] != null) {
+            valObjArryList.add(Double.parseDouble((String) values[i]));
+        } else {
+            return null;
+        }
+    }
+    return valObjArryList;
+}
+#end_block
+
+#method_before
+public String periodPartWithGroupBy(int period, List<String> groupBy) {
+    if (period <= 0) {
+        period = 300;
+    }
+    String periodStr = ",time(" + period + "s) fill(0)";
+    return String.format(" group by %1$s%2$s", COMMA_JOINER.join(groupBy), periodStr);
+}
+#method_after
+public String periodPartWithGroupBy(int period, List<String> groupBy) {
+    if (period <= 0) {
+        period = 300;
+    }
+    String periodStr = ",time(" + period + "s)";
+    return String.format(" group by %1$s%2$s", COMMA_JOINER.join(groupBy), periodStr);
+}
+#end_block
+
+#method_before
+public String periodPart(int period, Boolean mergeMetricsFlag) {
+    String periodStr = period > 0 ? String.format(" group by time(%1$ds)", period) : " group by time(300s)";
+    periodStr += mergeMetricsFlag ? " fill(0) " : ", * fill(0) ";
+    return periodStr;
+}
+#method_after
+public String periodPart(int period, Boolean mergeMetricsFlag) {
+    String periodStr = period > 0 ? String.format(" group by time(%1$ds)", period) : " group by time(300s)";
+    periodStr += mergeMetricsFlag ? "" : ", *";
+    return periodStr;
+}
+#end_block
+
+#method_before
+static String buildMetricDefinitionSubSql(String name, Map<String, String> dimensions, DateTime startTime, DateTime endTime) {
+    String namePart = "";
+    if (name != null && !name.isEmpty()) {
+        namePart = "AND defSub.name = :name ";
+    }
+    return String.format(METRIC_DEF_SUB_SQL, namePart, buildDimensionAndClause(dimensions, TABLE_TO_JOIN_ON), buildTimeAndClause(startTime, endTime, TABLE_TO_JOIN_ON));
+}
+#method_after
+static String buildMetricDefinitionSubSql(String name, Map<String, String> dimensions, DateTime startTime, DateTime endTime) {
+    String namePart = "";
+    if (name != null && !name.isEmpty()) {
+        namePart = "AND defSub.name = :name ";
+    }
+    return String.format(METRIC_DEF_SUB_SQL, buildTimeJoin(startTime), namePart, buildDimensionAndClause(dimensions, TABLE_TO_JOIN_ON), buildTimeAndClause(startTime, endTime));
+}
+#end_block
+
+#method_before
+static String buildTimeAndClause(DateTime startTime, DateTime endTime, String tableToJoin) {
+    if (startTime == null) {
+        return "";
+    }
+    StringBuilder timeAndClause = new StringBuilder();
+    timeAndClause.append("AND ").append(tableToJoin).append(".id IN (");
+    timeAndClause.append(MEASUREMENT_AND_CLAUSE);
+    if (endTime != null) {
+        timeAndClause.append("AND time_stamp <= :endTime ");
+    }
+    timeAndClause.append(")");
+    return timeAndClause.toString();
+}
+#method_after
+static String buildTimeAndClause(DateTime startTime, DateTime endTime) {
+    if (startTime == null) {
+        return "";
+    }
+    StringBuilder timeAndClause = new StringBuilder();
+    timeAndClause.append(MEASUREMENT_AND_CLAUSE);
+    if (endTime != null) {
+        timeAndClause.append("AND time_stamp <= :endTime ");
+    }
+    return timeAndClause.toString();
+}
+#end_block
+
+#method_before
+static void checkForMultipleDefinitions(Handle h, String tenantId, String name, Map<String, String> dimensions) throws MultipleMetricsException {
+    String namePart = "";
+    if (name != null && !name.isEmpty()) {
+        namePart = "AND name = :name ";
+    }
+    String sql = String.format(METRIC_DEF_SUB_SQL, namePart, buildDimensionAndClause(dimensions, TABLE_TO_JOIN_ON), "") + " limit 2";
+    Query<Map<String, Object>> query = h.createQuery(sql);
+    query.bind("tenantId", tenantId);
+    if (name != null) {
+        query.bind("name", name);
+    }
+    bindDimensionsToQuery(query, dimensions);
+    List<Map<String, Object>> rows = query.list();
+    if (rows.size() > 1) {
+        throw new MultipleMetricsException(name, dimensions);
+    }
+}
+#method_after
+static void checkForMultipleDefinitions(Handle h, String tenantId, String name, Map<String, String> dimensions) throws MultipleMetricsException {
+    String namePart = "";
+    if (name != null && !name.isEmpty()) {
+        namePart = "AND name = :name ";
+    }
+    String sql = String.format(METRIC_DEF_SUB_SQL, "", namePart, buildDimensionAndClause(dimensions, TABLE_TO_JOIN_ON), "") + " limit 2";
+    Query<Map<String, Object>> query = h.createQuery(sql);
+    query.bind("tenantId", tenantId);
+    if (name != null) {
+        query.bind("name", name);
+    }
+    bindDimensionsToQuery(query, dimensions);
+    List<Map<String, Object>> rows = query.list();
+    if (rows.size() > 1) {
+        throw new MultipleMetricsException(name, dimensions);
+    }
+}
+#end_block
+
+#method_before
+@Override
+public List<MetricName> findNames(String tenantId, Map<String, String> dimensions, String offset, int limit) throws Exception {
+    int startIndex = this.influxV9Utils.startIndex(offset);
+    String q = String.format("show measurements " + "where %1$s %2$s %3$s %4$s %5$s", this.influxV9Utils.privateTenantIdPart(tenantId), this.influxV9Utils.privateRegionPart(this.region), this.influxV9Utils.dimPart(dimensions), this.influxV9Utils.limitPart(limit), this.influxV9Utils.offsetPart(startIndex));
+    logger.debug("Metric name query: {}", q);
+    String r = this.influxV9RepoReader.read(q);
+    Series series = this.objectMapper.readValue(r, Series.class);
+    List<MetricName> metricNameList = metricNameList(series, startIndex);
+    logger.debug("Found {} metric definitions matching query", metricNameList.size());
+    return metricNameList;
+}
+#method_after
+@Override
+public List<MetricName> findNames(String tenantId, Map<String, String> dimensions, String offset, int limit) throws Exception {
+    // 
+    // Use treeset to keep list in alphabetic/predictable order
+    // for string based offset.
+    // 
+    List<MetricName> metricNameList = new ArrayList<>();
+    Set<String> matchingNames = new TreeSet<>();
+    String q = String.format("show series " + "where %1$s %2$s %3$s", this.influxV9Utils.privateTenantIdPart(tenantId), this.influxV9Utils.privateRegionPart(this.region), this.influxV9Utils.dimPart(dimensions));
+    logger.debug("Metric name query: {}", q);
+    String r = this.influxV9RepoReader.read(q);
+    Series series = this.objectMapper.readValue(r, Series.class);
+    if (!series.isEmpty()) {
+        for (Serie serie : series.getSeries()) {
+            matchingNames.add(serie.getName());
+        }
+    }
+    List<String> filteredNames = filterMetricNames(matchingNames, limit, offset);
+    for (String filteredName : filteredNames) {
+        MetricName dimName = new MetricName(filteredName);
+        metricNameList.add(dimName);
+    }
+    logger.debug("Found {} metric definitions matching query", metricNameList.size());
+    return metricNameList;
+}
+#end_block
+
+#method_before
+private List<MetricName> metricNameList(Series series, int startIndex) {
+    List<MetricName> metricNameList = new ArrayList<>();
+    if (!series.isEmpty()) {
+        int index = startIndex;
+        Serie serie = series.getSeries()[0];
+        for (String[] values : serie.getValues()) {
+            MetricName m = new MetricName(String.valueOf(index++), values[0]);
+            metricNameList.add(m);
+        }
+    }
+    return metricNameList;
+}
+#method_after
+private List<MetricName> metricNameList(Series series) {
+    List<MetricName> metricNameList = new ArrayList<>();
+    if (!series.isEmpty()) {
+        Serie serie = series.getSeries()[0];
+        for (String[] values : serie.getValues()) {
+            MetricName m = new MetricName(values[0]);
+            metricNameList.add(m);
+        }
+    }
+    return metricNameList;
+}
+#end_block
+
+#method_before
+private boolean hasMeasurements(MetricDefinition m, String tenantId, DateTime startTime, DateTime endTime) {
+    boolean hasMeasurements = true;
+    // 
+    if (startTime == null) {
+        return hasMeasurements;
+    }
+    try {
+        String q = buildMeasurementsQuery(tenantId, m.name, m.dimensions, startTime, endTime);
+        String r = this.influxV9RepoReader.read(q);
+        Series series = this.objectMapper.readValue(r, Series.class);
+        hasMeasurements = !series.isEmpty();
+    } catch (Exception e) {
+        // 
+        // If something goes wrong with the measurements query
+        // checking if there are current measurements, default to
+        // existing behavior and return the definition.
+        // 
+        logger.error("Failed to query for measuremnts for: {}", m.name, e);
+        hasMeasurements = true;
+    }
+    return hasMeasurements;
+}
+#method_after
+private boolean hasMeasurements(MetricDefinition m, String tenantId, DateTime startTime, DateTime endTime) {
+    boolean hasMeasurements = true;
+    // 
+    if (startTime == null) {
+        return hasMeasurements;
+    }
+    try {
+        String q = buildMeasurementsQuery(tenantId, m.name, m.dimensions, startTime, endTime);
+        String r = this.influxV9RepoReader.read(q);
+        Series series = this.objectMapper.readValue(r, Series.class);
+        hasMeasurements = !series.isEmpty();
+    } catch (Exception e) {
+        // 
+        // If something goes wrong with the measurements query
+        // checking if there are current measurements, default to
+        // existing behavior and return the definition.
+        // 
+        logger.error("Failed to query for measurements for: {}", m.name, e);
+        hasMeasurements = true;
+    }
+    return hasMeasurements;
+}
+#end_block
+
+#method_before
+public String timeOffsetPart(String offset) {
+    if (StringUtils.isEmpty(offset)) {
+        return StringUtils.EMPTY;
+    }
+    if (!"0".equals(offset)) {
+        Object convertible;
+        try {
+            convertible = Long.valueOf(offset);
+        } catch (IllegalArgumentException exp) {
+            // not a numeric value
+            convertible = offset;
+        }
+        offset = Conversions.variantToDateTime(convertible).toString(ISODateTimeFormat.dateTime());
+    }
+    return String.format(" and time >= '%1$s'", offset);
+}
+#method_after
+public String timeOffsetPart(String offset) {
+    if (StringUtils.isEmpty(offset)) {
+        return StringUtils.EMPTY;
+    }
+    if (!"0".equals(offset)) {
+        Object convertible;
+        try {
+            convertible = Long.valueOf(offset);
+        } catch (IllegalArgumentException exp) {
+            // not a numeric value
+            convertible = offset;
+        }
+        offset = Conversions.variantToDateTime(convertible).toString(ISODateTimeFormat.dateTime());
+    }
+    return String.format(" and time > '%1$s'", offset);
+}
+#end_block
+
+#method_before
+public String periodPartWithGroupBy(int period) {
+    return period > 0 ? String.format(" group by time(%1$ds), * fill(0)", period) : " group by time(300s), * fill(0)";
+}
+#method_after
+public String periodPartWithGroupBy(int period) {
+    return period > 0 ? String.format(" group by time(%1$ds), *", period) : " group by time(300s), *";
+}
+#end_block
+
+#method_before
+public String periodPart(int period) {
+    return period > 0 ? String.format(" group by time(%1$ds) fill(0)", period) : " group by time(300s) fill(0)";
+}
+#method_after
+public String periodPart(int period) {
+    return period > 0 ? String.format(" group by time(%1$ds)", period) : " group by time(300s)";
+}
+#end_block
+
+#method_before
+@Override
+public DimensionValues findValues(String metricName, String tenantId, String dimensionName, String offset, int limit) throws Exception {
+    // 
+    // Use treeset to keep list in alphabetic/predictable order
+    // for string based offset.
+    // 
+    Set<String> matchingValues = new TreeSet<String>();
+    String dimNamePart = "and \"" + this.influxV9Utils.sanitize(dimensionName) + "\" =~ /.*/";
+    String q = String.format("show series %1$s where %2$s %3$s", this.influxV9Utils.namePart(metricName, false), this.influxV9Utils.privateTenantIdPart(tenantId), dimNamePart);
+    logger.debug("Dimension values query: {}", q);
+    String r = this.influxV9RepoReader.read(q);
+    Series series = this.objectMapper.readValue(r, Series.class);
+    if (!series.isEmpty()) {
+        for (Serie serie : series.getSeries()) {
+            for (String[] values : serie.getValues()) {
+                Map<String, String> dimensions = this.influxV9Utils.getDimensions(values, serie.getColumns());
+                for (Map.Entry<String, String> entry : dimensions.entrySet()) {
+                    if (dimensionName.equals(entry.getKey())) {
+                        matchingValues.add(entry.getValue());
+                    }
+                }
+            }
+        }
+    }
+    List<String> filteredValues = filterDimensionValues(matchingValues, dimensionName, limit, offset);
+    return new DimensionValues(metricName, dimensionName, filteredValues);
+}
+#method_after
+@Override
+public List<DimensionValues> findValues(String metricName, String tenantId, String dimensionName, String offset, int limit) throws Exception {
+    // 
+    // Use treeset to keep list in alphabetic/predictable order
+    // for string based offset.
+    // 
+    List<DimensionValues> dimensionValueList = new ArrayList<>();
+    Set<String> matchingValues = new TreeSet<String>();
+    String dimNamePart = "and \"" + this.influxV9Utils.sanitize(dimensionName) + "\" =~ /.*/";
+    String q = String.format("show series %1$s where %2$s %3$s", this.influxV9Utils.namePart(metricName, false), this.influxV9Utils.privateTenantIdPart(tenantId), dimNamePart);
+    logger.debug("Dimension values query: {}", q);
+    String r = this.influxV9RepoReader.read(q);
+    Series series = this.objectMapper.readValue(r, Series.class);
+    if (!series.isEmpty()) {
+        for (Serie serie : series.getSeries()) {
+            for (String[] values : serie.getValues()) {
+                Map<String, String> dimensions = this.influxV9Utils.getDimensions(values, serie.getColumns());
+                for (Map.Entry<String, String> entry : dimensions.entrySet()) {
+                    if (dimensionName.equals(entry.getKey())) {
+                        matchingValues.add(entry.getValue());
+                    }
+                }
+            }
+        }
+    }
+    List<String> filteredValues = filterDimensionValues(matchingValues, limit, offset);
+    for (String filteredValue : filteredValues) {
+        DimensionValues dimValue = new DimensionValues(metricName, filteredValue, dimensionName);
+        dimensionValueList.add(dimValue);
+    }
+    return dimensionValueList;
+}
+#end_block
+
+#method_before
+private List<String> filterDimensionValues(Set<String> matchingValues, String dimensionName, int limit, String offset) {
+    Boolean haveOffset = (null != offset && !"".equals(offset));
+    List<String> filteredValues = new ArrayList<String>();
+    int remaining_limit = limit + 1;
+    for (String dimVal : matchingValues) {
+        if (remaining_limit <= 0) {
+            break;
+        }
+        if (haveOffset && dimVal.compareTo(offset) <= 0) {
+            continue;
+        }
+        filteredValues.add(dimVal);
+        remaining_limit--;
+    }
+    return filteredValues;
+}
+#method_after
+private List<String> filterDimensionValues(Set<String> matchingValues, int limit, String offset) {
+    Boolean haveOffset = !Strings.isNullOrEmpty(offset);
+    List<String> filteredValues = new ArrayList<String>();
+    int remaining_limit = limit + 1;
+    for (String dimVal : matchingValues) {
+        if (remaining_limit <= 0) {
+            break;
+        }
+        if (haveOffset && dimVal.compareTo(offset) <= 0) {
+            continue;
+        }
+        filteredValues.add(dimVal);
+        remaining_limit--;
+    }
+    return filteredValues;
+}
+#end_block
+
+#method_before
+@Override
+public DimensionNames findNames(String metricName, String tenantId, String offset, int limit) throws Exception {
+    // 
+    // Use treeset to keep list in alphabetic/predictable order
+    // for string based offset.
+    // 
+    Set<String> matchingNames = new TreeSet<String>();
+    String q = String.format("show series %1$s where %2$s", this.influxV9Utils.namePart(metricName, false), this.influxV9Utils.privateTenantIdPart(tenantId));
+    logger.debug("Dimension names query: {}", q);
+    String r = this.influxV9RepoReader.read(q);
+    Series series = this.objectMapper.readValue(r, Series.class);
+    if (!series.isEmpty()) {
+        for (Serie serie : series.getSeries()) {
+            for (String[] names : serie.getValues()) {
+                Map<String, String> dimensions = this.influxV9Utils.getDimensions(names, serie.getColumns());
+                for (Map.Entry<String, String> entry : dimensions.entrySet()) {
+                    matchingNames.add(entry.getKey());
+                }
+            }
+        }
+    }
+    List<String> filteredNames = filterDimensionNames(matchingNames, metricName, limit, offset);
+    return new DimensionNames(metricName, filteredNames);
+}
+#method_after
+@Override
+public List<DimensionNames> findNames(String metricName, String tenantId, String offset, int limit) throws Exception {
+    // 
+    // Use treeset to keep list in alphabetic/predictable order
+    // for string based offset.
+    // 
+    List<DimensionNames> dimensionNameList = new ArrayList<>();
+    Set<String> matchingNames = new TreeSet<String>();
+    String q = String.format("show series %1$s where %2$s", this.influxV9Utils.namePart(metricName, false), this.influxV9Utils.privateTenantIdPart(tenantId));
+    logger.debug("Dimension names query: {}", q);
+    String r = this.influxV9RepoReader.read(q);
+    Series series = this.objectMapper.readValue(r, Series.class);
+    if (!series.isEmpty()) {
+        for (Serie serie : series.getSeries()) {
+            for (String[] names : serie.getValues()) {
+                Map<String, String> dimensions = this.influxV9Utils.getDimensions(names, serie.getColumns());
+                for (Map.Entry<String, String> entry : dimensions.entrySet()) {
+                    matchingNames.add(entry.getKey());
+                }
+            }
+        }
+    }
+    List<String> filteredNames = filterDimensionNames(matchingNames, limit, offset);
+    for (String filteredName : filteredNames) {
+        DimensionNames dimName = new DimensionNames(metricName, filteredName);
+        dimensionNameList.add(dimName);
+    }
+    return dimensionNameList;
+}
+#end_block
+
+#method_before
+private List<String> filterDimensionNames(Set<String> matchingNames, String metricName, int limit, String offset) {
+    Boolean haveOffset = (null != offset && !"".equals(offset));
+    List<String> filteredNames = new ArrayList<String>();
+    int remaining_limit = limit + 1;
+    for (String dimName : matchingNames) {
+        if (remaining_limit <= 0) {
+            break;
+        }
+        if (haveOffset && dimName.compareTo(offset) <= 0) {
+            continue;
+        }
+        filteredNames.add(dimName);
+        remaining_limit--;
+    }
+    return filteredNames;
+}
+#method_after
+private List<String> filterDimensionNames(Set<String> matchingNames, int limit, String offset) {
+    Boolean haveOffset = !Strings.isNullOrEmpty(offset);
+    List<String> filteredNames = new ArrayList<String>();
+    int remaining_limit = limit + 1;
+    for (String dimName : matchingNames) {
+        if (remaining_limit <= 0) {
+            break;
+        }
+        if (haveOffset && dimName.compareTo(offset) <= 0) {
+            continue;
+        }
+        filteredNames.add(dimName);
+        remaining_limit--;
+    }
+    return filteredNames;
+}
+#end_block
+
+#method_before
+@Override
+public DimensionValues findValues(String metricName, String tenantId, String dimensionName, String offset, int limit) throws Exception {
+    List<String> values = new ArrayList<String>();
+    String offsetPart = "";
+    String metricNamePart = "";
+    try (Handle h = db.open()) {
+        if (offset != null && !offset.isEmpty()) {
+            offsetPart = " and dims.value > '" + offset + "' ";
+        }
+        if (metricName != null && !metricName.isEmpty()) {
+            metricNamePart = " and def.name = '" + metricName + "' ";
+        }
+        String limitPart = " limit " + Integer.toString(limit + 1);
+        String sql = String.format(FIND_DIMENSION_VALUES_SQL, this.dbHint, offsetPart, metricNamePart, tenantId, dimensionName, limitPart);
+        Query<Map<String, Object>> query = h.createQuery(sql);
+        List<Map<String, Object>> rows = query.list();
+        for (Map<String, Object> row : rows) {
+            String dimValue = (String) row.get("dValue");
+            values.add(dimValue);
+        }
+    }
+    return new DimensionValues(metricName, dimensionName, values);
+}
+#method_after
+@Override
+public List<DimensionValues> findValues(String metricName, String tenantId, String dimensionName, String offset, int limit) throws Exception {
+    String offsetPart = "";
+    String metricNamePart = "";
+    try (Handle h = db.open()) {
+        if (offset != null && !offset.isEmpty()) {
+            offsetPart = " and dims.value > '" + offset + "' ";
+        }
+        if (metricName != null && !metricName.isEmpty()) {
+            metricNamePart = " and def.name = '" + metricName + "' ";
+        }
+        String limitPart = " limit " + Integer.toString(limit + 1);
+        String sql = String.format(FIND_DIMENSION_VALUES_SQL, this.dbHint, offsetPart, metricNamePart, tenantId, dimensionName, limitPart);
+        Query<Map<String, Object>> query = h.createQuery(sql);
+        List<Map<String, Object>> rows = query.list();
+        List<DimensionValues> dimensionValuesList = new ArrayList<>(rows.size());
+        for (Map<String, Object> row : rows) {
+            String dimValue = (String) row.get("dValue");
+            DimensionValues dimensionValue = new DimensionValues(metricName, dimValue, dimensionName);
+            dimensionValuesList.add(dimensionValue);
+        }
+        return dimensionValuesList;
+    }
+}
+#end_block
+
+#method_before
+@Override
+public DimensionNames findNames(String metricName, String tenantId, String offset, int limit) throws Exception {
+    List<String> names = new ArrayList<String>();
+    String offsetPart = "";
+    String metricNamePart = "";
+    try (Handle h = db.open()) {
+        if (offset != null && !offset.isEmpty()) {
+            offsetPart = " and dims.name > '" + offset + "' ";
+        }
+        if (metricName != null && !metricName.isEmpty()) {
+            metricNamePart = " and def.name = '" + metricName + "' ";
+        }
+        String limitPart = " limit " + Integer.toString(limit + 1);
+        String sql = String.format(FIND_DIMENSION_NAMES_SQL, this.dbHint, offsetPart, metricNamePart, tenantId, limitPart);
+        Query<Map<String, Object>> query = h.createQuery(sql);
+        List<Map<String, Object>> rows = query.list();
+        for (Map<String, Object> row : rows) {
+            String dimName = (String) row.get("dName");
+            names.add(dimName);
+        }
+    }
+    return new DimensionNames(metricName, names);
+}
+#method_after
+@Override
+public List<DimensionNames> findNames(String metricName, String tenantId, String offset, int limit) throws Exception {
+    String offsetPart = "";
+    String metricNamePart = "";
+    try (Handle h = db.open()) {
+        if (offset != null && !offset.isEmpty()) {
+            offsetPart = " and dims.name > '" + offset + "' ";
+        }
+        if (metricName != null && !metricName.isEmpty()) {
+            metricNamePart = " and def.name = '" + metricName + "' ";
+        }
+        String limitPart = " limit " + Integer.toString(limit + 1);
+        String sql = String.format(FIND_DIMENSION_NAMES_SQL, this.dbHint, offsetPart, metricNamePart, tenantId, limitPart);
+        Query<Map<String, Object>> query = h.createQuery(sql);
+        List<Map<String, Object>> rows = query.list();
+        List<DimensionNames> dimensionNamesList = new ArrayList<>(rows.size());
+        for (Map<String, Object> row : rows) {
+            String dimName = (String) row.get("dName");
+            DimensionNames dimensionName = new DimensionNames(metricName, dimName);
+            dimensionNamesList.add(dimensionName);
+        }
+        return dimensionNamesList;
+    }
+}
+#end_block
+
+#method_before
+@Override
+public String toString() {
+    return String.format("MetricName=%s DimensionNames [names=%s]", metricName, names);
+}
+#method_after
+@Override
+public String toString() {
+    return String.format("DimensionNames: MetricName=%s DimensionNames [names=%s]", getMetricName(), getDimensionInfo());
+}
+#end_block
+
+#method_before
+@GET
+@Path("/names/values")
+@Timed
+@Produces(MediaType.APPLICATION_JSON)
+public Object getDimensionValues(@Context UriInfo uriInfo, @HeaderParam("X-Tenant-Id") String tenantId, @HeaderParam("X-Roles") String roles, @QueryParam("limit") String limit, @QueryParam("dimension_name") String dimensionName, @QueryParam("metric_name") String metricName, @QueryParam("offset") String offset, @QueryParam("tenant_id") String crossTenantId) throws Exception {
+    Validation.validateNotNullOrEmpty(dimensionName, "dimension_name");
+    final int paging_limit = this.persistUtils.getLimit(limit);
+    String queryTenantId = Validation.getQueryProject(roles, crossTenantId, tenantId, admin_role);
+    DimensionValues dimVals = repo.findValues(metricName, queryTenantId, dimensionName, offset, paging_limit);
+    return Links.paginateDimensionValues(dimVals, paging_limit, uriInfo);
+}
+#method_after
+@GET
+@Path("/names/values")
+@Timed
+@Produces(MediaType.APPLICATION_JSON)
+public Object getDimensionValues(@Context UriInfo uriInfo, @HeaderParam("X-Tenant-Id") String tenantId, @HeaderParam("X-Roles") String roles, @QueryParam("limit") String limit, @QueryParam("dimension_name") String dimensionName, @QueryParam("metric_name") String metricName, @QueryParam("offset") String offset, @QueryParam("tenant_id") String crossTenantId) throws Exception {
+    Validation.validateNotNullOrEmpty(dimensionName, "dimension_name");
+    final int paging_limit = this.persistUtils.getLimit(limit);
+    String queryTenantId = Validation.getQueryProject(roles, crossTenantId, tenantId, admin_role);
+    List<DimensionValues> dimValues = repo.findValues(metricName, queryTenantId, dimensionName, offset, paging_limit);
+    return Links.paginate(paging_limit, dimValues, uriInfo);
+}
+#end_block
+
+#method_before
+@GET
+@Path("/names")
+@Timed
+@Produces(MediaType.APPLICATION_JSON)
+public Object getDimensionNames(@Context UriInfo uriInfo, @HeaderParam("X-Tenant-Id") String tenantId, @HeaderParam("X-Roles") String roles, @QueryParam("limit") String limit, @QueryParam("metric_name") String metricName, @QueryParam("offset") String offset, @QueryParam("tenant_id") String crossTenantId) throws Exception {
+    final int paging_limit = this.persistUtils.getLimit(limit);
+    String queryTenantId = Validation.getQueryProject(roles, crossTenantId, tenantId, admin_role);
+    DimensionNames dimNames = repo.findNames(metricName, queryTenantId, offset, paging_limit);
+    return Links.paginateDimensionNames(dimNames, paging_limit, uriInfo);
+}
+#method_after
+@GET
+@Path("/names")
+@Timed
+@Produces(MediaType.APPLICATION_JSON)
+public Object getDimensionNames(@Context UriInfo uriInfo, @HeaderParam("X-Tenant-Id") String tenantId, @HeaderParam("X-Roles") String roles, @QueryParam("limit") String limit, @QueryParam("metric_name") String metricName, @QueryParam("offset") String offset, @QueryParam("tenant_id") String crossTenantId) throws Exception {
+    final int paging_limit = this.persistUtils.getLimit(limit);
+    String queryTenantId = Validation.getQueryProject(roles, crossTenantId, tenantId, admin_role);
+    List<DimensionNames> dimNames = repo.findNames(metricName, queryTenantId, offset, paging_limit);
+    return Links.paginate(paging_limit, dimNames, uriInfo);
+}
+#end_block
+
+#method_before
+@Override
+public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((id == null) ? 0 : id.hashCode());
+    result = prime * result + ((name == null) ? 0 : name.hashCode());
+    return result;
+}
+#method_after
+@Override
+public int hashCode() {
+    final int prime = 31;
+    int result = 17;
+    result = prime * result + ((id == null) ? 0 : id.hashCode());
+    result = prime * result + ((name == null) ? 0 : name.hashCode());
+    return result;
+}
+#end_block
+
+#method_before
+@Override
+public void invoke(ArrayList<StorletInputStream> inputStreams, ArrayList<StorletOutputStream> outputStreams, Map<String, String> parameters, StorletLogger log) throws StorletException {
+    log.emitLog("IdentityStorlet Invoked");
+    /*
+         * Copy metadata into out md
+         */
+    HashMap<String, String> md = new HashMap<String, String>();
+    HashMap<String, String> object_md;
+    Iterator it;
+    StorletInputStream sis = inputStreams.get(0);
+    object_md = sis.getMetadata();
+    it = object_md.entrySet().iterator();
+    while (it.hasNext()) {
+        Map.Entry pairs = (Map.Entry) it.next();
+        log.emitLog("Putting metadata " + (String) pairs.getKey() + "=" + (String) pairs.getValue());
+        md.put((String) pairs.getKey(), (String) pairs.getValue());
+    }
+    /*
+         * Execute
+         */
+    log.emitLog("Let's concat, anyway");
+    /*
+         * Obtain the storletObjectOutputStream
+         */
+    StorletObjectOutputStream storletObjectOutputStream;
+    storletObjectOutputStream = (StorletObjectOutputStream) outputStreams.get(0);
+    /*
+         * Now set the output metadata
+         */
+    log.emitLog("Setting metadata");
+    storletObjectOutputStream.setMetadata(md);
+    /*
+         * Copy data from input stream to output stream
+         */
+    log.emitLog("Copying data");
+    OutputStream os = storletObjectOutputStream.getStream();
+    final byte[] buffer = new byte[65536];
+    try {
+        for (StorletInputStream psis : inputStreams) {
+            InputStream is;
+            is = psis.getStream();
+            String readString = null;
+            try {
+                log.emitLog("About to read from input");
+                for (int bytes_read = is.read(buffer); bytes_read >= 0; bytes_read = is.read(buffer)) {
+                    log.emitLog("read from input " + bytes_read + "bytes");
+                    readString = new String(buffer);
+                    readString = readString.replaceAll("\0", "");
+                    log.emitLog("Writing to output " + bytes_read + "bytes");
+                    os.write(readString.getBytes(), 0, bytes_read);
+                    log.emitLog("About to read from input");
+                }
+            } catch (Exception e) {
+                log.emitLog("Copying data failed: " + e.getMessage());
+            } finally {
+                try {
+                    psis.close();
+                } catch (Exception e) {
+                    log.emitLog("Falied to close input steram " + e.getMessage());
+                }
+            }
+        }
+    } catch (Exception e) {
+        log.emitLog("Copying data failed in finally: " + e.getMessage());
+        throw new StorletException("Copying data failed: " + e.getMessage());
+    } finally {
+        try {
+            os.close();
+        } catch (IOException e) {
+            log.emitLog("Falied to close input steram " + e.getMessage());
+        }
+    }
+    log.emitLog("IdentityStorlet Invocation done");
+}
+#method_after
+@Override
+public void invoke(ArrayList<StorletInputStream> inputStreams, ArrayList<StorletOutputStream> outputStreams, Map<String, String> parameters, StorletLogger log) throws StorletException {
+    log.emitLog("MultiInputStorlet Invoked");
+    /*
+         * Copy metadata into out md
+         */
+    HashMap<String, String> md = new HashMap<String, String>();
+    HashMap<String, String> object_md;
+    Iterator it;
+    StorletInputStream sis = inputStreams.get(0);
+    object_md = sis.getMetadata();
+    it = object_md.entrySet().iterator();
+    while (it.hasNext()) {
+        Map.Entry pairs = (Map.Entry) it.next();
+        log.emitLog("Putting metadata " + (String) pairs.getKey() + "=" + (String) pairs.getValue());
+        md.put((String) pairs.getKey(), (String) pairs.getValue());
+    }
+    /*
+         * Execute
+         */
+    log.emitLog("Let's concat, anyway");
+    /*
+         * Obtain the storletObjectOutputStream
+         */
+    StorletObjectOutputStream storletObjectOutputStream;
+    storletObjectOutputStream = (StorletObjectOutputStream) outputStreams.get(0);
+    /*
+         * Now set the output metadata
+         */
+    log.emitLog("Setting metadata");
+    storletObjectOutputStream.setMetadata(md);
+    /*
+         * Copy data from input stream to output stream
+         */
+    log.emitLog("Copying data");
+    OutputStream os = storletObjectOutputStream.getStream();
+    final byte[] buffer = new byte[65536];
+    try {
+        for (StorletInputStream psis : inputStreams) {
+            InputStream is;
+            is = psis.getStream();
+            String readString = null;
+            try {
+                log.emitLog("About to read from input");
+                for (int bytes_read = is.read(buffer); bytes_read >= 0; bytes_read = is.read(buffer)) {
+                    log.emitLog("read from input " + bytes_read + "bytes");
+                    readString = new String(buffer);
+                    readString = readString.replaceAll("\0", "");
+                    log.emitLog("Writing to output " + bytes_read + "bytes");
+                    os.write(readString.getBytes(), 0, bytes_read);
+                    log.emitLog("About to read from input");
+                }
+            } catch (Exception e) {
+                log.emitLog("Copying data failed: " + e.getMessage());
+            } finally {
+                try {
+                    psis.close();
+                } catch (Exception e) {
+                    log.emitLog("Falied to close input steram " + e.getMessage());
+                }
+            }
+        }
+    } catch (Exception e) {
+        log.emitLog("Copying data failed in finally: " + e.getMessage());
+        throw new StorletException("Copying data failed: " + e.getMessage());
+    } finally {
+        try {
+            os.close();
+        } catch (IOException e) {
+            log.emitLog("Falied to close input steram " + e.getMessage());
+        }
+    }
+    log.emitLog("MultiInputStorlet Invocation done");
+}
+#end_block
+
+#method_before
+@Override
+public void invoke(ArrayList<StorletInputStream> inputStreams, ArrayList<StorletOutputStream> outputStreams, Map<String, String> parameters, StorletLogger log) throws StorletException {
+    log.emitLog("HalfStorlet Invoked");
+    StorletInputStream sis = inputStreams.get(0);
+    StorletObjectOutputStream storletObjectOutputStream;
+    storletObjectOutputStream = (StorletObjectOutputStream) outputStreams.get(0);
+    storletObjectOutputStream.setMetadata(sis.getMetadata());
+    /*
+		 * Copy every other byte from input stream to output stream
+		 */
+    log.emitLog("Copying every other byte");
+    StorletInputStream psis = (StorletInputStream) inputStreams.get(0);
+    InputStream is;
+    is = psis.getStream();
+    OutputStream os = storletObjectOutputStream.getStream();
+    try {
+        log.emitLog(new Date().toString() + "About to read from input");
+        int a;
+        boolean bool = true;
+        while ((a = is.read()) != -1) {
+            if (bool)
+                os.write(a);
+            bool = !bool;
+        }
+    } catch (Exception e) {
+        log.emitLog("Copying every other byte from input stream to output stream failed: " + e.getMessage());
+        throw new StorletException("Copying every other byte from input stream to output stream failed: " + e.getMessage());
+    } finally {
+        try {
+            is.close();
+            os.close();
+        } catch (IOException e) {
+        }
+    }
+    log.emitLog("HalfStorlet Invocation done");
+}
+#method_after
+@Override
+public void invoke(ArrayList<StorletInputStream> inputStreams, ArrayList<StorletOutputStream> outputStreams, Map<String, String> parameters, StorletLogger log) throws StorletException {
+    log.emitLog("HalfStorlet Invoked");
+    StorletInputStream sis = inputStreams.get(0);
+    StorletObjectOutputStream storletObjectOutputStream;
+    storletObjectOutputStream = (StorletObjectOutputStream) outputStreams.get(0);
+    storletObjectOutputStream.setMetadata(sis.getMetadata());
+    /*
+         * Copy every other byte from input stream to output stream
+         */
+    log.emitLog("Copying every other byte");
+    StorletInputStream psis = (StorletInputStream) inputStreams.get(0);
+    InputStream is;
+    is = psis.getStream();
+    OutputStream os = storletObjectOutputStream.getStream();
+    try {
+        log.emitLog(new Date().toString() + "About to read from input");
+        int a;
+        boolean bool = true;
+        while ((a = is.read()) != -1) {
+            if (bool)
+                os.write(a);
+            bool = !bool;
+        }
+    } catch (Exception e) {
+        log.emitLog("Copying every other byte from input stream to output stream failed: " + e.getMessage());
+        throw new StorletException("Copying every other byte from input stream to output stream failed: " + e.getMessage());
+    } finally {
+        try {
+            is.close();
+            os.close();
+        } catch (IOException e) {
+        }
+    }
+    log.emitLog("HalfStorlet Invocation done");
+}
+#end_block
+
+#method_before
+@Override
+public void invoke(ArrayList<StorletInputStream> inputStreams, ArrayList<StorletOutputStream> outputStreams, Map<String, String> parameters, StorletLogger log) throws StorletException {
+    log.emitLog("CompressStorlet Invoked");
+    StorletInputStream sis = inputStreams.get(0);
+    InputStream is = sis.getStream();
+    HashMap<String, String> metadata = sis.getMetadata();
+    final int COMPRESS = 0;
+    final int UNCOMPRESS = 1;
+    int action = COMPRESS;
+    /*
+		 * Get optional action flag
+		 */
+    String action_str = parameters.get("action");
+    if (action_str != null && action_str.equals("uncompress")) {
+        action = UNCOMPRESS;
+    }
+    StorletObjectOutputStream storletObjectOutputStream = (StorletObjectOutputStream) outputStreams.get(0);
+    storletObjectOutputStream.setMetadata(metadata);
+    OutputStream outputStream = storletObjectOutputStream.getStream();
+    try {
+        byte[] buffer = new byte[65536];
+        int len;
+        if (action == COMPRESS) {
+            GZIPOutputStream gzipOS = new GZIPOutputStream(outputStream);
+            while ((len = is.read(buffer)) != -1) {
+                gzipOS.write(buffer, 0, len);
+            }
+            gzipOS.close();
+        } else {
+            GZIPInputStream gzipIS = new GZIPInputStream(is);
+            while ((len = gzipIS.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, len);
+            }
+            gzipIS.close();
+        }
+    } catch (IOException e) {
+        log.emitLog("CompressExample - raised IOException: " + e.getMessage());
+    } finally {
+        try {
+            is.close();
+            outputStream.close();
+        } catch (IOException e) {
+        }
+    }
+    log.emitLog("CompressStorlet Invocation done");
+}
+#method_after
+@Override
+public void invoke(ArrayList<StorletInputStream> inputStreams, ArrayList<StorletOutputStream> outputStreams, Map<String, String> parameters, StorletLogger log) throws StorletException {
+    log.emitLog("CompressStorlet Invoked");
+    StorletInputStream sis = inputStreams.get(0);
+    InputStream is = sis.getStream();
+    HashMap<String, String> metadata = sis.getMetadata();
+    final int COMPRESS = 0;
+    final int UNCOMPRESS = 1;
+    int action = COMPRESS;
+    /*
+         * Get optional action flag
+         */
+    String action_str = parameters.get("action");
+    if (action_str != null && action_str.equals("uncompress")) {
+        action = UNCOMPRESS;
+    }
+    StorletObjectOutputStream storletObjectOutputStream = (StorletObjectOutputStream) outputStreams.get(0);
+    storletObjectOutputStream.setMetadata(metadata);
+    OutputStream outputStream = storletObjectOutputStream.getStream();
+    try {
+        byte[] buffer = new byte[65536];
+        int len;
+        if (action == COMPRESS) {
+            GZIPOutputStream gzipOS = new GZIPOutputStream(outputStream);
+            while ((len = is.read(buffer)) != -1) {
+                gzipOS.write(buffer, 0, len);
+            }
+            gzipOS.close();
+        } else {
+            GZIPInputStream gzipIS = new GZIPInputStream(is);
+            while ((len = gzipIS.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, len);
+            }
+            gzipIS.close();
+        }
+    } catch (IOException e) {
+        log.emitLog("CompressExample - raised IOException: " + e.getMessage());
+    } finally {
+        try {
+            is.close();
+            outputStream.close();
+        } catch (IOException e) {
+        }
+    }
+    log.emitLog("CompressStorlet Invocation done");
+}
+#end_block
+
+#method_before
+@Override
+public void invoke(ArrayList<StorletInputStream> inputStreams, ArrayList<StorletOutputStream> outputStreams, Map<String, String> parameters, StorletLogger log) throws StorletException {
+    m_log = log;
+    m_log.emitLog("PartitionsIdentityStorlet Invoked");
+    StorletObjectOutputStream sos = null;
+    OutputStream os = null;
+    InputStream is = null;
+    try {
+        sos = (StorletObjectOutputStream) outputStreams.get(0);
+        sos.setMetadata(new HashMap<String, String>());
+        os = sos.getStream();
+        is = inputStreams.get(0).getStream();
+    } catch (Exception ex) {
+        m_log.emitLog("Failed to get streams from Storlet invoke inputs");
+        safeClose(os, is);
+        return;
+    }
+    /*
+		 * Get mandatory parameters
+		 */
+    try {
+        parseInputParameters(parameters);
+    } catch (Exception ex) {
+        m_log.emitLog("Failed to initialize input stream");
+        safeClose(os, is);
+        return;
+    }
+    String line;
+    int lineLength = 0;
+    try {
+        m_br = new BufferedReader(new InputStreamReader(is));
+    } catch (Exception ex) {
+        m_log.emitLog("Failed to initialize input stream");
+        safeClose(os, is);
+        return;
+    }
+    try {
+        lineLength = consumeFirstLine(os);
+    } catch (Exception ex) {
+        m_log.emitLog("Failed to consume first line");
+        safeClose(os, is);
+        return;
+    }
+    m_length -= lineLength;
+    try {
+        // if m_end points exactly to an end of a record.
+        while (((line = m_br.readLine()) != null) && (m_length >= -1)) {
+            m_total_lines_emitted += 1;
+            os.write(line.getBytes());
+            os.write('\n');
+            // m_log.emitLog("m_length is " + m_length);
+            // m_log.emitLog("wrote: " + new String(line.getBytes(),"UTF-8") + "\n");
+            m_length -= (line.length() + 1);
+        }
+        if (m_length > 0)
+            m_log.emitLog("Got a null line while not consuming all range");
+    } catch (Exception ex) {
+        m_log.emitLog("Exception while consuming range " + Arrays.toString(ex.getStackTrace()));
+    } finally {
+        safeClose(os, is);
+    }
+    m_log.emitLog("Total lines emitted: " + m_total_lines_emitted);
+}
+#method_after
+@Override
+public void invoke(ArrayList<StorletInputStream> inputStreams, ArrayList<StorletOutputStream> outputStreams, Map<String, String> parameters, StorletLogger log) throws StorletException {
+    m_log = log;
+    m_log.emitLog("PartitionsIdentityStorlet Invoked");
+    StorletObjectOutputStream sos = null;
+    OutputStream os = null;
+    InputStream is = null;
+    try {
+        sos = (StorletObjectOutputStream) outputStreams.get(0);
+        sos.setMetadata(new HashMap<String, String>());
+        os = sos.getStream();
+        is = inputStreams.get(0).getStream();
+    } catch (Exception ex) {
+        m_log.emitLog("Failed to get streams from Storlet invoke inputs");
+        safeClose(os, is);
+        return;
+    }
+    /*
+         * Get mandatory parameters
+         */
+    try {
+        parseInputParameters(parameters);
+    } catch (Exception ex) {
+        m_log.emitLog("Failed to initialize input stream");
+        safeClose(os, is);
+        return;
+    }
+    String line;
+    int lineLength = 0;
+    try {
+        m_br = new BufferedReader(new InputStreamReader(is));
+    } catch (Exception ex) {
+        m_log.emitLog("Failed to initialize input stream");
+        safeClose(os, is);
+        return;
+    }
+    try {
+        lineLength = consumeFirstLine(os);
+    } catch (Exception ex) {
+        m_log.emitLog("Failed to consume first line");
+        safeClose(os, is);
+        return;
+    }
+    m_length -= lineLength;
+    try {
+        // if m_end points exactly to an end of a record.
+        while (((line = m_br.readLine()) != null) && (m_length >= -1)) {
+            m_total_lines_emitted += 1;
+            os.write(line.getBytes());
+            os.write('\n');
+            // m_log.emitLog("m_length is " + m_length);
+            // m_log.emitLog("wrote: " + new String(line.getBytes(),"UTF-8") + "\n");
+            m_length -= (line.length() + 1);
+        }
+        if (m_length > 0)
+            m_log.emitLog("Got a null line while not consuming all range");
+    } catch (Exception ex) {
+        m_log.emitLog("Exception while consuming range " + Arrays.toString(ex.getStackTrace()));
+    } finally {
+        safeClose(os, is);
+    }
+    m_log.emitLog("Total lines emitted: " + m_total_lines_emitted);
+}
+#end_block
+
+#method_before
+@Override
+public void invoke(ArrayList<StorletInputStream> inputStreams, ArrayList<StorletOutputStream> outputStreams, Map<String, String> parameters, StorletLogger log) throws StorletException {
+    log.emitLog("IdentityStorlet Invoked");
+    /*
+		 * Copy metadata into out md
+		 */
+    HashMap<String, String> md = new HashMap<String, String>();
+    HashMap<String, String> object_md;
+    Iterator it;
+    StorletInputStream sis = inputStreams.get(0);
+    object_md = sis.getMetadata();
+    it = object_md.entrySet().iterator();
+    while (it.hasNext()) {
+        Map.Entry pairs = (Map.Entry) it.next();
+        log.emitLog("Putting metadata " + (String) pairs.getKey() + "=" + (String) pairs.getValue());
+        md.put((String) pairs.getKey(), (String) pairs.getValue());
+    }
+    /*
+		 * Get optional execute flag
+		 */
+    String strExecute = new String("false");
+    if (parameters.get("execute") != null) {
+        strExecute = parameters.get("execute");
+    }
+    boolean bExecute = Boolean.parseBoolean(strExecute);
+    int nExitCode = -1;
+    /*
+		 * Execute
+		 */
+    if (bExecute == true) {
+        String strJarPath = StorletUtils.getClassFolder(this.getClass());
+        // Combine the invocation string
+        String strExec = strJarPath + java.io.File.separator + "get42";
+        log.emitLog("Exec = " + strExec);
+        try {
+            // Start process, wait for it to finish, get the exit code
+            Process ExecProc = new ProcessBuilder(strExec).start();
+            nExitCode = ExecProc.waitFor();
+            log.emitLog("Exit code = " + nExitCode);
+        } catch (Exception e) {
+            log.emitLog("Execution failed. Got Exception " + e.getMessage());
+        }
+    }
+    /*
+		 * Get optional chunk size
+		 */
+    String strChunkSize = "65536";
+    if (parameters.get("chunk_size") != null) {
+        strChunkSize = parameters.get("chunk_size");
+    }
+    int iChunkSize;
+    try {
+        iChunkSize = Integer.parseInt(strChunkSize);
+    } catch (NumberFormatException e) {
+        log.emitLog("The chunk_size parameter is not an integer");
+        throw new StorletException("The chunk_size parameter is not an integer");
+    }
+    /*
+		 * 1) If the output stream is StorletObjectOutputStream we are in a GET
+		 * or PUT scenario where we copy the data and metadata into it. 2) If
+		 * the output stream is StorletContainerHandle we are in a Storlet batch
+		 * scenario where we first ask for a StorletObjectOutputStream, and then
+		 * do the copy.
+		 */
+    StorletObjectOutputStream storletObjectOutputStream;
+    StorletOutputStream storletOutputStream = outputStreams.get(0);
+    if (storletOutputStream instanceof StorletContainerHandle) {
+        log.emitLog("Requesting for output object");
+        StorletContainerHandle storletContainerHandle = (StorletContainerHandle) storletOutputStream;
+        String objectName = new String(storletContainerHandle.getName() + "/copy_target");
+        storletObjectOutputStream = storletContainerHandle.getObjectOutputStream(objectName);
+        storletContainerHandle.close();
+    } else {
+        storletObjectOutputStream = (StorletObjectOutputStream) outputStreams.get(0);
+    }
+    /*
+		 * add execution invocation result to out md
+		 */
+    if (bExecute == true) {
+        md.put("Execution result", Integer.toString(nExitCode));
+    }
+    /*
+		 * Copy parameters into out md
+		 */
+    it = parameters.entrySet().iterator();
+    while (it.hasNext()) {
+        Map.Entry pairs = (Map.Entry) it.next();
+        log.emitLog("Putting parameter " + (String) pairs.getKey() + "=" + (String) pairs.getValue());
+        md.put("Parameter-" + (String) pairs.getKey(), (String) pairs.getValue());
+    }
+    /*
+		 * Now set the output metadata
+		 */
+    log.emitLog("Setting metadata");
+    storletObjectOutputStream.setMetadata(md);
+    /*
+		 * Get optional double flag
+		 */
+    String strDouble = new String("false");
+    if (parameters.get("double") != null) {
+        strDouble = parameters.get("double");
+    }
+    boolean bDouble = Boolean.parseBoolean(strDouble);
+    log.emitLog("bDouble is " + bDouble);
+    /*
+		 * Copy data from input stream to output stream
+		 */
+    log.emitLog("Copying data");
+    StorletInputStream psis = (StorletInputStream) inputStreams.get(0);
+    InputStream is;
+    is = psis.getStream();
+    OutputStream os = storletObjectOutputStream.getStream();
+    final byte[] buffer = new byte[iChunkSize];
+    String readString = null;
+    try {
+        log.emitLog(new Date().toString() + "About to read from input");
+        for (int bytes_read = is.read(buffer); bytes_read >= 0; bytes_read = is.read(buffer)) {
+            log.emitLog(new Date().toString() + "read from input " + bytes_read + "bytes");
+            readString = new String(buffer);
+            readString = readString.replaceAll("\0", "");
+            log.emitLog(new Date().toString() + "Writing to output " + bytes_read + "bytes");
+            os.write(readString.getBytes(), 0, bytes_read);
+            if (bDouble == true) {
+                log.emitLog("bDouble == true writing again");
+                log.emitLog(new Date().toString() + "Writing to output " + bytes_read + "bytes");
+                // os.write(buffer);
+                os.write(readString.getBytes());
+            }
+            log.emitLog("About to read from input");
+        }
+        os.close();
+    } catch (Exception e) {
+        log.emitLog("Copying data from inut stream to output stream failed: " + e.getMessage());
+        throw new StorletException("Copying data from inut stream to output stream failed: " + e.getMessage());
+    } finally {
+        try {
+            is.close();
+            os.close();
+        } catch (IOException e) {
+        }
+    }
+    log.emitLog("IdentityStorlet Invocation done");
+}
+#method_after
+@Override
+public void invoke(ArrayList<StorletInputStream> inputStreams, ArrayList<StorletOutputStream> outputStreams, Map<String, String> parameters, StorletLogger log) throws StorletException {
+    log.emitLog("IdentityStorlet Invoked");
+    /*
+         * Copy metadata into out md
+         */
+    HashMap<String, String> md = new HashMap<String, String>();
+    HashMap<String, String> object_md;
+    Iterator it;
+    StorletInputStream sis = inputStreams.get(0);
+    object_md = sis.getMetadata();
+    it = object_md.entrySet().iterator();
+    while (it.hasNext()) {
+        Map.Entry pairs = (Map.Entry) it.next();
+        log.emitLog("Putting metadata " + (String) pairs.getKey() + "=" + (String) pairs.getValue());
+        md.put((String) pairs.getKey(), (String) pairs.getValue());
+    }
+    /*
+         * Get optional execute flag
+         */
+    String strExecute = new String("false");
+    if (parameters.get("execute") != null) {
+        strExecute = parameters.get("execute");
+    }
+    boolean bExecute = Boolean.parseBoolean(strExecute);
+    int nExitCode = -1;
+    /*
+         * Execute
+         */
+    if (bExecute == true) {
+        String strJarPath = StorletUtils.getClassFolder(this.getClass());
+        // Combine the invocation string
+        String strExec = strJarPath + java.io.File.separator + "get42";
+        log.emitLog("Exec = " + strExec);
+        try {
+            // Start process, wait for it to finish, get the exit code
+            Process ExecProc = new ProcessBuilder(strExec).start();
+            nExitCode = ExecProc.waitFor();
+            log.emitLog("Exit code = " + nExitCode);
+        } catch (Exception e) {
+            log.emitLog("Execution failed. Got Exception " + e.getMessage());
+        }
+    }
+    /*
+         * Get optional chunk size
+         */
+    String strChunkSize = "65536";
+    if (parameters.get("chunk_size") != null) {
+        strChunkSize = parameters.get("chunk_size");
+    }
+    int iChunkSize;
+    try {
+        iChunkSize = Integer.parseInt(strChunkSize);
+    } catch (NumberFormatException e) {
+        log.emitLog("The chunk_size parameter is not an integer");
+        throw new StorletException("The chunk_size parameter is not an integer");
+    }
+    /*
+         * 1) If the output stream is StorletObjectOutputStream we are in a GET
+         * or PUT scenario where we copy the data and metadata into it. 2) If
+         * the output stream is StorletContainerHandle we are in a Storlet batch
+         * scenario where we first ask for a StorletObjectOutputStream, and then
+         * do the copy.
+         */
+    StorletObjectOutputStream storletObjectOutputStream;
+    StorletOutputStream storletOutputStream = outputStreams.get(0);
+    if (storletOutputStream instanceof StorletContainerHandle) {
+        log.emitLog("Requesting for output object");
+        StorletContainerHandle storletContainerHandle = (StorletContainerHandle) storletOutputStream;
+        String objectName = new String(storletContainerHandle.getName() + "/copy_target");
+        storletObjectOutputStream = storletContainerHandle.getObjectOutputStream(objectName);
+        storletContainerHandle.close();
+    } else {
+        storletObjectOutputStream = (StorletObjectOutputStream) outputStreams.get(0);
+    }
+    /*
+         * add execution invocation result to out md
+         */
+    if (bExecute == true) {
+        md.put("Execution result", Integer.toString(nExitCode));
+    }
+    /*
+         * Copy parameters into out md
+         */
+    it = parameters.entrySet().iterator();
+    while (it.hasNext()) {
+        Map.Entry pairs = (Map.Entry) it.next();
+        log.emitLog("Putting parameter " + (String) pairs.getKey() + "=" + (String) pairs.getValue());
+        md.put("Parameter-" + (String) pairs.getKey(), (String) pairs.getValue());
+    }
+    /*
+         * Now set the output metadata
+         */
+    log.emitLog("Setting metadata");
+    storletObjectOutputStream.setMetadata(md);
+    /*
+         * Get optional double flag
+         */
+    String strDouble = new String("false");
+    if (parameters.get("double") != null) {
+        strDouble = parameters.get("double");
+    }
+    boolean bDouble = Boolean.parseBoolean(strDouble);
+    log.emitLog("bDouble is " + bDouble);
+    /*
+         * Copy data from input stream to output stream
+         */
+    log.emitLog("Copying data");
+    StorletInputStream psis = (StorletInputStream) inputStreams.get(0);
+    InputStream is;
+    is = psis.getStream();
+    OutputStream os = storletObjectOutputStream.getStream();
+    final byte[] buffer = new byte[iChunkSize];
+    String readString = null;
+    try {
+        log.emitLog(new Date().toString() + "About to read from input");
+        for (int bytes_read = is.read(buffer); bytes_read >= 0; bytes_read = is.read(buffer)) {
+            log.emitLog(new Date().toString() + "read from input " + bytes_read + "bytes");
+            readString = new String(buffer);
+            readString = readString.replaceAll("\0", "");
+            log.emitLog(new Date().toString() + "Writing to output " + bytes_read + "bytes");
+            os.write(readString.getBytes(), 0, bytes_read);
+            if (bDouble == true) {
+                log.emitLog("bDouble == true writing again");
+                log.emitLog(new Date().toString() + "Writing to output " + bytes_read + "bytes");
+                // os.write(buffer);
+                os.write(readString.getBytes());
+            }
+            log.emitLog("About to read from input");
+        }
+        os.close();
+    } catch (Exception e) {
+        log.emitLog("Copying data from inut stream to output stream failed: " + e.getMessage());
+        throw new StorletException("Copying data from inut stream to output stream failed: " + e.getMessage());
+    } finally {
+        try {
+            is.close();
+            os.close();
+        } catch (IOException e) {
+        }
+    }
+    log.emitLog("IdentityStorlet Invocation done");
+}
+#end_block
+
+#method_before
+@Override
+public void invoke(ArrayList<StorletInputStream> inputStreams, ArrayList<StorletOutputStream> outputStreams, Map<String, String> parameters, StorletLogger log) throws StorletException {
+    log.emitLog("ThumbnailStorlet Invoked");
+    /*
+		 * Get input stuff
+		 */
+    HashMap<String, String> object_md;
+    StorletInputStream storletInputStream = inputStreams.get(0);
+    InputStream thumbnailInputStream = storletInputStream.getStream();
+    object_md = storletInputStream.getMetadata();
+    /*
+		 * Get output stuff
+		 */
+    StorletObjectOutputStream storletObjectOutputStream = (StorletObjectOutputStream) outputStreams.get(0);
+    OutputStream thumbnailOutputStream = storletObjectOutputStream.getStream();
+    /*
+		 * Set the output metadata
+		 */
+    log.emitLog("Setting metadata");
+    storletObjectOutputStream.setMetadata(object_md);
+    /*
+		 * Read Input to BufferedImage
+		 */
+    log.emitLog("Reading Input");
+    BufferedImage img = null;
+    try {
+        img = ImageIO.read(thumbnailInputStream);
+    } catch (Exception e) {
+        log.emitLog("Failed to read input stream to buffered image");
+        throw new StorletException("Failed to read input stream to buffered image " + e.getMessage());
+    } finally {
+        try {
+            thumbnailInputStream.close();
+        } catch (IOException e) {
+            log.emitLog("Failed to close input stream");
+        }
+    }
+    try {
+        thumbnailInputStream.close();
+    } catch (IOException e) {
+        log.emitLog("Failed to close input stream");
+    }
+    /*
+		 * Convert
+		 */
+    log.emitLog("Converting");
+    int newH = img.getHeight() / 8;
+    int newW = img.getWidth() / 8;
+    int type = img.getTransparency() == Transparency.OPAQUE ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB;
+    BufferedImage thumbnailImage = new BufferedImage(newW, newH, type);
+    Graphics2D g = thumbnailImage.createGraphics();
+    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+    g.drawImage(img, 0, 0, newW, newH, null);
+    g.dispose();
+    /*
+		 * Write
+		 */
+    log.emitLog("Writing Output");
+    try {
+        ImageIO.write(thumbnailImage, "PNG", thumbnailOutputStream);
+    } catch (Exception e) {
+        log.emitLog("Failed to write image to out stream");
+        throw new StorletException("Failed to write image to out stream " + e.getMessage());
+    } finally {
+        try {
+            thumbnailOutputStream.close();
+        } catch (IOException e) {
+        }
+    }
+    try {
+        thumbnailOutputStream.close();
+    } catch (IOException e) {
+    }
+    log.emitLog("Done");
+}
+#method_after
+@Override
+public void invoke(ArrayList<StorletInputStream> inputStreams, ArrayList<StorletOutputStream> outputStreams, Map<String, String> parameters, StorletLogger log) throws StorletException {
+    log.emitLog("ThumbnailStorlet Invoked");
+    /*
+         * Get input stuff
+         */
+    HashMap<String, String> object_md;
+    StorletInputStream storletInputStream = inputStreams.get(0);
+    InputStream thumbnailInputStream = storletInputStream.getStream();
+    object_md = storletInputStream.getMetadata();
+    /*
+         * Get output stuff
+         */
+    StorletObjectOutputStream storletObjectOutputStream = (StorletObjectOutputStream) outputStreams.get(0);
+    OutputStream thumbnailOutputStream = storletObjectOutputStream.getStream();
+    /*
+         * Set the output metadata
+         */
+    log.emitLog("Setting metadata");
+    storletObjectOutputStream.setMetadata(object_md);
+    /*
+         * Read Input to BufferedImage
+         */
+    log.emitLog("Reading Input");
+    BufferedImage img = null;
+    try {
+        img = ImageIO.read(thumbnailInputStream);
+    } catch (Exception e) {
+        log.emitLog("Failed to read input stream to buffered image");
+        throw new StorletException("Failed to read input stream to buffered image " + e.getMessage());
+    } finally {
+        try {
+            thumbnailInputStream.close();
+        } catch (IOException e) {
+            log.emitLog("Failed to close input stream");
+        }
+    }
+    try {
+        thumbnailInputStream.close();
+    } catch (IOException e) {
+        log.emitLog("Failed to close input stream");
+    }
+    /*
+         * Convert
+         */
+    log.emitLog("Converting");
+    int newH = img.getHeight() / 8;
+    int newW = img.getWidth() / 8;
+    int type = img.getTransparency() == Transparency.OPAQUE ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB;
+    BufferedImage thumbnailImage = new BufferedImage(newW, newH, type);
+    Graphics2D g = thumbnailImage.createGraphics();
+    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+    g.drawImage(img, 0, 0, newW, newH, null);
+    g.dispose();
+    /*
+         * Write
+         */
+    log.emitLog("Writing Output");
+    try {
+        ImageIO.write(thumbnailImage, "PNG", thumbnailOutputStream);
+    } catch (Exception e) {
+        log.emitLog("Failed to write image to out stream");
+        throw new StorletException("Failed to write image to out stream " + e.getMessage());
+    } finally {
+        try {
+            thumbnailOutputStream.close();
+        } catch (IOException e) {
+        }
+    }
+    try {
+        thumbnailOutputStream.close();
+    } catch (IOException e) {
+    }
+    log.emitLog("Done");
+}
+#end_block
+
+#method_before
+@Override
+public List<Statistics> find(String tenantId, String name, Map<String, String> dimensions, DateTime startTime, @Nullable DateTime endTime, List<String> statistics, int period, String offset, int limit, Boolean mergeMetricsFlag, String groupBy) throws Exception {
+    String offsetTimePart = "";
+    if (!Strings.isNullOrEmpty(offset)) {
+        int i = offset.indexOf('_');
+        if (i > -1) {
+            offsetTimePart = offset.substring(i + 1);
+            // Add the period to the offset to ensure only the next group of points are returned
+            DateTime offsetDateTime = DateTime.parse(offsetTimePart).plusSeconds(period);
+            offset = offset.substring(0, i).concat(offsetDateTime.toString());
+        }
+    }
+    String q = buildQuery(tenantId, name, dimensions, startTime, endTime, statistics, period, offset, limit, mergeMetricsFlag, groupBy);
+    String r = this.influxV9RepoReader.read(q);
+    Series series = this.objectMapper.readValue(r, Series.class);
+    List<Statistics> statisticsList = statisticslist(series, offset, limit);
+    logger.debug("Found {} metric definitions matching query", statisticsList.size());
+    return statisticsList;
+}
+#method_after
+@Override
+public List<Statistics> find(String tenantId, String name, Map<String, String> dimensions, DateTime startTime, @Nullable DateTime endTime, List<String> statistics, int period, String offset, int limit, Boolean mergeMetricsFlag, String groupBy) throws Exception {
+    String offsetTimePart = "";
+    if (!Strings.isNullOrEmpty(offset)) {
+        int indexOfUnderscore = offset.indexOf('_');
+        if (indexOfUnderscore > -1) {
+            offsetTimePart = offset.substring(indexOfUnderscore + 1);
+            // Add the period to the offset to ensure only the next group of points are returned
+            DateTime offsetDateTime = DateTime.parse(offsetTimePart).plusSeconds(period);
+            // leave out any ID, as influx doesn't understand it
+            offset = offsetDateTime.toString();
+        }
+    }
+    String q = buildQuery(tenantId, name, dimensions, startTime, endTime, statistics, period, offset, limit, mergeMetricsFlag, groupBy);
+    String r = this.influxV9RepoReader.read(q);
+    Series series = this.objectMapper.readValue(r, Series.class);
+    List<Statistics> statisticsList = statisticslist(series, offset, limit);
+    logger.debug("Found {} metric definitions matching query", statisticsList.size());
+    return statisticsList;
+}
+#end_block
+
+#method_before
+private String buildQuery(String tenantId, String name, Map<String, String> dimensions, DateTime startTime, DateTime endTime, List<String> statistics, int period, String offset, int limit, Boolean mergeMetricsFlag, String groupBy) throws Exception {
+    String offsetTimePart = "";
+    if (!Strings.isNullOrEmpty(offset)) {
+        int i = offset.indexOf('_');
+        offsetTimePart = offset.substring(i + 1);
+    }
+    String q;
+    if (Boolean.TRUE.equals(mergeMetricsFlag)) {
+        q = String.format("select %1$s %2$s " + "where %3$s %4$s %5$s %6$s %7$s %8$s %9$s %10$s", funcPart(statistics), this.influxV9Utils.namePart(name, true), this.influxV9Utils.privateTenantIdPart(tenantId), this.influxV9Utils.privateRegionPart(this.region), this.influxV9Utils.startTimePart(startTime), this.influxV9Utils.dimPart(dimensions), this.influxV9Utils.endTimePart(endTime), this.influxV9Utils.timeOffsetPart(offsetTimePart), this.influxV9Utils.periodPart(period), this.influxV9Utils.limitPart(limit));
+    } else {
+        if (!"*".equals(groupBy) && !this.influxV9MetricDefinitionRepo.isAtMostOneSeries(tenantId, name, dimensions)) {
+            throw new MultipleMetricsException(name, dimensions);
+        }
+        q = String.format("select %1$s %2$s " + "where %3$s %4$s %5$s %6$s %7$s %8$s", funcPart(statistics), this.influxV9Utils.namePart(name, true), this.influxV9Utils.privateTenantIdPart(tenantId), this.influxV9Utils.privateRegionPart(this.region), this.influxV9Utils.startTimePart(startTime), this.influxV9Utils.dimPart(dimensions), this.influxV9Utils.endTimePart(endTime), this.influxV9Utils.periodPartWithGroupBy(period));
+    }
+    logger.debug("Statistics query: {}", q);
+    return q;
+}
+#method_after
+private String buildQuery(String tenantId, String name, Map<String, String> dimensions, DateTime startTime, DateTime endTime, List<String> statistics, int period, String offset, int limit, Boolean mergeMetricsFlag, String groupBy) throws Exception {
+    String offsetTimePart = "";
+    if (!Strings.isNullOrEmpty(offset)) {
+        int indexOfUnderscore = offset.indexOf('_');
+        offsetTimePart = offset.substring(indexOfUnderscore + 1);
+    }
+    String q;
+    if (Boolean.TRUE.equals(mergeMetricsFlag)) {
+        q = String.format("select %1$s %2$s " + "where %3$s %4$s %5$s %6$s %7$s %8$s %9$s %10$s", funcPart(statistics), this.influxV9Utils.namePart(name, true), this.influxV9Utils.privateTenantIdPart(tenantId), this.influxV9Utils.privateRegionPart(this.region), this.influxV9Utils.startTimePart(startTime), this.influxV9Utils.dimPart(dimensions), this.influxV9Utils.endTimePart(endTime), this.influxV9Utils.timeOffsetPart(offsetTimePart), this.influxV9Utils.periodPart(period), this.influxV9Utils.limitPart(limit));
+    } else {
+        if (!"*".equals(groupBy) && !this.influxV9MetricDefinitionRepo.isAtMostOneSeries(tenantId, name, dimensions)) {
+            throw new MultipleMetricsException(name, dimensions);
+        }
+        q = String.format("select %1$s %2$s " + "where %3$s %4$s %5$s %6$s %7$s %8$s", funcPart(statistics), this.influxV9Utils.namePart(name, true), this.influxV9Utils.privateTenantIdPart(tenantId), this.influxV9Utils.privateRegionPart(this.region), this.influxV9Utils.startTimePart(startTime), this.influxV9Utils.dimPart(dimensions), this.influxV9Utils.endTimePart(endTime), this.influxV9Utils.periodPartWithGroupBy(period));
+    }
+    logger.debug("Statistics query: {}", q);
+    return q;
+}
+#end_block
+
+#method_before
+@Override
+public void addValue(double value) {
+    super.addValue(value);
+    this.count++;
+}
+#method_after
+@Override
+public void addValue(double value, double timestamp) {
+    super.addValue(value, timestamp);
+    this.count++;
+}
+#end_block
+
+#method_before
+@Override
+public void addValue(double value) {
+    initialized = true;
+    this.value++;
+}
+#method_after
+@Override
+public void addValue(double value, double timestamp) {
+    initialized = true;
+    this.value++;
+}
+#end_block
+
+#method_before
+@Override
+public void addValue(double value) {
+    if (!initialized) {
+        initialized = true;
+        this.value = value;
+    } else if (value > this.value)
+        this.value = value;
+}
+#method_after
+@Override
+public void addValue(double value, double timestamp) {
+    if (!initialized) {
+        initialized = true;
+        this.value = value;
+    } else if (value > this.value)
+        this.value = value;
+}
+#end_block
+
+#method_before
+@Override
+public void addValue(double value) {
+    if (!initialized) {
+        initialized = true;
+        this.value = value;
+    } else if (value < this.value)
+        this.value = value;
+}
+#method_after
+@Override
+public void addValue(double value, double timestamp) {
+    if (!initialized) {
+        initialized = true;
+        this.value = value;
+    } else if (value < this.value)
+        this.value = value;
+}
+#end_block
+
+#method_before
+@Override
+public void addValue(double value) {
+    initialized = true;
+    this.value += value;
+}
+#method_after
+@Override
+public void addValue(double value, double timestamp) {
+    initialized = true;
+    this.value += value;
+}
+#end_block
+
+#method_before
+@Override
+public void addValue(double value) {
+    initialized = true;
+    this.value = value;
+}
+#method_after
+@Override
+public void addValue(double value, double timestamp) {
+    initialized = true;
+    // Ensure older measurements don't change value
+    if (timestamp > this.lastTimestamp) {
+        this.value = value;
+        this.lastTimestamp = timestamp;
+    }
+}
+#end_block
+
+#method_before
+@Override
+@SuppressWarnings("unchecked")
+public void run(ApiConfig config, Environment environment) throws Exception {
+    /**
+     * Wire services
+     */
+    Injector.registerModules(new MonApiModule(environment, config));
+    /**
+     * Configure resources
+     */
+    environment.jersey().register(Injector.getInstance(VersionResource.class));
+    environment.jersey().register(Injector.getInstance(AlarmDefinitionResource.class));
+    environment.jersey().register(Injector.getInstance(AlarmResource.class));
+    environment.jersey().register(Injector.getInstance(DimensionResource.class));
+    environment.jersey().register(Injector.getInstance(MetricResource.class));
+    environment.jersey().register(Injector.getInstance(MeasurementResource.class));
+    environment.jersey().register(Injector.getInstance(StatisticResource.class));
+    environment.jersey().register(Injector.getInstance(NotificationMethodResource.class));
+    /**
+     * Configure providers
+     */
+    removeExceptionMappers(environment.jersey().getResourceConfig().getSingletons());
+    environment.jersey().register(new EntityExistsExceptionMapper());
+    environment.jersey().register(new EntityNotFoundExceptionMapper());
+    environment.jersey().register(new IllegalArgumentExceptionMapper());
+    environment.jersey().register(new InvalidEntityExceptionMapper());
+    environment.jersey().register(new JsonProcessingExceptionMapper());
+    environment.jersey().register(new JsonMappingExceptionManager());
+    environment.jersey().register(new ConstraintViolationExceptionMapper());
+    environment.jersey().register(new ThrowableExceptionMapper<Throwable>() {
+    });
+    environment.jersey().register(new MultipleMetricsExceptionMapper());
+    /**
+     * Configure Jackson
+     */
+    environment.getObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+    environment.getObjectMapper().enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
+    environment.getObjectMapper().disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    environment.getObjectMapper().disable(DeserializationFeature.WRAP_EXCEPTIONS);
+    SimpleModule module = new SimpleModule("SerializationModule");
+    module.addSerializer(new SubAlarmExpressionSerializer());
+    environment.getObjectMapper().registerModule(module);
+    /**
+     * Configure CORS filter
+     */
+    Dynamic corsFilter = environment.servlets().addFilter("cors", CrossOriginFilter.class);
+    corsFilter.addMappingForUrlPatterns(null, true, "/*");
+    corsFilter.setInitParameter("allowedOrigins", "*");
+    corsFilter.setInitParameter("allowedHeaders", "X-Requested-With,Content-Type,Accept,Origin,X-Auth-Token");
+    corsFilter.setInitParameter("allowedMethods", "OPTIONS,GET,HEAD");
+    if (config.middleware.enabled) {
+        ensureHasValue(config.middleware.serverVIP, "serverVIP", "enabled", "true");
+        ensureHasValue(config.middleware.serverPort, "serverPort", "enabled", "true");
+        ensureHasValue(config.middleware.adminAuthMethod, "adminAuthMethod", "enabled", "true");
+        if ("password".equalsIgnoreCase(config.middleware.adminAuthMethod)) {
+            ensureHasValue(config.middleware.adminUser, "adminUser", "adminAuthMethod", "password");
+            ensureHasValue(config.middleware.adminPassword, "adminPassword", "adminAuthMethod", "password");
+        } else if ("token".equalsIgnoreCase(config.middleware.adminAuthMethod)) {
+            ensureHasValue(config.middleware.adminToken, "adminToken", "adminAuthMethod", "token");
+        } else {
+            throw new Exception(String.format("Invalid value '%s' for adminAuthMethod. Must be either password or token", config.middleware.adminAuthMethod));
+        }
+        if (config.middleware.defaultAuthorizedRoles == null || config.middleware.defaultAuthorizedRoles.isEmpty()) {
+            ensureHasValue(null, "defaultAuthorizedRoles", "enabled", "true");
+        }
+        if (config.middleware.connSSLClientAuth) {
+            ensureHasValue(config.middleware.keystore, "keystore", "connSSLClientAuth", "true");
+            ensureHasValue(config.middleware.keystorePassword, "keystorePassword", "connSSLClientAuth", "true");
+        }
+        Map<String, String> authInitParams = new HashMap<String, String>();
+        authInitParams.put("ServerVIP", config.middleware.serverVIP);
+        authInitParams.put("ServerPort", config.middleware.serverPort);
+        authInitParams.put(AuthConstants.USE_HTTPS, String.valueOf(config.middleware.useHttps));
+        authInitParams.put("ConnTimeout", config.middleware.connTimeout);
+        authInitParams.put("ConnSSLClientAuth", String.valueOf(config.middleware.connSSLClientAuth));
+        authInitParams.put("ConnPoolMaxActive", config.middleware.connPoolMaxActive);
+        authInitParams.put("ConnPoolMaxIdle", config.middleware.connPoolMaxActive);
+        authInitParams.put("ConnPoolEvictPeriod", config.middleware.connPoolEvictPeriod);
+        authInitParams.put("ConnPoolMinIdleTime", config.middleware.connPoolMinIdleTime);
+        authInitParams.put("ConnRetryTimes", config.middleware.connRetryTimes);
+        authInitParams.put("ConnRetryInterval", config.middleware.connRetryInterval);
+        authInitParams.put("AdminToken", config.middleware.adminToken);
+        authInitParams.put("TimeToCacheToken", config.middleware.timeToCacheToken);
+        authInitParams.put("AdminAuthMethod", config.middleware.adminAuthMethod);
+        authInitParams.put("AdminUser", config.middleware.adminUser);
+        authInitParams.put("AdminPassword", config.middleware.adminPassword);
+        authInitParams.put(AuthConstants.ADMIN_PROJECT_ID, config.middleware.adminProjectId);
+        authInitParams.put(AuthConstants.ADMIN_PROJECT_NAME, config.middleware.adminProjectName);
+        authInitParams.put(AuthConstants.ADMIN_USER_DOMAIN_ID, config.middleware.adminUserDomainId);
+        authInitParams.put(AuthConstants.ADMIN_USER_DOMAIN_NAME, config.middleware.adminUserDomainName);
+        authInitParams.put(AuthConstants.ADMIN_PROJECT_DOMAIN_ID, config.middleware.adminProjectDomainId);
+        authInitParams.put(AuthConstants.ADMIN_PROJECT_DOMAIN_NAME, config.middleware.adminProjectDomainName);
+        authInitParams.put("MaxTokenCacheSize", config.middleware.maxTokenCacheSize);
+        setIfNotNull(authInitParams, AuthConstants.TRUSTSTORE, config.middleware.truststore);
+        setIfNotNull(authInitParams, AuthConstants.TRUSTSTORE_PASS, config.middleware.truststorePassword);
+        setIfNotNull(authInitParams, AuthConstants.KEYSTORE, config.middleware.keystore);
+        setIfNotNull(authInitParams, AuthConstants.KEYSTORE_PASS, config.middleware.keystorePassword);
+        /**
+         * Configure auth filters
+         */
+        Dynamic preAuthenticationFilter = environment.servlets().addFilter("pre-auth", new PreAuthenticationFilter());
+        preAuthenticationFilter.addMappingForUrlPatterns(null, true, "/");
+        preAuthenticationFilter.addMappingForUrlPatterns(null, true, "/v2.0/*");
+        Dynamic tokenAuthFilter = environment.servlets().addFilter("token-auth", new TokenAuth());
+        tokenAuthFilter.addMappingForUrlPatterns(null, true, "/");
+        tokenAuthFilter.addMappingForUrlPatterns(null, true, "/v2.0/*");
+        tokenAuthFilter.setInitParameters(authInitParams);
+        Dynamic postAuthenticationFilter = environment.servlets().addFilter("post-auth", new PostAuthenticationFilter(config.middleware.defaultAuthorizedRoles, config.middleware.agentAuthorizedRoles, config.middleware.readOnlyAuthorizedRoles));
+        postAuthenticationFilter.addMappingForUrlPatterns(null, true, "/");
+        postAuthenticationFilter.addMappingForUrlPatterns(null, true, "/v2.0/*");
+        environment.jersey().getResourceConfig().getContainerRequestFilters().add(new RoleAuthorizationFilter());
+    } else {
+        Dynamic mockAuthenticationFilter = environment.servlets().addFilter("mock-auth", new MockAuthenticationFilter());
+        mockAuthenticationFilter.addMappingForUrlPatterns(null, true, "/");
+        mockAuthenticationFilter.addMappingForUrlPatterns(null, true, "/v2.0/*");
+    }
+}
+#method_after
+@Override
+@SuppressWarnings("unchecked")
+public void run(ApiConfig config, Environment environment) throws Exception {
+    /**
+     * Wire services
+     */
+    Injector.registerModules(new MonApiModule(environment, config));
+    /**
+     * Configure resources
+     */
+    environment.jersey().register(Injector.getInstance(VersionResource.class));
+    environment.jersey().register(Injector.getInstance(AlarmDefinitionResource.class));
+    environment.jersey().register(Injector.getInstance(AlarmResource.class));
+    environment.jersey().register(Injector.getInstance(DimensionResource.class));
+    environment.jersey().register(Injector.getInstance(MetricResource.class));
+    environment.jersey().register(Injector.getInstance(MeasurementResource.class));
+    environment.jersey().register(Injector.getInstance(StatisticResource.class));
+    environment.jersey().register(Injector.getInstance(NotificationMethodResource.class));
+    environment.jersey().register(Injector.getInstance(NotificationMethodTypesResource.class));
+    /**
+     * Configure providers
+     */
+    removeExceptionMappers(environment.jersey().getResourceConfig().getSingletons());
+    environment.jersey().register(new EntityExistsExceptionMapper());
+    environment.jersey().register(new EntityNotFoundExceptionMapper());
+    environment.jersey().register(new IllegalArgumentExceptionMapper());
+    environment.jersey().register(new InvalidEntityExceptionMapper());
+    environment.jersey().register(new JsonProcessingExceptionMapper());
+    environment.jersey().register(new JsonMappingExceptionManager());
+    environment.jersey().register(new ConstraintViolationExceptionMapper());
+    environment.jersey().register(new ThrowableExceptionMapper<Throwable>() {
+    });
+    environment.jersey().register(new MultipleMetricsExceptionMapper());
+    /**
+     * Configure Jackson
+     */
+    environment.getObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+    environment.getObjectMapper().enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
+    environment.getObjectMapper().disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    environment.getObjectMapper().disable(DeserializationFeature.WRAP_EXCEPTIONS);
+    SimpleModule module = new SimpleModule("SerializationModule");
+    module.addSerializer(new SubAlarmExpressionSerializer());
+    environment.getObjectMapper().registerModule(module);
+    /**
+     * Configure CORS filter
+     */
+    Dynamic corsFilter = environment.servlets().addFilter("cors", CrossOriginFilter.class);
+    corsFilter.addMappingForUrlPatterns(null, true, "/*");
+    corsFilter.setInitParameter("allowedOrigins", "*");
+    corsFilter.setInitParameter("allowedHeaders", "X-Requested-With,Content-Type,Accept,Origin,X-Auth-Token");
+    corsFilter.setInitParameter("allowedMethods", "OPTIONS,GET,HEAD");
+    if (config.middleware.enabled) {
+        ensureHasValue(config.middleware.serverVIP, "serverVIP", "enabled", "true");
+        ensureHasValue(config.middleware.serverPort, "serverPort", "enabled", "true");
+        ensureHasValue(config.middleware.adminAuthMethod, "adminAuthMethod", "enabled", "true");
+        if ("password".equalsIgnoreCase(config.middleware.adminAuthMethod)) {
+            ensureHasValue(config.middleware.adminUser, "adminUser", "adminAuthMethod", "password");
+            ensureHasValue(config.middleware.adminPassword, "adminPassword", "adminAuthMethod", "password");
+        } else if ("token".equalsIgnoreCase(config.middleware.adminAuthMethod)) {
+            ensureHasValue(config.middleware.adminToken, "adminToken", "adminAuthMethod", "token");
+        } else {
+            throw new Exception(String.format("Invalid value '%s' for adminAuthMethod. Must be either password or token", config.middleware.adminAuthMethod));
+        }
+        if (config.middleware.defaultAuthorizedRoles == null || config.middleware.defaultAuthorizedRoles.isEmpty()) {
+            ensureHasValue(null, "defaultAuthorizedRoles", "enabled", "true");
+        }
+        if (config.middleware.connSSLClientAuth) {
+            ensureHasValue(config.middleware.keystore, "keystore", "connSSLClientAuth", "true");
+            ensureHasValue(config.middleware.keystorePassword, "keystorePassword", "connSSLClientAuth", "true");
+        }
+        Map<String, String> authInitParams = new HashMap<String, String>();
+        authInitParams.put("ServerVIP", config.middleware.serverVIP);
+        authInitParams.put("ServerPort", config.middleware.serverPort);
+        authInitParams.put(AuthConstants.USE_HTTPS, String.valueOf(config.middleware.useHttps));
+        authInitParams.put("ConnTimeout", config.middleware.connTimeout);
+        authInitParams.put("ConnSSLClientAuth", String.valueOf(config.middleware.connSSLClientAuth));
+        authInitParams.put("ConnPoolMaxActive", config.middleware.connPoolMaxActive);
+        authInitParams.put("ConnPoolMaxIdle", config.middleware.connPoolMaxActive);
+        authInitParams.put("ConnPoolEvictPeriod", config.middleware.connPoolEvictPeriod);
+        authInitParams.put("ConnPoolMinIdleTime", config.middleware.connPoolMinIdleTime);
+        authInitParams.put("ConnRetryTimes", config.middleware.connRetryTimes);
+        authInitParams.put("ConnRetryInterval", config.middleware.connRetryInterval);
+        authInitParams.put("AdminToken", config.middleware.adminToken);
+        authInitParams.put("TimeToCacheToken", config.middleware.timeToCacheToken);
+        authInitParams.put("AdminAuthMethod", config.middleware.adminAuthMethod);
+        authInitParams.put("AdminUser", config.middleware.adminUser);
+        authInitParams.put("AdminPassword", config.middleware.adminPassword);
+        authInitParams.put(AuthConstants.ADMIN_PROJECT_ID, config.middleware.adminProjectId);
+        authInitParams.put(AuthConstants.ADMIN_PROJECT_NAME, config.middleware.adminProjectName);
+        authInitParams.put(AuthConstants.ADMIN_USER_DOMAIN_ID, config.middleware.adminUserDomainId);
+        authInitParams.put(AuthConstants.ADMIN_USER_DOMAIN_NAME, config.middleware.adminUserDomainName);
+        authInitParams.put(AuthConstants.ADMIN_PROJECT_DOMAIN_ID, config.middleware.adminProjectDomainId);
+        authInitParams.put(AuthConstants.ADMIN_PROJECT_DOMAIN_NAME, config.middleware.adminProjectDomainName);
+        authInitParams.put("MaxTokenCacheSize", config.middleware.maxTokenCacheSize);
+        setIfNotNull(authInitParams, AuthConstants.TRUSTSTORE, config.middleware.truststore);
+        setIfNotNull(authInitParams, AuthConstants.TRUSTSTORE_PASS, config.middleware.truststorePassword);
+        setIfNotNull(authInitParams, AuthConstants.KEYSTORE, config.middleware.keystore);
+        setIfNotNull(authInitParams, AuthConstants.KEYSTORE_PASS, config.middleware.keystorePassword);
+        /**
+         * Configure auth filters
+         */
+        Dynamic preAuthenticationFilter = environment.servlets().addFilter("pre-auth", new PreAuthenticationFilter());
+        preAuthenticationFilter.addMappingForUrlPatterns(null, true, "/");
+        preAuthenticationFilter.addMappingForUrlPatterns(null, true, "/v2.0/*");
+        Dynamic tokenAuthFilter = environment.servlets().addFilter("token-auth", new TokenAuth());
+        tokenAuthFilter.addMappingForUrlPatterns(null, true, "/");
+        tokenAuthFilter.addMappingForUrlPatterns(null, true, "/v2.0/*");
+        tokenAuthFilter.setInitParameters(authInitParams);
+        Dynamic postAuthenticationFilter = environment.servlets().addFilter("post-auth", new PostAuthenticationFilter(config.middleware.defaultAuthorizedRoles, config.middleware.agentAuthorizedRoles, config.middleware.readOnlyAuthorizedRoles));
+        postAuthenticationFilter.addMappingForUrlPatterns(null, true, "/");
+        postAuthenticationFilter.addMappingForUrlPatterns(null, true, "/v2.0/*");
+        environment.jersey().getResourceConfig().getContainerRequestFilters().add(new RoleAuthorizationFilter());
+    } else {
+        Dynamic mockAuthenticationFilter = environment.servlets().addFilter("mock-auth", new MockAuthenticationFilter());
+        mockAuthenticationFilter.addMappingForUrlPatterns(null, true, "/");
+        mockAuthenticationFilter.addMappingForUrlPatterns(null, true, "/v2.0/*");
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected void configure() {
+    final boolean hibernateEnabled = this.isHibernateEnabled();
+    this.bindUtils(hibernateEnabled);
+    if (hibernateEnabled) {
+        this.bind(AlarmRepo.class).to(AlarmSqlRepoImpl.class).in(Singleton.class);
+        this.bind(AlarmDefinitionRepo.class).to(AlarmDefinitionSqlRepoImpl.class).in(Singleton.class);
+        this.bind(NotificationMethodRepo.class).to(NotificationMethodSqlRepoImpl.class).in(Singleton.class);
+    } else {
+        bind(AlarmRepo.class).to(AlarmMySqlRepoImpl.class).in(Singleton.class);
+        bind(AlarmDefinitionRepo.class).to(AlarmDefinitionMySqlRepoImpl.class).in(Singleton.class);
+        bind(NotificationMethodRepo.class).to(NotificationMethodMySqlRepoImpl.class).in(Singleton.class);
+        bind(PersistUtils.class).in(Singleton.class);
+    }
+    if (config.databaseConfiguration.getDatabaseType().trim().equalsIgnoreCase(VERTICA)) {
+        bind(AlarmStateHistoryRepo.class).to(AlarmStateHistoryVerticaRepoImpl.class).in(Singleton.class);
+        bind(DimensionRepo.class).to(DimensionVerticaRepoImpl.class).in(Singleton.class);
+        bind(MetricDefinitionRepo.class).to(MetricDefinitionVerticaRepoImpl.class).in(Singleton.class);
+        bind(MeasurementRepo.class).to(MeasurementVerticaRepoImpl.class).in(Singleton.class);
+        bind(StatisticRepo.class).to(StatisticVerticaRepoImpl.class).in(Singleton.class);
+    } else if (config.databaseConfiguration.getDatabaseType().trim().equalsIgnoreCase(INFLUXDB)) {
+        if (config.influxDB.getVersion() != null && !config.influxDB.getVersion().equalsIgnoreCase(INFLUXDB_V9)) {
+            System.err.println("Found unsupported Influxdb version: " + config.influxDB.getVersion());
+            System.err.println("Supported Influxdb versions are 'v9'");
+            System.err.println("Check your config file");
+            System.exit(1);
+        }
+        bind(InfluxV9Utils.class).in(Singleton.class);
+        bind(InfluxV9RepoReader.class).in(Singleton.class);
+        bind(AlarmStateHistoryRepo.class).to(InfluxV9AlarmStateHistoryRepo.class).in(Singleton.class);
+        bind(MetricDefinitionRepo.class).to(InfluxV9MetricDefinitionRepo.class).in(Singleton.class);
+        bind(MeasurementRepo.class).to(InfluxV9MeasurementRepo.class).in(Singleton.class);
+        bind(StatisticRepo.class).to(InfluxV9StatisticRepo.class).in(Singleton.class);
+    } else {
+        throw new ProvisionException("Failed to detect supported database. Supported databases are " + "'vertica' and 'influxdb'. Check your config file.");
+    }
+}
+#method_after
+@Override
+protected void configure() {
+    final boolean hibernateEnabled = this.isHibernateEnabled();
+    this.bindUtils(hibernateEnabled);
+    if (hibernateEnabled) {
+        this.bind(AlarmRepo.class).to(AlarmSqlRepoImpl.class).in(Singleton.class);
+        this.bind(AlarmDefinitionRepo.class).to(AlarmDefinitionSqlRepoImpl.class).in(Singleton.class);
+        this.bind(NotificationMethodRepo.class).to(NotificationMethodSqlRepoImpl.class).in(Singleton.class);
+    } else {
+        bind(AlarmRepo.class).to(AlarmMySqlRepoImpl.class).in(Singleton.class);
+        bind(AlarmDefinitionRepo.class).to(AlarmDefinitionMySqlRepoImpl.class).in(Singleton.class);
+        bind(NotificationMethodRepo.class).to(NotificationMethodMySqlRepoImpl.class).in(Singleton.class);
+        bind(PersistUtils.class).in(Singleton.class);
+    }
+    if (config.databaseConfiguration.getDatabaseType().trim().equalsIgnoreCase(VERTICA)) {
+        bind(AlarmStateHistoryRepo.class).to(AlarmStateHistoryVerticaRepoImpl.class).in(Singleton.class);
+        bind(DimensionRepo.class).to(DimensionVerticaRepoImpl.class).in(Singleton.class);
+        bind(MetricDefinitionRepo.class).to(MetricDefinitionVerticaRepoImpl.class).in(Singleton.class);
+        bind(MeasurementRepo.class).to(MeasurementVerticaRepoImpl.class).in(Singleton.class);
+        bind(StatisticRepo.class).to(StatisticVerticaRepoImpl.class).in(Singleton.class);
+    } else if (config.databaseConfiguration.getDatabaseType().trim().equalsIgnoreCase(INFLUXDB)) {
+        if (config.influxDB.getVersion() != null && !config.influxDB.getVersion().equalsIgnoreCase(INFLUXDB_V9)) {
+            System.err.println("Found unsupported Influxdb version: " + config.influxDB.getVersion());
+            System.err.println("Supported Influxdb versions are 'v9'");
+            System.err.println("Check your config file");
+            System.exit(1);
+        }
+        bind(InfluxV9Utils.class).in(Singleton.class);
+        bind(InfluxV9RepoReader.class).in(Singleton.class);
+        bind(AlarmStateHistoryRepo.class).to(InfluxV9AlarmStateHistoryRepo.class).in(Singleton.class);
+        bind(DimensionRepo.class).to(InfluxV9DimensionRepo.class).in(Singleton.class);
+        bind(MetricDefinitionRepo.class).to(InfluxV9MetricDefinitionRepo.class).in(Singleton.class);
+        bind(MeasurementRepo.class).to(InfluxV9MeasurementRepo.class).in(Singleton.class);
+        bind(StatisticRepo.class).to(InfluxV9StatisticRepo.class).in(Singleton.class);
+    } else {
+        throw new ProvisionException("Failed to detect supported database. Supported databases are " + "'vertica' and 'influxdb'. Check your config file.");
+    }
+}
+#end_block
+
+#method_before
+@Override
+public DimensionValues find(String tenantId, String name, String offset, int limit) throws Exception {
+    List<String> values = new ArrayList<String>();
+    String offsetPart = "";
+    try (Handle h = db.open()) {
+        if (offset != null && !offset.isEmpty()) {
+            offsetPart = " and dims.value > '" + offset + "' ";
+        }
+        String limitPart = " limit " + Integer.toString(limit + 1);
+        String sql = String.format(FIND_DIMENSION_VALUES_SQL, this.dbHint, offsetPart, tenantId, name, limitPart);
+        Query<Map<String, Object>> query = h.createQuery(sql);
+        List<Map<String, Object>> rows = query.list();
+        for (Map<String, Object> row : rows) {
+            String dimValue = (String) row.get("dValue");
+            values.add(dimValue);
+        }
+    }
+    return new DimensionValues(name, values);
+}
+#method_after
+@Override
+public DimensionValues find(String metricName, String tenantId, String dimensionName, String offset, int limit) throws Exception {
+    List<String> values = new ArrayList<String>();
+    String offsetPart = "";
+    String metricNamePart = "";
+    try (Handle h = db.open()) {
+        if (offset != null && !offset.isEmpty()) {
+            offsetPart = " and dims.value > '" + offset + "' ";
+        }
+        if (metricName != null && !metricName.isEmpty()) {
+            metricNamePart = " and def.name = '" + metricName + "' ";
+        }
+        String limitPart = " limit " + Integer.toString(limit + 1);
+        String sql = String.format(FIND_DIMENSION_VALUES_SQL, this.dbHint, offsetPart, metricNamePart, tenantId, dimensionName, limitPart);
+        Query<Map<String, Object>> query = h.createQuery(sql);
+        List<Map<String, Object>> rows = query.list();
+        for (Map<String, Object> row : rows) {
+            String dimValue = (String) row.get("dValue");
+            values.add(dimValue);
+        }
+    }
+    return new DimensionValues(metricName, dimensionName, values);
+}
+#end_block
+
+#method_before
+public static DimensionValues paginateDimensionValues(DimensionValues dimVals, int limit, UriInfo uriInfo) throws UnsupportedEncodingException {
+    List<Link> links = new ArrayList<>();
+    links.add(getSelfLink(uriInfo));
+    if (dimVals.getValues().size() > limit) {
+        dimVals.getValues().remove(dimVals.getValues().size() - 1);
+        String offset = dimVals.getValues().get(dimVals.getValues().size() - 1);
+        links.add(getNextLink(offset, uriInfo));
+    }
+    dimVals.setLinks(links);
+    return dimVals;
+}
+#method_after
+public static Paged paginateDimensionValues(DimensionValues dimVals, int limit, UriInfo uriInfo) throws UnsupportedEncodingException {
+    Paged paged = new Paged();
+    List<DimensionValues> elements = new ArrayList<DimensionValues>();
+    paged.links.add(getSelfLink(uriInfo));
+    if ((null != dimVals) && (dimVals.getValues().size() > limit)) {
+        dimVals.getValues().remove(dimVals.getValues().size() - 1);
+        String offset = dimVals.getValues().get(dimVals.getValues().size() - 1);
+        paged.links.add(getNextLink(offset, uriInfo));
+    }
+    elements.add(dimVals);
+    paged.elements = elements;
+    return paged;
+}
+#end_block
+
+#method_before
+@Override
+public boolean equals(Object obj) {
+    if (this == obj)
+        return true;
+    if (obj == null)
+        return false;
+    if (getClass() != obj.getClass())
+        return false;
+    DimensionValues other = (DimensionValues) obj;
+    if (name == null) {
+        if (other.name != null)
+            return false;
+    } else if (!name.equals(other.name))
+        return false;
+    if (values == null) {
+        if (other.values != null)
+            return false;
+    } else if (!values.equals(other.values))
+        return false;
+    return true;
+}
+#method_after
+@Override
+public boolean equals(Object obj) {
+    if (this == obj)
+        return true;
+    if (obj == null)
+        return false;
+    if (getClass() != obj.getClass())
+        return false;
+    DimensionValues other = (DimensionValues) obj;
+    if (dimensionName == null) {
+        if (other.dimensionName != null)
+            return false;
+    } else if (!dimensionName.equals(other.dimensionName))
+        return false;
+    if (metricName == null) {
+        if (other.metricName != null)
+            return false;
+    } else if (!metricName.equals(other.metricName))
+        return false;
+    if (values == null) {
+        if (other.values != null)
+            return false;
+    } else if (!values.equals(other.values))
+        return false;
+    return true;
+}
+#end_block
+
+#method_before
+@Override
+public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((name == null) ? 0 : name.hashCode());
+    result = prime * result + ((values == null) ? 0 : values.hashCode());
+    return result;
+}
+#method_after
+@Override
+public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((dimensionName == null) ? 0 : dimensionName.hashCode());
+    result = prime * result + ((metricName == null) ? 0 : metricName.hashCode());
+    result = prime * result + ((values == null) ? 0 : values.hashCode());
+    return result;
+}
+#end_block
+
+#method_before
+@Override
+public String toString() {
+    return String.format("DimensionValues [name=%s, values=%s]", name, values);
+}
+#method_after
+@Override
+public String toString() {
+    return String.format("MetricName=%s DimensionValues [name=%s, values=%s]", metricName, dimensionName, values);
+}
+#end_block
+
+#method_before
+@GET
+@Timed
+@Produces(MediaType.APPLICATION_JSON)
+public Object get(@Context UriInfo uriInfo, @HeaderParam("X-Tenant-Id") String tenantId, @HeaderParam("X-Roles") String roles, @QueryParam("limit") String limit, @QueryParam("name") String name, @QueryParam("offset") String offset, @QueryParam("tenant_id") String crossTenantId) throws Exception {
+    Validation.validateNotNullOrEmpty(name, "name");
+    final int paging_limit = this.persistUtils.getLimit(limit);
+    String queryTenantId = Validation.getQueryProject(roles, crossTenantId, tenantId, admin_role);
+    DimensionValues dimVals = repo.find(queryTenantId, name, offset, paging_limit);
+    return Links.paginateDimensionValues(dimVals, paging_limit, uriInfo);
+}
+#method_after
+@GET
+@Timed
+@Produces(MediaType.APPLICATION_JSON)
+public Object get(@Context UriInfo uriInfo, @HeaderParam("X-Tenant-Id") String tenantId, @HeaderParam("X-Roles") String roles, @QueryParam("limit") String limit, @QueryParam("dimension_name") String dimensionName, @QueryParam("metric_name") String metricName, @QueryParam("offset") String offset, @QueryParam("tenant_id") String crossTenantId) throws Exception {
+    Validation.validateNotNullOrEmpty(dimensionName, "dimension_name");
+    final int paging_limit = this.persistUtils.getLimit(limit);
+    String queryTenantId = Validation.getQueryProject(roles, crossTenantId, tenantId, admin_role);
+    DimensionValues dimVals = repo.find(metricName, queryTenantId, dimensionName, offset, paging_limit);
+    return Links.paginateDimensionValues(dimVals, paging_limit, uriInfo);
+}
+#end_block
+
+#method_before
+@Override
+public void createAlarm(Alarm alarm) {
+    Handle h = db.open();
+    try {
+        String timestamp = simpleDateFormat.format(new Date(System.currentTimeMillis()));
+        h.begin();
+        h.insert("insert into alarm (id, alarm_definition_id, state, state_updated_at, created_at, updated_at) values (?, ?, ?, ?, ?, ?)", alarm.getId(), alarm.getAlarmDefinitionId(), alarm.getState().toString(), timestamp, timestamp, timestamp);
+        for (final SubAlarm subAlarm : alarm.getSubAlarms()) {
+            h.insert("insert into sub_alarm (id, alarm_id, sub_expression_id, expression, created_at, updated_at) values (?, ?, ?, ?, ?, ?)", subAlarm.getId(), subAlarm.getAlarmId(), subAlarm.getAlarmSubExpressionId(), subAlarm.getExpression().getExpression(), timestamp, timestamp);
+        }
+        for (final MetricDefinitionAndTenantId md : alarm.getAlarmedMetrics()) {
+            createAlarmedMetric(h, md, alarm.getId());
+        }
+        h.commit();
+    } catch (RuntimeException e) {
+        h.rollback();
+        throw e;
+    } finally {
+        h.close();
+    }
+}
+#method_after
+@Override
+public void createAlarm(Alarm alarm) {
+    Handle h = db.open();
+    try {
+        String timestamp = formatDateFromMillis(System.currentTimeMillis());
+        h.begin();
+        h.insert("insert into alarm (id, alarm_definition_id, state, state_updated_at, created_at, updated_at) values (?, ?, ?, ?, ?, ?)", alarm.getId(), alarm.getAlarmDefinitionId(), alarm.getState().toString(), timestamp, timestamp, timestamp);
+        for (final SubAlarm subAlarm : alarm.getSubAlarms()) {
+            h.insert("insert into sub_alarm (id, alarm_id, sub_expression_id, expression, created_at, updated_at) values (?, ?, ?, ?, ?, ?)", subAlarm.getId(), subAlarm.getAlarmId(), subAlarm.getAlarmSubExpressionId(), subAlarm.getExpression().getExpression(), timestamp, timestamp);
+        }
+        for (final MetricDefinitionAndTenantId md : alarm.getAlarmedMetrics()) {
+            createAlarmedMetric(h, md, alarm.getId());
+        }
+        h.commit();
+    } catch (RuntimeException e) {
+        h.rollback();
+        throw e;
+    } finally {
+        h.close();
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void updateState(String id, AlarmState state, long msTimestamp) {
+    try (final Handle h = db.open()) {
+        String timestamp = simpleDateFormat.format(new Date(msTimestamp));
+        h.createStatement("update alarm set state = :state, state_updated_at = :timestamp, updated_at = :timestamp where id = :id").bind("id", id).bind("timestamp", timestamp).bind("state", state.toString()).execute();
+    }
+}
+#method_after
+@Override
+public void updateState(String id, AlarmState state, long msTimestamp) {
+    try (final Handle h = db.open()) {
+        String timestamp = formatDateFromMillis(msTimestamp);
+        h.createStatement("update alarm set state = :state, state_updated_at = :timestamp, updated_at = :timestamp where id = :id").bind("id", id).bind("timestamp", timestamp).bind("state", state.toString()).execute();
+    }
+}
+#end_block
+

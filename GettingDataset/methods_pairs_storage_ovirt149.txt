@@ -1,0 +1,49 @@
+2
+#method_before
+private String readAllLines(BufferedReader bufferedReader) {
+    String tempString;
+    String returnString = null;
+    try {
+        while ((tempString = bufferedReader.readLine()) != null) {
+            returnString += tempString + '\n';
+        }
+    } catch (IOException e) {
+        log.error("IOException while trying to read from buffer", e);
+    }
+    return (returnString == null) ? null : returnString.toString();
+}
+#method_after
+private String readAllLines(BufferedReader bufferedReader) {
+    String tempString;
+    StringBuilder returnString = new StringBuilder();
+    try {
+        while ((tempString = bufferedReader.readLine()) != null) {
+            returnString.append(tempString).append('\n');
+        }
+    } catch (IOException e) {
+        log.error("IOException while trying to read from buffer", e);
+    }
+    return returnString.toString();
+}
+#end_block
+
+#method_before
+private void logOutputAndErrors(String output, String errors) {
+    if (errors != null && errors.length() != 0) {
+        log.error("Sign Certificate request script errors:\n" + errors);
+    }
+    if (output != null && errors.length() != 0) {
+        log.debug("Sign Certificate request script output:\n" + output);
+    }
+}
+#method_after
+private void logOutputAndErrors(String output, String errors) {
+    if (errors != null && errors.length() != 0) {
+        log.error("Sign Certificate request script errors:\n" + errors);
+    }
+    if (output != null && output.length() != 0) {
+        log.debug("Sign Certificate request script output:\n" + output);
+    }
+}
+#end_block
+

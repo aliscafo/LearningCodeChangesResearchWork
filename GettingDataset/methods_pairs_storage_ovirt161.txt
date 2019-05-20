@@ -1,0 +1,1529 @@
+43
+#method_before
+private TestResult commonAffinityTest(boolean enforcing, boolean positive) {
+    TestOptimizer optimizer = new TestOptimizer();
+    Host h1 = optimizer.createHost("h1", 1000000000L);
+    Host h2 = optimizer.createHost("h2", 1000000000L);
+    VM vm1 = optimizer.createVm("vm1", 10000000L);
+    VM vm2 = optimizer.createVm("vm2", 10000000L);
+    vm1.setHost(h1);
+    vm2.setHost(h1);
+    AffinityGroup group = new AffinityGroup();
+    group.setId("group");
+    group.setPositive(positive);
+    group.setEnforcing(enforcing);
+    List<VM> list = new ArrayList<>();
+    list.add(vm1);
+    list.add(vm2);
+    VmAffinityGroup groupFact = VmAffinityGroup.create(group, list);
+    optimizer.addFact(groupFact).addMigration(vm1, h1);
+    HardSoftScore r1 = optimizer.score();
+    optimizer.addMigration(vm2, h2);
+    HardSoftScore r2 = optimizer.score();
+    TestResult res = new TestResult();
+    res.scoreSameHost = enforcing ? r1.getHardScore() : r1.getSoftScore();
+    res.scoreDifferentHosts = enforcing ? r2.getHardScore() : r2.getSoftScore();
+    return res;
+}
+#method_after
+private TestResult commonAffinityTest(boolean enforcing, boolean positive) {
+    TestOptimizer optimizer = new TestOptimizer();
+    Host h1 = optimizer.createHost("h1", 1000000000L);
+    Host h2 = optimizer.createHost("h2", 1000000000L);
+    VM vm1 = optimizer.createVm("vm1", 10000000L);
+    VM vm2 = optimizer.createVm("vm2", 10000000L);
+    vm1.setHost(h1);
+    vm2.setHost(h1);
+    AffinityGroup group = new AffinityGroup();
+    group.setId("group");
+    group.setPositive(positive);
+    group.setEnforcing(enforcing);
+    List<VM> list = new ArrayList<>();
+    list.add(vm1);
+    list.add(vm2);
+    VmAffinityGroup groupFact = VmAffinityGroup.create(group, list);
+    optimizer.enablePolicyUnit(PolicyUnit.VM_AFFINITY_FILTER).enablePolicyUnit(PolicyUnit.VM_AFFINITY_WEIGHT, 1).addFact(groupFact).addMigration(vm1, h1);
+    HardSoftScore r1 = optimizer.score();
+    optimizer.addMigration(vm2, h2);
+    HardSoftScore r2 = optimizer.score();
+    TestResult res = new TestResult();
+    res.scoreSameHost = enforcing ? r1.getHardScore() : r1.getSoftScore();
+    res.scoreDifferentHosts = enforcing ? r2.getHardScore() : r2.getSoftScore();
+    return res;
+}
+#end_block
+
+#method_before
+private Map<String, Object> nextArgs(ExtMap context, boolean showHelp) {
+    Map<String, String> contextSubstitutions = new HashMap<>();
+    contextSubstitutions.put("@ENGINE_ETC@", System.getProperty("org.ovirt.engine.exttool.core.engineEtc"));
+    contextSubstitutions.put("@PROGRAM_NAME@", System.getProperty("org.ovirt.engine.aaa.jdbc.programName"));
+    contextSubstitutions.put("@MODULE_LIST@", StringUtils.join(this.getSubModules(), "\n  ") + "\n  help");
+    Map<String, Object> parsed;
+    ArgumentsParser argumentsParser = new ArgumentsParser(Cli.class.getResourceAsStream("arguments.properties"), this.getName());
+    argumentsParser.getSubstitutions().putAll(contextSubstitutions);
+    @SuppressWarnings("unchecked")
+    List<String> tail = context.get(ContextKeys.TAIL, List.class);
+    // updates tail.
+    argumentsParser.parse(tail);
+    parsed = argumentsParser.getParsedArgs();
+    List<Throwable> errors = argumentsParser.getErrors();
+    if (errors.size() > 0) {
+        for (Throwable thr : errors) {
+            context.get(ContextKeys.THROWABLES, List.class).add(thr);
+            context.get(ContextKeys.ERR_MESSAGES, List.class).add(thr.getMessage());
+        }
+        context.mput(ContextKeys.EXIT_STATUS, ARGUMENT_PARSING_ERROR);
+    }
+    if (showHelp || !context.containsKey(ContextKeys.EXIT_STATUS)) {
+        if (showHelp || (Boolean) parsed.get("help") || (tail.size() > 0 && tail.get(0).equals("help"))) {
+            addContextMessage(context, false, argumentsParser.getUsage());
+            context.putIfAbsent(ContextKeys.EXIT_STATUS, SUCCESS);
+        }
+    }
+    return parsed;
+}
+#method_after
+private Map<String, Object> nextArgs(ExtMap context, boolean showHelp) {
+    Map<String, String> contextSubstitutions = new HashMap<>();
+    contextSubstitutions.put("@ENGINE_ETC@", System.getProperty("org.ovirt.engine.aaa.jdbc.engineEtc"));
+    contextSubstitutions.put("@PROGRAM_NAME@", System.getProperty("org.ovirt.engine.aaa.jdbc.programName"));
+    contextSubstitutions.put("@MODULE_LIST@", StringUtils.join(this.getSubModules(), "\n  ") + "\n  help");
+    Map<String, Object> parsed;
+    ArgumentsParser argumentsParser = new ArgumentsParser(Cli.class.getResourceAsStream("arguments.properties"), this.getName());
+    argumentsParser.getSubstitutions().putAll(contextSubstitutions);
+    @SuppressWarnings("unchecked")
+    List<String> tail = context.get(ContextKeys.TAIL, List.class);
+    // updates tail.
+    argumentsParser.parse(tail);
+    parsed = argumentsParser.getParsedArgs();
+    List<Throwable> errors = argumentsParser.getErrors();
+    if (errors.size() > 0) {
+        for (Throwable thr : errors) {
+            context.get(ContextKeys.THROWABLES, List.class).add(thr);
+            context.get(ContextKeys.ERR_MESSAGES, List.class).add(thr.getMessage());
+        }
+        context.mput(ContextKeys.EXIT_STATUS, ARGUMENT_PARSING_ERROR);
+    }
+    if (showHelp || !context.containsKey(ContextKeys.EXIT_STATUS)) {
+        if (showHelp || (Boolean) parsed.get("help") || (tail.size() > 0 && tail.get(0).equals("help"))) {
+            addContextMessage(context, false, argumentsParser.getUsage());
+            context.putIfAbsent(ContextKeys.EXIT_STATUS, SUCCESS);
+        }
+    }
+    return parsed;
+}
+#end_block
+
+#method_before
+@Mapping(from = StorageConnectionExtension.class, to = org.ovirt.engine.core.common.businessentities.storage.StorageServerConnectionExtension.class)
+public static StorageServerConnectionExtension map(StorageConnectionExtension restConnectionModel, StorageServerConnectionExtension template) {
+    StorageServerConnectionExtension engineConnectionExt = template != null ? template : new StorageServerConnectionExtension();
+    if (restConnectionModel.isSetId()) {
+        engineConnectionExt.setId(new Guid(restConnectionModel.getId()));
+    }
+    if (restConnectionModel.isSetHost()) {
+        engineConnectionExt.setHostId(new Guid(restConnectionModel.getHost().getId()));
+    }
+    if (restConnectionModel.isSetTarget()) {
+        engineConnectionExt.setIqn(restConnectionModel.getTarget());
+    }
+    if (restConnectionModel.isSetUsername()) {
+        engineConnectionExt.setUserName(restConnectionModel.getUsername());
+    }
+    if (restConnectionModel.isSetPassword()) {
+        engineConnectionExt.setPassword(restConnectionModel.getPassword());
+    }
+    return engineConnectionExt;
+}
+#method_after
+@Mapping(from = StorageConnectionExtension.class, to = org.ovirt.engine.core.common.businessentities.storage.StorageServerConnectionExtension.class)
+public static StorageServerConnectionExtension map(StorageConnectionExtension restConnectionModel, StorageServerConnectionExtension template) {
+    StorageServerConnectionExtension engineConnectionExt = template != null ? template : new StorageServerConnectionExtension();
+    if (restConnectionModel.isSetId()) {
+        engineConnectionExt.setId(new Guid(restConnectionModel.getId()));
+    }
+    if (restConnectionModel.isSetHost() && restConnectionModel.getHost().isSetId()) {
+        engineConnectionExt.setHostId(new Guid(restConnectionModel.getHost().getId()));
+    }
+    if (restConnectionModel.isSetTarget()) {
+        engineConnectionExt.setIqn(restConnectionModel.getTarget());
+    }
+    if (restConnectionModel.isSetUsername()) {
+        engineConnectionExt.setUserName(restConnectionModel.getUsername());
+    }
+    if (restConnectionModel.isSetPassword()) {
+        engineConnectionExt.setPassword(restConnectionModel.getPassword());
+    }
+    return engineConnectionExt;
+}
+#end_block
+
+#method_before
+@Mapping(from = org.ovirt.engine.core.common.businessentities.storage.StorageServerConnectionExtension.class, to = StorageConnectionExtension.class)
+public static StorageConnectionExtension map(StorageServerConnectionExtension connectionExtension, StorageConnectionExtension template) {
+    StorageConnectionExtension modelConnectionExt = template != null ? template : new StorageConnectionExtension();
+    modelConnectionExt.setId(connectionExtension.getId().toString());
+    Host host = new Host();
+    host.setId(connectionExtension.getHostId().toString());
+    modelConnectionExt.setHost(host);
+    modelConnectionExt.setTarget(connectionExtension.getIqn());
+    modelConnectionExt.setUsername(connectionExtension.getUserName());
+    modelConnectionExt.setPassword(connectionExtension.getPassword());
+    return modelConnectionExt;
+}
+#method_after
+@Mapping(from = org.ovirt.engine.core.common.businessentities.storage.StorageServerConnectionExtension.class, to = StorageConnectionExtension.class)
+public static StorageConnectionExtension map(StorageServerConnectionExtension connectionExtension, StorageConnectionExtension template) {
+    StorageConnectionExtension modelConnectionExt = template != null ? template : new StorageConnectionExtension();
+    modelConnectionExt.setId(connectionExtension.getId().toString());
+    Host host = new Host();
+    if (connectionExtension.getHostId() != null) {
+        host.setId(connectionExtension.getHostId().toString());
+    }
+    modelConnectionExt.setHost(host);
+    modelConnectionExt.setTarget(connectionExtension.getIqn());
+    modelConnectionExt.setUsername(connectionExtension.getUserName());
+    modelConnectionExt.setPassword(connectionExtension.getPassword());
+    return modelConnectionExt;
+}
+#end_block
+
+#method_before
+private boolean updateImageParametersRequiringVmDownRequested() {
+    if (getOldDisk().getDiskStorageType() != DiskStorageType.IMAGE) {
+        return false;
+    }
+    Guid oldQuotaId = ((DiskImage) getOldDisk()).getQuotaId();
+    // happens when quota is enabled, but disk never assigned a quota
+    if (oldQuotaId == null) {
+        return false;
+    }
+    return !Objects.equals(oldQuotaId, getQuotaId());
+}
+#method_after
+private boolean updateImageParametersRequiringVmDownRequested() {
+    if (getOldDisk().getDiskStorageType() != DiskStorageType.IMAGE) {
+        return false;
+    }
+    Guid oldQuotaId = ((DiskImage) getOldDisk()).getQuotaId();
+    /*
+         * oldQuotaId == null : Initial quota, not assigned yet.
+         * happens when: quota is disabled or,
+         * quota enabled, but disk never attached with a quota
+         */
+    if (oldQuotaId == null) {
+        // if no prior quota, ignore quota update
+        return false;
+    }
+    return !Objects.equals(oldQuotaId, getQuotaId());
+}
+#end_block
+
+#method_before
+public Map spmStart(String spUUID, String prevID, String prevLVER, String recoveryMode, String scsiFencing) {
+    final Host host = getActiveHost();
+    Map resultMap = getOKStatus();
+    Task task = new Task(getUuid());
+    resultMap.put("uuid", task.getId());
+    task.setTarget(host);
+    getActiveHost().getRunningTasks().put(task.getId(), task);
+    TaskProcessor.getInstance().addTask(new TaskRequest(TaskType.FINISH_START_SPM, 10000l, task));
+    return resultMap;
+}
+#method_after
+public Map spmStart(String spUUID, String prevID, String prevLVER, String recoveryMode, String scsiFencing) {
+    final Host host = getActiveHost();
+    Map resultMap = getOKStatus();
+    Task task = new Task(getUuid());
+    resultMap.put("uuid", task.getId());
+    task.setTarget(host);
+    getActiveHost().getRunningTasks().put(task.getId(), task);
+    TaskProcessor.setTasksMap(host.getName(), task.getId());
+    TaskProcessor.getInstance().addTask(new TaskRequest(TaskType.FINISH_START_SPM, 10000l, task));
+    return resultMap;
+}
+#end_block
+
+#method_before
+public Map createVolume(String sdUUID, String spUUID, String imgUUID, String size, Integer volFormat, Integer preallocate, Integer diskType, String volUUID, String desc, String srcImgUUID, String srcVolUUID) {
+    try {
+        DataCenter dataCenter = getDataCenterById(spUUID);
+        StorageDomain storageDomain = dataCenter.getStorageDomainMap().get(sdUUID);
+        final Volume volume = new Volume();
+        volume.setId(volUUID);
+        volume.setSize(size);
+        volume.setVolFormat(volFormat);
+        volume.setPreallocate(preallocate);
+        volume.setDiskType(diskType);
+        volume.setImgUUID(imgUUID);
+        volume.setDesc(desc);
+        volume.setSrcImgUUID(srcImgUUID);
+        volume.setSrcVolUUID(srcVolUUID);
+        log.info("Adding volume: {} for sp: {}, sd: {}", new Object[] { volUUID, spUUID, sdUUID });
+        storageDomain.getVolumes().put(volUUID, volume);
+        updateDataCenter(dataCenter);
+        final Map resultMap = getOKStatus();
+        final Task task = new Task(getUuid());
+        resultMap.put("uuid", task.getId());
+        Host host = getActiveHost();
+        host.getRunningTasks().put(task.getId(), task);
+        TaskProcessor.setTasksMap(host.getName(), task.getId());
+        TaskProcessor.getInstance().addTask(new TaskRequest(TaskType.FINISH_CREATE_VOLUME, 5000l, task));
+        return resultMap;
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#method_after
+public Map createVolume(String sdUUID, String spUUID, String imgUUID, String size, Integer volFormat, Integer preallocate, Integer diskType, String volUUID, String desc, String srcImgUUID, String srcVolUUID) {
+    try {
+        DataCenter dataCenter = getDataCenterById(spUUID);
+        StorageDomain storageDomain = dataCenter.getStorageDomainMap().get(sdUUID);
+        final Volume volume = new Volume();
+        volume.setId(volUUID);
+        volume.setSize(size);
+        volume.setVolFormat(volFormat);
+        volume.setPreallocate(preallocate);
+        volume.setDiskType(diskType);
+        volume.setImgUUID(imgUUID);
+        volume.setDesc(desc);
+        volume.setSrcImgUUID(srcImgUUID);
+        volume.setSrcVolUUID(srcVolUUID);
+        log.info("Adding volume: {} for sp: {}, sd: {}", new Object[] { volUUID, spUUID, sdUUID });
+        storageDomain.getVolumes().put(volUUID, volume);
+        updateDataCenter(dataCenter);
+        final Map resultMap = getOKStatus();
+        final Task task = new Task(getUuid());
+        resultMap.put("uuid", task.getId());
+        syncTask(null, task);
+        TaskProcessor.getInstance().addTask(new TaskRequest(TaskType.FINISH_CREATE_VOLUME, 5000l, task));
+        return resultMap;
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#end_block
+
+#method_before
+public Map getAllTasksStatuses() {
+    Map resultMap = getOKStatus();
+    Map allTasksStatusMap = map();
+    // adding new getter in oorder to process stored tasks, due to context holder server changes.
+    for (Map.Entry<String, String> entry : TaskProcessor.getTasksMap().entrySet()) {
+        processor(allTasksStatusMap, getActiveHostByName(entry.getKey()).getRunningTasks().values());
+    }
+    // backward compatibility
+    processor(allTasksStatusMap, getActiveHost().getRunningTasks().values());
+    resultMap.put("allTasksStatus", allTasksStatusMap);
+    return resultMap;
+}
+#method_after
+public Map getAllTasksStatuses() {
+    Map resultMap = getOKStatus();
+    Map allTasksStatusMap = map();
+    // adding new getter in order to process stored tasks, due to context holder server changes.
+    for (Map.Entry<String, String> entry : TaskProcessor.getTasksMap().entrySet()) {
+        processor(allTasksStatusMap, getActiveHostByName(entry.getKey()).getRunningTasks().values());
+    }
+    TaskProcessor.clearTaskMap();
+    // backward compatibility
+    processor(allTasksStatusMap, getActiveHost().getRunningTasks().values());
+    resultMap.put("allTasksStatus", allTasksStatusMap);
+    return resultMap;
+}
+#end_block
+
+#method_before
+public synchronized static Map<String, String> getTasksMap() {
+    return tasksmap;
+}
+#method_after
+public static Map<String, String> getTasksMap() {
+    return tasksmap;
+}
+#end_block
+
+#method_before
+public synchronized static void setTasksMap(String hostName, String taskId) {
+    tasksmap.put(hostName, taskId);
+}
+#method_after
+public static void setTasksMap(String hostName, String taskId) {
+    tasksmap.put(hostName, taskId);
+}
+#end_block
+
+#method_before
+public Map getOKStatus() {
+    return ResultCodes.OK.newMap();
+}
+#method_after
+public Map getOKStatus() {
+    return getStatusMap("OK", 0);
+}
+#end_block
+
+#method_before
+public Map getOKStatusNotImplemented() {
+    log.warn("The method is not fully implemented!", new Exception());
+    return ResultCodes.OK.newMap();
+}
+#method_after
+public Map getOKStatusNotImplemented() {
+    log.warn("The method is not fully implemented!", new Exception());
+    return getStatusMap("OK", 0);
+}
+#end_block
+
+#method_before
+public Map getDoneStatus() {
+    return ResultCodes.DONE.newMap();
+}
+#method_after
+public Map getDoneStatus() {
+    return getStatusMap("Done", 0);
+}
+#end_block
+
+#method_before
+public Host getActiveHostByName(String serverName) {
+    final Host host = VdsmManager.getInstance().getHostByName(serverName);
+    return host;
+}
+#method_after
+public Host getActiveHostByName(String serverName) {
+    return VdsmManager.getInstance().getHostByName(serverName);
+}
+#end_block
+
+#method_before
+public void run() {
+    JsonRpcRequest request = null;
+    try {
+        request = JsonRpcRequest.fromByteArray(message);
+        ContextHolder.init();
+        ContextHolder.setServerName(Integer.toString(client.hashCode()));
+        log.debug("context holder server name is: {}", ContextHolder.getServerName());
+        ResponseBuilder builder = new ResponseBuilder(request.getId());
+        String methodName = request.getMethod();
+        builder = CommandFactory.createCommand(methodName).run(request.getParams(), builder);
+        send(builder.build(), request.getMethod());
+    } catch (Throwable e) {
+        log.error("Failure in processing request", e);
+        Map<String, Object> error = new HashMap<>();
+        error.put("code", 100);
+        error.put("message", e.getMessage());
+        if (request != null) {
+            send(new ResponseBuilder(request.getId()).withError(error).build(), request.getMethod());
+        }
+    }
+}
+#method_after
+public void run() {
+    JsonRpcRequest request = null;
+    try {
+        request = JsonRpcRequest.fromByteArray(message);
+        ContextHolder.init();
+        if (client.getRetryPolicy().getIdentifier() != null) {
+            ContextHolder.setServerName(client.getRetryPolicy().getIdentifier());
+            log.debug("client policy identifier {}", client.getRetryPolicy().getIdentifier());
+        } else {
+            ContextHolder.setServerName(Integer.toString(client.hashCode()));
+            log.error("client identifier were not found, using hash");
+        }
+        ResponseBuilder builder = new ResponseBuilder(request.getId());
+        String methodName = request.getMethod();
+        builder = CommandFactory.createCommand(methodName).run(request.getParams(), builder);
+        send(builder.build(), request.getMethod());
+    } catch (Throwable e) {
+        log.error("Failure in processing request", e);
+        Map<String, Object> error = new HashMap<>();
+        error.put("code", 100);
+        error.put("message", e.getMessage());
+        if (request != null) {
+            send(new ResponseBuilder(request.getId()).withError(error).build(), request.getMethod());
+        }
+    }
+}
+#end_block
+
+#method_before
+private MapSqlParameterSource getVdsGroupParamSource(VDSGroup group) {
+    MapSqlParameterSource parameterSource = getCustomMapSqlParameterSource().addValue("description", group.getDescription()).addValue("name", group.getName()).addValue("free_text_comment", group.getComment()).addValue("vds_group_id", group.getId()).addValue("cpu_name", group.getCpuName()).addValue("storage_pool_id", group.getStoragePoolId()).addValue("max_vds_memory_over_commit", group.getMaxVdsMemoryOverCommit()).addValue("count_threads_as_cores", group.getCountThreadsAsCores()).addValue("transparent_hugepages", group.getTransparentHugepages()).addValue("compatibility_version", group.getCompatibilityVersion()).addValue("migrate_on_error", group.getMigrateOnError()).addValue("virt_service", group.supportsVirtService()).addValue("gluster_service", group.supportsGlusterService()).addValue("tunnel_migration", group.isTunnelMigration()).addValue("required_rng_sources", VmRngDevice.sourcesToCsv(group.getRequiredRngSources())).addValue("emulated_machine", group.getEmulatedMachine()).addValue("detect_emulated_machine", group.isDetectEmulatedMachine()).addValue("trusted_service", group.supportsTrustedService()).addValue("ha_reservation", group.supportsHaReservation()).addValue("optional_reason", group.isOptionalReasonRequired()).addValue("maintenance_reason_required", group.isMaintenanceReasonRequired()).addValue("cluster_policy_id", group.getClusterPolicyId()).addValue("cluster_policy_custom_properties", SerializationFactory.getSerializer().serialize(group.getClusterPolicyProperties())).addValue("architecture", group.getArchitecture()).addValue("enable_balloon", group.isEnableBallooning()).addValue("optimization_type", group.getOptimizationType()).addValue("enable_ksm", group.isEnableKsm()).addValue("spice_proxy", group.getSpiceProxy()).addValue("serial_number_policy", group.getSerialNumberPolicy() == null ? null : group.getSerialNumberPolicy().getValue()).addValue("custom_serial_number", group.getCustomSerialNumber()).addValue("skip_fencing_if_sd_active", group.getFencingPolicy().isSkipFencingIfSDActive()).addValue("skip_fencing_if_connectivity_broken", group.getFencingPolicy().isSkipFencingIfConnectivityBroken()).addValue("hosts_with_broken_connectivity_threshold", group.getFencingPolicy().getHostsWithBrokenConnectivityThreshold()).addValue("fencing_enabled", group.getFencingPolicy().isFencingEnabled()).addValue("is_auto_converge", group.getAutoConverge()).addValue("is_migrate_compressed", group.getMigrateCompressed()).addValue("ksm_merge_across_nodes", group.isKsmMergeAcrossNumaNodes());
+    return parameterSource;
+}
+#method_after
+private MapSqlParameterSource getVdsGroupParamSource(VDSGroup group) {
+    MapSqlParameterSource parameterSource = getCustomMapSqlParameterSource().addValue("description", group.getDescription()).addValue("name", group.getName()).addValue("free_text_comment", group.getComment()).addValue("vds_group_id", group.getId()).addValue("cpu_name", group.getCpuName()).addValue("storage_pool_id", group.getStoragePoolId()).addValue("max_vds_memory_over_commit", group.getMaxVdsMemoryOverCommit()).addValue("count_threads_as_cores", group.getCountThreadsAsCores()).addValue("transparent_hugepages", group.getTransparentHugepages()).addValue("compatibility_version", group.getCompatibilityVersion()).addValue("migrate_on_error", group.getMigrateOnError()).addValue("virt_service", group.supportsVirtService()).addValue("gluster_service", group.supportsGlusterService()).addValue("tunnel_migration", group.isTunnelMigration()).addValue("required_rng_sources", VmRngDevice.sourcesToCsv(group.getRequiredRngSources())).addValue("emulated_machine", group.getEmulatedMachine()).addValue("detect_emulated_machine", group.isDetectEmulatedMachine()).addValue("trusted_service", group.supportsTrustedService()).addValue("ha_reservation", group.supportsHaReservation()).addValue("optional_reason", group.isOptionalReasonRequired()).addValue("maintenance_reason_required", group.isMaintenanceReasonRequired()).addValue("cluster_policy_id", group.getClusterPolicyId()).addValue("cluster_policy_custom_properties", SerializationFactory.getSerializer().serialize(group.getClusterPolicyProperties())).addValue("architecture", group.getArchitecture()).addValue("enable_balloon", group.isEnableBallooning()).addValue("optimization_type", group.getOptimizationType()).addValue("enable_ksm", group.isEnableKsm()).addValue("spice_proxy", group.getSpiceProxy()).addValue("serial_number_policy", group.getSerialNumberPolicy() == null ? null : group.getSerialNumberPolicy().getValue()).addValue("custom_serial_number", group.getCustomSerialNumber()).addValue("skip_fencing_if_sd_active", group.getFencingPolicy().isSkipFencingIfSDActive()).addValue("skip_fencing_if_connectivity_broken", group.getFencingPolicy().isSkipFencingIfConnectivityBroken()).addValue("hosts_with_broken_connectivity_threshold", group.getFencingPolicy().getHostsWithBrokenConnectivityThreshold()).addValue("fencing_enabled", group.getFencingPolicy().isFencingEnabled()).addValue("is_auto_converge", group.getAutoConverge()).addValue("is_migrate_compressed", group.getMigrateCompressed()).addValue("gluster_tuned_profile", group.getGlusterTunedProfile()).addValue("ksm_merge_across_nodes", group.isKsmMergeAcrossNumaNodes());
+    return parameterSource;
+}
+#end_block
+
+#method_before
+@Override
+public VDSGroup mapRow(ResultSet rs, int rowNum) throws SQLException {
+    VDSGroup entity = new VDSGroup();
+    entity.setDescription(rs.getString("description"));
+    entity.setName(rs.getString("name"));
+    entity.setId(getGuidDefaultEmpty(rs, "vds_group_id"));
+    entity.setComment(rs.getString("free_text_comment"));
+    entity.setCpuName(rs.getString("cpu_name"));
+    entity.setStoragePoolId(getGuid(rs, "storage_pool_id"));
+    entity.setStoragePoolName(rs.getString("storage_pool_name"));
+    entity.setMaxVdsMemoryOverCommit(rs.getInt("max_vds_memory_over_commit"));
+    entity.setCountThreadsAsCores(rs.getBoolean("count_threads_as_cores"));
+    entity.setTransparentHugepages(rs.getBoolean("transparent_hugepages"));
+    entity.setCompatibilityVersion(new Version(rs.getString("compatibility_version")));
+    entity.setMigrateOnError(MigrateOnErrorOptions.forValue(rs.getInt("migrate_on_error")));
+    entity.setVirtService(rs.getBoolean("virt_service"));
+    entity.setGlusterService(rs.getBoolean("gluster_service"));
+    entity.setTunnelMigration(rs.getBoolean("tunnel_migration"));
+    entity.getRequiredRngSources().addAll(VmRngDevice.csvToSourcesSet(rs.getString("required_rng_sources")));
+    entity.setEmulatedMachine(rs.getString("emulated_machine"));
+    entity.setDetectEmulatedMachine(rs.getBoolean("detect_emulated_machine"));
+    entity.setTrustedService(rs.getBoolean("trusted_service"));
+    entity.setHaReservation(rs.getBoolean("ha_reservation"));
+    entity.setOptionalReasonRequired(rs.getBoolean("optional_reason"));
+    entity.setMaintenanceReasonRequired(rs.getBoolean("maintenance_reason_required"));
+    entity.setClusterPolicyId(Guid.createGuidFromString(rs.getString("cluster_policy_id")));
+    entity.setClusterPolicyName(rs.getString("cluster_policy_name"));
+    entity.setClusterPolicyProperties(SerializationFactory.getDeserializer().deserializeOrCreateNew(rs.getString("cluster_policy_custom_properties"), LinkedHashMap.class));
+    entity.setEnableBallooning(rs.getBoolean("enable_balloon"));
+    entity.setEnableKsm(rs.getBoolean("enable_ksm"));
+    entity.setArchitecture(ArchitectureType.forValue(rs.getInt("architecture")));
+    entity.setOptimizationType(OptimizationType.from(rs.getInt("optimization_type")));
+    entity.setSpiceProxy(rs.getString("spice_proxy"));
+    entity.setSerialNumberPolicy(SerialNumberPolicy.forValue((Integer) rs.getObject("serial_number_policy")));
+    entity.setCustomSerialNumber(rs.getString("custom_serial_number"));
+    entity.getFencingPolicy().setSkipFencingIfSDActive(rs.getBoolean("skip_fencing_if_sd_active"));
+    entity.getFencingPolicy().setSkipFencingIfConnectivityBroken(rs.getBoolean("skip_fencing_if_connectivity_broken"));
+    entity.getFencingPolicy().setHostsWithBrokenConnectivityThreshold(rs.getInt("hosts_with_broken_connectivity_threshold"));
+    entity.getFencingPolicy().setFencingEnabled(rs.getBoolean("fencing_enabled"));
+    entity.setAutoConverge((Boolean) rs.getObject("is_auto_converge"));
+    entity.setMigrateCompressed((Boolean) rs.getObject("is_migrate_compressed"));
+    entity.setKsmMergeAcrossNumaNodes((Boolean) rs.getObject("ksm_merge_across_nodes"));
+    return entity;
+}
+#method_after
+@Override
+public VDSGroup mapRow(ResultSet rs, int rowNum) throws SQLException {
+    VDSGroup entity = new VDSGroup();
+    entity.setDescription(rs.getString("description"));
+    entity.setName(rs.getString("name"));
+    entity.setId(getGuidDefaultEmpty(rs, "vds_group_id"));
+    entity.setComment(rs.getString("free_text_comment"));
+    entity.setCpuName(rs.getString("cpu_name"));
+    entity.setStoragePoolId(getGuid(rs, "storage_pool_id"));
+    entity.setStoragePoolName(rs.getString("storage_pool_name"));
+    entity.setMaxVdsMemoryOverCommit(rs.getInt("max_vds_memory_over_commit"));
+    entity.setCountThreadsAsCores(rs.getBoolean("count_threads_as_cores"));
+    entity.setTransparentHugepages(rs.getBoolean("transparent_hugepages"));
+    entity.setCompatibilityVersion(new Version(rs.getString("compatibility_version")));
+    entity.setMigrateOnError(MigrateOnErrorOptions.forValue(rs.getInt("migrate_on_error")));
+    entity.setVirtService(rs.getBoolean("virt_service"));
+    entity.setGlusterService(rs.getBoolean("gluster_service"));
+    entity.setTunnelMigration(rs.getBoolean("tunnel_migration"));
+    entity.getRequiredRngSources().addAll(VmRngDevice.csvToSourcesSet(rs.getString("required_rng_sources")));
+    entity.setEmulatedMachine(rs.getString("emulated_machine"));
+    entity.setDetectEmulatedMachine(rs.getBoolean("detect_emulated_machine"));
+    entity.setTrustedService(rs.getBoolean("trusted_service"));
+    entity.setHaReservation(rs.getBoolean("ha_reservation"));
+    entity.setOptionalReasonRequired(rs.getBoolean("optional_reason"));
+    entity.setMaintenanceReasonRequired(rs.getBoolean("maintenance_reason_required"));
+    entity.setClusterPolicyId(Guid.createGuidFromString(rs.getString("cluster_policy_id")));
+    entity.setClusterPolicyName(rs.getString("cluster_policy_name"));
+    entity.setClusterPolicyProperties(SerializationFactory.getDeserializer().deserializeOrCreateNew(rs.getString("cluster_policy_custom_properties"), LinkedHashMap.class));
+    entity.setEnableBallooning(rs.getBoolean("enable_balloon"));
+    entity.setEnableKsm(rs.getBoolean("enable_ksm"));
+    entity.setArchitecture(ArchitectureType.forValue(rs.getInt("architecture")));
+    entity.setOptimizationType(OptimizationType.from(rs.getInt("optimization_type")));
+    entity.setSpiceProxy(rs.getString("spice_proxy"));
+    entity.setSerialNumberPolicy(SerialNumberPolicy.forValue((Integer) rs.getObject("serial_number_policy")));
+    entity.setCustomSerialNumber(rs.getString("custom_serial_number"));
+    entity.getFencingPolicy().setSkipFencingIfSDActive(rs.getBoolean("skip_fencing_if_sd_active"));
+    entity.getFencingPolicy().setSkipFencingIfConnectivityBroken(rs.getBoolean("skip_fencing_if_connectivity_broken"));
+    entity.getFencingPolicy().setHostsWithBrokenConnectivityThreshold(rs.getInt("hosts_with_broken_connectivity_threshold"));
+    entity.getFencingPolicy().setFencingEnabled(rs.getBoolean("fencing_enabled"));
+    entity.setAutoConverge((Boolean) rs.getObject("is_auto_converge"));
+    entity.setMigrateCompressed((Boolean) rs.getObject("is_migrate_compressed"));
+    entity.setGlusterTunedProfile(rs.getString("gluster_tuned_profile"));
+    entity.setKsmMergeAcrossNumaNodes(rs.getBoolean("ksm_merge_across_nodes"));
+    return entity;
+}
+#end_block
+
+#method_before
+public Boolean isKsmMergeAcrossNumaNodes() {
+    return ksmMergeAcrossNumaNodes;
+}
+#method_after
+public boolean isKsmMergeAcrossNumaNodes() {
+    return ksmMergeAcrossNumaNodes;
+}
+#end_block
+
+#method_before
+public void setKsmMergeAcrossNumaNodes(Boolean ksmMergeAcrossNumaNodes) {
+    this.ksmMergeAcrossNumaNodes = ksmMergeAcrossNumaNodes;
+}
+#method_after
+public void setKsmMergeAcrossNumaNodes(boolean ksmMergeAcrossNumaNodes) {
+    this.ksmMergeAcrossNumaNodes = ksmMergeAcrossNumaNodes;
+}
+#end_block
+
+#method_before
+@Override
+public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + (id == null ? 0 : id.hashCode());
+    result = prime * result + (compatVersion == null ? 0 : compatVersion.hashCode());
+    result = prime * result + (compatibilityVersion == null ? 0 : compatibilityVersion.hashCode());
+    result = prime * result + (cpuName == null ? 0 : cpuName.hashCode());
+    result = prime * result + (description == null ? 0 : description.hashCode());
+    result = prime * result + maxVdsMemoryOverCommit;
+    result = prime * result + (countThreadsAsCores ? 1231 : 1237);
+    result = prime * result + (migrateOnError == null ? 0 : migrateOnError.hashCode());
+    result = prime * result + (name == null ? 0 : name.hashCode());
+    result = prime * result + (storagePoolId == null ? 0 : storagePoolId.hashCode());
+    result = prime * result + (storagePoolName == null ? 0 : storagePoolName.hashCode());
+    result = prime * result + (transparentHugepages ? 1231 : 1237);
+    result = prime * result + (virtService ? 1231 : 1237);
+    result = prime * result + (glusterService ? 1231 : 1237);
+    result = prime * result + (tunnelMigration ? 1231 : 1237);
+    result = prime * result + (emulatedMachine == null ? 0 : emulatedMachine.hashCode());
+    result = prime * result + (trustedService ? 1231 : 1237);
+    result = prime * result + (haReservation ? 1231 : 1237);
+    result = prime * result + (clusterPolicyName == null ? 0 : clusterPolicyName.hashCode());
+    result = prime * result + (clusterPolicyProperties == null ? 0 : clusterPolicyProperties.hashCode());
+    result = prime * result + (requiredRngSources == null ? 0 : requiredRngSources.hashCode());
+    result = prime * result + (enableKsm ? 1231 : 1237);
+    result = prime * result + (enableBallooning ? 1231 : 1237);
+    result = prime * result + (optimizationType == null ? 0 : optimizationType.hashCode());
+    result = prime * result + (serialNumberPolicy == null ? 0 : serialNumberPolicy.hashCode());
+    result = prime * result + (customSerialNumber == null ? 0 : customSerialNumber.hashCode());
+    result = prime * result + (groupHostsAndVms == null ? 0 : groupHostsAndVms.hashCode());
+    result = prime * result + (fencingPolicy == null ? 0 : fencingPolicy.hashCode());
+    result = prime * result + (autoConverge == null ? 0 : autoConverge.hashCode());
+    result = prime * result + (migrateCompressed == null ? 0 : migrateCompressed.hashCode());
+    result = prime * result + (maintenanceReasonRequired ? 1231 : 1237);
+    result = prime * result + (ksmMergeAcrossNumaNodes == null ? 0 : ksmMergeAcrossNumaNodes.hashCode());
+    return result;
+}
+#method_after
+@Override
+public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + (id == null ? 0 : id.hashCode());
+    result = prime * result + (compatVersion == null ? 0 : compatVersion.hashCode());
+    result = prime * result + (compatibilityVersion == null ? 0 : compatibilityVersion.hashCode());
+    result = prime * result + (cpuName == null ? 0 : cpuName.hashCode());
+    result = prime * result + (description == null ? 0 : description.hashCode());
+    result = prime * result + maxVdsMemoryOverCommit;
+    result = prime * result + (countThreadsAsCores ? 1231 : 1237);
+    result = prime * result + (migrateOnError == null ? 0 : migrateOnError.hashCode());
+    result = prime * result + (name == null ? 0 : name.hashCode());
+    result = prime * result + (storagePoolId == null ? 0 : storagePoolId.hashCode());
+    result = prime * result + (storagePoolName == null ? 0 : storagePoolName.hashCode());
+    result = prime * result + (transparentHugepages ? 1231 : 1237);
+    result = prime * result + (virtService ? 1231 : 1237);
+    result = prime * result + (glusterService ? 1231 : 1237);
+    result = prime * result + (tunnelMigration ? 1231 : 1237);
+    result = prime * result + (emulatedMachine == null ? 0 : emulatedMachine.hashCode());
+    result = prime * result + (trustedService ? 1231 : 1237);
+    result = prime * result + (haReservation ? 1231 : 1237);
+    result = prime * result + (clusterPolicyName == null ? 0 : clusterPolicyName.hashCode());
+    result = prime * result + (clusterPolicyProperties == null ? 0 : clusterPolicyProperties.hashCode());
+    result = prime * result + (requiredRngSources == null ? 0 : requiredRngSources.hashCode());
+    result = prime * result + (enableKsm ? 1231 : 1237);
+    result = prime * result + (enableBallooning ? 1231 : 1237);
+    result = prime * result + (optimizationType == null ? 0 : optimizationType.hashCode());
+    result = prime * result + (serialNumberPolicy == null ? 0 : serialNumberPolicy.hashCode());
+    result = prime * result + (customSerialNumber == null ? 0 : customSerialNumber.hashCode());
+    result = prime * result + (groupHostsAndVms == null ? 0 : groupHostsAndVms.hashCode());
+    result = prime * result + (fencingPolicy == null ? 0 : fencingPolicy.hashCode());
+    result = prime * result + (autoConverge == null ? 0 : autoConverge.hashCode());
+    result = prime * result + (migrateCompressed == null ? 0 : migrateCompressed.hashCode());
+    result = prime * result + (glusterTunedProfile == null ? 0 : glusterTunedProfile.hashCode());
+    result = prime * result + (addtionalFeaturesSupported == null ? 0 : addtionalFeaturesSupported.hashCode());
+    result = prime * result + (maintenanceReasonRequired ? 1231 : 1237);
+    result = prime * result + (ksmMergeAcrossNumaNodes ? 1231 : 1237);
+    return result;
+}
+#end_block
+
+#method_before
+@Override
+public boolean equals(Object obj) {
+    if (this == obj) {
+        return true;
+    }
+    if (!(obj instanceof VDSGroup)) {
+        return false;
+    }
+    VDSGroup other = (VDSGroup) obj;
+    // cause all kinds of havoc in the UI when clusters are refreshed.
+    return (ObjectUtils.objectsEqual(id, other.id) && ObjectUtils.objectsEqual(compatVersion, other.compatVersion) && ObjectUtils.objectsEqual(compatibilityVersion, other.compatibilityVersion) && ObjectUtils.objectsEqual(cpuName, other.cpuName) && ObjectUtils.objectsEqual(description, other.description) && maxVdsMemoryOverCommit == other.maxVdsMemoryOverCommit && countThreadsAsCores == other.countThreadsAsCores && migrateOnError == other.migrateOnError && ObjectUtils.objectsEqual(name, other.name) && ObjectUtils.objectsEqual(storagePoolId, other.storagePoolId) && ObjectUtils.objectsEqual(storagePoolName, other.storagePoolName) && transparentHugepages == other.transparentHugepages && virtService == other.virtService && glusterService == other.glusterService && tunnelMigration == other.tunnelMigration && ObjectUtils.objectsEqual(emulatedMachine, other.emulatedMachine) && trustedService == other.trustedService && haReservation == other.haReservation && ObjectUtils.objectsEqual(clusterPolicyId, other.clusterPolicyId) && ObjectUtils.objectsEqual(clusterPolicyName, other.clusterPolicyName) && ObjectUtils.objectsEqual(clusterPolicyProperties, other.clusterPolicyProperties) && enableKsm == other.enableKsm && enableBallooning == other.enableBallooning && detectEmulatedMachine == other.detectEmulatedMachine && optimizationType == other.optimizationType) && serialNumberPolicy == other.serialNumberPolicy && ObjectUtils.objectsEqual(customSerialNumber, other.customSerialNumber) && ObjectUtils.objectsEqual(groupHostsAndVms, other.groupHostsAndVms) && ObjectUtils.objectsEqual(requiredRngSources, other.requiredRngSources) && ObjectUtils.objectsEqual(fencingPolicy, other.fencingPolicy) && ObjectUtils.objectsEqual(autoConverge, other.autoConverge) && ObjectUtils.objectsEqual(migrateCompressed, other.migrateCompressed) && ObjectUtils.objectsEqual(maintenanceReasonRequired, other.maintenanceReasonRequired) && ObjectUtils.objectsEqual(ksmMergeAcrossNumaNodes, other.ksmMergeAcrossNumaNodes);
+}
+#method_after
+@Override
+public boolean equals(Object obj) {
+    if (this == obj) {
+        return true;
+    }
+    if (!(obj instanceof VDSGroup)) {
+        return false;
+    }
+    VDSGroup other = (VDSGroup) obj;
+    // cause all kinds of havoc in the UI when clusters are refreshed.
+    return (ObjectUtils.objectsEqual(id, other.id) && ObjectUtils.objectsEqual(compatVersion, other.compatVersion) && ObjectUtils.objectsEqual(compatibilityVersion, other.compatibilityVersion) && ObjectUtils.objectsEqual(cpuName, other.cpuName) && ObjectUtils.objectsEqual(description, other.description) && maxVdsMemoryOverCommit == other.maxVdsMemoryOverCommit && countThreadsAsCores == other.countThreadsAsCores && migrateOnError == other.migrateOnError && ObjectUtils.objectsEqual(name, other.name) && ObjectUtils.objectsEqual(storagePoolId, other.storagePoolId) && ObjectUtils.objectsEqual(storagePoolName, other.storagePoolName) && transparentHugepages == other.transparentHugepages && virtService == other.virtService && glusterService == other.glusterService && tunnelMigration == other.tunnelMigration && ObjectUtils.objectsEqual(emulatedMachine, other.emulatedMachine) && trustedService == other.trustedService && haReservation == other.haReservation && ObjectUtils.objectsEqual(clusterPolicyId, other.clusterPolicyId) && ObjectUtils.objectsEqual(clusterPolicyName, other.clusterPolicyName) && ObjectUtils.objectsEqual(clusterPolicyProperties, other.clusterPolicyProperties) && enableKsm == other.enableKsm && enableBallooning == other.enableBallooning && detectEmulatedMachine == other.detectEmulatedMachine && optimizationType == other.optimizationType) && serialNumberPolicy == other.serialNumberPolicy && ObjectUtils.objectsEqual(customSerialNumber, other.customSerialNumber) && ObjectUtils.objectsEqual(groupHostsAndVms, other.groupHostsAndVms) && ObjectUtils.objectsEqual(requiredRngSources, other.requiredRngSources) && ObjectUtils.objectsEqual(fencingPolicy, other.fencingPolicy) && ObjectUtils.objectsEqual(autoConverge, other.autoConverge) && ObjectUtils.objectsEqual(migrateCompressed, other.migrateCompressed) && ObjectUtils.objectsEqual(glusterTunedProfile, other.glusterTunedProfile) && ksmMergeAcrossNumaNodes == other.ksmMergeAcrossNumaNodes && ObjectUtils.objectsEqual(maintenanceReasonRequired, other.maintenanceReasonRequired) && ObjectUtils.objectsEqual(addtionalFeaturesSupported, other.addtionalFeaturesSupported);
+}
+#end_block
+
+#method_before
+private String getMountPointsFilterPattern() {
+    String[] mountPointsToIgnore = Config.<String>getValue(ConfigValues.GlusterStorageDeviceListMountPointsToIgore).split(",");
+    // Mounts to be ignored can be exact mount point or a regular expression which should be with the starting part
+    // of the mount point. So create a regex which can match against any given pattern in the list.
+    StringBuilder pattern = new StringBuilder();
+    for (String mointPoint : mountPointsToIgnore) {
+        pattern.append("^");
+        pattern.append(mointPoint);
+        pattern.append("$");
+        pattern.append("|");
+    }
+    return pattern.toString();
+}
+#method_after
+private String getMountPointsFilterPattern() {
+    String[] mountPointsToIgnore = Config.<String>getValue(ConfigValues.GlusterStorageDeviceListMountPointsToIgnore).split(",");
+    // Mounts to be ignored can be exact mount point or a regular expression which should be with the starting part
+    // of the mount point. So create a regex which can match against any given pattern in the list.
+    StringBuilder pattern = new StringBuilder();
+    for (String mointPoint : mountPointsToIgnore) {
+        pattern.append("^");
+        pattern.append(mointPoint);
+        pattern.append("$");
+        pattern.append("|");
+    }
+    return pattern.toString();
+}
+#end_block
+
+#method_before
+private List<String> getFsTypesFilter() {
+    return Arrays.asList(Config.<String>getValue(ConfigValues.GlusterStorageDeviceListFileSystemTypesToIgore).split(","));
+}
+#method_after
+private List<String> getFsTypesFilter() {
+    return Arrays.asList(Config.<String>getValue(ConfigValues.GlusterStorageDeviceListFileSystemTypesToIgnore).split(","));
+}
+#end_block
+
+#method_before
+@Override
+protected void setActionMessageParameters() {
+    addCanDoActionMessage(VdcBllMessages.VAR__ACTION__REMOVE);
+}
+#method_after
+@Override
+protected void setActionMessageParameters() {
+    addCanDoActionMessage(VdcBllMessages.VAR__ACTION__REMOVE);
+    super.setActionMessageParameters();
+}
+#end_block
+
+#method_before
+@Override
+protected void setActionMessageParameters() {
+    addCanDoActionMessage(VdcBllMessages.VAR__ACTION__CREATE);
+    addCustomValue(GlusterConstants.VOLUME_SNAPSHOT_NAME, getParameters().getSnapshot().getSnapshotName());
+}
+#method_after
+@Override
+protected void setActionMessageParameters() {
+    addCanDoActionMessage(VdcBllMessages.VAR__ACTION__CREATE);
+    addCustomValue(GlusterConstants.VOLUME_SNAPSHOT_NAME, getParameters().getSnapshot().getSnapshotName());
+    super.setActionMessageParameters();
+}
+#end_block
+
+#method_before
+@Override
+protected boolean canDoAction() {
+    if (!super.canDoAction()) {
+        return false;
+    }
+    GlusterVolumeEntity volume = getGlusterVolume();
+    if (volume.getStatus() == GlusterStatus.DOWN) {
+        return failCanDoAction(VdcBllMessages.ACTION_TYPE_FAILED_GLUSTER_VOLUME_IS_DOWN);
+    }
+    if (volume.getAsyncTask() != null && (volume.getAsyncTask().getType() == GlusterTaskType.REBALANCE || volume.getAsyncTask().getType() == GlusterTaskType.REMOVE_BRICK)) {
+        return failCanDoAction(VdcBllMessages.ACTION_TYPE_FAILED_VOLUME_OPERATION_IN_PROGRESS);
+    }
+    if (!GlusterUtil.getInstance().isVolumeThinlyProvisioned(volume)) {
+        return failCanDoAction(VdcBllMessages.ACTION_TYPE_FAILED_GLUSTER_VOLUME_IS_NOT_THINLY_PROVISIONED);
+    }
+    if (getDbFacade().getGlusterVolumeSnapshotDao().getByName(getGlusterVolumeId(), snapshot.getSnapshotName()) != null) {
+        return failCanDoAction(VdcBllMessages.ACTION_TYPE_FAILED_SNAPSHOT_ALREADY_EXISTS);
+    }
+    List<GlusterBrickEntity> bricks = volume.getBricks();
+    for (GlusterBrickEntity brick : bricks) {
+        if (!brick.isOnline()) {
+            return failCanDoAction(VdcBllMessages.ACTION_TYPE_FAILED_ONE_OR_MORE_BRICKS_ARE_DOWN);
+        }
+    }
+    for (GlusterGeoRepSession session : georepSessions) {
+        if (session.getSlaveNodeUuid() == null || session.getSlaveVolumeId() == null) {
+            // the volume
+            return failCanDoAction(VdcBllMessages.ACTION_TYPE_FAILED_REMOTE_CLUSTER_NOT_MAINTAINED_BY_ENGINE);
+        }
+    }
+    return true;
+}
+#method_after
+@Override
+protected boolean canDoAction() {
+    if (!super.canDoAction()) {
+        return false;
+    }
+    GlusterVolumeEntity volume = getGlusterVolume();
+    if (volume.getStatus() == GlusterStatus.DOWN) {
+        return failCanDoAction(VdcBllMessages.ACTION_TYPE_FAILED_GLUSTER_VOLUME_IS_DOWN);
+    }
+    if (volume.getAsyncTask() != null && (volume.getAsyncTask().getType() == GlusterTaskType.REBALANCE || volume.getAsyncTask().getType() == GlusterTaskType.REMOVE_BRICK) && volume.getAsyncTask().getStatus() == JobExecutionStatus.STARTED) {
+        addCanDoActionMessageVariable("asyncTask", volume.getAsyncTask().getType().name().toLowerCase());
+        return failCanDoAction(VdcBllMessages.ACTION_TYPE_FAILED_VOLUME_ASYNC_OPERATION_IN_PROGRESS);
+    }
+    if (!GlusterUtil.getInstance().isVolumeThinlyProvisioned(volume)) {
+        return failCanDoAction(VdcBllMessages.ACTION_TYPE_FAILED_GLUSTER_VOLUME_IS_NOT_THINLY_PROVISIONED);
+    }
+    if (getDbFacade().getGlusterVolumeSnapshotDao().getByName(getGlusterVolumeId(), snapshot.getSnapshotName()) != null) {
+        return failCanDoAction(VdcBllMessages.ACTION_TYPE_FAILED_SNAPSHOT_ALREADY_EXISTS);
+    }
+    List<GlusterBrickEntity> bricks = volume.getBricks();
+    for (GlusterBrickEntity brick : bricks) {
+        if (!brick.isOnline()) {
+            return failCanDoAction(VdcBllMessages.ACTION_TYPE_FAILED_ONE_OR_MORE_BRICKS_ARE_DOWN);
+        }
+    }
+    for (GlusterGeoRepSession session : georepSessions) {
+        if (session.getSlaveNodeUuid() == null || session.getSlaveVolumeId() == null) {
+            // the volume
+            return failCanDoAction(VdcBllMessages.ACTION_TYPE_FAILED_REMOTE_CLUSTER_NOT_MAINTAINED_BY_ENGINE);
+        }
+    }
+    return true;
+}
+#end_block
+
+#method_before
+@Override
+protected void setActionMessageParameters() {
+    addCanDoActionMessage(VdcBllMessages.VAR__ACTION__REMOVE);
+}
+#method_after
+@Override
+protected void setActionMessageParameters() {
+    addCanDoActionMessage(VdcBllMessages.VAR__ACTION__REMOVE);
+    super.setActionMessageParameters();
+}
+#end_block
+
+#method_before
+public void alertVolumeSnapshotLimitsReached(final GlusterVolumeEntity volume) {
+    if (!alertVolumeSnapshotHardLimitReached(volume)) {
+        alertVolumeSnapshotSoftLimitReached(volume);
+    }
+}
+#method_after
+public void alertVolumeSnapshotLimitsReached(final GlusterVolumeEntity volume) {
+    if (!alertVolumeLimitReached(volume, true)) {
+        alertVolumeLimitReached(volume, false);
+    }
+}
+#end_block
+
+#method_before
+@Before
+public void init() {
+    syncJob = Mockito.spy(GlusterSnapshotSyncJob.getInstance());
+    MockitoAnnotations.initMocks(this);
+    syncJob.setLogUtil(logUtil);
+    doReturn(clusterDao).when(syncJob).getClusterDao();
+    doReturn(volumeDao).when(syncJob).getGlusterVolumeDao();
+    doReturn(snapshotDao).when(syncJob).getGlusterVolumeSnapshotDao();
+    doReturn(snapshotConfigDao).when(syncJob).getGlusterVolumeSnapshotConfigDao();
+    doReturn(clusterUtils).when(syncJob).getClusterUtils();
+    doReturn(glusterUtil).when(syncJob).getGlusterUtil();
+    doReturn(getClusters()).when(clusterDao).getAll();
+    doReturn(getVolumes()).when(volumeDao).getByClusterId(argThat(validClusterId()));
+    doReturn(getVolume(CLUSTER_ID_1, VOLUME_ID_1, VOLUME_NAME_1)).when(volumeDao).getByName(argThat(validClusterId()), argThat(validVolumeName()));
+    doReturn(getServer()).when(clusterUtils).getRandomUpServer(any(Guid.class));
+    when(glusterUtil.isGlusterSnapshotSupported(eq(Version.v3_4), any(Guid.class))).thenReturn(false);
+    when(glusterUtil.isGlusterSnapshotSupported(eq(Version.v3_5), any(Guid.class))).thenReturn(true);
+    doReturn(engineLock).when(syncJob).acquireVolumeSnapshotLock(any(Guid.class));
+    doNothing().when(glusterUtil).alertVolumeSnapshotLimitsReached(any(GlusterVolumeEntity.class));
+    doNothing().when(glusterUtil).checkAndRemoveVolumeSnapshotLimitsAlert(any(GlusterVolumeEntity.class));
+}
+#method_after
+@Before
+public void init() {
+    syncJob = Mockito.spy(GlusterSnapshotSyncJob.getInstance());
+    MockitoAnnotations.initMocks(this);
+    syncJob.setLogUtil(logUtil);
+    doReturn(clusterDao).when(syncJob).getClusterDao();
+    doReturn(volumeDao).when(syncJob).getGlusterVolumeDao();
+    doReturn(snapshotDao).when(syncJob).getGlusterVolumeSnapshotDao();
+    doReturn(snapshotConfigDao).when(syncJob).getGlusterVolumeSnapshotConfigDao();
+    doReturn(clusterUtils).when(syncJob).getClusterUtils();
+    doReturn(glusterUtil).when(syncJob).getGlusterUtil();
+    doReturn(getClusters()).when(clusterDao).getAll();
+    doReturn(getValidCluster()).when(clusterDao).get(any(Guid.class));
+    doReturn(getVolumes()).when(volumeDao).getByClusterId(argThat(validClusterId()));
+    doReturn(getVolume(CLUSTER_ID_1, VOLUME_ID_1, VOLUME_NAME_1)).when(volumeDao).getByName(argThat(validClusterId()), argThat(validVolumeName()));
+    doReturn(getServer()).when(clusterUtils).getRandomUpServer(any(Guid.class));
+    when(glusterUtil.isGlusterSnapshotSupported(eq(Version.v3_4), any(Guid.class))).thenReturn(false);
+    when(glusterUtil.isGlusterSnapshotSupported(eq(Version.v3_5), any(Guid.class))).thenReturn(true);
+    doReturn(engineLock).when(syncJob).acquireVolumeSnapshotLock(any(Guid.class));
+    doNothing().when(glusterUtil).alertVolumeSnapshotLimitsReached(any(GlusterVolumeEntity.class));
+    doNothing().when(glusterUtil).checkAndRemoveVolumeSnapshotLimitsAlert(any(GlusterVolumeEntity.class));
+}
+#end_block
+
+#method_before
+@Test
+public void testSyncSnapshotsList() {
+    doReturn(getExistingSnapshots()).when(snapshotDao).getAllByVolumeId(argThat(validVolumeId()));
+    doReturn(getSnapshotVDSReturnVal(true)).when(syncJob).runVdsCommand(eq(VDSCommandType.GetGlusterVolumeSnapshotInfo), argThat(snapshotInfoParam()));
+    syncJob.refreshSnapshotList();
+    Mockito.verify(snapshotDao, times(1)).saveAll(any(List.class));
+    Mockito.verify(snapshotDao, times(1)).removeAll(any(List.class));
+    Mockito.verify(snapshotDao, times(1)).updateAllInBatch(any(List.class));
+}
+#method_after
+@Test
+public void testSyncSnapshotsList() {
+    doReturn(getExistingSnapshots()).when(snapshotDao).getAllByVolumeId(argThat(validVolumeId()));
+    doReturn(getSnapshotVDSReturnVal(true)).when(syncJob).runVdsCommand(eq(VDSCommandType.GetGlusterVolumeSnapshotInfo), argThat(snapshotInfoParam()));
+    when(volumeDao.getById(any(Guid.class))).thenReturn(getVolume(CLUSTER_ID_1, VOLUME_ID_1, VOLUME_NAME_1));
+    syncJob.refreshSnapshotList();
+    Mockito.verify(snapshotDao, times(1)).saveAll(any(List.class));
+    Mockito.verify(snapshotDao, times(1)).removeAll(any(List.class));
+    Mockito.verify(snapshotDao, times(1)).updateAllInBatch(any(List.class));
+}
+#end_block
+
+#method_before
+private void addOrUpdateSnapshots(Guid clusterId, List<GlusterVolumeSnapshotEntity> fetchedSnapshots) {
+    Map<Guid, GlusterVolumeSnapshotEntity> fetchedSnapshotsMap = new HashMap<>();
+    for (GlusterVolumeSnapshotEntity fetchedSnapshot : fetchedSnapshots) {
+        fetchedSnapshotsMap.put(fetchedSnapshot.getId(), fetchedSnapshot);
+    }
+    List<GlusterVolumeSnapshotEntity> existingSnapshots = getGlusterVolumeSnapshotDao().getAllByClusterId(clusterId);
+    Map<Guid, GlusterVolumeSnapshotEntity> existingSnapshotsMap = new HashMap<>();
+    for (GlusterVolumeSnapshotEntity existingSnapshot : existingSnapshots) {
+        existingSnapshotsMap.put(existingSnapshot.getId(), existingSnapshot);
+    }
+    List<GlusterVolumeSnapshotEntity> updatedSnapshots = new ArrayList<>();
+    List<GlusterVolumeSnapshotEntity> newlyAddedSnapshots = new ArrayList<>();
+    List<GlusterVolumeSnapshotEntity> deletedSnapshots = new ArrayList<>();
+    for (GlusterVolumeSnapshotEntity fetchedSnapshot : fetchedSnapshots) {
+        GlusterVolumeSnapshotEntity correspondingExistingSnapshot = existingSnapshotsMap.get(fetchedSnapshot.getId());
+        if (correspondingExistingSnapshot == null) {
+            newlyAddedSnapshots.add(fetchedSnapshot);
+        } else if (correspondingExistingSnapshot.getStatus() != fetchedSnapshot.getStatus()) {
+            correspondingExistingSnapshot.setStatus(fetchedSnapshot.getStatus());
+            updatedSnapshots.add(correspondingExistingSnapshot);
+        }
+    }
+    for (GlusterVolumeSnapshotEntity existingSnapshot : existingSnapshots) {
+        GlusterVolumeSnapshotEntity correspondingFetchedSnapshot = fetchedSnapshotsMap.get(existingSnapshot.getId());
+        if (correspondingFetchedSnapshot == null) {
+            deletedSnapshots.add(existingSnapshot);
+        }
+    }
+    // update snapshot details
+    try (EngineLock lock = acquireVolumeSnapshotLock(clusterId)) {
+        saveNewSnapshots(newlyAddedSnapshots);
+        updateSnapshots(updatedSnapshots);
+        deleteSnapshots(deletedSnapshots);
+    } catch (Exception e) {
+        log.error("Exception ocuured while adding/updating snapshots from CLI - '{}'", e.getMessage());
+        log.debug("Exception", e);
+        throw new VdcBLLException(VdcBllErrors.GlusterSnapshotInfoFailedException, e.getLocalizedMessage());
+    }
+}
+#method_after
+private void addOrUpdateSnapshots(Guid clusterId, List<GlusterVolumeSnapshotEntity> fetchedSnapshots) {
+    Map<Guid, GlusterVolumeSnapshotEntity> fetchedSnapshotsMap = new HashMap<>();
+    for (GlusterVolumeSnapshotEntity fetchedSnapshot : fetchedSnapshots) {
+        fetchedSnapshotsMap.put(fetchedSnapshot.getId(), fetchedSnapshot);
+    }
+    VDSGroup cluster = getClusterDao().get(clusterId);
+    List<GlusterVolumeSnapshotEntity> existingSnapshots = getGlusterVolumeSnapshotDao().getAllByClusterId(clusterId);
+    Map<Guid, GlusterVolumeSnapshotEntity> existingSnapshotsMap = new HashMap<>();
+    for (GlusterVolumeSnapshotEntity existingSnapshot : existingSnapshots) {
+        existingSnapshotsMap.put(existingSnapshot.getId(), existingSnapshot);
+    }
+    List<GlusterVolumeSnapshotEntity> updatedSnapshots = new ArrayList<>();
+    List<GlusterVolumeSnapshotEntity> newlyAddedSnapshots = new ArrayList<>();
+    List<GlusterVolumeSnapshotEntity> deletedSnapshots = new ArrayList<>();
+    for (final GlusterVolumeSnapshotEntity fetchedSnapshot : fetchedSnapshots) {
+        GlusterVolumeSnapshotEntity correspondingExistingSnapshot = existingSnapshotsMap.get(fetchedSnapshot.getId());
+        if (correspondingExistingSnapshot == null) {
+            final GlusterVolumeEntity volume = getGlusterVolumeDao().getById(fetchedSnapshot.getVolumeId());
+            newlyAddedSnapshots.add(fetchedSnapshot);
+            log.debug("Detected new gluster volume snapshot '{}' for volume '{}' on cluster: '{}'", fetchedSnapshot.getSnapshotName(), volume.getName(), cluster.getName());
+            logUtil.logAuditMessage(clusterId, volume, null, AuditLogType.GLUSTER_VOLUME_SNAPSHOT_DETECTED_NEW, new HashMap<String, String>() {
+
+                {
+                    put("snapName", fetchedSnapshot.getSnapshotName());
+                    put(GlusterConstants.VOLUME_NAME, volume.getName());
+                }
+            });
+        } else if (correspondingExistingSnapshot.getStatus() != fetchedSnapshot.getStatus()) {
+            correspondingExistingSnapshot.setStatus(fetchedSnapshot.getStatus());
+            updatedSnapshots.add(correspondingExistingSnapshot);
+        }
+    }
+    for (final GlusterVolumeSnapshotEntity existingSnapshot : existingSnapshots) {
+        GlusterVolumeSnapshotEntity correspondingFetchedSnapshot = fetchedSnapshotsMap.get(existingSnapshot.getId());
+        if (correspondingFetchedSnapshot == null) {
+            final GlusterVolumeEntity volume = getGlusterVolumeDao().getById(existingSnapshot.getVolumeId());
+            deletedSnapshots.add(existingSnapshot);
+            log.debug("Gluster volume snapshot '{}' detected removed for volume '{}' on cluster: '{}'", existingSnapshot.getSnapshotName(), volume.getName(), cluster.getName());
+            logUtil.logAuditMessage(clusterId, volume, null, AuditLogType.GLUSTER_VOLUME_SNAPSHOT_DELETED_FROM_CLI, new HashMap<String, String>() {
+
+                {
+                    put("snapName", existingSnapshot.getSnapshotName());
+                    put(GlusterConstants.VOLUME_NAME, volume.getName());
+                }
+            });
+        }
+    }
+    // update snapshot details
+    try (EngineLock lock = acquireVolumeSnapshotLock(clusterId)) {
+        saveNewSnapshots(newlyAddedSnapshots);
+        updateSnapshots(updatedSnapshots);
+        deleteSnapshots(deletedSnapshots);
+    } catch (Exception e) {
+        log.error("Exception ocuured while adding/updating snapshots from CLI - '{}'", e.getMessage());
+        log.debug("Exception", e);
+        throw new VdcBLLException(VdcBllErrors.GlusterSnapshotInfoFailedException, e.getLocalizedMessage());
+    }
+}
+#end_block
+
+#method_before
+private void addOrUpdateSnapshotsConfig(Guid clusterId, GlusterSnapshotConfigInfo configInfo) {
+    try (EngineLock lock = acquireVolumeSnapshotLock(clusterId)) {
+        for (Map.Entry<String, String> entry : configInfo.getClusterConfigOptions().entrySet()) {
+            if (entry.getValue() != null) {
+                addOrUpdateClusterConfig(clusterId, entry.getKey(), entry.getValue());
+            }
+        }
+    } catch (Exception e) {
+        log.error("Exception ocuured while adding/updating snapshots configurations from CLI - '{}'", e.getMessage());
+        log.debug("Exception", e);
+        throw new VdcBLLException(VdcBllErrors.GlusterSnapshotInfoFailedException, e.getLocalizedMessage());
+    }
+    Map<String, Map<String, String>> volumeConfigs = configInfo.getVolumeConfigOptions();
+    for (Map.Entry<String, Map<String, String>> entry : volumeConfigs.entrySet()) {
+        GlusterVolumeEntity volume = getGlusterVolumeDao().getByName(clusterId, entry.getKey());
+        if (volume == null) {
+            continue;
+        }
+        try (EngineLock lock = acquireVolumeSnapshotLock(volume.getId())) {
+            Map<String, String> volumeConfig = entry.getValue();
+            if (volumeConfig != null) {
+                for (Map.Entry<String, String> entry1 : volumeConfig.entrySet()) {
+                    if (entry.getValue() != null) {
+                        addOrUpdateVolumeConfig(clusterId, volume.getId(), entry1.getKey(), entry1.getValue());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Exception ocuured while adding/updating snapshots configurations from CLI - '{}'", e.getMessage());
+            log.debug("Exception", e);
+            throw new VdcBLLException(VdcBllErrors.GlusterSnapshotInfoFailedException, e.getLocalizedMessage());
+        }
+    }
+}
+#method_after
+private void addOrUpdateSnapshotsConfig(Guid clusterId, GlusterSnapshotConfigInfo configInfo) {
+    VDSGroup cluster = getClusterDao().get(clusterId);
+    try (EngineLock lock = acquireVolumeSnapshotLock(clusterId)) {
+        for (Map.Entry<String, String> entry : configInfo.getClusterConfigOptions().entrySet()) {
+            if (entry.getValue() != null) {
+                addOrUpdateClusterConfig(cluster, entry.getKey(), entry.getValue());
+            }
+        }
+    } catch (Exception e) {
+        log.error("Exception ocuured while adding/updating snapshots configurations from CLI - '{}'", e.getMessage());
+        log.debug("Exception", e);
+        throw new VdcBLLException(VdcBllErrors.GlusterSnapshotInfoFailedException, e.getLocalizedMessage());
+    }
+    Map<String, Map<String, String>> volumeConfigs = configInfo.getVolumeConfigOptions();
+    for (Map.Entry<String, Map<String, String>> entry : volumeConfigs.entrySet()) {
+        GlusterVolumeEntity volume = getGlusterVolumeDao().getByName(clusterId, entry.getKey());
+        if (volume == null) {
+            continue;
+        }
+        try (EngineLock lock = acquireVolumeSnapshotLock(volume.getId())) {
+            Map<String, String> volumeConfig = entry.getValue();
+            if (volumeConfig != null) {
+                for (Map.Entry<String, String> entry1 : volumeConfig.entrySet()) {
+                    if (entry.getValue() != null) {
+                        addOrUpdateVolumeConfig(cluster, volume, entry1.getKey(), entry1.getValue());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Exception ocuured while adding/updating snapshots configurations from CLI - '{}'", e.getMessage());
+            log.debug("Exception", e);
+            throw new VdcBLLException(VdcBllErrors.GlusterSnapshotInfoFailedException, e.getLocalizedMessage());
+        }
+    }
+}
+#end_block
+
+#method_before
+private void addOrUpdateClusterConfig(Guid clusterId, String paramName, String paramValue) {
+    GlusterVolumeSnapshotConfig param = new GlusterVolumeSnapshotConfig();
+    param.setClusterId(clusterId);
+    param.setVolumeId(null);
+    param.setParamName(paramName);
+    param.setParamValue(paramValue);
+    GlusterVolumeSnapshotConfig existingParamDetail = getGlusterVolumeSnapshotConfigDao().getConfigByClusterIdAndName(clusterId, paramName);
+    if (existingParamDetail == null) {
+        getGlusterVolumeSnapshotConfigDao().save(param);
+    } else if (!(existingParamDetail.getParamValue().equals(paramValue))) {
+        getGlusterVolumeSnapshotConfigDao().updateConfigByClusterIdAndName(clusterId, paramName, paramValue);
+    }
+}
+#method_after
+private void addOrUpdateClusterConfig(VDSGroup cluster, final String paramName, final String paramValue) {
+    GlusterVolumeSnapshotConfig param = new GlusterVolumeSnapshotConfig();
+    param.setClusterId(cluster.getId());
+    param.setVolumeId(null);
+    param.setParamName(paramName);
+    param.setParamValue(paramValue);
+    GlusterVolumeSnapshotConfig existingParamDetail = getGlusterVolumeSnapshotConfigDao().getConfigByClusterIdAndName(cluster.getId(), paramName);
+    if (existingParamDetail == null) {
+        getGlusterVolumeSnapshotConfigDao().save(param);
+        log.debug("Detected new gluster volume snapshot configuration '{}' with value '{}' for cluster: '{}'", paramName, paramValue, cluster.getName());
+        logUtil.logAuditMessage(cluster.getId(), null, null, AuditLogType.GLUSTER_VOLUME_SNAPSHOT_CLUSTER_CONFIG_DETECTED_NEW, new HashMap<String, String>() {
+
+            {
+                put("snapConfigName", paramName);
+                put("snapConfigValue", paramValue);
+            }
+        });
+    } else if (!(existingParamDetail.getParamValue().equals(paramValue))) {
+        getGlusterVolumeSnapshotConfigDao().updateConfigByClusterIdAndName(cluster.getId(), paramName, paramValue);
+    }
+}
+#end_block
+
+#method_before
+private void addOrUpdateVolumeConfig(Guid clusterId, Guid volumeId, String paramName, String paramValue) {
+    GlusterVolumeSnapshotConfig cfg = new GlusterVolumeSnapshotConfig();
+    cfg.setClusterId(clusterId);
+    cfg.setVolumeId(volumeId);
+    cfg.setParamName(paramName);
+    cfg.setParamValue(paramValue);
+    GlusterVolumeSnapshotConfig existingParamDetail = getGlusterVolumeSnapshotConfigDao().getConfigByVolumeIdAndName(clusterId, volumeId, paramName);
+    if (existingParamDetail == null) {
+        getGlusterVolumeSnapshotConfigDao().save(cfg);
+    } else if (!(existingParamDetail.getParamValue().equals(paramValue))) {
+        getGlusterVolumeSnapshotConfigDao().updateConfigByVolumeIdAndName(clusterId, volumeId, paramName, paramValue);
+    }
+}
+#method_after
+private void addOrUpdateVolumeConfig(VDSGroup cluster, final GlusterVolumeEntity volume, final String paramName, final String paramValue) {
+    GlusterVolumeSnapshotConfig cfg = new GlusterVolumeSnapshotConfig();
+    cfg.setClusterId(cluster.getId());
+    cfg.setVolumeId(volume.getId());
+    cfg.setParamName(paramName);
+    cfg.setParamValue(paramValue);
+    GlusterVolumeSnapshotConfig existingParamDetail = getGlusterVolumeSnapshotConfigDao().getConfigByVolumeIdAndName(cluster.getId(), volume.getId(), paramName);
+    if (existingParamDetail == null) {
+        getGlusterVolumeSnapshotConfigDao().save(cfg);
+        log.debug("Detected new gluster volume snapshot configuration '{}' with value '{}' for volume: '{}' on cluster '{}'", paramName, paramValue, cluster.getName(), volume.getName());
+        logUtil.logAuditMessage(cluster.getId(), volume, null, AuditLogType.GLUSTER_VOLUME_SNAPSHOT_VOLUME_CONFIG_DETECTED_NEW, new HashMap<String, String>() {
+
+            {
+                put("snapConfigName", paramName);
+                put("snapConfigValue", paramValue);
+                put(GlusterConstants.VOLUME_NAME, volume.getName());
+            }
+        });
+    } else if (!(existingParamDetail.getParamValue().equals(paramValue))) {
+        getGlusterVolumeSnapshotConfigDao().updateConfigByVolumeIdAndName(cluster.getId(), volume.getId(), paramName, paramValue);
+    }
+}
+#end_block
+
+#method_before
+public boolean isVolumeSnapshotHardLimitReached(Guid volumeId) {
+    GlusterVolumeEntity volume = getGlusterVolumeDao().getById(volumeId);
+    if (volume != null) {
+        GlusterVolumeSnapshotConfig config = getGlusterVolumeSnapshotConfigDao().getConfigByVolumeIdAndName(volume.getClusterId(), volumeId, "snap-max-hard-limit");
+        if (config != null) {
+            // remove the % sign in the last
+            int snapMaxHardLimit = Integer.parseInt(config.getParamValue());
+            int snapshotCount = volume.getSnapshotsCount();
+            return snapshotCount >= snapMaxHardLimit;
+        }
+    }
+    return false;
+}
+#method_after
+public boolean isVolumeSnapshotHardLimitReached(Guid volumeId) {
+    GlusterVolumeEntity volume = getGlusterVolumeDao().getById(volumeId);
+    if (volume != null) {
+        GlusterVolumeSnapshotConfig config = getGlusterVolumeSnapshotConfigDao().getConfigByVolumeIdAndName(volume.getClusterId(), volumeId, "snap-max-hard-limit");
+        if (config != null) {
+            int snapMaxHardLimit = Integer.parseInt(config.getParamValue());
+            int snapshotCount = volume.getSnapshotsCount();
+            return snapshotCount >= snapMaxHardLimit;
+        }
+    }
+    return false;
+}
+#end_block
+
+#method_before
+public void setIncomingHeartbeat(boolean isHeartbeat) {
+    this.isIncomingHeartbeat.set(isHeartbeat);
+}
+#method_after
+public void setIncomingHeartbeat(boolean isHeartbeat) {
+    if (isHeartbeat && this.incomingHeartbeat != 0) {
+        this.isIncomingHeartbeat.set(isHeartbeat);
+        return;
+    }
+    this.isIncomingHeartbeat.set(false);
+}
+#end_block
+
+#method_before
+public void setOutgoingHeartbeat(boolean isHeartbeat) {
+    this.isOutgoingHeartbeat.set(isHeartbeat);
+}
+#method_after
+public void setOutgoingHeartbeat(boolean isHeartbeat) {
+    if (isHeartbeat && this.outgoingHeartbeat != 0) {
+        this.isOutgoingHeartbeat.set(isHeartbeat);
+        return;
+    }
+    this.isOutgoingHeartbeat.set(false);
+}
+#end_block
+
+#method_before
+public void setIncomingHeartbeat(boolean isHeartbeat) {
+    if (isHeartbeat && this.incomingHeartbeat != 0) {
+        this.isIncomingHeartbeat.set(isHeartbeat);
+    }
+    this.isIncomingHeartbeat.set(false);
+}
+#method_after
+public void setIncomingHeartbeat(boolean isHeartbeat) {
+    if (isHeartbeat && this.incomingHeartbeat != 0) {
+        this.isIncomingHeartbeat.set(isHeartbeat);
+        return;
+    }
+    this.isIncomingHeartbeat.set(false);
+}
+#end_block
+
+#method_before
+public void setOutgoingHeartbeat(boolean isHeartbeat) {
+    if (isHeartbeat && this.outgoingHeartbeat != 0) {
+        this.isOutgoingHeartbeat.set(isHeartbeat);
+    }
+    this.isOutgoingHeartbeat.set(false);
+}
+#method_after
+public void setOutgoingHeartbeat(boolean isHeartbeat) {
+    if (isHeartbeat && this.outgoingHeartbeat != 0) {
+        this.isOutgoingHeartbeat.set(isHeartbeat);
+        return;
+    }
+    this.isOutgoingHeartbeat.set(false);
+}
+#end_block
+
+#method_before
+private DomainMonitoringResult analyzeDomainReport(VDSDomainsData tempData, StoragePool storagePool, boolean isLog) {
+    if (!tempData.isActual() && FeatureSupported.reportWhetherDomainMonitoringResultIsActual(storagePool.getcompatibility_version())) {
+        log.warnFormat("Domain '{}' report isn't an actual report", getDomainIdTuple(tempData.getDomainId()));
+        return DomainMonitoringResult.NOT_ACTUAL;
+    }
+    if (tempData.getCode() != 0) {
+        if (isLog) {
+            log.errorFormat("Domain {0} was reported with error code {1}", getDomainIdTuple(tempData.getDomainId()), tempData.getCode());
+        }
+        if (tempData.getCode() == VdcBllErrors.StorageDomainDoesNotExist.getValue() || tempData.getCode() == VdcBllErrors.StorageException.getValue()) {
+            return DomainMonitoringResult.STORAGE_ACCCESS_ERROR;
+        }
+        return DomainMonitoringResult.PROBLEMATIC;
+    }
+    if (tempData.getLastCheck() > Config.<Double>getValue(ConfigValues.MaxStorageVdsTimeoutCheckSec)) {
+        if (isLog) {
+            log.errorFormat("Domain {0} check timeot {1} is too big", getDomainIdTuple(tempData.getDomainId()), tempData.getLastCheck());
+        }
+        return DomainMonitoringResult.PROBLEMATIC;
+    }
+    return DomainMonitoringResult.OK;
+}
+#method_after
+private DomainMonitoringResult analyzeDomainReport(VDSDomainsData tempData, StoragePool storagePool, boolean isLog) {
+    if (!tempData.isActual() && FeatureSupported.reportWhetherDomainMonitoringResultIsActual(storagePool.getcompatibility_version())) {
+        log.warnFormat("Domain {0} report isn't an actual report", getDomainIdTuple(tempData.getDomainId()));
+        return DomainMonitoringResult.NOT_ACTUAL;
+    }
+    if (tempData.getCode() != 0) {
+        if (isLog) {
+            log.errorFormat("Domain {0} was reported with error code {1}", getDomainIdTuple(tempData.getDomainId()), tempData.getCode());
+        }
+        if (tempData.getCode() == VdcBllErrors.StorageDomainDoesNotExist.getValue() || tempData.getCode() == VdcBllErrors.StorageException.getValue()) {
+            return DomainMonitoringResult.STORAGE_ACCCESS_ERROR;
+        }
+        return DomainMonitoringResult.PROBLEMATIC;
+    }
+    if (tempData.getLastCheck() > Config.<Double>getValue(ConfigValues.MaxStorageVdsTimeoutCheckSec)) {
+        if (isLog) {
+            log.errorFormat("Domain {0} check timeot {1} is too big", getDomainIdTuple(tempData.getDomainId()), tempData.getLastCheck());
+        }
+        return DomainMonitoringResult.PROBLEMATIC;
+    }
+    return DomainMonitoringResult.OK;
+}
+#end_block
+
+#method_before
+public void load(String xsd) throws IOException {
+    // Parse the XML schema document:
+    Document schema;
+    try {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        DocumentBuilder parser = factory.newDocumentBuilder();
+        schema = parser.parse(new File(xsd));
+    } catch (Exception exception) {
+        throw new IOException("Can't parse XML schema.", exception);
+    }
+    // Prepare the xpath engine with the required namespace mapping:
+    xpath = XPathFactory.newInstance().newXPath();
+    xpath.setNamespaceContext(new NamespaceContext() {
+
+        @Override
+        public String getNamespaceURI(String prefix) {
+            switch(prefix) {
+                case "xs":
+                    return "http://www.w3.org/2001/XMLSchema";
+                default:
+                    return XMLConstants.NULL_NS_URI;
+            }
+        }
+
+        @Override
+        public String getPrefix(String namespaceURI) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Iterator getPrefixes(String namespaceURI) {
+            throw new UnsupportedOperationException();
+        }
+    });
+    // Populate the indexes:
+    populateElementsIndex(schema);
+    populateComplexTypesIndex(schema);
+    // Exclude all the simple types:
+    Set<String> excluded = new HashSet<>();
+    NodeList nodes = (NodeList) evaluate("//xs:simpleType/@name", schema, XPathConstants.NODESET);
+    for (int i = 0; i < nodes.getLength(); i++) {
+        Node name = nodes.item(i);
+        excluded.add(name.getNodeValue());
+    }
+    // Exclude infrastructure types:
+    excluded.add("BaseDevice");
+    excluded.add("BaseDevices");
+    excluded.add("BaseResource");
+    excluded.add("BaseResources");
+    excluded.add("DetailedLink");
+    excluded.add("ErrorHandlingOptions");
+    // Exclude the VM summary because it conflicts with the API summary:
+    excluded.add("VmSummary");
+    // Populate the types by tag map, including all the element definitions that appear in the XML schema, even
+    // those that aren't top level and thus not valid as roots of valid XML documents:
+    NodeList elements = (NodeList) evaluate("//xs:element", schema, XPathConstants.NODESET);
+    for (int i = 0; i < elements.getLength(); i++) {
+        final Element element = (Element) elements.item(i);
+        final String name = element.getAttribute("name");
+        final String type = element.getAttribute("type");
+        if (!name.isEmpty() && !type.isEmpty()) {
+            if (!type.startsWith("xs:") && !excluded.contains(type)) {
+                typesByTag.put(name, type);
+            }
+        }
+    }
+    // There are several conflicts with "version", so force it:
+    typesByTag.put("version", "VersionCaps");
+    // Populate the tags by type name, including only the top level element definitions that appear in the XML
+    // schema, those that can appear as roots of valid XML documents:
+    elements = (NodeList) evaluate("/xs:schema/xs:element", schema, XPathConstants.NODESET);
+    for (int i = 0; i < elements.getLength(); i++) {
+        final Element element = (Element) elements.item(i);
+        final String name = element.getAttribute("name");
+        final String type = element.getAttribute("type");
+        if (!name.isEmpty() && !type.isEmpty()) {
+            if (!type.startsWith("xs:") && !excluded.contains(type)) {
+                tagsByType.put(type, name);
+            }
+        }
+    }
+}
+#method_after
+public void load(String xsd) throws IOException {
+    // Parse the XML schema document:
+    Document schema;
+    try {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        DocumentBuilder parser = factory.newDocumentBuilder();
+        schema = parser.parse(new File(xsd));
+    } catch (Exception exception) {
+        throw new IOException("Can't parse XML schema.", exception);
+    }
+    // Prepare the xpath engine with the required namespace mapping:
+    xpath = XPathFactory.newInstance().newXPath();
+    xpath.setNamespaceContext(new NamespaceContext() {
+
+        @Override
+        public String getNamespaceURI(String prefix) {
+            switch(prefix) {
+                case "xs":
+                    return "http://www.w3.org/2001/XMLSchema";
+                default:
+                    return XMLConstants.NULL_NS_URI;
+            }
+        }
+
+        @Override
+        public String getPrefix(String namespaceURI) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Iterator getPrefixes(String namespaceURI) {
+            throw new UnsupportedOperationException();
+        }
+    });
+    // Populate the indexes:
+    populateElementsIndex(schema);
+    populateComplexTypesIndex(schema);
+    // Exclude all the simple types:
+    Set<String> excluded = new HashSet<>();
+    NodeList nodes = (NodeList) evaluate("//xs:simpleType/@name", schema, XPathConstants.NODESET);
+    for (int i = 0; i < nodes.getLength(); i++) {
+        Node name = nodes.item(i);
+        excluded.add(name.getNodeValue());
+    }
+    // Exclude infrastructure types:
+    excluded.add("BaseDevice");
+    excluded.add("BaseDevices");
+    excluded.add("BaseResource");
+    excluded.add("BaseResources");
+    excluded.add("DetailedLink");
+    excluded.add("ErrorHandlingOptions");
+    // Exclude the VM summary because it conflicts with the API summary:
+    excluded.add("VmSummary");
+    // Populate the types by tag map, including all the element definitions that appear in the XML schema, even
+    // those that aren't top level and thus not valid as roots of valid XML documents:
+    NodeList elements = (NodeList) evaluate("//xs:element", schema, XPathConstants.NODESET);
+    for (int i = 0; i < elements.getLength(); i++) {
+        Element element = (Element) elements.item(i);
+        String name = element.getAttribute("name");
+        String type = element.getAttribute("type");
+        if (!name.isEmpty() && !type.isEmpty()) {
+            if (!type.startsWith("xs:") && !excluded.contains(type)) {
+                typesByTag.put(name, type);
+            }
+        }
+    }
+    // There are several conflicts with "version", so force it:
+    typesByTag.put("version", "VersionCaps");
+    // Populate the tags by type name, including only the top level element definitions that appear in the XML
+    // schema, those that can appear as roots of valid XML documents:
+    elements = (NodeList) evaluate("/xs:schema/xs:element", schema, XPathConstants.NODESET);
+    for (int i = 0; i < elements.getLength(); i++) {
+        Element element = (Element) elements.item(i);
+        String name = element.getAttribute("name");
+        String type = element.getAttribute("type");
+        if (!name.isEmpty() && !type.isEmpty()) {
+            if (!type.startsWith("xs:") && !excluded.contains(type)) {
+                tagsByType.put(type, name);
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+private Object evaluate(final String expression, final Object item, final QName returnType) {
+    try {
+        return xpath.evaluate(expression, item, returnType);
+    } catch (XPathExpressionException exception) {
+        throw new RuntimeException("Can't evaluate XPath expression \"" + expression + "\".");
+    }
+}
+#method_after
+private Object evaluate(String expression, Object item, QName returnType) {
+    try {
+        return xpath.evaluate(expression, item, returnType);
+    } catch (XPathExpressionException exception) {
+        throw new RuntimeException("Can't evaluate XPath expression \"" + expression + "\".");
+    }
+}
+#end_block
+
+#method_before
+private boolean isExtensionOf(final Element node, final String name) {
+    final String base = (String) evaluate("xs:complexContent/" + "xs:extension/" + "@base", node, XPathConstants.STRING);
+    if (base == null) {
+        return false;
+    }
+    if (base.equals(name)) {
+        return false;
+    }
+    final Element next = getComplexType(base);
+    if (next == null) {
+        return false;
+    }
+    return isExtensionOf(next, name);
+}
+#method_after
+private boolean isExtensionOf(Element node, String name) {
+    String base = (String) evaluate("xs:complexContent/" + "xs:extension/" + "@base", node, XPathConstants.STRING);
+    if (base == null) {
+        return false;
+    }
+    if (base.equals(name)) {
+        return false;
+    }
+    Element next = getComplexType(base);
+    if (next == null) {
+        return false;
+    }
+    return isExtensionOf(next, name);
+}
+#end_block
+

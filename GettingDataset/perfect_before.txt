@@ -1,0 +1,136 @@
+public TYPE_1 comment ( String id ) { throw new TYPE_2 ( ) ; }
+public synchronized static Map < String , String > METHOD_1 ( ) { return VAR_1 ; }
+protected TYPE_1 METHOD_1 ( TYPE_2 < TYPE_3 > repo , RevCommit commit ) throws Exception { return METHOD_2 ( repo , commit , null , null , null ) ; }
+public void METHOD_1 ( boolean VAR_1 , String VAR_2 ) { VAR_3 . METHOD_2 ( VAR_1 ) ; VAR_3 . METHOD_3 ( VAR_1 ) ; if ( ! VAR_1 ) { VAR_4 . METHOD_4 ( VAR_2 ) ; } }
+public void METHOD_1 ( Guid value ) { VAR_1 = new TYPE_1 < Guid > ( ) ; VAR_1 . add ( value ) ; }
+protected boolean validate ( ) { if ( ! super . validate ( ) ) { return false ; } if ( METHOD_1 ( ) == null ) { return METHOD_2 ( VAR_1 ) ; } return true ; }
+public void METHOD_1 ( ) throws OrmException , TYPE_1 { METHOD_2 ( ) . update ( VAR_1 ) ; }
+public static boolean METHOD_1 ( TYPE_1 version ) { return ( Boolean ) METHOD_2 ( VAR_1 , version . toString ( ) ) ; }
+protected void METHOD_1 ( ) throws HyracksDataException { super . METHOD_1 ( ) ; VAR_1 . METHOD_2 ( ) ; VAR_1 . METHOD_3 ( ) ; VAR_1 . create ( ) ; VAR_1 . METHOD_4 ( ) ; }
+public TYPE_1 METHOD_1 ( ) { VAR_1 . println ( STRING_1 ) ; return VAR_2 ; }
+public static TYPE_1 METHOD_1 ( int changeId , String VAR_1 ) { return change ( changeId ) . view ( STRING_1 ) . id ( VAR_1 ) ; }
+protected void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 VAR_2 ) { if ( VAR_1 . METHOD_2 ( ) == null ) { VAR_1 . METHOD_3 ( new ArrayList < TYPE_2 > ( ) ) ; } VAR_1 . METHOD_2 ( ) . add ( VAR_2 ) ; }
+public void METHOD_1 ( String [ ] VAR_1 ) throws RemoteException { }
+public ChangeInfo get ( ) { throw new TYPE_1 ( ) ; }
+protected boolean validate ( ) { if ( METHOD_1 ( ) == null ) { METHOD_2 ( VAR_1 ) ; return false ; } if ( ! super . validate ( ) ) { return false ; } return true ; }
+private void METHOD_1 ( ) { METHOD_2 ( ) . METHOD_3 ( ( Boolean ) METHOD_4 ( ) . getEntity ( ) ) ; METHOD_5 ( ) ; }
+public void METHOD_1 ( int VAR_1 ) { VAR_2 = VAR_1 ; }
+public void METHOD_1 ( Integer VAR_1 ) { this . VAR_1 = VAR_1 . METHOD_2 ( ) ; }
+public void METHOD_1 ( TYPE_1 [ ] VAR_1 ) { for ( int i = 0 ; i < VAR_2 ; i ++ ) { VAR_3 [ i ] = VAR_1 [ i ] . METHOD_2 ( ) ; } }
+protected TYPE_1 METHOD_1 ( ) { if ( VAR_1 == null ) { VAR_1 = METHOD_2 ( ) . get ( ( Guid ) getParameters ( ) . METHOD_3 ( ) ) ; } return VAR_1 ; }
+public ArrayList < DiskImage > METHOD_1 ( ) { return VAR_1 != null ? VAR_1 : new ArrayList < DiskImage > ( ) ; }
+public TYPE_1 METHOD_1 ( TYPE_2 network ) { return ( TYPE_1 ) super . METHOD_1 ( network ) ; }
+public void METHOD_1 ( ArrayList < Guid > VAR_1 ) { this . VAR_1 = VAR_1 ; }
+void METHOD_1 ( TYPE_1 item , int VAR_1 , int VAR_2 , int VAR_3 ) throws RemoteException { throw new TYPE_2 ( STRING_1 ) ; }
+void METHOD_1 ( TYPE_1 VAR_1 ) throws RemoteException { throw new TYPE_2 ( STRING_1 ) ; }
+public void METHOD_1 ( ) { String VAR_1 = STRING_1 ; Map < String , String > VAR_2 = new HashMap < > ( ) ; assert ( VAR_1 . equals ( TYPE_1 . METHOD_2 ( VAR_2 ) ) ) ; }
+public TYPE_1 id ( TYPE_2 id ) { this . id = METHOD_1 ( id ) ; return this ; }
+public static Boolean METHOD_1 ( Context context , String name ) { int id = getId ( context , VAR_1 , name ) ; if ( id == 0 ) return null ; return METHOD_2 ( context ) . METHOD_1 ( id ) ; }
+public TYPE_1 current ( ) throws RestApiException { throw new TYPE_2 ( ) ; }
+private static void METHOD_1 ( ) { mSeverities.put ( VAR_1 , AuditLogSeverity.NORMAL ) ; mSeverities.put ( VAR_2 , VAR_3 ) ; }
+public void METHOD_1 ( String value ) { if ( ! TYPE_1 . METHOD_2 ( name , value ) ) { name = value ; METHOD_3 ( new TYPE_2 ( STRING_1 ) ) ; } }
+public void METHOD_1 ( ) { METHOD_2 ( ) ; METHOD_3 ( null ) ; Frontend . METHOD_4 ( ) ; }
+public void METHOD_1 ( TYPE_1 request , TYPE_2 VAR_1 , TYPE_3 VAR_2 ) { TYPE_4 VAR_3 = new TYPE_4 ( VAR_2 ) ; TYPE_5 VAR_4 = VAR_5 ; METHOD_2 ( VAR_4 , VAR_1 , 0 , VAR_6 , VAR_7 , VAR_3 ) ; }
+public void METHOD_1 ( String VAR_1 ) { this . VAR_1 = ( VAR_1 == null ) ? STRING_1 : VAR_1 ; }
+void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 VAR_2 ) { this . VAR_1 = VAR_1 ; this . VAR_2 = VAR_2 ; }
+boolean METHOD_1 ( DeviceId deviceId ) { TYPE_1 VAR_1 = VAR_2 . METHOD_2 ( deviceId ) ; return ( VAR_1 != null && VAR_1 . METHOD_3 ( VAR_3 class ) ) ; }
+public static void METHOD_1 ( AsyncQuery aQuery , Guid VAR_1 , Guid VAR_2 , Guid VAR_3 ) { TYPE_1 parameters = new TYPE_1 ( VAR_1 , VAR_2 , VAR_3 , true ) ; Frontend . METHOD_2 ( ) . runQuery ( VAR_4 , parameters , aQuery ) ; }
+public String METHOD_1 ( ) throws RestApiException { throw new TYPE_1 ( ) ; }
+public static TYPE_1 METHOD_1 ( int id ) { return call ( id , STRING_1 ) ; }
+protected Object METHOD_1 ( TYPE_1 p ) { int VAR_1 ; String [ ] response ; response = p . METHOD_2 ( ) ; return response ; }
+private static boolean METHOD_1 ( final TYPE_1 cmd ) { return cmd . METHOD_2 ( ) . METHOD_3 ( VAR_1 ) ; }
+public TYPE_1 METHOD_1 ( ) { return size ; }
+public Boolean METHOD_1 ( TYPE_1 VAR_1 ) { return VAR_2 . METHOD_2 ( VAR_1 ) ; }
+public static String METHOD_1 ( String name ) { return TYPE_1 . METHOD_2 ( VAR_1 , name ) ; }
+public static String METHOD_1 ( File VAR_1 ) throws IOException { return TYPE_1 . METHOD_2 ( METHOD_3 ( VAR_1 ) , METHOD_4 ( VAR_1 ) ) . METHOD_5 ( ) ; }
+public void METHOD_1 ( ) throws IOException { VAR_1 = new TYPE_1 ( VAR_2 ) ; VAR_1 . METHOD_1 ( server , VAR_3 , VAR_4 ) ; verify ( VAR_2 ) . METHOD_1 ( server , VAR_3 , VAR_4 ) ; }
+public static TYPE_1 METHOD_1 ( ) { return new TYPE_2 ( ) . status ( VAR_1 ) . message ( TYPE_3 . empty ( ) ) . build ( ) ; }
+public Boolean METHOD_1 ( ) { return get ( VAR_1 , false ) ; }
+protected boolean validate ( ) { if ( getParameters ( ) . METHOD_1 ( ) == null || METHOD_2 ( ) == null ) { METHOD_3 ( VAR_1 ) ; return false ; } return super . validate ( ) ; }
+protected void METHOD_1 ( ) throws IOException { if ( VAR_1 != null ) { VAR_1 . METHOD_2 ( ) ; } if ( fd != null ) METHOD_3 ( ) ; }
+protected void METHOD_1 ( final TYPE_1 req , final TYPE_2 VAR_1 ) throws IOException , TYPE_3 { METHOD_2 ( req , VAR_1 ) ; }
+protected void execute ( ) { final Map < TYPE_1 , TYPE_2 > VAR_1 = TYPE_3 . get ( VAR_2 class ) . METHOD_1 ( ) ; METHOD_2 ( VAR_1 ) ; }
+protected boolean validate ( ) { if ( getVm ( ) == null ) { return METHOD_1 ( VAR_1 ) ; } return true ; }
+protected boolean METHOD_1 ( ) { if ( getParameters ( ) . METHOD_2 ( ) == VAR_1 && getParameters ( ) . METHOD_3 ( ) . equals ( getParameters ( ) . METHOD_4 ( ) ) ) { return METHOD_5 ( VAR_2 ) ; } return true ; }
+private static TYPE_1 METHOD_1 ( TYPE_2 as ) { return METHOD_1 ( as . METHOD_2 ( ) ) ; }
+public void METHOD_1 ( Integer value ) { this . VAR_1 . METHOD_2 ( value ) ; }
+public static void METHOD_1 ( Object VAR_1 , int VAR_2 ) { for ( int i = 0 ; i < VAR_2 ; i ++ ) { VAR_3 . format ( VAR_1 ) ; } }
+public void METHOD_1 ( ) { List < TYPE_1 > result = VAR_1 . METHOD_2 ( VAR_2 , VAR_3 , VAR_4 , false ) ; METHOD_3 ( result ) ; }
+public void METHOD_1 ( Integer [ ] position ) { VAR_1 . position [ 0 ] = position [ 0 ] . METHOD_2 ( ) ; VAR_1 . position [ 1 ] = position [ 1 ] . METHOD_2 ( ) ; }
+private TYPE_1 METHOD_1 ( ) throws Exception { TYPE_2 context = TYPE_2 . METHOD_2 ( STRING_1 ) ; context . METHOD_3 ( null , null , null ) ; return context . METHOD_4 ( ) ; }
+public void METHOD_1 ( ) { log.info ( STRING_1 ) ; for ( TYPE_1 VAR_1 : VAR_2 ) { METHOD_1 ( VAR_1 ) ; } }
+void METHOD_1 ( List < TYPE_1 > VAR_1 , TYPE_2 metadata , int VAR_2 , int VAR_3 , int VAR_4 ) throws RemoteException { throw new TYPE_3 ( STRING_1 ) ; }
+public List < TYPE_1 > METHOD_1 ( ) { List < TYPE_1 > VAR_1 = new ArrayList < TYPE_1 > ( ) ; for ( TYPE_2 VAR_2 : METHOD_2 ( ) ) { VAR_1 . METHOD_3 ( VAR_2 . METHOD_1 ( ) ) ; } return VAR_1 ; }
+private void METHOD_1 ( String VAR_1 , String [ ] args ) throws Exception { METHOD_1 ( VAR_1 , args , null ) ; }
+public TYPE_1 id ( int id ) throws RestApiException { throw new TYPE_2 ( ) ; }
+public void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 msg ) { this . METHOD_2 ( VAR_1 ) . METHOD_3 ( msg ) ; for ( TYPE_3 listener : VAR_2 ) { listener . METHOD_4 ( VAR_1 , msg ) ; } }
+public TYPE_1 < ? > METHOD_1 ( Guid VAR_1 ) { return METHOD_1 ( VAR_2 . get ( ) . get ( VAR_1 ) , METHOD_2 ( VAR_1 ) ) ; }
+protected void METHOD_1 ( TYPE_1 VAR_1 ) { }
+private boolean METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 VAR_2 ) { TYPE_3 VAR_3 = VAR_4 . METHOD_2 ( VAR_1 , VAR_2 ) ; return VAR_3 != null && VAR_3 . METHOD_1 ( ) ; }
+public void METHOD_1 ( Integer [ ] VAR_1 ) { VAR_2 [ 0 ] = VAR_1 [ 0 ] . METHOD_2 ( ) ; VAR_2 [ 1 ] = VAR_1 [ 1 ] . METHOD_2 ( ) ; }
+public void index ( ) { throw new TYPE_1 ( ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_2 ( VAR_1 ) ; }
+private boolean METHOD_1 ( TYPE_1 parameters ) { if ( parameters . METHOD_2 ( ) . equals ( parameters . METHOD_3 ( ) ) ) { return METHOD_4 ( VAR_1 ) ; } return true ; }
+public synchronized void METHOD_1 ( ) { VAR_1 . println ( STRING_1 + toString ( ) ) ; VAR_2 . set ( true ) ; METHOD_2 ( ) ; }
+void METHOD_1 ( ) { getTable ( ) . METHOD_2 ( ) ; getTable ( ) . METHOD_3 ( VAR_1 . METHOD_4 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { TYPE_1 VAR_1 = new TYPE_1 ( ) ; VAR_1 . METHOD_2 ( null ) ; assertThat ( new TYPE_2 ( VAR_1 , new TYPE_3 ( ) , VAR_2 ) . METHOD_3 ( ) , METHOD_4 ( VAR_3 ) ) ; }
+protected void METHOD_1 ( TYPE_1 e ) { { } }
+public void METHOD_1 ( Guid VAR_1 ) { TYPE_1 . METHOD_2 ( ) . METHOD_3 ( VAR_2 , new TYPE_2 ( VAR_1 ) ) ; TYPE_1 . METHOD_2 ( ) . METHOD_3 ( VAR_3 , new TYPE_2 ( VAR_1 ) ) ; }
+public void start ( String VAR_1 , TYPE_1 VAR_2 ) throws RemoteException { }
+TYPE_1 . Type METHOD_1 ( ) { if ( VAR_1 == null ) { return ( ( VAR_2 . size ( ) > 2 ) ? VAR_3 : VAR_4 ) ; } else { return TYPE_2 . METHOD_2 ( VAR_1 ) ; } }
+public Guid METHOD_1 ( ) { return this . VAR_1 ; }
+public void METHOD_1 ( TYPE_1 VAR_1 ) { super . METHOD_1 ( VAR_1 ) ; VAR_1 . METHOD_2 ( new ArrayList < TYPE_2 > ( ) ) ; VAR_1 . METHOD_3 ( false ) ; VAR_1 . METHOD_4 ( METHOD_5 ( ) ) ; }
+public Set < TYPE_1 > METHOD_1 ( ConnectPoint VAR_1 , final ConnectPoint VAR_2 ) { throw new TYPE_2 ( VAR_3 ) ; }
+public static < VAR_1 extends VAR_2 > VAR_3 < VAR_1 > VAR_4 ( VAR_5 < VAR_1 > VAR_6 , return VAR_7 ( VAR_6 , VAR_8 , factory , 0 ) ; }
+public void METHOD_1 ( String VAR_1 , String VAR_2 ) throws IOException { if ( log . METHOD_2 ( ) ) log . debug ( STRING_1 , VAR_1 , VAR_2 ) ; }
+public Boolean METHOD_1 ( ) { return this . VAR_1 . METHOD_2 ( ) ; }
+public TYPE_1 . ArrayList < TYPE_2 > METHOD_1 ( TYPE_3 VAR_1 , TYPE_1 . ArrayList < TYPE_4 > parameters ) { return METHOD_2 ( VAR_1 , parameters , true ) ; }
+protected TYPE_1 METHOD_1 ( ) { return METHOD_2 ( ) . METHOD_1 ( ) ; }
+public static void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 < ? extends TYPE_3 > VAR_2 , String VAR_3 ) { TYPE_3 VAR_4 = VAR_1 . METHOD_2 ( VAR_2 ) ; METHOD_3 ( VAR_4 , VAR_3 ) ; }
+protected Guid METHOD_1 ( ) { return METHOD_2 ( ) . METHOD_3 ( ) . METHOD_4 ( ) ; }
+public TYPE_1 METHOD_1 ( ) { return state . METHOD_1 ( ) ; }
+public Boolean METHOD_1 ( TYPE_1 key , TYPE_2 value ) { return METHOD_2 ( VAR_1 . METHOD_1 ( key , value ) ) ; }
+public void METHOD_1 ( ) throws IOException { VAR_1 = new TYPE_1 ( VAR_2 ) ; VAR_1 . METHOD_1 ( VAR_3 , VAR_4 , VAR_5 ) ; verify ( VAR_2 ) . METHOD_1 ( VAR_3 , VAR_4 , VAR_5 ) ; }
+protected TYPE_1 METHOD_1 ( TYPE_2 < TYPE_3 > repo ) throws Exception { return METHOD_1 ( repo , null , null , null , null ) ; }
+public View METHOD_1 ( ) { if ( METHOD_2 ( ) == 0 ) return null ; return METHOD_3 ( METHOD_2 ( ) - 1 ) ; }
+public static TYPE_1 METHOD_1 ( TYPE_2 VAR_1 , long VAR_2 , long VAR_3 , int VAR_4 , TYPE_3 options ) { return TYPE_4 . METHOD_1 ( VAR_1 , VAR_2 , VAR_3 , VAR_4 , options , VAR_5 , true ) ; }
+public Map < String , TYPE_1 > files ( int VAR_1 ) throws RestApiException { throw new TYPE_2 ( ) ; }
+final public int METHOD_1 ( ) { return TYPE_1 . hash ( name , parameters ) ; }
+private TYPE_1 METHOD_1 ( boolean VAR_1 , boolean VAR_2 ) throws Exception { return METHOD_1 ( STRING_1 , VAR_1 , VAR_2 , true ) ; }
+TYPE_1 METHOD_1 ( ) { return VAR_1 . METHOD_1 ( ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_2 ( STRING_1 , false , METHOD_3 ( ) ) ; }
+public void METHOD_1 ( TYPE_1 model ) { if ( ( Boolean ) model . METHOD_2 ( ) . getEntity ( ) ) { METHOD_3 ( model ) ; } else { METHOD_4 ( ) ; } }
+public void METHOD_1 ( String VAR_1 ) { if ( VAR_2 == null ) { VAR_2 = new TYPE_1 < > ( ) ; } VAR_2 . add ( VAR_1 ) ; }
+protected List < RevCommit > METHOD_1 ( ) throws Exception { return METHOD_1 ( project , STRING_1 ) ; }
+public boolean METHOD_1 ( ) { return VAR_1 || VAR_2 == 1 ; }
+public TYPE_1 update ( TYPE_1 VAR_1 ) { METHOD_1 ( VAR_2 class , VAR_1 ) ; return METHOD_2 ( VAR_1 , new TYPE_2 ( VAR_3 , VAR_4 class ) , VAR_5 , new TYPE_3 ( ) ) ; }
+protected void METHOD_1 ( String VAR_1 , TYPE_1 < TYPE_2 > event ) throws IOException { VAR_2 . index ( new TYPE_3 ( VAR_1 ) ) ; log . debug ( STRING_1 , VAR_1 ) ; }
+public TYPE_1 build ( ) throws TYPE_2 { return new TYPE_1 ( VAR_1 , VAR_2 , VAR_3 , VAR_4 , VAR_5 , VAR_6 , VAR_7 ) ; }
+public TYPE_1 METHOD_1 ( String VAR_1 , String VAR_2 ) { Map < String , Object > VAR_3 = VAR_4 . METHOD_1 ( VAR_1 , VAR_2 ) ; TYPE_1 VAR_5 = new TYPE_1 ( VAR_3 ) ; return VAR_5 ; }
+private void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 params ) { if ( log . METHOD_2 ( ) ) { log . debug ( STRING_1 , VAR_1 , params ) ; } }
+public static void METHOD_1 ( Object VAR_1 , int VAR_2 ) { for ( int i = 0 ; i < VAR_2 ; i ++ ) { VAR_3 . METHOD_1 ( VAR_1 ) ; } }
+public void METHOD_1 ( boolean VAR_1 ) { if ( VAR_2 == null ) return ; VAR_2 . METHOD_1 ( VAR_1 ) ; }
+public void METHOD_1 ( TYPE_1 VAR_1 ) { METHOD_2 ( VAR_1 , VAR_2 ) ; TYPE_2 event = VAR_3 . METHOD_1 ( VAR_1 ) ; }
+private void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 key ) { TYPE_3 connection = METHOD_2 ( VAR_1 , key , VAR_2 ) ; synchronized ( VAR_3 ) { VAR_3 . METHOD_3 ( connection ) ; } }
+public void METHOD_1 ( String path , boolean VAR_1 ) { throw new TYPE_1 ( ) ; }
+private boolean METHOD_1 ( ) { final TYPE_1 network = METHOD_2 ( ) ; return ( network != null && network . METHOD_3 ( ) ) ; }
+public void VAR_1 ( VAR_2 ( VAR_3 ) ; VAR_4 ( VAR_5 ) ; }
+private boolean METHOD_1 ( String VAR_1 ) { return ! TYPE_1 . METHOD_2 ( VAR_1 ) . METHOD_3 ( ) ; }
+private Object METHOD_1 ( TYPE_1 p ) { int VAR_1 ; byte [ ] response ; response = p . METHOD_2 ( ) ; return response ; }
+private void METHOD_1 ( TYPE_1 VAR_1 ) { METHOD_2 ( VAR_1 ) ; }
+public void METHOD_1 ( String path , boolean VAR_1 ) throws RestApiException { throw new TYPE_1 ( ) ; }
+protected void METHOD_1 ( final TYPE_1 result ) { VAR_1 . METHOD_1 ( result ) ; VAR_1 . METHOD_2 ( ) ; }
+public void METHOD_1 ( TYPE_1 VAR_1 ) throws TYPE_2 { TYPE_3 . METHOD_2 ( VAR_2 - > VAR_2 . METHOD_3 ( VAR_3 , VAR_1 ) ) ; }
+public void METHOD_1 ( ) { assertFalse ( command . validate ( ) ) ; assertTrue ( command . getReturnValue ( ) . METHOD_2 ( ) . contains ( TYPE_1 . toString ( ) ) ) ; }
+private Object METHOD_1 ( TYPE_1 p ) { int [ ] response = ( int [ ] ) METHOD_2 ( p ) ; if ( VAR_1 >= 1 ) { VAR_2 = response [ 0 ] ; } return response ; }
+public void METHOD_1 ( ) throws Exception { TYPE_1 VAR_1 = METHOD_2 ( ) ; METHOD_3 ( VAR_1 , VAR_2 ) ; METHOD_4 ( VAR_1 ) ; METHOD_3 ( VAR_1 , VAR_3 ) ; METHOD_5 ( ) ; METHOD_3 ( VAR_1 , VAR_3 ) ; METHOD_6 ( ) ; }
+public int METHOD_1 ( ) { return TYPE_1 . hash ( VAR_1 , type ( ) , METHOD_2 ( ) ) ; }
+public TYPE_1 METHOD_1 ( String [ ] VAR_1 ) { if ( VAR_2 != null ) { return VAR_2 . METHOD_1 ( VAR_1 ) ; } return null ; }
+public static final TYPE_1 METHOD_1 ( ) { return VAR_1 ; }
+public TYPE_1 METHOD_1 ( String id ) { return METHOD_2 ( new TYPE_2 ( id , this ) ) ; }
+boolean METHOD_1 ( ) { return VAR_1 . isEmpty ( ) ; }
+protected TYPE_1 METHOD_1 ( ) throws HyracksDataException , TYPE_2 { TYPE_3 VAR_1 = VAR_2 . METHOD_2 ( ) ; return METHOD_3 ( VAR_3 , VAR_1 . METHOD_4 ( ) , VAR_1 . METHOD_5 ( ) , true ) ; }
+public void METHOD_1 ( ) throws TYPE_1 , AnalysisException { METHOD_2 ( STRING_1 ) ; METHOD_3 ( STRING_2 , STRING_3 ) ; METHOD_3 ( STRING_4 , STRING_5 ) ; }
+TYPE_1 METHOD_1 ( ) { return VAR_1 . METHOD_2 ( ) ; }
+public String METHOD_1 ( ) { String VAR_1 = STRING_1 + TYPE_1 . toString ( this . VAR_2 ) + STRING_2 ; return VAR_1 + METHOD_2 ( ) ; }
+public boolean METHOD_1 ( TYPE_1 ... VAR_1 ) { for ( TYPE_1 VAR_2 : VAR_1 ) { VAR_3 . remove ( VAR_2 ) ; } return true ; }

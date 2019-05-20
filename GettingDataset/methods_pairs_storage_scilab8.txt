@@ -1,0 +1,3370 @@
+57
+#method_before
+public void closeNavigator() {
+    editor.removeNavigator();
+    mapNode.clear();
+    mapFunPath.clear();
+    mapAnchorPath.clear();
+    functionNavigator = null;
+    model = null;
+    pane = null;
+    doc = null;
+}
+#method_after
+public void closeNavigator() {
+    editor.removeNavigator();
+    mapNode.clear();
+    mapFunPath.clear();
+    mapAnchorPath.clear();
+    functionNavigator = null;
+    model = null;
+    pane = null;
+    doc = null;
+    for (ScilabEditorPane p : panes) {
+        ((ScilabDocument) p.getDocument()).removeDocumentListener(this);
+    }
+    panes.clear();
+}
+#end_block
+
+#method_before
+private void initComponents() {
+    labelNumerotation = new JLabel();
+    lineNumber = new JTextField();
+    numType = new JComboBox();
+    jSeparator1 = new JSeparator();
+    labelGotoLine = new JLabel();
+    scrollPane = new JScrollPane();
+    setTitle(SciNotesMessages.CODE_NAVIGATOR);
+    updateUI();
+    labelNumerotation.setText(SciNotesMessages.NUMEROTATION);
+    labelNumerotation.setFocusable(false);
+    lineNumber.addKeyListener(new KeyListener() {
+
+        public void keyTyped(KeyEvent ke) {
+        }
+
+        public void keyPressed(KeyEvent ke) {
+        }
+
+        public void keyReleased(KeyEvent ke) {
+            updateCaretPosition();
+        }
+    });
+    lineNumber.addFocusListener(new FocusListener() {
+
+        public void focusGained(FocusEvent e) {
+            updateCaretPosition();
+        }
+
+        public void focusLost(FocusEvent e) {
+        }
+    });
+    numType.setModel(new DefaultComboBoxModel(new String[] { SciNotesMessages.ABSOLUTE, SciNotesMessages.RELATIVE }));
+    numType.addActionListener(new ActionListener() {
+
+        public void actionPerformed(ActionEvent evt) {
+            int i = numType.getSelectedIndex();
+            if (i == 0 && !isAbsolute) {
+                lineNumber.setText(EMPTY);
+                isAbsolute = true;
+            } else if (i == 1 && isAbsolute) {
+                lineNumber.setText(EMPTY);
+                isAbsolute = false;
+            }
+        }
+    });
+    labelGotoLine.setText(SciNotesMessages.GO_TO_LINE);
+    labelGotoLine.setFocusable(false);
+    functionNavigator.addMouseListener(new MouseAdapter() {
+
+        public void mousePressed(MouseEvent e) {
+            int row = functionNavigator.getRowForLocation(e.getX(), e.getY());
+            if (e.getClickCount() == 2) {
+                handleSelectedItem(row);
+            }
+        }
+    });
+    functionNavigator.getInputMap().put(KeyStroke.getKeyStroke("ENTER"), "toggle");
+    functionNavigator.addKeyListener(new KeyAdapter() {
+
+        public void keyTyped(KeyEvent e) {
+            if (e.getKeyChar() == '\n') {
+                int row = functionNavigator.getMinSelectionRow();
+                handleSelectedItem(row);
+            }
+        }
+    });
+    createPopupMenuOnJTree();
+    scrollPane.setViewportView(functionNavigator);
+    /* Begin NetBeans */
+    GroupLayout layout = new GroupLayout(getContentPane());
+    getContentPane().setLayout(layout);
+    layout.setHorizontalGroup(layout.createParallelGroup(Alignment.LEADING).addGroup(layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(Alignment.LEADING).addComponent(scrollPane, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE).addComponent(jSeparator1, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE).addGroup(layout.createSequentialGroup().addGroup(layout.createParallelGroup(Alignment.LEADING).addComponent(labelGotoLine).addComponent(labelNumerotation)).addGap(18, 18, 18).addGroup(layout.createParallelGroup(Alignment.LEADING).addComponent(lineNumber, GroupLayout.PREFERRED_SIZE, 58, GroupLayout.PREFERRED_SIZE).addComponent(numType, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))).addContainerGap()));
+    layout.setVerticalGroup(layout.createParallelGroup(Alignment.LEADING).addGroup(Alignment.TRAILING, layout.createSequentialGroup().addContainerGap().addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 439, Short.MAX_VALUE).addPreferredGap(ComponentPlacement.RELATED).addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE).addPreferredGap(ComponentPlacement.RELATED).addGroup(layout.createParallelGroup(Alignment.BASELINE).addComponent(labelGotoLine).addComponent(lineNumber, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addGap(4, 4, 4).addGroup(layout.createParallelGroup(Alignment.BASELINE).addComponent(labelNumerotation).addComponent(numType, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addContainerGap()));
+    /* End NetBeans */
+    List<Component> components = new ArrayList(3);
+    components.add(functionNavigator);
+    components.add(lineNumber);
+    components.add(numType);
+    setFocusable(true);
+    setFocusCycleRoot(true);
+    setFocusTraversalPolicy(new NavigatorFocusTraversalPolicy(components));
+    setMinimumSize(new Dimension(224, 0));
+    setPreferredSize(new Dimension(224, 543));
+    CallBack callback = new CallBack(null) {
+
+        public void callBack() {
+            ClosingOperationsManager.startClosingOperation((SwingScilabTab) NavigatorWindow.this);
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            callBack();
+        }
+    };
+    setCallback(callback);
+    MenuBar menubar = ScilabMenuBar.createMenuBar();
+    Menu fileMenu = ScilabMenu.createMenu();
+    fileMenu.setText(SciNotesMessages.FILE);
+    fileMenu.setMnemonic('F');
+    MenuItem menu = ScilabMenuItem.createMenuItem();
+    menu.setCallback(callback);
+    ((SwingScilabMenuItem) menu.getAsSimpleMenuItem()).setAccelerator(SciNotesGUI.getActionKeyMap().get("ExitAction"));
+    menu.setText(SciNotesMessages.EXIT);
+    fileMenu.add(menu);
+    menubar.add(fileMenu);
+    Menu orderMenu = ScilabMenu.createMenu();
+    orderMenu.setText(SciNotesMessages.ORDER);
+    orderMenu.setMnemonic('O');
+    menu = ScilabMenuItem.createMenuItem();
+    menu.setCallback(new CallBack(null) {
+
+        public void callBack() {
+            doc.setAlphaOrderInTree(true);
+            updateTree();
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            callBack();
+        }
+    });
+    menu.setText(SciNotesMessages.ALPHABETIC_ORDER);
+    ((SwingScilabMenuItem) menu.getAsSimpleMenuItem()).setAccelerator(KeyStroke.getKeyStroke("alt A"));
+    orderMenu.add(menu);
+    menu = ScilabMenuItem.createMenuItem();
+    menu.setCallback(new CallBack(null) {
+
+        public void callBack() {
+            doc.setAlphaOrderInTree(false);
+            updateTree();
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            callBack();
+        }
+    });
+    ((SwingScilabMenuItem) menu.getAsSimpleMenuItem()).setAccelerator(KeyStroke.getKeyStroke("alt N"));
+    menu.setText(SciNotesMessages.NATURAL_ORDER);
+    orderMenu.add(menu);
+    menubar.add(orderMenu);
+    addMenuBar(menubar);
+    TextBox infobar = ScilabTextBox.createTextBox();
+    addInfoBar(infobar);
+}
+#method_after
+private void initComponents() {
+    labelNumerotation = new JLabel();
+    lineNumber = new JTextField();
+    numType = new JComboBox();
+    jSeparator1 = new JSeparator();
+    labelGotoLine = new JLabel();
+    scrollPane = new JScrollPane();
+    setTitle(SciNotesMessages.CODE_NAVIGATOR);
+    updateUI();
+    labelNumerotation.setText(SciNotesMessages.NUMEROTATION);
+    labelNumerotation.setFocusable(false);
+    lineNumber.addKeyListener(new KeyListener() {
+
+        public void keyTyped(KeyEvent ke) {
+        }
+
+        public void keyPressed(KeyEvent ke) {
+        }
+
+        public void keyReleased(KeyEvent ke) {
+            updateCaretPosition();
+        }
+    });
+    lineNumber.addFocusListener(new FocusListener() {
+
+        public void focusGained(FocusEvent e) {
+            updateCaretPosition();
+        }
+
+        public void focusLost(FocusEvent e) {
+        }
+    });
+    numType.setModel(new DefaultComboBoxModel(new String[] { SciNotesMessages.ABSOLUTE, SciNotesMessages.RELATIVE }));
+    numType.addActionListener(new ActionListener() {
+
+        public void actionPerformed(ActionEvent evt) {
+            int i = numType.getSelectedIndex();
+            if (i == 0 && !isAbsolute) {
+                lineNumber.setText(EMPTY);
+                isAbsolute = true;
+            } else if (i == 1 && isAbsolute) {
+                lineNumber.setText(EMPTY);
+                isAbsolute = false;
+            }
+        }
+    });
+    labelGotoLine.setText(SciNotesMessages.GO_TO_LINE);
+    labelGotoLine.setFocusable(false);
+    functionNavigator.addMouseListener(new MouseAdapter() {
+
+        public void mousePressed(MouseEvent e) {
+            int row = functionNavigator.getRowForLocation(e.getX(), e.getY());
+            if (e.getClickCount() == 2) {
+                handleSelectedItem(row);
+            }
+        }
+    });
+    functionNavigator.getInputMap().put(KeyStroke.getKeyStroke("ENTER"), "toggle");
+    functionNavigator.addKeyListener(new KeyAdapter() {
+
+        public void keyTyped(KeyEvent e) {
+            if (e.getKeyChar() == '\n') {
+                int row = functionNavigator.getMinSelectionRow();
+                handleSelectedItem(row);
+            }
+        }
+    });
+    createPopupMenuOnJTree();
+    scrollPane.setViewportView(functionNavigator);
+    /* Begin NetBeans */
+    GroupLayout layout = new GroupLayout(getContentPane());
+    getContentPane().setLayout(layout);
+    layout.setHorizontalGroup(layout.createParallelGroup(Alignment.LEADING).addGroup(layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(Alignment.LEADING).addComponent(scrollPane, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE).addComponent(jSeparator1, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE).addGroup(layout.createSequentialGroup().addGroup(layout.createParallelGroup(Alignment.LEADING).addComponent(labelGotoLine).addComponent(labelNumerotation)).addGap(18, 18, 18).addGroup(layout.createParallelGroup(Alignment.LEADING).addComponent(lineNumber, GroupLayout.PREFERRED_SIZE, 58, GroupLayout.PREFERRED_SIZE).addComponent(numType, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))).addContainerGap()));
+    layout.setVerticalGroup(layout.createParallelGroup(Alignment.LEADING).addGroup(Alignment.TRAILING, layout.createSequentialGroup().addContainerGap().addComponent(scrollPane, GroupLayout.DEFAULT_SIZE, 439, Short.MAX_VALUE).addPreferredGap(ComponentPlacement.RELATED).addComponent(jSeparator1, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE).addPreferredGap(ComponentPlacement.RELATED).addGroup(layout.createParallelGroup(Alignment.BASELINE).addComponent(labelGotoLine).addComponent(lineNumber, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addGap(4, 4, 4).addGroup(layout.createParallelGroup(Alignment.BASELINE).addComponent(labelNumerotation).addComponent(numType, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)).addContainerGap()));
+    /* End NetBeans */
+    List<Component> components = new ArrayList(3);
+    components.add(functionNavigator);
+    components.add(lineNumber);
+    components.add(numType);
+    setFocusable(true);
+    setFocusCycleRoot(true);
+    setFocusTraversalPolicy(new NavigatorFocusTraversalPolicy(components));
+    setMinimumSize(new Dimension(224, 0));
+    setPreferredSize(new Dimension(224, 543));
+    CallBack callback = new CallBack(null) {
+
+        public void callBack() {
+            ClosingOperationsManager.startClosingOperation((SwingScilabTab) NavigatorWindow.this);
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            callBack();
+        }
+    };
+    MenuBar menubar = ScilabMenuBar.createMenuBar();
+    Menu fileMenu = ScilabMenu.createMenu();
+    fileMenu.setText(SciNotesMessages.FILE);
+    fileMenu.setMnemonic('F');
+    MenuItem menu = ScilabMenuItem.createMenuItem();
+    menu.setCallback(callback);
+    ((SwingScilabMenuItem) menu.getAsSimpleMenuItem()).setAccelerator(SciNotesGUI.getActionKeyMap().get("ExitAction"));
+    menu.setText(SciNotesMessages.EXIT);
+    fileMenu.add(menu);
+    menubar.add(fileMenu);
+    Menu orderMenu = ScilabMenu.createMenu();
+    orderMenu.setText(SciNotesMessages.ORDER);
+    orderMenu.setMnemonic('O');
+    menu = ScilabMenuItem.createMenuItem();
+    menu.setCallback(new CallBack(null) {
+
+        public void callBack() {
+            doc.setAlphaOrderInTree(true);
+            updateTree();
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            callBack();
+        }
+    });
+    menu.setText(SciNotesMessages.ALPHABETIC_ORDER);
+    ((SwingScilabMenuItem) menu.getAsSimpleMenuItem()).setAccelerator(KeyStroke.getKeyStroke("alt A"));
+    orderMenu.add(menu);
+    menu = ScilabMenuItem.createMenuItem();
+    menu.setCallback(new CallBack(null) {
+
+        public void callBack() {
+            doc.setAlphaOrderInTree(false);
+            updateTree();
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            callBack();
+        }
+    });
+    ((SwingScilabMenuItem) menu.getAsSimpleMenuItem()).setAccelerator(KeyStroke.getKeyStroke("alt N"));
+    menu.setText(SciNotesMessages.NATURAL_ORDER);
+    orderMenu.add(menu);
+    menubar.add(orderMenu);
+    addMenuBar(menubar);
+    TextBox infobar = ScilabTextBox.createTextBox();
+    addInfoBar(infobar);
+}
+#end_block
+
+#method_before
+public void setParentForLocation(Component parent) {
+    if (parent != null) {
+        parentWindow = parent;
+    } else {
+        parentWindow = null;
+    }
+}
+#method_after
+public void setParentForLocation(Component parent) {
+    parentWindow = parent;
+}
+#end_block
+
+#method_before
+public static void displayDialog(JFrame owner, final String uuid) {
+    selectedFiles = null;
+    int dimX = 450;
+    int dimY = 300;
+    dialog = new JDialog(owner);
+    dialog.getRootPane().getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), ESCAPE);
+    dialog.getRootPane().getActionMap().put(ESCAPE, new AbstractAction() {
+
+        public void actionPerformed(ActionEvent e) {
+            dialog.dispose();
+        }
+    });
+    dialog.setPreferredSize(new Dimension(dimX, dimY));
+    JButton ok = new JButton(SciNotesMessages.OK);
+    JButton cancel = new JButton(SciNotesMessages.CANCEL);
+    ok.setPreferredSize(cancel.getPreferredSize());
+    Object[] buttons = new Object[2];
+    ok.addActionListener(new ActionListener() {
+
+        public void actionPerformed(ActionEvent e) {
+            selectedFiles = getOpenedFiles(uuid);
+            dialog.dispose();
+        }
+    });
+    cancel.addActionListener(new ActionListener() {
+
+        public void actionPerformed(ActionEvent e) {
+            System.out.println(uuid);
+            List<UUID> editorID = ConfigSciNotesManager.getOpenFilesEditorList();
+            for (int i = 0; i < editorID.size(); i++) {
+                // Remove these files from the list of open files
+                if (editorID.get(i).toString().equals(uuid)) {
+                    ConfigSciNotesManager.removeFromOpenFiles(editorID.get(i));
+                    break;
+                }
+            }
+            dialog.dispose();
+        }
+    });
+    if (isWindows()) {
+        buttons[0] = ok;
+        buttons[1] = cancel;
+    } else {
+        buttons[0] = cancel;
+        buttons[1] = ok;
+    }
+    JOptionPane jop = new JOptionPane(SciNotesMessages.RESTORE_FILES_QUERY, JOptionPane.QUESTION_MESSAGE, JOptionPane.CANCEL_OPTION, null, buttons);
+    JPanel panel = new JPanel();
+    panel.setPreferredSize(new Dimension(dimX, dimY));
+    panel.setLayout(new GridBagLayout());
+    GridBagConstraints c = new GridBagConstraints();
+    c.gridheight = 1;
+    c.gridwidth = 1;
+    c.gridx = 0;
+    c.gridy = 0;
+    c.weighty = 0.5;
+    c.anchor = GridBagConstraints.PAGE_START;
+    c.fill = GridBagConstraints.HORIZONTAL;
+    panel.add(jop, c);
+    c.gridx = 0;
+    c.gridy = 1;
+    c.gridheight = GridBagConstraints.REMAINDER;
+    c.fill = GridBagConstraints.HORIZONTAL;
+    fillTree(uuid);
+    JScrollPane scroll = new JScrollPane(tree);
+    scroll.setMinimumSize(new Dimension(dimX - 2 * GAP, dimY / 2));
+    panel.add(scroll, c);
+    dialog.setContentPane(panel);
+    dialog.pack();
+    dialog.setIconImage(((ImageIcon) SCILAB_ICON).getImage());
+    dialog.setTitle(SciNotesMessages.RESTORE_FILES_TITLE);
+    dialog.setModalityType(ModalityType.APPLICATION_MODAL);
+    dialog.setResizable(false);
+    dialog.setLocationRelativeTo(owner);
+    dialog.setVisible(true);
+}
+#method_after
+public static void displayDialog(JFrame owner, final String uuid) {
+    selectedFiles = null;
+    int dimX = 450;
+    int dimY = 300;
+    dialog = new JDialog(owner);
+    dialog.getRootPane().getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), ESCAPE);
+    dialog.getRootPane().getActionMap().put(ESCAPE, new AbstractAction() {
+
+        public void actionPerformed(ActionEvent e) {
+            dialog.dispose();
+        }
+    });
+    dialog.setPreferredSize(new Dimension(dimX, dimY));
+    JButton ok = new JButton(SciNotesMessages.OK);
+    JButton cancel = new JButton(SciNotesMessages.CANCEL);
+    ok.setPreferredSize(cancel.getPreferredSize());
+    Object[] buttons = new Object[2];
+    ok.addActionListener(new ActionListener() {
+
+        public void actionPerformed(ActionEvent e) {
+            selectedFiles = getOpenedFiles(uuid);
+            dialog.dispose();
+        }
+    });
+    cancel.addActionListener(new ActionListener() {
+
+        public void actionPerformed(ActionEvent e) {
+            List<UUID> editorID = ConfigSciNotesManager.getOpenFilesEditorList();
+            for (int i = 0; i < editorID.size(); i++) {
+                // Remove these files from the list of open files
+                if (editorID.get(i).toString().equals(uuid)) {
+                    ConfigSciNotesManager.removeFromOpenFiles(editorID.get(i));
+                    break;
+                }
+            }
+            dialog.dispose();
+        }
+    });
+    if (isWindows()) {
+        buttons[0] = ok;
+        buttons[1] = cancel;
+    } else {
+        buttons[0] = cancel;
+        buttons[1] = ok;
+    }
+    JOptionPane jop = new JOptionPane(SciNotesMessages.RESTORE_FILES_QUERY, JOptionPane.QUESTION_MESSAGE, JOptionPane.CANCEL_OPTION, null, buttons);
+    JPanel panel = new JPanel();
+    panel.setPreferredSize(new Dimension(dimX, dimY));
+    panel.setLayout(new GridBagLayout());
+    GridBagConstraints c = new GridBagConstraints();
+    c.gridheight = 1;
+    c.gridwidth = 1;
+    c.gridx = 0;
+    c.gridy = 0;
+    c.weighty = 0.5;
+    c.anchor = GridBagConstraints.PAGE_START;
+    c.fill = GridBagConstraints.HORIZONTAL;
+    panel.add(jop, c);
+    c.gridx = 0;
+    c.gridy = 1;
+    c.gridheight = GridBagConstraints.REMAINDER;
+    c.fill = GridBagConstraints.HORIZONTAL;
+    fillTree(uuid);
+    JScrollPane scroll = new JScrollPane(tree);
+    scroll.setMinimumSize(new Dimension(dimX - 2 * GAP, dimY / 2));
+    panel.add(scroll, c);
+    dialog.setContentPane(panel);
+    dialog.pack();
+    dialog.setIconImage(((ImageIcon) SCILAB_ICON).getImage());
+    dialog.setTitle(SciNotesMessages.RESTORE_FILES_TITLE);
+    dialog.setModalityType(ModalityType.APPLICATION_MODAL);
+    dialog.setResizable(false);
+    dialog.setLocationRelativeTo(owner);
+    dialog.setVisible(true);
+}
+#end_block
+
+#method_before
+private static List<File> getOpenedFiles(String uuid) {
+    List<File> list = new ArrayList();
+    TreeModel model = tree.getModel();
+    List<File> files = ConfigSciNotesManager.getOpenFilesByEditor(UUID.fromString(uuid));
+    if (files.size() > 0) {
+        List<File> filesToOpen = new ArrayList();
+        TreeNode node = (TreeNode) model.getChild(model.getRoot(), 0);
+        for (int j = 0; j < files.size(); j++) {
+            DefaultMutableTreeNode mutNode = (DefaultMutableTreeNode) node.getChildAt(j);
+            CheckBoxNode cb = (CheckBoxNode) mutNode.getUserObject();
+            if (cb.isSelected()) {
+                filesToOpen.add(files.get(j));
+            }
+        }
+        list = filesToOpen;
+    }
+    // Remove these files from the list of open files
+    ConfigSciNotesManager.removeFromOpenFiles(UUID.fromString(uuid));
+    return list;
+}
+#method_after
+private static List<File> getOpenedFiles(String uuid) {
+    List<File> list = new ArrayList();
+    TreeModel model = tree.getModel();
+    List<File> files = removeAlreadyOpenFiles(uuid);
+    if (files.size() > 0) {
+        List<File> filesToOpen = new ArrayList();
+        TreeNode node = (TreeNode) model.getChild(model.getRoot(), 0);
+        for (int j = 0; j < files.size(); j++) {
+            DefaultMutableTreeNode mutNode = (DefaultMutableTreeNode) node.getChildAt(j);
+            CheckBoxNode cb = (CheckBoxNode) mutNode.getUserObject();
+            if (cb.isSelected()) {
+                filesToOpen.add(files.get(j));
+            }
+        }
+        list = filesToOpen;
+    }
+    // Remove these files from the list of open files
+    ConfigSciNotesManager.removeFromOpenFiles(UUID.fromString(uuid));
+    return list;
+}
+#end_block
+
+#method_before
+private static void fillTree(String uuid) {
+    List<UUID> editorID = ConfigSciNotesManager.getOpenFilesEditorList();
+    Vector eds = new Vector(1);
+    List<File> filesToOpen = ConfigSciNotesManager.getOpenFilesByEditor(UUID.fromString(uuid));
+    if (filesToOpen.size() > 0) {
+        eds.add(new FilesVector("Editor " + ConfigSciNotesManager.getEditorNbFromUUID(uuid), filesToOpen));
+    }
+    tree = new JTree(eds);
+    CheckBoxNodeRenderer renderer = new CheckBoxNodeRenderer();
+    tree.setCellRenderer(renderer);
+    tree.setCellEditor(new CheckBoxNodeEditor(tree));
+    tree.setEditable(true);
+    for (int i = 0; i < tree.getRowCount(); i++) {
+        tree.expandRow(i);
+    }
+}
+#method_after
+private static void fillTree(String uuid) {
+    List<UUID> editorID = ConfigSciNotesManager.getOpenFilesEditorList();
+    Vector eds = new Vector(1);
+    List<File> filesToOpen = removeAlreadyOpenFiles(uuid);
+    if (filesToOpen.size() > 0) {
+        eds.add(new FilesVector("Editor " + ConfigSciNotesManager.getEditorNbFromUUID(uuid), filesToOpen));
+    }
+    tree = new JTree(eds);
+    CheckBoxNodeRenderer renderer = new CheckBoxNodeRenderer();
+    tree.setCellRenderer(renderer);
+    tree.setCellEditor(new CheckBoxNodeEditor(tree));
+    tree.setEditable(true);
+    for (int i = 0; i < tree.getRowCount(); i++) {
+        tree.expandRow(i);
+    }
+}
+#end_block
+
+#method_before
+private void retrievePrivateFieldFromBasicContentViewerUI() {
+    Field privateField = null;
+    try {
+        privateField = BasicContentViewerUI.class.getDeclaredField("html");
+        privateField.setAccessible(true);
+    } catch (SecurityException e) {
+        System.err.println("Security error: Could not change the accessibility on the html component of the help browser.");
+        System.err.println("Please submit a bug report: http://bugzilla.scilab.org");
+        e.printStackTrace();
+    } catch (NoSuchFieldException e) {
+        System.err.println("Could not find the field of the html component of the help browser.");
+        System.err.println("Please submit a bug report: http://bugzilla.scilab.org");
+        e.printStackTrace();
+    }
+    try {
+        this.accessibleHtml = (javax.swing.JEditorPane) privateField.get(this);
+        accessibleHtml.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals("document")) {
+                    accessibleHtml.setVisible(false);
+                }
+                if (evt.getPropertyName().equals("page")) {
+                    if (!accessibleHtml.isVisible()) {
+                        modifyFont(0);
+                        SwingUtilities.invokeLater(new Runnable() {
+
+                            public void run() {
+                                accessibleHtml.setVisible(true);
+                            }
+                        });
+                    }
+                }
+            }
+        });
+        accessibleHtml.setFocusCycleRoot(false);
+        accessibleHtml.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ScilabKeyStroke.getKeyStroke("OSSCKEY shift EQUALS"), SHIFTEQ);
+        accessibleHtml.getActionMap().put(SHIFTEQ, new AbstractAction() {
+
+            public void actionPerformed(ActionEvent e) {
+                SwingScilabHelpBrowserViewer.this.increaseFont();
+            }
+        });
+        SwingUtilities.getAncestorOfClass(JScrollPane.class, accessibleHtml).addMouseWheelListener(this);
+    } catch (IllegalArgumentException e) {
+        System.err.println("Illegal argument in the retrieval of the html component of Javahelp");
+        e.printStackTrace();
+    } catch (IllegalAccessException e) {
+        System.err.println("Illegal access in the retrieval of the html component of Javahelp");
+        e.printStackTrace();
+    }
+}
+#method_after
+private void retrievePrivateFieldFromBasicContentViewerUI() {
+    Field privateField = null;
+    try {
+        privateField = BasicContentViewerUI.class.getDeclaredField("html");
+        privateField.setAccessible(true);
+    } catch (SecurityException e) {
+        System.err.println("Security error: Could not change the accessibility on the html component of the help browser.");
+        System.err.println("Please submit a bug report: http://bugzilla.scilab.org");
+        e.printStackTrace();
+    } catch (NoSuchFieldException e) {
+        System.err.println("Could not find the field of the html component of the help browser.");
+        System.err.println("Please submit a bug report: http://bugzilla.scilab.org");
+        e.printStackTrace();
+    }
+    try {
+        this.accessibleHtml = (javax.swing.JEditorPane) privateField.get(this);
+        accessibleHtml.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                // To improve... (it doesn't always work)
+                if (evt.getPropertyName().equals("document")) {
+                    accessibleHtml.setVisible(false);
+                    accessibleHtml.validate();
+                }
+                if (evt.getPropertyName().equals("page")) {
+                    if (!accessibleHtml.isVisible()) {
+                        modifyFont(0);
+                        SwingUtilities.invokeLater(new Runnable() {
+
+                            public void run() {
+                                accessibleHtml.setVisible(true);
+                            }
+                        });
+                    }
+                }
+            }
+        });
+        // The previous workaround hides the component accessibleHtml
+        // and consequently the focus is given to an other component.
+        // So we force the accessibleHtml to keep the focus.
+        accessibleHtml.setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
+
+            public Component getFirstComponent(Container aContainer) {
+                return x;
+            }
+        });
+        accessibleHtml.setFocusCycleRoot(true);
+        accessibleHtml.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ScilabKeyStroke.getKeyStroke("OSSCKEY shift EQUALS"), SHIFTEQ);
+        accessibleHtml.getActionMap().put(SHIFTEQ, new AbstractAction() {
+
+            public void actionPerformed(ActionEvent e) {
+                SwingScilabHelpBrowserViewer.this.increaseFont();
+            }
+        });
+        SwingUtilities.getAncestorOfClass(JScrollPane.class, accessibleHtml).addMouseWheelListener(this);
+    } catch (IllegalArgumentException e) {
+        System.err.println("Illegal argument in the retrieval of the html component of Javahelp");
+        e.printStackTrace();
+    } catch (IllegalAccessException e) {
+        System.err.println("Illegal access in the retrieval of the html component of Javahelp");
+        e.printStackTrace();
+    }
+}
+#end_block
+
+#method_before
+public static void scinotesWithText(String text) {
+    launchSciNotes();
+    ScilabEditorPane theTextPane;
+    String name = editor.getTextPane(0).getName();
+    if (name == null || name.startsWith(SciNotesMessages.UNTITLED)) {
+        theTextPane = editor.getTextPane(0);
+    } else {
+        theTextPane = editor.addEmptyTab();
+    }
+    ScilabDocument styleDocument = (ScilabDocument) theTextPane.getDocument();
+    try {
+        editor.getEditorKit().read(new StringReader(text), styleDocument, 0);
+    } catch (IOException e) {
+        System.err.println(SciNotesMessages.ERROR_WITH_STRING);
+    } catch (BadLocationException e) {
+        System.err.println(SciNotesMessages.ERROR_WITH_STRING);
+    }
+}
+#method_after
+public static void scinotesWithText(String text) {
+    launchSciNotes();
+    ScilabEditorPane theTextPane;
+    if (editor.getTabPane().getTabCount() != 0) {
+        String name = editor.getTextPane(0).getName();
+        if (name == null) {
+            theTextPane = editor.getTextPane(0);
+        } else {
+            theTextPane = editor.addEmptyTab();
+        }
+    } else {
+        theTextPane = editor.addEmptyTab();
+    }
+    ScilabDocument styleDocument = (ScilabDocument) theTextPane.getDocument();
+    try {
+        editor.getEditorKit().read(new StringReader(text), styleDocument, theTextPane.getCaretPosition());
+    } catch (IOException e) {
+        System.err.println(SciNotesMessages.ERROR_WITH_STRING);
+    } catch (BadLocationException e) {
+        System.err.println(SciNotesMessages.ERROR_WITH_STRING);
+    }
+}
+#end_block
+
+#method_before
+public void actionPerformed(ActionEvent evt) {
+    boolean b = portrait.isSelected();
+    Vector<String> properties = new Vector<String>();
+    if (evt.getSource() == confirmOption) {
+        if (b) {
+            properties.add(portrait.getText().toLowerCase());
+        } else {
+            properties.add(landscape.getText().toLowerCase());
+        }
+        exportData.setExportProperties(properties);
+        optionDialog.dispose();
+        int figId = exportData.getFigureId();
+        String fileName = exportData.getExportName();
+        int fileType = ExportRenderer.types.get(exportData.getExportExtension());
+        int orientation = exportData.getExportProperties().elementAt(0).equalsIgnoreCase("landscape") ? ExportRenderer.LANDSCAPE : ExportRenderer.PORTRAIT;
+        parentWindow.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        String err = FileExporter.fileExport(figId, fileName, fileType, orientation);
+        parentWindow.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        if (err.length() != 0) {
+            ScilabModalDialog.show(parentTab, "An error occurred during export: " + err, "Export error", IconType.ERROR_ICON);
+        }
+    }
+    if (evt.getSource() == abortOption) {
+        optionDialog.dispose();
+    }
+}
+#method_after
+public void actionPerformed(ActionEvent evt) {
+    boolean b = portrait.isSelected();
+    Vector<String> properties = new Vector<String>();
+    if (evt.getSource() == confirmOption) {
+        if (b) {
+            properties.add(portrait.getText().toLowerCase());
+        } else {
+            properties.add(landscape.getText().toLowerCase());
+        }
+        exportData.setExportProperties(properties);
+        optionDialog.dispose();
+        int figId = exportData.getFigureId();
+        String fileName = exportData.getExportName();
+        int fileType = ExportRenderer.types.get(exportData.getExportExtension());
+        int orientation = exportData.getExportProperties().elementAt(0).equalsIgnoreCase("landscape") ? ExportRenderer.LANDSCAPE : ExportRenderer.PORTRAIT;
+        parentWindow.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        // 1f is the jpeg quality compression and it is useless here
+        String err = FileExporter.fileExport(figId, fileName, fileType, 1f, orientation);
+        parentWindow.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        if (err.length() != 0) {
+            ScilabModalDialog.show(parentTab, "An error occurred during export: " + err, "Export error", IconType.ERROR_ICON);
+        }
+    }
+    if (evt.getSource() == abortOption) {
+        optionDialog.dispose();
+    }
+}
+#end_block
+
+#method_before
+public void setGraphicObjectRelationship(String parentId, String childId) {
+    Object oldParent = getProperty(childId, GraphicObjectProperties.__GO_PARENT__);
+    if (oldParent != null && oldParent instanceof String) {
+        String oldParentId = (String) oldParent;
+        if (oldParentId.equals(parentId)) {
+            return;
+        }
+        if (!oldParentId.equals("")) {
+            getObjectFromId(oldParentId).removeChildren(childId);
+        }
+    }
+    if (parentId != null && !parentId.equals("")) {
+        getObjectFromId(parentId).addChildren(childId);
+    }
+    setProperty(childId, GraphicObjectProperties.__GO_PARENT__, parentId);
+}
+#method_after
+public void setGraphicObjectRelationship(String parentId, String childId) {
+    Object oldParent = getProperty(childId, GraphicObjectProperties.__GO_PARENT__);
+    if (oldParent != null && oldParent instanceof String) {
+        String oldParentId = (String) oldParent;
+        if (oldParentId.equals(parentId)) {
+            return;
+        }
+        if (!oldParentId.equals("")) {
+            getObjectFromId(oldParentId).removeChild(childId);
+            objectUpdate(oldParentId, GraphicObjectProperties.__GO_CHILDREN__);
+        }
+    }
+    /* Insertion occurs at the head of the children list */
+    if (parentId != null && !parentId.equals("")) {
+        getObjectFromId(parentId).addChild(childId);
+        objectUpdate(parentId, GraphicObjectProperties.__GO_CHILDREN__);
+    }
+    setProperty(childId, GraphicObjectProperties.__GO_PARENT__, parentId);
+}
+#end_block
+
+#method_before
+public GraphicObject clone() {
+    GraphicObject copy = null;
+    try {
+        copy = (GraphicObject) super.clone();
+    } catch (CloneNotSupportedException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
+    return (GraphicObject) copy;
+}
+#method_after
+public GraphicObject clone() {
+    GraphicObject copy = null;
+    try {
+        copy = (GraphicObject) super.clone();
+    } catch (CloneNotSupportedException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
+    /*
+             * Creating an empty list is done to avoid
+             * still referencing the original object's own list,
+             * which occurs when the Figure model is cloned.
+             */
+    copy.setChildren(new LinkedList<String>());
+    /*
+             * Avoids keeping the Figure model as a parent
+             * when the Axes model is cloned.
+             */
+    copy.setParent("");
+    /*
+             * Sets no object as the selected child.
+             */
+    copy.setSelectedChild("");
+    return (GraphicObject) copy;
+}
+#end_block
+
+#method_before
+public Object getPropertyFromName(String propertyName) {
+    if (propertyName.equals(__GO_PARENT__)) {
+        return GraphicObjectPropertyType.PARENT;
+    } else if (propertyName.equals(__GO_CHILDREN__)) {
+        return GraphicObjectPropertyType.CHILDREN;
+    } else if (propertyName.equals(__GO_CHILDREN_COUNT__)) {
+        return GraphicObjectPropertyType.CHILDREN_COUNT;
+    } else if (propertyName.equals(__GO_VISIBLE__)) {
+        return GraphicObjectPropertyType.VISIBLE;
+    } else if (propertyName.equals(__GO_USER_DATA__)) {
+        return GraphicObjectPropertyType.USERDATA;
+    } else if (propertyName.equals(__GO_USER_DATA_SIZE__)) {
+        return GraphicObjectPropertyType.USERDATASIZE;
+    } else if (propertyName.equals(__GO_REFERENCED__)) {
+        return GraphicObjectPropertyType.REFERENCED;
+    } else if (propertyName.equals(__GO_VALID__)) {
+        return GraphicObjectPropertyType.VALID;
+    } else if (propertyName.equals(__GO_TYPE__)) {
+        return GraphicObjectPropertyType.TYPE;
+    } else if (propertyName.equals(__GO_DATA_MODEL__)) {
+        return GraphicObjectPropertyType.DATA;
+    } else {
+        return GraphicObjectPropertyType.UNKNOWNPROPERTY;
+    }
+}
+#method_after
+public Object getPropertyFromName(String propertyName) {
+    if (propertyName.equals(__GO_PARENT__)) {
+        return GraphicObjectPropertyType.PARENT;
+    } else if (propertyName.equals(__GO_CHILDREN__)) {
+        return GraphicObjectPropertyType.CHILDREN;
+    } else if (propertyName.equals(__GO_CHILDREN_COUNT__)) {
+        return GraphicObjectPropertyType.CHILDREN_COUNT;
+    } else if (propertyName.equals(__GO_VISIBLE__)) {
+        return GraphicObjectPropertyType.VISIBLE;
+    } else if (propertyName.equals(__GO_USER_DATA__)) {
+        return GraphicObjectPropertyType.USERDATA;
+    } else if (propertyName.equals(__GO_USER_DATA_SIZE__)) {
+        return GraphicObjectPropertyType.USERDATASIZE;
+    } else if (propertyName.equals(__GO_REFERENCED__)) {
+        return GraphicObjectPropertyType.REFERENCED;
+    } else if (propertyName.equals(__GO_VALID__)) {
+        return GraphicObjectPropertyType.VALID;
+    } else if (propertyName.equals(__GO_PARENT_FIGURE__)) {
+        return GraphicObjectPropertyType.PARENT_FIGURE;
+    } else if (propertyName.equals(__GO_PARENT_AXES__)) {
+        return GraphicObjectPropertyType.PARENT_AXES;
+    } else if (propertyName.equals(__GO_PARENT_AXES__)) {
+        return GraphicObjectPropertyType.PARENT_AXES;
+    } else if (propertyName.equals(__GO_HAS_LEGEND_CHILD__)) {
+        return GraphicObjectPropertyType.HASLEGENDCHILD;
+    } else if (propertyName.equals(__GO_SELECTED_CHILD__)) {
+        return GraphicObjectPropertyType.SELECTEDCHILD;
+    } else if (propertyName.equals(__GO_TYPE__)) {
+        return GraphicObjectPropertyType.TYPE;
+    } else if (propertyName.equals(__GO_DATA_MODEL__)) {
+        return GraphicObjectPropertyType.DATA;
+    } else {
+        return GraphicObjectPropertyType.UNKNOWNPROPERTY;
+    }
+}
+#end_block
+
+#method_before
+public Object getProperty(Object property) {
+    if (property == GraphicObjectPropertyType.PARENT) {
+        return getParent();
+    } else if (property == GraphicObjectPropertyType.CHILDREN) {
+        return getChildren();
+    } else if (property == GraphicObjectPropertyType.CHILDREN_COUNT) {
+        return getChildren().length;
+    } else if (property == GraphicObjectPropertyType.VISIBLE) {
+        return getVisible();
+    } else if (property == GraphicObjectPropertyType.USERDATA) {
+        return getUserData();
+    } else if (property == GraphicObjectPropertyType.USERDATASIZE) {
+        return getUserDataSize();
+    } else if (property == GraphicObjectPropertyType.TYPE) {
+        return getType();
+    } else if (property == GraphicObjectPropertyType.DATA) {
+        return getIdentifier();
+    } else if (property == GraphicObjectPropertyType.UNKNOWNPROPERTY) {
+        return null;
+    } else {
+        return null;
+    }
+}
+#method_after
+public Object getProperty(Object property) {
+    if (property == GraphicObjectPropertyType.PARENT) {
+        return getParent();
+    } else if (property == GraphicObjectPropertyType.CHILDREN) {
+        return getChildren();
+    } else if (property == GraphicObjectPropertyType.CHILDREN_COUNT) {
+        return getChildren().length;
+    } else if (property == GraphicObjectPropertyType.VISIBLE) {
+        return getVisible();
+    } else if (property == GraphicObjectPropertyType.USERDATA) {
+        return getUserData();
+    } else if (property == GraphicObjectPropertyType.USERDATASIZE) {
+        return getUserDataSize();
+    } else if (property == GraphicObjectPropertyType.PARENT_FIGURE) {
+        return getParentFigure();
+    } else if (property == GraphicObjectPropertyType.PARENT_AXES) {
+        return getParentAxes();
+    } else if (property == GraphicObjectPropertyType.HASLEGENDCHILD) {
+        return getHasLegendChild();
+    } else if (property == GraphicObjectPropertyType.SELECTEDCHILD) {
+        return getSelectedChild();
+    } else if (property == GraphicObjectPropertyType.TYPE) {
+        return getType();
+    } else if (property == GraphicObjectPropertyType.DATA) {
+        return getIdentifier();
+    } else if (property == GraphicObjectPropertyType.UNKNOWNPROPERTY) {
+        return null;
+    } else {
+        return null;
+    }
+}
+#end_block
+
+#method_before
+public boolean setProperty(Object property, Object value) {
+    if (property == GraphicObjectPropertyType.PARENT) {
+        setParent((String) value);
+    } else if (property == GraphicObjectPropertyType.CHILDREN) {
+        setChildren((List<String>) value);
+    } else if (property == GraphicObjectPropertyType.VISIBLE) {
+        setVisible((Boolean) value);
+    } else if (property == GraphicObjectPropertyType.USERDATA) {
+        setUserData(value);
+    } else if (property == GraphicObjectPropertyType.USERDATASIZE) {
+        return false;
+    } else if (property == GraphicObjectPropertyType.DATA) {
+        return true;
+    } else if (property == GraphicObjectPropertyType.UNKNOWNPROPERTY) {
+        return false;
+    }
+    return true;
+}
+#method_after
+public boolean setProperty(Object property, Object value) {
+    if (property == GraphicObjectPropertyType.PARENT) {
+        setParent((String) value);
+    } else if (property == GraphicObjectPropertyType.CHILDREN) {
+        setChildren((List<String>) value);
+    } else if (property == GraphicObjectPropertyType.VISIBLE) {
+        setVisible((Boolean) value);
+    } else if (property == GraphicObjectPropertyType.USERDATA) {
+        setUserData(value);
+    } else if (property == GraphicObjectPropertyType.USERDATASIZE) {
+        return false;
+    } else if (property == GraphicObjectPropertyType.SELECTEDCHILD) {
+        setSelectedChild((String) value);
+    } else if (property == GraphicObjectPropertyType.DATA) {
+        return true;
+    } else if (property == GraphicObjectPropertyType.UNKNOWNPROPERTY) {
+        return false;
+    }
+    return true;
+}
+#end_block
+
+#method_before
+public void caretUpdate(CaretEvent e) {
+    String str = getText().substring(0, e.getDot());
+    Matcher matcher = latexPattern.matcher(str);
+    if (matcher.find() && matcher.end() == str.length()) {
+        String latex = matcher.group().replace("\'\'", "\'").replace("\"\"", "\"");
+        latex = latex.substring(2, latex.length());
+        int hl = ScilabLaTeXViewer.displayExpression(this, Integer.MAX_VALUE, latex, 0, e.getDot()) + 2;
+        int y = 0;
+        try {
+            Rectangle rect = modelToView(getCaretPosition());
+            y = (int) (rect.height + rect.y + 1);
+        } catch (BadLocationException ex) {
+        }
+        int sheight = height;
+        height = y + hl;
+        if (height != sheight) {
+            validate();
+            console.updateScrollPosition();
+        }
+        isLatex = true;
+    } else {
+        if (isLatex) {
+            ScilabLaTeXViewer.removeLaTeXViewer(this);
+            if (height != -1) {
+                height = -1;
+                validate();
+            }
+            isLatex = false;
+        }
+    }
+}
+#method_after
+public void caretUpdate(CaretEvent e) {
+    String str = getText().substring(0, e.getDot());
+    int lastPos = str.lastIndexOf("\"$");
+    if (lastPos != -1) {
+        str = str.substring(lastPos);
+    }
+    Matcher matcher = latexPattern.matcher(str);
+    if (matcher.find() && matcher.end() == str.length()) {
+        String latex = matcher.group().replace("\'\'", "\'").replace("\"\"", "\"");
+        latex = latex.substring(2, latex.length());
+        int hl = ScilabLaTeXViewer.displayExpression(this, Integer.MAX_VALUE, latex, lastPos, e.getDot()) + 2;
+        int y = 0;
+        try {
+            Rectangle rect = modelToView(getCaretPosition());
+            y = (int) (rect.height + rect.y + 1);
+        } catch (BadLocationException ex) {
+        }
+        int sheight = height;
+        height = y + hl;
+        if (height != sheight) {
+            validate();
+            console.updateScrollPosition();
+        }
+        isLatex = true;
+    } else {
+        if (isLatex) {
+            ScilabLaTeXViewer.removeLaTeXViewer(this);
+            if (height != -1) {
+                height = -1;
+                validate();
+            }
+            isLatex = false;
+        }
+    }
+}
+#end_block
+
+#method_before
+public ElementsBuffer getVertexBuffer(String id) {
+    if (vertexBuffers.containsKey(id)) {
+        return vertexBuffers.get(id);
+    } else {
+        ElementsBuffer vertexBuffer = canvas.getBuffersManager().createElementsBuffer();
+        int length = DataLoader.getDataSize(id);
+        FloatBuffer dataBuffer = BufferUtil.newFloatBuffer(length * 4);
+        DataLoader.fillVertices(id, dataBuffer, 4, 0x1 | 0x2 | 0x4 | 0x8, DEFAULT_SCALE, DEFAULT_TRANSLATE);
+        vertexBuffer.setData(dataBuffer, 4);
+        vertexBuffers.put(id, vertexBuffer);
+        return vertexBuffer;
+    }
+}
+#method_after
+public ElementsBuffer getVertexBuffer(String id) {
+    if (vertexBufferMap.containsKey(id)) {
+        return vertexBufferMap.get(id);
+    } else {
+        ElementsBuffer vertexBuffer = canvas.getBuffersManager().createElementsBuffer();
+        fillVertexBuffer(vertexBuffer, id);
+        vertexBufferMap.put(id, vertexBuffer);
+        return vertexBuffer;
+    }
+}
+#end_block
+
+#method_before
+public static void fillVertices(String id, java.nio.FloatBuffer BUFF, int elementsSize, int coordinateMask, double[] scale, double[] translation) {
+    assert BUFF.isDirect() : "Buffer must be allocated direct.";
+    {
+        DataLoaderJNI.fillVertices(id, BUFF, elementsSize, coordinateMask, scale, translation);
+    }
+}
+#method_after
+public static void fillVertices(String id, java.nio.FloatBuffer BUFF, int bufferLength, int elementsSize, int coordinateMask, double[] scale, double[] translation) {
+    assert BUFF.isDirect() : "Buffer must be allocated direct.";
+    {
+        DataLoaderJNI.fillVertices(id, BUFF, bufferLength, elementsSize, coordinateMask, scale, translation);
+    }
+}
+#end_block
+
+#method_before
+public static void fillIndices(String id, java.nio.IntBuffer BUFF) {
+    assert BUFF.isDirect() : "Buffer must be allocated direct.";
+    {
+        DataLoaderJNI.fillIndices(id, BUFF);
+    }
+}
+#method_after
+public static int fillIndices(String id, java.nio.IntBuffer BUFF, int bufferLength) {
+    assert BUFF.isDirect() : "Buffer must be allocated direct.";
+    {
+        return DataLoaderJNI.fillIndices(id, BUFF, bufferLength);
+    }
+}
+#end_block
+
+#method_before
+public void setTextArrayDimensions(Integer[] dimensions) {
+    int currentSize = this.dimensions[0] * this.dimensions[1];
+    if (dimensions[0] * dimensions[1] != currentSize) {
+        FormattedText[] newText = new FormattedText[dimensions[0] * dimensions[1]];
+        for (int i = 0; i < dimensions[0] * dimensions[1]; i++) {
+            newText[i] = new FormattedText();
+            if (currentSize >= 1) {
+                newText[i].getFont().setProperties(text[0].getFont());
+            }
+        }
+        text = newText;
+    }
+    this.dimensions[0] = dimensions[0];
+    this.dimensions[1] = dimensions[1];
+}
+#method_after
+public void setTextArrayDimensions(Integer[] dimensions) {
+    int currentSize = this.dimensions[0] * this.dimensions[1];
+    if (dimensions[0] * dimensions[1] != currentSize) {
+        FormattedText[] newText = new FormattedText[dimensions[0] * dimensions[1]];
+        for (int i = 0; i < dimensions[0] * dimensions[1]; i++) {
+            newText[i] = new FormattedText();
+            if (currentSize >= 1) {
+                newText[i].setFont(new Font(text[0].getFont()));
+            }
+        }
+        text = newText;
+    }
+    this.dimensions[0] = dimensions[0];
+    this.dimensions[1] = dimensions[1];
+}
+#end_block
+
+#method_before
+/*
+	 * Scilab exported methods.
+	 * 
+	 * All the following methods must use SwingUtilities method to assert that
+	 * the operations will be called on the EDT thread.
+	 * 
+	 * @see modules/xcos/src/jni/Xcos.giws.xml
+	 * @see sci_gateway/xcos_gateway.xml
+	 * @see modules/xcos/sci_gateway/cpp/sci_*.cpp
+	 */
+@ScilabExported(module = "xcos", filename = "Xcos.giws.xml")
+public static void xcos() {
+    final Xcos instance = getInstance();
+    /* load scicos libraries (macros) */
+    InterpreterManagement.requestScilabExec("loadXcosLibs(); scicos_debug();");
+    SwingUtilities.invokeLater(new Runnable() {
+
+        @Override
+        public void run() {
+            instance.open(null);
+            PaletteManager.setVisible(true);
+        }
+    });
+}
+#method_after
+/*
+	 * Scilab exported methods.
+	 * 
+	 * All the following methods must use SwingUtilities method to assert that
+	 * the operations will be called on the EDT thread.
+	 * 
+	 * @see modules/xcos/src/jni/Xcos.giws.xml
+	 * @see sci_gateway/xcos_gateway.xml
+	 * @see modules/xcos/sci_gateway/cpp/sci_*.cpp
+	 */
+@ScilabExported(module = "xcos", filename = "Xcos.giws.xml")
+public static void xcos() {
+    final Xcos instance = getInstance();
+    /* load scicos libraries (macros) */
+    InterpreterManagement.requestScilabExec("loadXcosLibs(); loadScicos();");
+    SwingUtilities.invokeLater(new Runnable() {
+
+        @Override
+        public void run() {
+            instance.open(null);
+            PaletteManager.setVisible(true);
+        }
+    });
+}
+#end_block
+
+#method_before
+@ScilabExported(module = "xcos", filename = "Xcos.giws.xml")
+public static void xcos(final String fileName) {
+    final Xcos instance = getInstance();
+    final File filename = new File(fileName);
+    /* load scicos libraries (macros) */
+    InterpreterManagement.requestScilabExec("loadXcosLibs(); scicos_debug();");
+    try {
+        SwingUtilities.invokeAndWait(new Runnable() {
+
+            @Override
+            public void run() {
+                instance.open(filename);
+            }
+        });
+    } catch (final InterruptedException e) {
+        LOG.error(e);
+    } catch (final InvocationTargetException e) {
+        Throwable throwable = e;
+        String firstMessage = null;
+        while (throwable != null) {
+            firstMessage = throwable.getLocalizedMessage();
+            throwable = throwable.getCause();
+        }
+        throw new RuntimeException(firstMessage, e);
+    }
+}
+#method_after
+@ScilabExported(module = "xcos", filename = "Xcos.giws.xml")
+public static void xcos(final String fileName) {
+    final Xcos instance = getInstance();
+    final File filename = new File(fileName);
+    /* load scicos libraries (macros) */
+    InterpreterManagement.requestScilabExec("loadXcosLibs(); loadScicos();");
+    try {
+        SwingUtilities.invokeAndWait(new Runnable() {
+
+            @Override
+            public void run() {
+                instance.open(filename);
+            }
+        });
+    } catch (final InterruptedException e) {
+        LOG.error(e);
+    } catch (final InvocationTargetException e) {
+        Throwable throwable = e;
+        String firstMessage = null;
+        while (throwable != null) {
+            firstMessage = throwable.getLocalizedMessage();
+            throwable = throwable.getCause();
+        }
+        throw new RuntimeException(firstMessage, e);
+    }
+}
+#end_block
+
+#method_before
+public void updateExportedPort() {
+    if (child == null) {
+        return;
+    }
+    final Map<IOBlocks, List<mxICell>> blocksMap = IOBlocks.getAllBlocks(this);
+    final Map<IOBlocks, List<mxICell>> portsMap = IOBlocks.getAllPorts(this);
+    for (IOBlocks block : IOBlocks.values()) {
+        final int blockCount = blocksMap.get(block).size();
+        int portCount = portsMap.get(block).size();
+        // add ports if required
+        while (blockCount > portCount) {
+            try {
+                BasicPort port;
+                port = block.getReferencedPortClass().newInstance();
+                addPort(port);
+            } catch (InstantiationException e) {
+                LogFactory.getLog(SuperBlock.class).error(e);
+            } catch (IllegalAccessException e) {
+                LogFactory.getLog(SuperBlock.class).error(e);
+            }
+            portCount++;
+        }
+        // remove ports if required
+        while (portCount > blockCount) {
+            removePort((BasicPort) portsMap.get(block).get(portCount - 1));
+            portCount--;
+        }
+    }
+    getParentDiagram().fireEvent(new mxEventObject(XcosEvent.SUPER_BLOCK_UPDATED, XcosConstants.EVENT_BLOCK_UPDATED, this));
+}
+#method_after
+public void updateExportedPort() {
+    if (child == null) {
+        return;
+    }
+    if (getParentDiagram() == null) {
+        setParentDiagram(Xcos.findParent(this));
+    }
+    final Map<IOBlocks, List<mxICell>> blocksMap = IOBlocks.getAllBlocks(this);
+    final Map<IOBlocks, List<mxICell>> portsMap = IOBlocks.getAllPorts(this);
+    for (IOBlocks block : IOBlocks.values()) {
+        final int blockCount = blocksMap.get(block).size();
+        int portCount = portsMap.get(block).size();
+        // add ports if required
+        while (blockCount > portCount) {
+            try {
+                BasicPort port;
+                port = block.getReferencedPortClass().newInstance();
+                addPort(port);
+            } catch (InstantiationException e) {
+                LogFactory.getLog(SuperBlock.class).error(e);
+            } catch (IllegalAccessException e) {
+                LogFactory.getLog(SuperBlock.class).error(e);
+            }
+            portCount++;
+        }
+        // remove ports if required
+        while (portCount > blockCount) {
+            removePort((BasicPort) portsMap.get(block).get(portCount - 1));
+            portCount--;
+        }
+    }
+    getParentDiagram().fireEvent(new mxEventObject(XcosEvent.SUPER_BLOCK_UPDATED, XcosConstants.EVENT_BLOCK_UPDATED, this));
+}
+#end_block
+
+#method_before
+public void mask() {
+    setInterfaceFunctionName(MASKED_INTERFUNCTION_NAME);
+    setSimulationFunctionName(MASKED_SIMULATION_NAME);
+}
+#method_after
+public void mask() {
+    setInterfaceFunctionName(MASKED_INTERFUNCTION_NAME);
+    setSimulationFunctionName(MASKED_SIMULATION_NAME);
+    setIntegerParameters(new ScilabDouble(1));
+}
+#end_block
+
+#method_before
+public void unmask() {
+    setInterfaceFunctionName(INTERFUNCTION_NAME);
+    setSimulationFunctionName(SIMULATION_NAME);
+}
+#method_after
+public void unmask() {
+    setInterfaceFunctionName(INTERFUNCTION_NAME);
+    setSimulationFunctionName(SIMULATION_NAME);
+    setIntegerParameters(new ScilabDouble());
+}
+#end_block
+
+#method_before
+@Override
+public void setValue(Object value) {
+    super.setValue(value);
+    if (value == null) {
+        return;
+    }
+    if (getChild() != null) {
+        getChild().setTitle(toValidCIdentifier(value.toString()));
+        setRealParameters(new DiagramElement().encode(getChild()));
+    }
+}
+#method_after
+@Override
+public void setValue(Object value) {
+    super.setValue(value);
+    if (value == null) {
+        return;
+    }
+    if (getChild() != null) {
+        getChild().setTitle(FileUtils.toValidCIdentifier(value.toString()));
+        setRealParameters(new DiagramElement().encode(getChild()));
+    }
+}
+#end_block
+
+#method_before
+@Override
+public Object clone() throws CloneNotSupportedException {
+    SuperBlock clone = (SuperBlock) super.clone();
+    // Clear then generate the child.
+    clone.child = null;
+    clone.generateId();
+    return clone;
+}
+#method_after
+@Override
+public Object clone() throws CloneNotSupportedException {
+    SuperBlock clone = (SuperBlock) super.clone();
+    // clone the diagram
+    if (child != null) {
+        clone.child = (SuperBlockDiagram) child.clone();
+        clone.child.setContainer(clone);
+    }
+    return clone;
+}
+#end_block
+
+#method_before
+private void showUpdateDialog() {
+    ScilabModalDialog.show(null, new String[] { SOME_BLOCKS_HAS_BEEN_REMOVED, "", PLEASE_CHECK_THE_DIAGRAM }, INCOMPATIBILITY_DETECTED, IconType.WARNING_ICON);
+}
+#method_after
+private void showUpdateDialog() {
+    ScilabModalDialog.show(null, new String[] { SOME_BLOCKS_HAVE_BEEN_REMOVED, "", PLEASE_CHECK_THE_DIAGRAM }, INCOMPATIBILITY_DETECTED, IconType.WARNING_ICON);
+}
+#end_block
+
+#method_before
+private void fillParams(XcosDiagram from, int field) {
+    ScilabType data;
+    final ScicosParametersElement paramsElement = new ScicosParametersElement();
+    data = base.get(field);
+    data = paramsElement.encode(from.getScicosParameters(), data);
+    // set the title as it is need for generating files
+    ((ScilabTList) data).set(TITLE_INDEX, new ScilabString(from.getTitle()));
+    base.set(field, data);
+}
+#method_after
+private void fillParams(XcosDiagram from, int field) {
+    ScilabType data;
+    final ScicosParametersElement paramsElement = new ScicosParametersElement();
+    data = base.get(field);
+    data = paramsElement.encode(from.getScicosParameters(), data);
+    // set the title as it is need for generating files
+    ((ScilabTList) data).set(TITLE_INDEX, new ScilabString(FileUtils.toValidCIdentifier(from.getTitle())));
+    base.set(field, data);
+}
+#end_block
+
+#method_before
+private void fillObjs(XcosDiagram from, int field) {
+    final BlockElement blockElement = new BlockElement();
+    final LinkElement linkElement = new LinkElement(null);
+    final ScilabList data = (ScilabList) base.get(field);
+    final List<BasicBlock> blockList = new ArrayList<BasicBlock>();
+    final List<BasicLink> linkList = new ArrayList<BasicLink>();
+    /*
+    	 * Fill the block and link lists
+    	 */
+    final Object parent = from.getDefaultParent();
+    final mxIGraphModel model = from.getModel();
+    final int nbObjs = model.getChildCount(parent);
+    for (int i = 0; i < nbObjs; i++) {
+        Object current = model.getChildAt(parent, i);
+        if (current instanceof BasicBlock && !(current instanceof TextBlock)) {
+            BasicBlock block = (BasicBlock) current;
+            blockList.add(block);
+            // 
+            for (int j = 0; j < block.getChildCount(); ++j) {
+                if (block.getChildAt(j) instanceof BasicLink) {
+                    linkList.add((BasicLink) block.getChildAt(j));
+                }
+            }
+        } else if (current instanceof BasicLink) {
+            BasicLink link = (BasicLink) current;
+            linkList.add(link);
+        }
+    }
+    /*
+		 * Reorder links
+		 */
+    for (int i = 0; i < linkList.size(); ++i) {
+        linkList.get(i).setOrdering(i + blockList.size() + 1);
+    }
+    /*
+    	 * Reorder and encode blocks
+    	 */
+    for (int i = 0; i < blockList.size(); ++i) {
+        blockList.get(i).setOrdering(i + 1);
+        data.add(blockElement.encode(blockList.get(i), null));
+    }
+    /*
+    	 * Encode links
+    	 */
+    for (int i = 0; i < linkList.size(); ++i) {
+        final ScilabType link = linkElement.encode(linkList.get(i), null);
+        if (link != null) {
+            data.add(link);
+        }
+    }
+}
+#method_after
+private void fillObjs(XcosDiagram from, int field) {
+    final BlockElement blockElement = new BlockElement();
+    final LinkElement linkElement = new LinkElement(null);
+    final ScilabList data = (ScilabList) base.get(field);
+    final List<BasicBlock> blockList = new ArrayList<BasicBlock>();
+    final List<BasicLink> linkList = new ArrayList<BasicLink>();
+    /*
+    	 * Fill the block and link lists
+    	 */
+    final Object parent = from.getDefaultParent();
+    final mxIGraphModel model = from.getModel();
+    final int nbObjs = model.getChildCount(parent);
+    for (int i = 0; i < nbObjs; i++) {
+        final Object current = model.getChildAt(parent, i);
+        if (current instanceof BasicBlock && !(current instanceof TextBlock)) {
+            final BasicBlock block = (BasicBlock) current;
+            blockList.add(block);
+            // 
+            for (int j = 0; j < block.getChildCount(); ++j) {
+                if (block.getChildAt(j) instanceof BasicLink) {
+                    final BasicLink link = (BasicLink) block.getChildAt(j);
+                    // do not add the link if not connected
+                    if (link.getSource() != null && link.getTarget() != null) {
+                        linkList.add(link);
+                    }
+                }
+            }
+        } else if (current instanceof BasicLink) {
+            final BasicLink link = (BasicLink) current;
+            // Only add connected links
+            final mxICell source = link.getSource();
+            final mxICell target = link.getTarget();
+            if (source != null && target != null && source.getParent() instanceof BasicBlock && target.getParent() instanceof BasicBlock) {
+                linkList.add(link);
+            }
+        }
+    }
+    /*
+		 * Use a predictable block and links order when debug is enable
+		 */
+    if (LogFactory.getLog(DiagramElement.class).isDebugEnabled()) {
+        Collections.sort(blockList);
+        Collections.sort(linkList, new Comparator<BasicLink>() {
+
+            @Override
+            public int compare(BasicLink o1, BasicLink o2) {
+                return ((ScilabGraphUniqueObject) o1.getSource()).compareTo((ScilabGraphUniqueObject) o2.getSource());
+            }
+        });
+    }
+    /*
+		 * Reorder links
+		 */
+    for (int i = 0; i < linkList.size(); ++i) {
+        linkList.get(i).setOrdering(i + blockList.size() + 1);
+    }
+    /*
+    	 * Reorder and encode blocks
+    	 */
+    for (int i = 0; i < blockList.size(); ++i) {
+        blockList.get(i).setOrdering(i + 1);
+        data.add(blockElement.encode(blockList.get(i), null));
+    }
+    /*
+    	 * Encode links
+    	 */
+    for (int i = 0; i < linkList.size(); ++i) {
+        final ScilabType link = linkElement.encode(linkList.get(i), null);
+        if (link != null) {
+            data.add(link);
+        }
+    }
+}
+#end_block
+
+#method_before
+public void hyperlinkUpdate(HyperlinkEvent event) {
+    if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        if (event.getDescription().startsWith("http://")) {
+            WebBrowser.openUrl(event.getURL(), event.getDescription());
+        } else if (event.getDescription().startsWith(SCILAB_PROTO)) {
+            if (helpSets == null) {
+                initHelpSets(x.getModel().getHelpSet());
+            }
+            URL url = resolvScilabLink(event.getDescription());
+            if (url != null) {
+                super.hyperlinkUpdate(new HyperlinkEvent(event.getSource(), event.getEventType(), url, ""));
+            }
+        } else if (event.getDescription().startsWith("file://")) {
+            String url = event.getDescription();
+            url = url.replaceFirst("SCI", SCI);
+            WebBrowser.openUrl(url);
+        } else {
+            super.hyperlinkUpdate(event);
+        }
+    }
+}
+#method_after
+public void hyperlinkUpdate(HyperlinkEvent event) {
+    if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        if (event.getDescription().startsWith("http://")) {
+            WebBrowser.openUrl(event.getURL(), event.getDescription());
+        } else if (event.getDescription().startsWith(SCILAB_PROTO)) {
+            if (helpSets == null) {
+                initHelpSets(x.getModel().getHelpSet());
+            }
+            URL url = resolvScilabLink(event);
+            if (url != null) {
+                super.hyperlinkUpdate(new HyperlinkEvent(event.getSource(), event.getEventType(), url, ""));
+            }
+        } else if (event.getDescription().startsWith("file://")) {
+            String url = event.getDescription();
+            url = url.replaceFirst("SCI", SCI);
+            WebBrowser.openUrl(url);
+        } else {
+            super.hyperlinkUpdate(event);
+        }
+    }
+}
+#end_block
+
+#method_before
+public URL getURLFromID(String tbxName, String id) {
+    if (tbxName == null) {
+        return getURLFromID(id);
+    }
+    URL url = null;
+    try {
+        for (HelpSet hs : helpSets) {
+            if (hs.getHelpSetURL().toString().indexOf("/" + tbxName + "_") != -1) {
+                javax.help.Map map = hs.getLocalMap();
+                if (map.isValidID(id, hs)) {
+                    url = map.getURLFromID(javax.help.Map.ID.create(id, hs));
+                    if (url != null) {
+                        return url;
+                    }
+                }
+            }
+        }
+        url = new URL(helpSets.get(0).getHelpSetURL().toString().replace("jhelpset.hs", "ScilabErrorPage.html"));
+    } catch (MalformedURLException ex) {
+    }
+    return url;
+}
+#method_after
+public URL getURLFromID(String tbxName, String id) {
+    if (tbxName == null) {
+        return getURLFromID(id);
+    }
+    URL url = null;
+    try {
+        for (HelpSet hs : helpSets) {
+            if (hs.getHelpSetURL().toString().replaceAll("\\\\", "/").indexOf("/" + tbxName + "/") != -1) {
+                javax.help.Map map = hs.getLocalMap();
+                if (map.isValidID(id, hs)) {
+                    url = map.getURLFromID(javax.help.Map.ID.create(id, hs));
+                    if (url != null) {
+                        return url;
+                    }
+                }
+            }
+        }
+        url = new URL(helpSets.get(0).getHelpSetURL().toString().replace("jhelpset.hs", "ScilabErrorPage.html"));
+    } catch (MalformedURLException ex) {
+    }
+    return url;
+}
+#end_block
+
+#method_before
+public URL resolvScilabLink(String address) {
+    int pos = SCILAB_PROTO.length();
+    String addr = address.trim().replaceAll("\\\\", "/");
+    addr = addr.substring(pos);
+    pos = addr.indexOf("/");
+    String location;
+    String path = "";
+    if (pos != -1) {
+        location = addr.substring(0, pos);
+        if (pos != addr.length()) {
+            path = addr.substring(pos + 1);
+        }
+    } else {
+        return getURLFromID(addr);
+    }
+    String[] splitLoc = location.split("\\.");
+    String mainLocation = null;
+    String subLocation = null;
+    if (splitLoc.length >= 1) {
+        mainLocation = splitLoc[0];
+    }
+    if (splitLoc.length >= 2) {
+        subLocation = splitLoc[1];
+    }
+    if (subLocation.equals("help")) {
+        return getURLFromID(/*mainLocation,*/
+        path);
+    } else if (subLocation.equals("exec")) {
+        exec(getToolboxPath() + "/" + path);
+    } else if (subLocation.equals("demos")) {
+        exec(getToolboxPath() + "/demos/" + path + ".sce");
+    }
+    return null;
+}
+#method_after
+public URL resolvScilabLink(HyperlinkEvent event) {
+    int pos = SCILAB_PROTO.length();
+    String addr = event.getDescription();
+    addr = addr.trim().replaceAll("\\\\", "/");
+    addr = addr.substring(pos);
+    pos = addr.indexOf("/");
+    String location;
+    String path = "";
+    if (pos != -1) {
+        location = addr.substring(0, pos);
+        if (pos != addr.length()) {
+            path = addr.substring(pos + 1);
+        }
+    } else {
+        return getURLFromID(addr);
+    }
+    String[] splitLoc = location.split("\\.");
+    String mainLocation = null;
+    String subLocation = null;
+    if (splitLoc.length >= 1) {
+        mainLocation = splitLoc[0];
+    }
+    if (splitLoc.length >= 2) {
+        subLocation = splitLoc[1];
+    }
+    if (subLocation.equals("help")) {
+        if (mainLocation.equals("scilab")) {
+            return getURLFromID(path);
+        } else {
+            return getURLFromID(mainLocation, path);
+        }
+    } else if (subLocation.equals("exec")) {
+        if (!mainLocation.equals("scilab")) {
+            exec(getToolboxPath() + "/" + path);
+        } else {
+            exec(SCI + "/modules/" + path);
+        }
+    } else if (subLocation.equals("demos")) {
+        if (!mainLocation.equals("scilab")) {
+            exec(getToolboxPath() + "/demos/" + path + ".sce");
+        } else {
+            exec(SCI + "/modules/" + path + ".sce");
+        }
+    } else if (subLocation.equals("execexample")) {
+        execExample(event.getSourceElement().getParentElement().getParentElement().getParentElement().getElement(0).getElement(0));
+    } else if (subLocation.equals("editexample")) {
+        editExample(event.getSourceElement().getParentElement().getParentElement().getParentElement().getElement(0).getElement(0));
+    }
+    return null;
+}
+#end_block
+
+#method_before
+private void createPopupMenu(JComponent c) {
+    final JPopupMenu popup = new JPopupMenu();
+    JMenuItem menuItem = null;
+    /* Execute into Scilab */
+    ActionListener actionListenerExecuteIntoScilab = new ActionListener() {
+
+        public void actionPerformed(ActionEvent actionEvent) {
+            String selection = accessibleHtml.getSelectedText();
+            if (selection == null) {
+                ScilabHelpBrowser.getHelpBrowser().getInfoBar().setText(Messages.gettext("No text selected"));
+            } else {
+                ScilabConsole.getConsole().getAsSimpleConsole().sendCommandsToScilab(selection, true, /* display */
+                true);
+            }
+        }
+    };
+    menuItem = new JMenuItem(Messages.gettext("Execute into Scilab"));
+    menuItem.addActionListener(actionListenerExecuteIntoScilab);
+    if (!ScilabConsole.isExistingConsole()) {
+        /* Only available in STD mode */
+        menuItem.setEnabled(false);
+    }
+    popup.add(menuItem);
+    /* Edit in the Scilab Text Editor */
+    ActionListener actionListenerLoadIntoTextEditor = new ActionListener() {
+
+        public void actionPerformed(ActionEvent actionEvent) {
+            String selection = accessibleHtml.getSelectedText();
+            if (selection == null) {
+                ScilabHelpBrowser.getHelpBrowser().getInfoBar().setText(Messages.gettext("No text selected"));
+            } else {
+                try {
+                    /* Dynamic load of the SciNotes class.
+                         * This is done to avoid a cyclic dependency on gui <=> scinotes
+                         */
+                    Class scinotesClass = Class.forName("org.scilab.modules.scinotes.SciNotes");
+                    Class[] arguments = new Class[] { String.class };
+                    Method method = scinotesClass.getMethod("scinotesWithText", arguments);
+                    method.invoke(scinotesClass, new Object[] { selection });
+                } catch (ClassNotFoundException e) {
+                    System.err.println("Could not find SciNotes class");
+                    e.printStackTrace();
+                } catch (SecurityException e) {
+                    System.err.println("Security error: Could not access to SciNotes class");
+                    e.printStackTrace();
+                } catch (NoSuchMethodException e) {
+                    System.err.println("Could not access to scinotesWithText method from object SciNotes");
+                    e.printStackTrace();
+                } catch (IllegalArgumentException e) {
+                    System.err.println("Wrong argument used with scinotesWithText method from object SciNotes");
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    System.err.println("Illegal access with scinotesWithText method from object SciNotes");
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    System.err.println("Error of invocation with scinotesWithText method from object SciNotes");
+                    e.printStackTrace();
+                }
+            }
+        }
+    };
+    menuItem = new JMenuItem(Messages.gettext("Edit in the Scilab Text Editor"));
+    try {
+        Class scinotesClass = Class.forName("org.scilab.modules.scinotes.SciNotes");
+    } catch (ClassNotFoundException e) {
+        /* SciNotes not available */
+        menuItem.setEnabled(false);
+    }
+    menuItem.addActionListener(actionListenerLoadIntoTextEditor);
+    popup.add(menuItem);
+    popup.addSeparator();
+    /* Back in the history*/
+    ActionListener actionListenerBackHistory = new ActionListener() {
+
+        public void actionPerformed(ActionEvent actionEvent) {
+            DefaultHelpHistoryModel history = SwingScilabHelpBrowser.getHelpHistory();
+            /* Not at the first position */
+            if (history.getIndex() > 0) {
+                SwingScilabHelpBrowser.getHelpHistory().goBack();
+            }
+        }
+    };
+    menuItem = new JMenuItem(Messages.gettext("Back"));
+    menuItem.addActionListener(actionListenerBackHistory);
+    popup.add(menuItem);
+    /* Forward in the history*/
+    ActionListener actionListenerForwardHistory = new ActionListener() {
+
+        public void actionPerformed(ActionEvent actionEvent) {
+            DefaultHelpHistoryModel history = SwingScilabHelpBrowser.getHelpHistory();
+            /* Not at the last position */
+            if (history.getHistory().size() != (history.getIndex() + 1)) {
+                SwingScilabHelpBrowser.getHelpHistory().goForward();
+            }
+        }
+    };
+    menuItem = new JMenuItem(Messages.gettext("Forward"));
+    menuItem.addActionListener(actionListenerForwardHistory);
+    popup.add(menuItem);
+    popup.addSeparator();
+    /* Copy */
+    menuItem = new JMenuItem(new DefaultEditorKit.CopyAction());
+    menuItem.setText(Messages.gettext("Copy"));
+    popup.add(menuItem);
+    popup.addSeparator();
+    /* Select all */
+    ActionListener actionListenerSelectAll = new ActionListener() {
+
+        public void actionPerformed(ActionEvent actionEvent) {
+            accessibleHtml.selectAll();
+        }
+    };
+    menuItem = new JMenuItem(Messages.gettext("Select All"));
+    menuItem.addActionListener(actionListenerSelectAll);
+    popup.add(menuItem);
+    /* Edit in the Scilab Text Editor */
+    final JMenuItem helpMenuItem = new JMenuItem("Help on the selected text");
+    ActionListener actionListenerHelpOnKeyword = new ActionListener() {
+
+        public void actionPerformed(ActionEvent actionEvent) {
+            String selection = accessibleHtml.getSelectedText();
+            if (selection == null) {
+                ScilabHelpBrowser.getHelpBrowser().getInfoBar().setText(Messages.gettext("No text selected"));
+            } else {
+                ScilabHelpBrowser.getHelpBrowser().searchKeywork(selection);
+            }
+        }
+    };
+    PropertyChangeListener listenerTextItem = new PropertyChangeListener() {
+
+        public void propertyChange(PropertyChangeEvent arg0) {
+            String keyword = accessibleHtml.getSelectedText();
+            if (keyword == null) {
+                helpMenuItem.setText(Messages.gettext("Help about a selected text"));
+            } else {
+                int nbOfDisplayedOnlyXChar = 10;
+                if (keyword.length() > nbOfDisplayedOnlyXChar) {
+                    keyword = keyword.substring(0, nbOfDisplayedOnlyXChar) + "...";
+                }
+                helpMenuItem.setText(Messages.gettext("Help about '") + keyword + "'");
+            }
+        }
+    };
+    helpMenuItem.addPropertyChangeListener(listenerTextItem);
+    helpMenuItem.addActionListener(actionListenerHelpOnKeyword);
+    popup.add(helpMenuItem);
+    /* Creates the Popupmenu on the component */
+    accessibleHtml.setComponentPopupMenu(popup);
+}
+#method_after
+private void createPopupMenu(JComponent c) {
+    final JPopupMenu popup = new JPopupMenu();
+    JMenuItem menuItem = null;
+    /* Execute into Scilab */
+    ActionListener actionListenerExecuteIntoScilab = new ActionListener() {
+
+        public void actionPerformed(ActionEvent actionEvent) {
+            String selection = accessibleHtml.getSelectedText();
+            if (selection == null) {
+                ScilabHelpBrowser.getHelpBrowser().getInfoBar().setText(Messages.gettext("No text selected"));
+            } else {
+                ScilabConsole.getConsole().getAsSimpleConsole().sendCommandsToScilab(selection, true, /* display */
+                true);
+            }
+        }
+    };
+    menuItem = new JMenuItem(Messages.gettext("Execute into Scilab"));
+    menuItem.addActionListener(actionListenerExecuteIntoScilab);
+    if (!ScilabConsole.isExistingConsole()) {
+        /* Only available in STD mode */
+        menuItem.setEnabled(false);
+    }
+    popup.add(menuItem);
+    /* Edit in the Scilab Text Editor */
+    ActionListener actionListenerLoadIntoTextEditor = new ActionListener() {
+
+        public void actionPerformed(ActionEvent actionEvent) {
+            String selection = accessibleHtml.getSelectedText();
+            if (selection == null) {
+                ScilabHelpBrowser.getHelpBrowser().getInfoBar().setText(Messages.gettext("No text selected"));
+            } else {
+                edit(selection);
+            }
+        }
+    };
+    menuItem = new JMenuItem(Messages.gettext("Edit in the Scilab Text Editor"));
+    try {
+        Class scinotesClass = Class.forName("org.scilab.modules.scinotes.SciNotes");
+    } catch (ClassNotFoundException e) {
+        /* SciNotes not available */
+        menuItem.setEnabled(false);
+    }
+    menuItem.addActionListener(actionListenerLoadIntoTextEditor);
+    popup.add(menuItem);
+    popup.addSeparator();
+    /* Back in the history*/
+    ActionListener actionListenerBackHistory = new ActionListener() {
+
+        public void actionPerformed(ActionEvent actionEvent) {
+            DefaultHelpHistoryModel history = SwingScilabHelpBrowser.getHelpHistory();
+            /* Not at the first position */
+            if (history.getIndex() > 0) {
+                SwingScilabHelpBrowser.getHelpHistory().goBack();
+            }
+        }
+    };
+    menuItem = new JMenuItem(Messages.gettext("Back"));
+    menuItem.addActionListener(actionListenerBackHistory);
+    popup.add(menuItem);
+    /* Forward in the history*/
+    ActionListener actionListenerForwardHistory = new ActionListener() {
+
+        public void actionPerformed(ActionEvent actionEvent) {
+            DefaultHelpHistoryModel history = SwingScilabHelpBrowser.getHelpHistory();
+            /* Not at the last position */
+            if (history.getHistory().size() != (history.getIndex() + 1)) {
+                SwingScilabHelpBrowser.getHelpHistory().goForward();
+            }
+        }
+    };
+    menuItem = new JMenuItem(Messages.gettext("Forward"));
+    menuItem.addActionListener(actionListenerForwardHistory);
+    popup.add(menuItem);
+    popup.addSeparator();
+    /* Copy */
+    menuItem = new JMenuItem(new DefaultEditorKit.CopyAction());
+    menuItem.setText(Messages.gettext("Copy"));
+    popup.add(menuItem);
+    popup.addSeparator();
+    /* Select all */
+    ActionListener actionListenerSelectAll = new ActionListener() {
+
+        public void actionPerformed(ActionEvent actionEvent) {
+            accessibleHtml.selectAll();
+        }
+    };
+    menuItem = new JMenuItem(Messages.gettext("Select All"));
+    menuItem.addActionListener(actionListenerSelectAll);
+    popup.add(menuItem);
+    /* Edit in the Scilab Text Editor */
+    final JMenuItem helpMenuItem = new JMenuItem("Help on the selected text");
+    ActionListener actionListenerHelpOnKeyword = new ActionListener() {
+
+        public void actionPerformed(ActionEvent actionEvent) {
+            String selection = accessibleHtml.getSelectedText();
+            if (selection == null) {
+                ScilabHelpBrowser.getHelpBrowser().getInfoBar().setText(Messages.gettext("No text selected"));
+            } else {
+                ScilabHelpBrowser.getHelpBrowser().searchKeywork(selection);
+            }
+        }
+    };
+    PropertyChangeListener listenerTextItem = new PropertyChangeListener() {
+
+        public void propertyChange(PropertyChangeEvent arg0) {
+            String keyword = accessibleHtml.getSelectedText();
+            if (keyword == null) {
+                helpMenuItem.setText(Messages.gettext("Help about a selected text"));
+            } else {
+                int nbOfDisplayedOnlyXChar = 10;
+                if (keyword.length() > nbOfDisplayedOnlyXChar) {
+                    keyword = keyword.substring(0, nbOfDisplayedOnlyXChar) + "...";
+                }
+                helpMenuItem.setText(Messages.gettext("Help about '") + keyword + "'");
+            }
+        }
+    };
+    helpMenuItem.addPropertyChangeListener(listenerTextItem);
+    helpMenuItem.addActionListener(actionListenerHelpOnKeyword);
+    popup.add(helpMenuItem);
+    /* Creates the Popupmenu on the component */
+    accessibleHtml.setComponentPopupMenu(popup);
+}
+#end_block
+
+#method_before
+public String getCSS() {
+    String str = ((Element) doc.getDocumentElement().getElementsByTagName("css").item(0)).getAttribute("doc");
+    return str.replaceAll(SCIVAR, SCI);
+}
+#method_after
+public String getCSS() {
+    String str = ((Element) doc.getDocumentElement().getElementsByTagName("css").item(0)).getAttribute("doc");
+    return str.replaceAll(SCIVAR, Matcher.quoteReplacement(SCI));
+}
+#end_block
+
+#method_before
+public String getTemplate(String kind) {
+    String str = ((Element) doc.getDocumentElement().getElementsByTagName("templates").item(0)).getAttribute(kind);
+    return str.replaceAll(SCIVAR, SCI);
+}
+#method_after
+public String getTemplate(String kind) {
+    String str = ((Element) doc.getDocumentElement().getElementsByTagName("templates").item(0)).getAttribute(kind);
+    return str.replaceAll(SCIVAR, Matcher.quoteReplacement(SCI));
+}
+#end_block
+
+#method_before
+private String[] getPathList(String kind) {
+    Element macros = (Element) doc.getDocumentElement().getElementsByTagName(kind).item(0);
+    NodeList pathList = macros.getElementsByTagName("file");
+    String[] paths = new String[pathList.getLength()];
+    for (int i = 0; i < paths.length; i++) {
+        paths[i] = ((Element) pathList.item(i)).getAttribute("path").replaceAll(SCIVAR, SCI);
+    }
+    return paths;
+}
+#method_after
+private String[] getPathList(String kind) {
+    Element macros = (Element) doc.getDocumentElement().getElementsByTagName(kind).item(0);
+    NodeList pathList = macros.getElementsByTagName("file");
+    String[] paths = new String[pathList.getLength()];
+    for (int i = 0; i < paths.length; i++) {
+        paths[i] = ((Element) pathList.item(i)).getAttribute("path").replaceAll(SCIVAR, Matcher.quoteReplacement(SCI));
+    }
+    return paths;
+}
+#end_block
+
+#method_before
+public String getVersion() {
+    String str = ((Element) doc.getDocumentElement().getElementsByTagName("version").item(0)).getAttribute("id");
+    return getVersion(str);
+}
+#method_after
+public String getVersion() {
+    String str = null;
+    NodeList list = doc.getDocumentElement().getElementsByTagName("version");
+    if (list != null && list.getLength() > 0) {
+        Element el = (Element) list.item(0);
+        if (el != null) {
+            str = el.getAttribute("id");
+        }
+    }
+    return getVersion(str);
+}
+#end_block
+
+#method_before
+public String handleProgramlisting(Map<String, String> attributes, String contents) throws SAXException {
+    String id = attributes.get("id");
+    String role = attributes.get("role");
+    String str;
+    if (role == null) {
+        str = encloseContents("div", "programlisting", encloseContents("pre", "scilabcode", scilabLexer.convert(HTMLScilabCodeHandler.getInstance(refname), contents)));
+    } else {
+        if (role.equals("xml")) {
+            str = encloseContents("div", "programlisting", encloseContents("pre", "xmlcode", xmlLexer.convert(HTMLXMLCodeHandler.getInstance(), contents)));
+        } else if (role.equals("c") || role.equals("cpp") || role.equals("code_gateway")) {
+            str = encloseContents("div", "programlisting", encloseContents("pre", "ccode", cLexer.convert(HTMLCCodeHandler.getInstance(), contents)));
+        } else if (role.equals("java")) {
+            str = encloseContents("div", "programlisting", encloseContents("pre", "ccode", javaLexer.convert(HTMLCCodeHandler.getInstance(), contents)));
+        } else {
+            str = encloseContents("div", "programlisting", encloseContents("pre", "scilabcode", scilabLexer.convert(HTMLScilabCodeHandler.getInstance(refname), contents)));
+        }
+    }
+    if (id != null) {
+        return "<a name=\"" + id + "\"></a>" + str;
+    } else {
+        return str;
+    }
+}
+#method_after
+public String handleProgramlisting(Map<String, String> attributes, String contents) throws SAXException {
+    String id = attributes.get("id");
+    String role = attributes.get("role");
+    String str;
+    if (role == null) {
+        String code = encloseContents("pre", "scilabcode", scilabLexer.convert(HTMLScilabCodeHandler.getInstance(refname), contents));
+        if (prependToProgramListing != null) {
+            code = prependToProgramListing + code;
+        }
+        if (appendToProgramListing != null) {
+            code += appendToProgramListing;
+        }
+        str = encloseContents("div", "programlisting", code);
+    } else {
+        if (role.equals("xml")) {
+            str = encloseContents("div", "programlisting", encloseContents("pre", "xmlcode", xmlLexer.convert(HTMLXMLCodeHandler.getInstance(), contents)));
+        } else if (role.equals("c") || role.equals("cpp") || role.equals("code_gateway")) {
+            str = encloseContents("div", "programlisting", encloseContents("pre", "ccode", cLexer.convert(HTMLCCodeHandler.getInstance(), contents)));
+        } else if (role.equals("java")) {
+            str = encloseContents("div", "programlisting", encloseContents("pre", "ccode", javaLexer.convert(HTMLCCodeHandler.getInstance(), contents)));
+        } else {
+            String code = encloseContents("pre", "scilabcode", scilabLexer.convert(HTMLScilabCodeHandler.getInstance(refname), contents));
+            if (prependToProgramListing != null) {
+                code = prependToProgramListing + code;
+            }
+            if (appendToProgramListing != null) {
+                code += appendToProgramListing;
+            }
+            str = encloseContents("div", "programlisting", code);
+        }
+    }
+    if (id != null) {
+        return "<a name=\"" + id + "\"></a>" + str;
+    } else {
+        return str;
+    }
+}
+#end_block
+
+#method_before
+protected String resolvScilabLink(String link) {
+    String[] toks = link.split("/");
+    if (toks != null && toks.length >= 2) {
+        if (!linkToTheWeb) {
+            String url = urlBase + toks[0] + "." + toks[1];
+            for (int i = 2; i < toks.length; i++) {
+                url += "/" + toks[i];
+            }
+            return url;
+        } else {
+            if (toks[0].equals("scilab") && toks[1].equals("help")) {
+                return urlBase + toks[2] + ".html";
+            } else {
+                return "#";
+            }
+        }
+    }
+    return link;
+}
+#method_after
+protected String resolvScilabLink(String link) {
+    int pos = link.indexOf("/");
+    if (pos == -1) {
+        return null;
+    }
+    String first = link.substring(0, pos);
+    String second = link.substring(pos + 1);
+    String[] toks = first.split("\\.");
+    if (toks == null || toks.length != 2) {
+        return null;
+    }
+    if (!linkToTheWeb) {
+        return urlBase + link;
+    } else {
+        if (toks[0].equals("scilab") && toks[1].equals("help")) {
+            return urlBase + second + ".html";
+        } else {
+            return "#";
+        }
+    }
+}
+#end_block
+
+#method_before
+public String process(String sourceDoc, String styleSheet) {
+    SciDocConfiguration conf = new SciDocConfiguration();
+    template = conf.getTemplate(format.toLowerCase());
+    /* TODO: make this file generated at build time of Scilab */
+    sciprim = conf.getBuiltins();
+    scimacro = conf.getMacros();
+    version = conf.getVersion();
+    // the path must be relative to outputDirectory
+    imagedir = ".";
+    if (!new File(sourceDoc).isFile()) {
+        System.err.println("Could not find master document: " + sourceDoc);
+        return null;
+    }
+    if (!new File(template).isFile()) {
+        System.err.println("Could not find template document: " + template);
+        return null;
+    }
+    try {
+        DocbookTagConverter converter = null;
+        String urlBase = null;
+        if (format.equalsIgnoreCase("javahelp")) {
+            converter = new JavaHelpDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, isToolbox, "scilab://");
+        } else {
+            if (isToolbox) {
+                urlBase = conf.getWebSiteURL() + language + "/";
+            }
+            if (format.equalsIgnoreCase("html") || format.equalsIgnoreCase("web")) {
+                converter = new HTMLDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, isToolbox, urlBase);
+            } else if (format.equalsIgnoreCase("chm")) {
+                converter = new CHMDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, isToolbox, urlBase, language);
+            }
+        }
+        converter.registerExternalXMLHandler(new HTMLMathMLHandler(outputDirectory, imagedir));
+        converter.registerExternalXMLHandler(new HTMLSVGHandler(outputDirectory, imagedir));
+        converter.convert();
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/scilab_code.css"), new File(outputDirectory + "/scilab_code.css"));
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/xml_code.css"), new File(outputDirectory + "/xml_code.css"));
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/c_code.css"), new File(outputDirectory + "/c_code.css"));
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/style.css"), new File(outputDirectory + "/style.css"));
+        if (format.equalsIgnoreCase("javahelp")) {
+            if (!isToolbox) {
+                Helpers.copyFile(new File(SCI + "/modules/helptools/data/pages/error.html"), new File(outputDirectory + "/ScilabErrorPage.html"));
+                Helpers.copyFile(new File(SCI + "/modules/helptools/data/pages/homepage-en_US.html"), new File(outputDirectory + "/ScilabHomePage.html"));
+                Helpers.copyFile(new File(SCI + "/modules/helptools/data/pages/ban_en_US.png"), new File(outputDirectory + "/ban_en_US.png"));
+            }
+            BuildJavaHelp.buildJavaHelp(outputDirectory, language);
+        }
+    } catch (Exception e) {
+        System.err.println("An error occured during the conversion:\n");
+        e.printStackTrace();
+    }
+    return outputDirectory;
+}
+#method_after
+public String process(String sourceDoc, String styleSheet) {
+    SciDocConfiguration conf = new SciDocConfiguration();
+    template = conf.getTemplate(format.toLowerCase());
+    /* TODO: make this file generated at build time of Scilab */
+    sciprim = conf.getBuiltins();
+    scimacro = conf.getMacros();
+    version = conf.getVersion();
+    // the path must be relative to outputDirectory
+    imagedir = ".";
+    if (!new File(sourceDoc).isFile()) {
+        System.err.println("Could not find master document: " + sourceDoc);
+        return null;
+    }
+    if (!new File(template).isFile()) {
+        System.err.println("Could not find template document: " + template);
+        return null;
+    }
+    try {
+        DocbookTagConverter converter = null;
+        String urlBase = null;
+        if (format.equalsIgnoreCase("javahelp")) {
+            converter = new JavaHelpDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, isToolbox, "scilab://");
+        } else {
+            if (isToolbox) {
+                urlBase = conf.getWebSiteURL() + language + "/";
+            }
+            if (format.equalsIgnoreCase("html") || format.equalsIgnoreCase("web")) {
+                converter = new HTMLDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, isToolbox, urlBase);
+            } else if (format.equalsIgnoreCase("chm")) {
+                converter = new CHMDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, isToolbox, urlBase, language);
+            }
+        }
+        converter.registerExternalXMLHandler(new HTMLMathMLHandler(outputDirectory, imagedir));
+        converter.registerExternalXMLHandler(new HTMLSVGHandler(outputDirectory, imagedir));
+        converter.convert();
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/scilab_code.css"), new File(outputDirectory + "/scilab_code.css"));
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/xml_code.css"), new File(outputDirectory + "/xml_code.css"));
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/c_code.css"), new File(outputDirectory + "/c_code.css"));
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/style.css"), new File(outputDirectory + "/style.css"));
+        Helpers.copyFile(new File(SCI + "/modules/gui/images/icons/media-playback-start.png"), new File(outputDirectory + "/ScilabExecute.png"));
+        Helpers.copyFile(new File(SCI + "/modules/gui/images/icons/accessories-text-editor.png"), new File(outputDirectory + "/ScilabEdit.png"));
+        if (format.equalsIgnoreCase("javahelp")) {
+            if (!isToolbox) {
+                Helpers.copyFile(new File(SCI + "/modules/helptools/data/pages/error.html"), new File(outputDirectory + "/ScilabErrorPage.html"));
+                Helpers.copyFile(new File(SCI + "/modules/helptools/data/pages/homepage-en_US.html"), new File(outputDirectory + "/ScilabHomePage.html"));
+                Helpers.copyFile(new File(SCI + "/modules/helptools/data/pages/ban_en_US.png"), new File(outputDirectory + "/ban_en_US.png"));
+            }
+            BuildJavaHelp.buildJavaHelp(outputDirectory, language);
+        }
+    } catch (Exception e) {
+        System.err.println("An error occured during the conversion:\n");
+        e.printStackTrace();
+    }
+    return outputDirectory;
+}
+#end_block
+
+#method_before
+@ScilabExported(module = "xcos", filename = "Xcos.giws.xml")
+public static void xcos(final String fileName) {
+    final Xcos instance = getInstance();
+    final File filename = new File(fileName);
+    /* load scicos libraries (macros) */
+    InterpreterManagement.requestScilabExec("loadXcosLibs();");
+    SwingUtilities.invokeLater(new Runnable() {
+
+        @Override
+        public void run() {
+            instance.open(filename);
+        }
+    });
+}
+#method_after
+@ScilabExported(module = "xcos", filename = "Xcos.giws.xml")
+public static void xcos(final String fileName) {
+    final Xcos instance = getInstance();
+    final File filename = new File(fileName);
+    /* load scicos libraries (macros) */
+    InterpreterManagement.requestScilabExec("loadXcosLibs();");
+    try {
+        SwingUtilities.invokeAndWait(new Runnable() {
+
+            @Override
+            public void run() {
+                instance.open(filename);
+            }
+        });
+    } catch (final InterruptedException e) {
+        LOG.error(e);
+    } catch (final InvocationTargetException e) {
+        Throwable throwable = e;
+        String firstMessage = null;
+        while (throwable != null) {
+            firstMessage = throwable.getLocalizedMessage();
+            throwable = throwable.getCause();
+        }
+        throw new RuntimeException(firstMessage, e);
+    }
+}
+#end_block
+
+#method_before
+@Override
+public mxStylesheet decode(ScilabType element, mxStylesheet into) throws ScicosFormatException {
+    data = (ScilabTList) element;
+    final mxStylesheet styleSheet = into;
+    validate();
+    if (into == null) {
+        throw new NullPointerException("No place to decode data");
+    }
+    /*
+		 * get the data
+		 */
+    int field = 2;
+    String[][] blockNames = ((ScilabString) data.get(field)).getData();
+    field++;
+    field++;
+    field++;
+    String[][] styles = ((ScilabString) data.get(field)).getData();
+    for (int i = 0; i < blockNames.length; i++) {
+        for (int j = 0; j < blockNames[i].length; j++) {
+            final Map<String, Object> style = styleSheet.getCellStyle(styles[i][j], styleSheet.getCellStyle("block", styleSheet.getDefaultVertexStyle()));
+            styleSheet.putCellStyle(blockNames[i][j], style);
+        }
+    }
+    return styleSheet;
+}
+#method_after
+@Override
+public mxStylesheet decode(ScilabType element, mxStylesheet into) throws ScicosFormatException {
+    data = (ScilabTList) element;
+    final mxStylesheet styleSheet = into;
+    validate();
+    if (into == null) {
+        throw new NullPointerException("No place to decode data");
+    }
+    /*
+		 * get the data
+		 */
+    int field = 2;
+    String[][] blockNames = ((ScilabString) data.get(field)).getData();
+    field++;
+    field++;
+    field++;
+    String[][] styles = ((ScilabString) data.get(field)).getData();
+    for (int i = 0; i < blockNames.length; i++) {
+        for (int j = 0; j < blockNames[i].length; j++) {
+            final Map<String, Object> style = styleSheet.getCellStyle(styles[i][j], styleSheet.getCellStyle("Icon", styleSheet.getDefaultVertexStyle()));
+            styleSheet.putCellStyle(blockNames[i][j], style);
+        }
+    }
+    return styleSheet;
+}
+#end_block
+
+#method_before
+public static Console createConsole() {
+    if (instance == null) {
+        instance = new ScilabConsole();
+        if (ScilabPrintStream.isAvailable()) {
+            PrintStream err = System.err;
+            System.setErr(ScilabPrintStream.getInstance());
+            ScilabPrintStream.setRedirect(err);
+        }
+    }
+    return instance;
+}
+#method_after
+public static Console createConsole() {
+    if (instance == null) {
+        instance = new ScilabConsole();
+        if (ScilabPrintStream.isAvailable()) {
+            /* Get usual stderr */
+            PrintStream err = System.err;
+            /* Now stderr is the console */
+            System.setErr(ScilabPrintStream.getInstance());
+            /* Bug 8748: Xcos needs to have the usual stderr too */
+            ScilabPrintStream.setRedirect(err);
+        }
+    }
+    return instance;
+}
+#end_block
+
+#method_before
+public void convert(String code, int[] lineNumberArray, String fileName, String type, String title, PageFormat format) {
+    FopFactory fopFactory = FopFactory.newInstance();
+    OutputStream out = null;
+    try {
+        fopFactory.setUserConfig(new File(ScilabConstants.SCI + "/modules/helptools/fopconf.xml"));
+        FOUserAgent userAgent = fopFactory.newFOUserAgent();
+        userAgent.setProducer(CREATOR);
+        userAgent.setTitle(title);
+        userAgent.setAuthor(System.getProperty("user.name"));
+        Fop fop;
+        if (!type.equals(PRINT) && !type.equals(PREVIEW) && fileName != null && !fileName.isEmpty()) {
+            out = new BufferedOutputStream(new FileOutputStream(new File(fileName)));
+            fop = fopFactory.newFop(type, userAgent, out);
+        } else {
+            fop = fopFactory.newFop(type, userAgent);
+        }
+        TransformerFactory factory = TransformerFactory.newInstance();
+        Transformer transformer = factory.newTransformer();
+        String str = super.convert(code, lineNumberArray, format);
+        Source src = new StreamSource(new StringReader(str));
+        Result res = new SAXResult(fop.getDefaultHandler());
+        transformer.transform(src, res);
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        try {
+            if (out != null) {
+                out.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+#method_after
+public void convert(String code, int[] lineNumberArray, String fileName, String type, String title, PageFormat format) {
+    FopFactory fopFactory = FopFactory.newInstance();
+    OutputStream out = null;
+    try {
+        fopFactory.setUserConfig(new File(ScilabConstants.SCI + "/modules/helptools/etc/fopconf.xml"));
+        FOUserAgent userAgent = fopFactory.newFOUserAgent();
+        userAgent.setProducer(CREATOR);
+        userAgent.setTitle(title);
+        userAgent.setAuthor(System.getProperty("user.name"));
+        Fop fop;
+        if (!type.equals(PRINT) && !type.equals(PREVIEW) && fileName != null && !fileName.isEmpty()) {
+            out = new BufferedOutputStream(new FileOutputStream(new File(fileName)));
+            fop = fopFactory.newFop(type, userAgent, out);
+        } else {
+            fop = fopFactory.newFop(type, userAgent);
+        }
+        TransformerFactory factory = TransformerFactory.newInstance();
+        Transformer transformer = factory.newTransformer();
+        String str = super.convert(code, lineNumberArray, format);
+        Source src = new StreamSource(new StringReader(str));
+        Result res = new SAXResult(fop.getDefaultHandler());
+        transformer.transform(src, res);
+    } catch (Exception e) {
+        if (type.equals(PRINT)) {
+            ScilabModalDialog.show(editor, SciNotesMessages.PRINTERERROR + "\n" + e.getLocalizedMessage());
+        } else {
+            System.err.println(SciNotesMessages.EXPORTERROR + ":");
+            e.printStackTrace();
+        }
+    } finally {
+        try {
+            if (out != null) {
+                out.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+#end_block
+
+#method_before
+public static void addMapActionNameKeys(Map map) {
+    for (Enumeration action = keysMap.propertyNames(); action.hasMoreElements(); ) {
+        String name = (String) action.nextElement();
+        KeyStroke ks = KeyStroke.getKeyStroke(keysMap.getProperty(name));
+        map.put(name, ks);
+    }
+}
+#method_after
+public static void addMapActionNameKeys(Map map) {
+    for (Enumeration action = keysMap.propertyNames(); action.hasMoreElements(); ) {
+        String name = (String) action.nextElement();
+        KeyStroke ks = ScilabKeyStroke.getKeyStroke(keysMap.getProperty(name));
+        map.put(name, ks);
+    }
+}
+#end_block
+
+#method_before
+public String getParentFigure() {
+    if (this instanceof Figure) {
+        return getIdentifier();
+    } else {
+        return GraphicController.getController().getObjectFromId(getParent()).getParentFigure();
+    }
+}
+#method_after
+public String getParentFigure() {
+    if (this instanceof Figure) {
+        return getIdentifier();
+    } else {
+        if (getParent() != null && GraphicController.getController().getObjectFromId(getParent()) != null) {
+            return GraphicController.getController().getObjectFromId(getParent()).getParentFigure();
+        } else {
+            return null;
+        }
+    }
+}
+#end_block
+
+#method_before
+public String getParentAxes() {
+    if (this instanceof Axes) {
+        return getIdentifier();
+    } else {
+        return GraphicController.getController().getObjectFromId(getParent()).getParentAxes();
+    }
+}
+#method_after
+public String getParentAxes() {
+    if (this instanceof Axes) {
+        return getIdentifier();
+    } else {
+        if (getParent() != null && GraphicController.getController().getObjectFromId(getParent()) != null) {
+            return GraphicController.getController().getObjectFromId(getParent()).getParentAxes();
+        } else {
+            return null;
+        }
+    }
+}
+#end_block
+
+#method_before
+public String handleSimplelist(Map<String, String> attributes, String contents) throws SAXException {
+    String style = "simplelist";
+    String type = attributes.get("type");
+    if (type != null) {
+        style += " " + type + "-list";
+    }
+    return encloseContents("ul", style, contents);
+}
+#method_after
+public String handleSimplelist(Map<String, String> attributes, String contents) throws SAXException {
+    String style = "itemizedlist";
+    return encloseContents("ul", style, contents);
+}
+#end_block
+
+#method_before
+public String process(String sourceDoc, String styleSheet) {
+    template = SCI + "/modules/helptools/data/template/template_" + format.toLowerCase() + ".html";
+    /* TODO: make this file generated at build time of Scilab */
+    sciprim = SCI + "/modules/helptools/data/configuration/scilab_primitives.txt";
+    scimacro = SCI + "/modules/helptools/data/configuration/scilab_macros.txt";
+    version = getVersion(version);
+    // the path must be relative to outputDirectory
+    imagedir = ".";
+    if (!new File(sourceDoc).isFile()) {
+        System.err.println("Could not find master document: " + sourceDoc);
+        return null;
+    }
+    if (!new File(template).isFile()) {
+        System.err.println("Could not find template document: " + template);
+        return null;
+    }
+    // Boolean.parseBoolean(map.get("checklast"));
+    boolean checkLast = false;
+    try {
+        DocbookTagConverter converter = null;
+        if (format.equalsIgnoreCase("javahelp")) {
+            converter = new JavaHelpDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, checkLast);
+        } else if (format.equalsIgnoreCase("html") || format.equalsIgnoreCase("web")) {
+            converter = new HTMLDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, checkLast);
+        } else if (format.equalsIgnoreCase("chm")) {
+            converter = new CHMDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, checkLast);
+        }
+        converter.registerExternalXMLHandler(new HTMLMathMLHandler(outputDirectory, imagedir));
+        converter.registerExternalXMLHandler(new HTMLSVGHandler(outputDirectory, imagedir));
+        converter.convert();
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/scilab_code.css"), new File(outputDirectory + "/scilab_code.css"));
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/style.css"), new File(outputDirectory + "/style.css"));
+        if (format.equalsIgnoreCase("javahelp")) {
+            // replace en_US by language
+            BuildJavaHelp.buildJavaHelp(outputDirectory, language);
+        }
+    } catch (Exception e) {
+        System.err.println("An error occured during the conversion:\n");
+        e.printStackTrace();
+    }
+    return outputDirectory;
+}
+#method_after
+public String process(String sourceDoc, String styleSheet) {
+    PrintStream err = System.err;
+    if (ScilabPrintStream.isAvailable()) {
+        System.setErr(ScilabPrintStream.getInstance());
+        System.err.println("");
+    }
+    template = SCI + "/modules/helptools/data/template/template_" + format.toLowerCase() + ".html";
+    /* TODO: make this file generated at build time of Scilab */
+    sciprim = SCI + "/modules/helptools/data/configuration/scilab_primitives.txt";
+    scimacro = SCI + "/modules/helptools/data/configuration/scilab_macros.txt";
+    version = getVersion(version);
+    // the path must be relative to outputDirectory
+    imagedir = ".";
+    if (!new File(sourceDoc).isFile()) {
+        System.err.println("Could not find master document: " + sourceDoc);
+        return null;
+    }
+    if (!new File(template).isFile()) {
+        System.err.println("Could not find template document: " + template);
+        return null;
+    }
+    // Boolean.parseBoolean(map.get("checklast"));
+    boolean checkLast = false;
+    try {
+        DocbookTagConverter converter = null;
+        if (format.equalsIgnoreCase("javahelp")) {
+            converter = new JavaHelpDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, checkLast);
+        } else if (format.equalsIgnoreCase("html") || format.equalsIgnoreCase("web")) {
+            converter = new HTMLDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, checkLast);
+        } else if (format.equalsIgnoreCase("chm")) {
+            converter = new CHMDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, checkLast, language);
+        }
+        converter.registerExternalXMLHandler(new HTMLMathMLHandler(outputDirectory, imagedir));
+        converter.registerExternalXMLHandler(new HTMLSVGHandler(outputDirectory, imagedir));
+        converter.convert();
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/scilab_code.css"), new File(outputDirectory + "/scilab_code.css"));
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/style.css"), new File(outputDirectory + "/style.css"));
+        if (format.equalsIgnoreCase("javahelp")) {
+            // replace en_US by language
+            BuildJavaHelp.buildJavaHelp(outputDirectory, language);
+        }
+    } catch (Exception e) {
+        System.err.println("An error occured during the conversion:\n");
+        e.printStackTrace();
+    }
+    System.setErr(err);
+    return outputDirectory;
+}
+#end_block
+
+#method_before
+public String process(String sourceDoc, String styleSheet) {
+    PrintStream err = System.err;
+    if (ScilabPrintStream.isAvailable()) {
+        System.setErr(ScilabPrintStream.getInstance());
+        System.err.println("");
+    }
+    template = SCI + "/modules/helptools/data/template/template_" + format.toLowerCase() + ".html";
+    /* TODO: make this file generated at build time of Scilab */
+    sciprim = SCI + "/modules/helptools/data/configuration/scilab_primitives.txt";
+    scimacro = SCI + "/modules/helptools/data/configuration/scilab_macros.txt";
+    version = getVersion(version);
+    // the path must be relative to outputDirectory
+    imagedir = ".";
+    if (!new File(sourceDoc).isFile()) {
+    // throw new FileNotFoundException("Could not find master document: " + sourceDoc);
+    }
+    // Boolean.parseBoolean(map.get("checklast"));
+    boolean checkLast = false;
+    try {
+        DocbookTagConverter converter = null;
+        if (format.equalsIgnoreCase("javahelp")) {
+            converter = new JavaHelpDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, checkLast);
+        } else if (format.equalsIgnoreCase("html")) {
+            converter = new HTMLDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, checkLast);
+        } else if (format.equalsIgnoreCase("chm")) {
+            converter = new CHMDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, checkLast);
+        }
+        converter.registerExternalXMLHandler(new HTMLMathMLHandler(outputDirectory, imagedir));
+        converter.registerExternalXMLHandler(new HTMLSVGHandler(outputDirectory, imagedir));
+        converter.convert();
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/scilab_code.css"), new File(outputDirectory + "/scilab_code.css"));
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/style.css"), new File(outputDirectory + "/style.css"));
+        if (format.equalsIgnoreCase("javahelp")) {
+            // replace en_US by language
+            BuildJavaHelp.buildJavaHelp(outputDirectory, language);
+        }
+    } catch (Exception e) {
+        System.err.println("An error occured during the conversion:\n");
+        e.printStackTrace();
+    }
+    System.setErr(err);
+    return outputDirectory;
+}
+#method_after
+public String process(String sourceDoc, String styleSheet) {
+    PrintStream err = System.err;
+    if (ScilabPrintStream.isAvailable()) {
+        System.setErr(ScilabPrintStream.getInstance());
+        System.err.println("");
+    }
+    template = SCI + "/modules/helptools/data/template/template_" + format.toLowerCase() + ".html";
+    /* TODO: make this file generated at build time of Scilab */
+    sciprim = SCI + "/modules/helptools/data/configuration/scilab_primitives.txt";
+    scimacro = SCI + "/modules/helptools/data/configuration/scilab_macros.txt";
+    version = getVersion(version);
+    // the path must be relative to outputDirectory
+    imagedir = ".";
+    if (!new File(sourceDoc).isFile()) {
+    // throw new FileNotFoundException("Could not find master document: " + sourceDoc);
+    }
+    // Boolean.parseBoolean(map.get("checklast"));
+    boolean checkLast = false;
+    try {
+        DocbookTagConverter converter = null;
+        if (format.equalsIgnoreCase("javahelp")) {
+            converter = new JavaHelpDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, checkLast);
+        } else if (format.equalsIgnoreCase("html")) {
+            converter = new HTMLDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, checkLast);
+        } else if (format.equalsIgnoreCase("chm")) {
+            converter = new CHMDocbookTagConverter(sourceDoc, outputDirectory, sciprim, scimacro, template, version, imagedir, checkLast, language);
+        }
+        converter.registerExternalXMLHandler(new HTMLMathMLHandler(outputDirectory, imagedir));
+        converter.registerExternalXMLHandler(new HTMLSVGHandler(outputDirectory, imagedir));
+        converter.convert();
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/scilab_code.css"), new File(outputDirectory + "/scilab_code.css"));
+        Helpers.copyFile(new File(SCI + "/modules/helptools/data/css/style.css"), new File(outputDirectory + "/style.css"));
+        if (format.equalsIgnoreCase("javahelp")) {
+            // replace en_US by language
+            BuildJavaHelp.buildJavaHelp(outputDirectory, language);
+        }
+    } catch (Exception e) {
+        System.err.println("An error occured during the conversion:\n");
+        e.printStackTrace();
+    }
+    System.setErr(err);
+    return outputDirectory;
+}
+#end_block
+
+#method_before
+@Test
+public void testDoubleList() throws NullPointerException, HDF5LibraryException, HDF5Exception {
+    ScilabList dataList = new ScilabList();
+    dataList.add(new ScilabDouble(2));
+    dataList.add(new ScilabDouble(51));
+    dataList.add(new ScilabString("hello"));
+    String[][] stringData = { { "i", "am", "a" }, { "string", "matrix", "!!!" } };
+    dataList.add(new ScilabString(stringData));
+    int fileId = H5Write.createFile(tempDir + "/doubleListFromJava.h5");
+    H5Write.writeInDataSet(fileId, "DoubleList", dataList);
+    H5Write.closeFile(fileId);
+    ScilabList data = new ScilabList();
+    fileId = H5Read.openFile(tempDir + "/stringListFromJava.h5");
+    Assert.assertEquals(H5Read.getRootType(fileId), H5ScilabConstant.SCILAB_CLASS_LIST);
+    H5Read.readDataFromFile(fileId, data);
+    Assert.assertEquals(data.getHeight(), dataList.getHeight());
+    Assert.assertEquals(data.getWidth(), dataList.getWidth());
+    // deep equals
+    Assert.assertEquals(data, dataList);
+}
+#method_after
+@Test
+public void testDoubleList() throws NullPointerException, HDF5LibraryException, HDF5Exception {
+    ScilabList dataList = new ScilabList();
+    dataList.add(new ScilabDouble(2));
+    dataList.add(new ScilabDouble(51));
+    int fileId = H5Write.createFile(tempDir + "/doubleListFromJava.h5");
+    H5Write.writeInDataSet(fileId, "DoubleList", dataList);
+    H5Write.closeFile(fileId);
+    ScilabList data = new ScilabList();
+    fileId = H5Read.openFile(tempDir + "/doubleListFromJava.h5");
+    Assert.assertEquals(H5Read.getRootType(fileId), H5ScilabConstant.SCILAB_CLASS_LIST);
+    H5Read.readDataFromFile(fileId, data);
+    Assert.assertEquals(data.getHeight(), dataList.getHeight());
+    Assert.assertEquals(data.getWidth(), dataList.getWidth());
+    // deep equals
+    Assert.assertEquals(data, dataList);
+}
+#end_block
+
+#method_before
+public static void main(String[] args) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+    Object obj = new testScilabString();
+    Method[] tests = testScilabString.class.getDeclaredMethods();
+    for (Method method : tests) {
+        if (method.getAnnotation(Test.class) != null) {
+            method.invoke(obj, (Object[]) null);
+        }
+    }
+}
+#method_after
+public static void main(String[] args) throws Exception {
+    final Class<?> myClass = Class.forName(new Throwable().getStackTrace()[0].getClassName());
+    Object obj = myClass.newInstance();
+    java.lang.reflect.Method[] tests = myClass.getDeclaredMethods();
+    for (java.lang.reflect.Method method : tests) {
+        if (method.getAnnotation(Test.class) != null) {
+            method.invoke(obj, (Object[]) null);
+        }
+    }
+}
+#end_block
+
+#method_before
+@Override
+public Object createEdge(Object parent, String id, Object value, Object source, Object target, String style) {
+    Object ret = null;
+    if (source instanceof BasicPort) {
+        BasicPort src = (BasicPort) source;
+        BasicLink link = null;
+        if (src.getType() == Type.EXPLICIT) {
+            link = new ExplicitLink();
+        } else if (src.getType() == Type.IMPLICIT) {
+            link = new ImplicitLink();
+        } else {
+            link = new CommandControlLink();
+        }
+        // allocate the associated geometry
+        link.setGeometry(new mxGeometry());
+        ret = link;
+    }
+    if (ret == null) {
+        ret = super.createEdge(parent, id, value, source, target, style);
+        LOG.debug("Creating a non typed edge");
+    }
+    return ret;
+}
+#method_after
+@Override
+public Object createEdge(Object parent, String id, Object value, Object source, Object target, String style) {
+    Object ret = null;
+    if (source instanceof BasicPort) {
+        BasicPort src = (BasicPort) source;
+        BasicLink link = null;
+        if (src.getType() == Type.EXPLICIT) {
+            link = new ExplicitLink();
+        } else if (src.getType() == Type.IMPLICIT) {
+            link = new ImplicitLink();
+        } else {
+            link = new CommandControlLink();
+        }
+        // allocate the associated geometry
+        link.setGeometry(new mxGeometry());
+        ret = link;
+    } else if (source instanceof SplitBlock) {
+        SplitBlock src = (SplitBlock) source;
+        return createEdge(parent, id, value, src.getIn(), target, style);
+    } else if (source instanceof BasicLink) {
+        BasicLink src = (BasicLink) source;
+        BasicLink link = null;
+        try {
+            link = src.getClass().newInstance();
+            // allocate the associated geometry
+            link.setGeometry(new mxGeometry());
+        } catch (InstantiationException e) {
+            LOG.error(e);
+        } catch (IllegalAccessException e) {
+            LOG.error(e);
+        }
+        ret = link;
+    }
+    if (ret == null) {
+        ret = super.createEdge(parent, id, value, source, target, style);
+        LOG.debug("Creating a non typed edge");
+    }
+    return ret;
+}
+#end_block
+
+#method_before
+@Override
+public Object addCell(Object cell, Object parent, Integer index, Object source, Object target) {
+    // already connected edge or normal block
+    if (source == null && target == null) {
+        return super.addCell(cell, parent, index, source, target);
+    }
+    // Command -> Control
+    if (source instanceof CommandPort && target instanceof ControlPort && cell instanceof CommandControlLink) {
+        return super.addCell(cell, parent, index, source, target);
+    }
+    // Switch source and target !
+    if (target instanceof CommandPort && source instanceof ControlPort && cell instanceof CommandControlLink) {
+        BasicLink current = (BasicLink) cell;
+        current.invertDirection();
+        return super.addCell(cell, parent, index, target, source);
+    }
+    // ExplicitOutput -> ExplicitInput
+    if (source instanceof ExplicitOutputPort && target instanceof ExplicitInputPort && cell instanceof ExplicitLink) {
+        return super.addCell(cell, parent, index, source, target);
+    }
+    // Switch source and target !
+    if (target instanceof ExplicitOutputPort && source instanceof ExplicitInputPort && cell instanceof ExplicitLink) {
+        BasicLink current = (BasicLink) cell;
+        current.invertDirection();
+        return super.addCell(cell, parent, index, target, source);
+    }
+    // ImplicitOutput -> ImplicitInput
+    if (source instanceof ImplicitOutputPort && target instanceof ImplicitInputPort && cell instanceof ImplicitLink) {
+        return super.addCell(cell, parent, index, source, target);
+    }
+    // Switch source and target !
+    if (target instanceof ImplicitOutputPort && source instanceof ImplicitInputPort && cell instanceof ImplicitLink) {
+        BasicLink current = (BasicLink) cell;
+        current.invertDirection();
+        return super.addCell(cell, parent, index, target, source);
+    }
+    // ImplicitInput -> ImplicitInput
+    if (source instanceof ImplicitInputPort && target instanceof ImplicitInputPort && cell instanceof ImplicitLink) {
+        return super.addCell(cell, parent, index, source, target);
+    }
+    // Switch source and target !
+    if (target instanceof ImplicitOutputPort && source instanceof ImplicitOutputPort && cell instanceof ImplicitLink) {
+        BasicLink current = (BasicLink) cell;
+        current.invertDirection();
+        return super.addCell(cell, parent, index, target, source);
+    }
+    // ExplicitLink -> ExplicitInputPort
+    if (source instanceof ExplicitLink && target instanceof ExplicitInputPort && cell instanceof ExplicitLink) {
+        SplitBlock split = addSplitEdge(((BasicLink) cell).getGeometry().getSourcePoint(), (BasicLink) source, (BasicPort) target);
+        return addCell(cell, parent, index, split.getOut2(), target);
+    }
+    // Switch source and target !
+    if (target instanceof ExplicitLink && source instanceof ExplicitInputPort && cell instanceof ExplicitLink) {
+        final BasicLink current = (BasicLink) cell;
+        final SplitBlock split = addSplitEdge(current.getGeometry().getTargetPoint(), (BasicLink) target, (BasicPort) source);
+        current.invertDirection();
+        return addCell(cell, parent, index, split.getOut2(), source);
+    }
+    // ImplicitLink -> ImplicitInputPort
+    if (source instanceof ImplicitLink && target instanceof ImplicitInputPort && cell instanceof ImplicitLink) {
+        SplitBlock split = addSplitEdge(((BasicLink) cell).getGeometry().getSourcePoint(), (BasicLink) source, (BasicPort) target);
+        return addCell(cell, parent, index, split.getOut2(), target);
+    }
+    // Switch source and target !
+    if (target instanceof ImplicitLink && source instanceof ImplicitInputPort && cell instanceof ImplicitLink) {
+        final BasicLink current = (BasicLink) cell;
+        final SplitBlock split = addSplitEdge(current.getGeometry().getTargetPoint(), (BasicLink) target, (BasicPort) source);
+        current.invertDirection();
+        return addCell(cell, parent, index, split.getOut2(), source);
+    }
+    // ImplicitLink -> ImplicitOutputPort
+    if (source instanceof ImplicitLink && target instanceof ImplicitOutputPort && cell instanceof ImplicitLink) {
+        final BasicLink current = (BasicLink) cell;
+        final SplitBlock split = addSplitEdge(current.getGeometry().getTargetPoint(), (BasicLink) source, (BasicPort) target);
+        return addCell(cell, parent, index, split.getOut2(), source);
+    }
+    // Switch source and target !
+    if (target instanceof ImplicitLink && source instanceof ImplicitOutputPort && cell instanceof ImplicitLink) {
+        final BasicLink current = (BasicLink) cell;
+        final SplitBlock split = addSplitEdge(current.getGeometry().getTargetPoint(), (ImplicitLink) target, (ImplicitOutputPort) source);
+        return addCell(cell, parent, index, split.getOut2(), source);
+    }
+    // CommandControlLink -> ControlPort
+    if (source instanceof CommandControlLink && target instanceof ControlPort && cell instanceof CommandControlLink) {
+        SplitBlock split = addSplitEdge(((BasicLink) cell).getGeometry().getSourcePoint(), (BasicLink) source, (BasicPort) target);
+        return addCell(cell, parent, index, split.getOut2(), target);
+    }
+    // Switch source and target !
+    if (target instanceof CommandControlLink && source instanceof ControlPort && cell instanceof CommandControlLink) {
+        final BasicLink current = (BasicLink) cell;
+        final SplitBlock split = addSplitEdge(current.getGeometry().getTargetPoint(), (BasicLink) target, (BasicPort) source);
+        current.invertDirection();
+        return addCell(cell, parent, index, split.getOut2(), source);
+    }
+    if (cell instanceof BasicLink && source != null && target != null) {
+        LOG.error("Unable to add a typed link");
+        return null;
+    } else {
+        LOG.error("Adding an untyped edge");
+        return super.addCell(cell, parent, index, source, target);
+    }
+}
+#method_after
+@Override
+public Object addCell(Object cell, Object parent, Integer index, Object source, Object target) {
+    // already connected edge or normal block
+    if (source == null && target == null) {
+        return super.addCell(cell, parent, index, source, target);
+    }
+    // Command -> Control
+    if (source instanceof CommandPort && target instanceof ControlPort && cell instanceof CommandControlLink) {
+        return super.addCell(cell, parent, index, source, target);
+    }
+    // Switch source and target !
+    if (target instanceof CommandPort && source instanceof ControlPort && cell instanceof CommandControlLink) {
+        BasicLink current = (BasicLink) cell;
+        current.invertDirection();
+        return super.addCell(cell, parent, index, target, source);
+    }
+    // ExplicitOutput -> ExplicitInput
+    if (source instanceof ExplicitOutputPort && target instanceof ExplicitInputPort && cell instanceof ExplicitLink) {
+        return super.addCell(cell, parent, index, source, target);
+    }
+    // Switch source and target !
+    if (target instanceof ExplicitOutputPort && source instanceof ExplicitInputPort && cell instanceof ExplicitLink) {
+        BasicLink current = (BasicLink) cell;
+        current.invertDirection();
+        return super.addCell(cell, parent, index, target, source);
+    }
+    // ImplicitOutput -> ImplicitInput
+    if (source instanceof ImplicitOutputPort && target instanceof ImplicitInputPort && cell instanceof ImplicitLink) {
+        return super.addCell(cell, parent, index, source, target);
+    }
+    // Switch source and target !
+    if (target instanceof ImplicitOutputPort && source instanceof ImplicitInputPort && cell instanceof ImplicitLink) {
+        BasicLink current = (BasicLink) cell;
+        current.invertDirection();
+        return super.addCell(cell, parent, index, target, source);
+    }
+    // ImplicitInput -> ImplicitInput
+    if (source instanceof ImplicitInputPort && target instanceof ImplicitInputPort && cell instanceof ImplicitLink) {
+        return super.addCell(cell, parent, index, source, target);
+    }
+    // Switch source and target !
+    if (target instanceof ImplicitOutputPort && source instanceof ImplicitOutputPort && cell instanceof ImplicitLink) {
+        BasicLink current = (BasicLink) cell;
+        current.invertDirection();
+        return super.addCell(cell, parent, index, target, source);
+    }
+    // ExplicitLink -> ExplicitInputPort
+    if (source instanceof ExplicitLink && target instanceof ExplicitInputPort && cell instanceof ExplicitLink) {
+        SplitBlock split = addSplitEdge(((BasicLink) cell).getGeometry().getSourcePoint(), (BasicLink) source);
+        return addCell(cell, parent, index, split.getOut2(), target);
+    }
+    // Switch source and target !
+    if (target instanceof ExplicitLink && source instanceof ExplicitInputPort && cell instanceof ExplicitLink) {
+        final BasicLink current = (BasicLink) cell;
+        final SplitBlock split = addSplitEdge(current.getGeometry().getTargetPoint(), (BasicLink) target);
+        current.invertDirection();
+        return addCell(cell, parent, index, split.getOut2(), source);
+    }
+    // ImplicitLink -> ImplicitInputPort
+    if (source instanceof ImplicitLink && target instanceof ImplicitInputPort && cell instanceof ImplicitLink) {
+        SplitBlock split = addSplitEdge(((BasicLink) cell).getGeometry().getSourcePoint(), (BasicLink) source);
+        return addCell(cell, parent, index, split.getOut2(), target);
+    }
+    // Switch source and target !
+    if (target instanceof ImplicitLink && source instanceof ImplicitInputPort && cell instanceof ImplicitLink) {
+        final BasicLink current = (BasicLink) cell;
+        final SplitBlock split = addSplitEdge(current.getGeometry().getTargetPoint(), (BasicLink) target);
+        current.invertDirection();
+        return addCell(cell, parent, index, split.getOut2(), source);
+    }
+    // ImplicitLink -> ImplicitOutputPort
+    if (source instanceof ImplicitLink && target instanceof ImplicitOutputPort && cell instanceof ImplicitLink) {
+        final BasicLink current = (BasicLink) cell;
+        final SplitBlock split = addSplitEdge(current.getGeometry().getTargetPoint(), (BasicLink) source);
+        return addCell(cell, parent, index, split.getOut2(), source);
+    }
+    // Switch source and target !
+    if (target instanceof ImplicitLink && source instanceof ImplicitOutputPort && cell instanceof ImplicitLink) {
+        final BasicLink current = (BasicLink) cell;
+        final SplitBlock split = addSplitEdge(current.getGeometry().getTargetPoint(), (ImplicitLink) target);
+        return addCell(cell, parent, index, split.getOut2(), source);
+    }
+    // CommandControlLink -> ControlPort
+    if (source instanceof CommandControlLink && target instanceof ControlPort && cell instanceof CommandControlLink) {
+        SplitBlock split = addSplitEdge(((BasicLink) cell).getGeometry().getSourcePoint(), (BasicLink) source);
+        return addCell(cell, parent, index, split.getOut2(), target);
+    }
+    // Switch source and target !
+    if (target instanceof CommandControlLink && source instanceof ControlPort && cell instanceof CommandControlLink) {
+        final BasicLink current = (BasicLink) cell;
+        final SplitBlock split = addSplitEdge(current.getGeometry().getTargetPoint(), (BasicLink) target);
+        current.invertDirection();
+        return addCell(cell, parent, index, split.getOut2(), source);
+    }
+    if (cell instanceof BasicLink && source != null && target != null) {
+        LOG.error("Unable to add a typed link");
+        return null;
+    } else {
+        LOG.error("Adding an untyped edge");
+        return super.addCell(cell, parent, index, source, target);
+    }
+}
+#end_block
+
+#method_before
+private SplitBlock addSplitEdge(final mxPoint splitPoint, final BasicLink link, final mxICell port) {
+    final BasicPort linkSource = (BasicPort) link.getSource();
+    final BasicPort linkTarget = (BasicPort) link.getTarget();
+    final SplitBlock splitBlock = (SplitBlock) BlockFactory.createBlock(BlockInterFunction.SPLIT_f);
+    getModel().beginUpdate();
+    try {
+        if (port instanceof BasicLink) {
+            splitBlock.setConnection(linkSource, linkTarget, (BasicPort) ((BasicLink) port).getSource());
+        } else {
+            splitBlock.setConnection(linkSource, linkTarget, (BasicPort) port);
+        }
+        final mxGeometry geom = splitBlock.getGeometry();
+        geom.setX(splitPoint.getX());
+        geom.setY(splitPoint.getY());
+        BlockPositioning.alignPoint(geom, getGridSize(), (SplitBlock.DEFAULT_SIZE / 2));
+        addCell(splitBlock);
+        // Update old link
+        // get breaking segment
+        final int pos = link.findNearestSegment(splitPoint);
+        // save points after breaking point
+        final mxPoint[] saveStartPoints = link.getPoints(pos, true);
+        final mxPoint[] saveEndPoints = link.getPoints(pos, false);
+        // disable events
+        getModel().beginUpdate();
+        getModel().remove(link);
+        getModel().endUpdate();
+        connect(linkSource, splitBlock.getIn(), saveStartPoints);
+        connect(splitBlock.getOut1(), linkTarget, saveEndPoints);
+        refresh();
+    } finally {
+        getModel().endUpdate();
+    }
+    return splitBlock;
+}
+#method_after
+public SplitBlock addSplitEdge(final mxPoint splitPoint, final BasicLink link) {
+    final BasicPort linkSource = (BasicPort) link.getSource();
+    final BasicPort linkTarget = (BasicPort) link.getTarget();
+    final SplitBlock splitBlock = (SplitBlock) BlockFactory.createBlock(BlockInterFunction.SPLIT_f);
+    getModel().beginUpdate();
+    try {
+        splitBlock.addConnection(linkSource);
+        final mxGeometry geom = splitBlock.getGeometry();
+        geom.setX(splitPoint.getX());
+        geom.setY(splitPoint.getY());
+        BlockPositioning.alignPoint(geom, getGridSize(), (SplitBlock.DEFAULT_SIZE / 2));
+        addCell(splitBlock);
+        // Update old link
+        // get breaking segment
+        final int pos = link.findNearestSegment(splitPoint);
+        // save points after breaking point
+        final List<mxPoint> saveStartPoints = link.getPoints(pos, true);
+        final List<mxPoint> saveEndPoints = link.getPoints(pos, false);
+        // disable events
+        getModel().beginUpdate();
+        getModel().remove(link);
+        getModel().endUpdate();
+        connect(linkSource, splitBlock.getIn(), saveStartPoints);
+        connect(splitBlock.getOut1(), linkTarget, saveEndPoints);
+        refresh();
+    } finally {
+        getModel().endUpdate();
+    }
+    return splitBlock;
+}
+#end_block
+
+#method_before
+public void connect(BasicPort src, BasicPort trg, mxPoint[] points) {
+    BasicLink newLink1 = BasicLink.createLinkFromPorts(src, trg);
+    newLink1.setGeometry(new mxGeometry(0, 0, 80, 80));
+    newLink1.setSource(src);
+    src.insertEdge(newLink1, true);
+    newLink1.setTarget(trg);
+    trg.insertEdge(newLink1, false);
+    // add points after breaking point in the new link
+    if (points != null) {
+        for (mxPoint point : points) {
+            newLink1.addPoint(point.getX(), point.getY());
+        }
+    }
+    addCell(newLink1);
+}
+#method_after
+public void connect(BasicPort src, BasicPort trg, List<mxPoint> points) {
+    BasicLink newLink1 = BasicLink.createLinkFromPorts(src, trg);
+    newLink1.setGeometry(new mxGeometry(0, 0, 80, 80));
+    // add points after breaking point in the new link
+    if (points != null) {
+        newLink1.getGeometry().setPoints(points);
+    }
+    addCell(newLink1, null, null, src, trg);
+}
+#end_block
+
+#method_before
+@Override
+public Object[] removeCells(final Object[] cells, final boolean includeEdges) {
+    if (cells == null || cells.length == 0) {
+        return super.removeCells(cells, includeEdges);
+    }
+    final ArrayList<Object> removedCells = new ArrayList<Object>(Arrays.asList(cells));
+    for (final Object cell : cells) {
+        /*
+			 * Remove split blocks
+			 */
+        if (cell instanceof BasicLink) {
+            final mxICell src = ((BasicLink) cell).getSource().getParent();
+            final mxICell target = ((BasicLink) cell).getTarget().getParent();
+            if (src instanceof SplitBlock) {
+                removedCells.add(src);
+            }
+            if (target instanceof SplitBlock) {
+                removedCells.add(target);
+            }
+        }
+    }
+    return super.removeCells(removedCells.toArray(), includeEdges);
+}
+#method_after
+@Override
+public Object[] removeCells(final Object[] cells, final boolean includeEdges) {
+    if (cells == null || cells.length == 0) {
+        return super.removeCells(cells, includeEdges);
+    }
+    /*
+		 * First remove all links connected to a removed Split if applicable 
+		 */
+    final Object[] initialCells;
+    if (includeEdges) {
+        initialCells = addAllEdges(cells);
+    } else {
+        initialCells = cells;
+    }
+    // stash used on the loop
+    final LinkedList<Object> loopCells = new LinkedList<Object>(Arrays.asList(initialCells));
+    // the cells that need to be really
+    final HashSet<Object> removedCells = new HashSet<Object>(loopCells);
+    // couple of cells to reconnect
+    final ArrayList<BasicPort[]> connectedCells = new ArrayList<BasicPort[]>();
+    final ArrayList<List<mxPoint>> connectedPoints = new ArrayList<List<mxPoint>>();
+    // /!\ not bounded algorithm
+    while (loopCells.size() > 0) {
+        Object cell = loopCells.pop();
+        if (cell instanceof BasicLink) {
+            /*
+				 * Add any split to a link
+				 */
+            final mxICell src = ((BasicLink) cell).getSource().getParent();
+            final mxICell target = ((BasicLink) cell).getTarget().getParent();
+            if (src instanceof SplitBlock) {
+                if (removedCells.add(src)) {
+                    loopCells.add(src);
+                }
+            }
+            if (target instanceof SplitBlock) {
+                if (removedCells.add(target)) {
+                    loopCells.add(target);
+                }
+            }
+        } else if (cell instanceof SplitBlock) {
+            final SplitBlock splitBlock = (SplitBlock) cell;
+            if (splitBlock.getIn().getEdgeCount() == 0 || splitBlock.getOut1().getEdgeCount() == 0 || splitBlock.getOut2().getEdgeCount() == 0) {
+                // corner case, all links will be removed
+                continue;
+            }
+            final mxICell inLink = splitBlock.getIn().getEdgeAt(0);
+            final mxICell out1Link = splitBlock.getOut1().getEdgeAt(0);
+            final mxICell out2Link = splitBlock.getOut2().getEdgeAt(0);
+            /*
+				 * Explicit case, if the in link is deleted; all the out links also should.
+				 */
+            if (inLink instanceof ExplicitLink && removedCells.contains(inLink)) {
+                if (removedCells.add(out1Link)) {
+                    loopCells.add(out1Link);
+                }
+                if (removedCells.add(out2Link)) {
+                    loopCells.add(out2Link);
+                }
+            }
+            /*
+				 * Global case reconnect if not removed
+				 */
+            BasicPort[] connection = null;
+            List<mxPoint> points = null;
+            if (!removedCells.contains(inLink) && !removedCells.contains(out1Link)) {
+                connection = new BasicPort[] { (BasicPort) inLink.getTerminal(true), (BasicPort) out1Link.getTerminal(false) };
+                points = getDirectPoints(splitBlock, inLink, out1Link);
+            } else if (!removedCells.contains(inLink) && !removedCells.contains(out2Link)) {
+                connection = new BasicPort[] { (BasicPort) inLink.getTerminal(true), (BasicPort) out2Link.getTerminal(false) };
+                points = getDirectPoints(splitBlock, inLink, out2Link);
+            } else if (!removedCells.contains(out1Link) && !removedCells.contains(out2Link)) {
+                // only implicit case, log otherwise
+                if (out1Link instanceof ImplicitLink || out2Link instanceof ImplicitLink) {
+                    LOG.error("Reconnection failed for explicit links");
+                }
+                connection = new BasicPort[] { (BasicPort) out1Link.getTerminal(false), (BasicPort) out2Link.getTerminal(false) };
+                points = getDirectPoints(splitBlock, out1Link, out2Link);
+            }
+            if (connection != null) {
+                connectedCells.add(connection);
+                connectedPoints.add(points);
+            }
+        }
+    }
+    final Object[] ret;
+    getModel().beginUpdate();
+    try {
+        ret = super.removeCells(removedCells.toArray(), includeEdges);
+        for (int i = 0; i < connectedCells.size(); i++) {
+            final BasicPort[] connection = connectedCells.get(i);
+            final List<mxPoint> points = connectedPoints.get(i);
+            connect(connection[0], connection[1], points);
+        }
+    } finally {
+        getModel().endUpdate();
+    }
+    return ret;
+}
+#end_block
+

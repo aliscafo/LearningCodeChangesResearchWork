@@ -1,0 +1,2033 @@
+30
+#method_before
+@Before
+public void loadLibrary() {
+    if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+        System.loadLibrary("scilab");
+    }
+}
+#method_after
+@BeforeClass
+public static final void loadLibrary() {
+    if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+        System.loadLibrary("scilab");
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void updateObject(String id, String property) {
+    try {
+        if (needUpdate(id, property)) {
+            GraphicController.getController().setProperty(id, GraphicObjectProperties.__GO_VALID__, true);
+            if (GraphicObjectProperties.__GO_COLORMAP__.equals(property) && figure.getIdentifier().equals(id)) {
+                labelManager.disposeAll();
+                dataManager.disposeAllColorBuffers();
+                dataManager.disposeAllTextureCoordinatesBuffers();
+                markManager.disposeAll();
+                textManager.disposeAll();
+                axesDrawer.disposeAll();
+                fecDrawer.updateAll();
+                colorMapTextureDataProvider.update();
+            } else {
+                labelManager.update(id, property);
+                dataManager.update(id, property);
+                markManager.update(id, property);
+                textManager.update(id, property);
+                axesDrawer.update(id, property);
+                legendDrawer.update(id, property);
+                fecDrawer.update(id, property);
+            }
+            if (GraphicObjectProperties.__GO_ANTIALIASING__.equals(property)) {
+                if (canvas instanceof JoGLCanvas) {
+                    System.out.println("figure.getAntialiasing()" + figure.getAntialiasing());
+                    ((JoGLCanvas) canvas).setAntiAliasingLevel(figure.getAntialiasing());
+                }
+            }
+            if (isImmediateDrawing(id)) {
+                canvas.redraw();
+            }
+        }
+        if (!isImmediateDrawing(id) && GraphicObjectProperties.__GO_IMMEDIATE_DRAWING__.equals(property)) {
+            canvas.waitImage();
+        }
+    } catch (OutOfMemoryException e) {
+        invalidate(GraphicController.getController().getObjectFromId(id), e);
+    } catch (ObjectRemovedException e) {
+    // Object has been removed before draw : do nothing.
+    }
+}
+#method_after
+@Override
+public void updateObject(String id, String property) {
+    try {
+        if (needUpdate(id, property)) {
+            GraphicController.getController().setProperty(id, GraphicObjectProperties.__GO_VALID__, true);
+            if (GraphicObjectProperties.__GO_COLORMAP__.equals(property) && figure.getIdentifier().equals(id)) {
+                labelManager.disposeAll();
+                dataManager.disposeAllColorBuffers();
+                dataManager.disposeAllTextureCoordinatesBuffers();
+                markManager.disposeAll();
+                textManager.disposeAll();
+                axesDrawer.disposeAll();
+                fecDrawer.updateAll();
+                colorMapTextureDataProvider.update();
+            } else {
+                labelManager.update(id, property);
+                dataManager.update(id, property);
+                markManager.update(id, property);
+                textManager.update(id, property);
+                axesDrawer.update(id, property);
+                legendDrawer.update(id, property);
+                fecDrawer.update(id, property);
+            }
+            if (GraphicObjectProperties.__GO_ANTIALIASING__.equals(property)) {
+                if (canvas instanceof JoGLCanvas) {
+                    ((JoGLCanvas) canvas).setAntiAliasingLevel(figure.getAntialiasing());
+                }
+            }
+            if (isImmediateDrawing(id)) {
+                canvas.redraw();
+            }
+        }
+        if (!isImmediateDrawing(id) && GraphicObjectProperties.__GO_IMMEDIATE_DRAWING__.equals(property)) {
+            canvas.waitImage();
+        }
+    } catch (OutOfMemoryException e) {
+        invalidate(GraphicController.getController().getObjectFromId(id), e);
+    } catch (ObjectRemovedException e) {
+    // Object has been removed before draw : do nothing.
+    }
+}
+#end_block
+
+#method_before
+public void load() throws IOException, SAXException, ParserConfigurationException, TransformerException {
+    if (hasInvalidManifest()) {
+        checkHeader();
+    }
+    ScilabList dictionary = getDictionary();
+    final FileInputStream fis = new FileInputStream(file);
+    final ZipInputStream zin = new ZipInputStream(fis);
+    // input stream without close operation
+    final EntryInputStream ein = new EntryInputStream(zin);
+    ZipEntry entry;
+    try {
+        while ((entry = zin.getNextEntry()) != null) {
+            final Node root = manifest.getFirstChild();
+            for (Node n = root.getFirstChild(); n != null; n = n.getNextSibling()) {
+                // node precondition
+                if (n.getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
+                if (!n.hasAttributes()) {
+                    continue;
+                }
+                final String media = n.getAttributes().getNamedItem("manifest:media-type").getNodeValue();
+                final String path = n.getAttributes().getNamedItem("manifest:full-path").getNodeValue();
+                // path should be the entry one, if not continue
+                if (!path.equals(entry.getName()) || path.equals(DICTIONARY_PATH)) {
+                    continue;
+                }
+                // select the right entry decoder
+                for (final Entry e : AVAILABLE_ENTRIES) {
+                    if (media.equals(e.getMediaType()) && path.matches(e.getFullPath())) {
+                        if (dictionary != null) {
+                            ((ContentEntry) e).setDictionary(dictionary);
+                        }
+                        e.setup(this);
+                        e.load(entry, new BufferedInputStream(ein));
+                        break;
+                    }
+                }
+            }
+        }
+    } finally {
+        zin.close();
+    }
+}
+#method_after
+public void load() throws IOException, SAXException, ParserConfigurationException, TransformerException {
+    if (hasInvalidManifest()) {
+        checkHeader();
+    }
+    final ScilabList dictionary = getDictionary();
+    final FileInputStream fis = new FileInputStream(file);
+    final ZipInputStream zin = new ZipInputStream(fis);
+    // input stream without close operation
+    final EntryInputStream ein = new EntryInputStream(zin);
+    ZipEntry entry;
+    try {
+        while ((entry = zin.getNextEntry()) != null) {
+            final Node root = manifest.getFirstChild();
+            for (Node n = root.getFirstChild(); n != null; n = n.getNextSibling()) {
+                // node precondition
+                if (n.getNodeType() != Node.ELEMENT_NODE) {
+                    continue;
+                }
+                if (!n.hasAttributes()) {
+                    continue;
+                }
+                final String media = n.getAttributes().getNamedItem("manifest:media-type").getNodeValue();
+                final String path = n.getAttributes().getNamedItem("manifest:full-path").getNodeValue();
+                // path should be the entry one, if not continue
+                if (!path.equals(entry.getName()) || path.equals(DICTIONARY_PATH)) {
+                    continue;
+                }
+                // select the right entry decoder
+                for (final Entry e : availableEntries) {
+                    if (media.equals(e.getMediaType()) && path.matches(e.getFullPath())) {
+                        if (dictionary != null) {
+                            ((ContentEntry) e).setDictionary(dictionary);
+                        }
+                        e.setup(this);
+                        e.load(entry, ein);
+                        break;
+                    }
+                }
+            }
+        }
+    } finally {
+        zin.close();
+    }
+}
+#end_block
+
+#method_before
+public ScilabList getDictionary() throws IOException {
+    final FileInputStream fis = new FileInputStream(file);
+    final ZipInputStream zin = new ZipInputStream(fis);
+    ZipEntry entry;
+    BufferedInputStream bis = new BufferedInputStream(zin);
+    try {
+        while ((entry = zin.getNextEntry()) != null) {
+            final String name = entry.getName();
+            if (name.equals(DICTIONARY_PATH)) {
+                DictionaryEntry e = new DictionaryEntry();
+                e.setup(this);
+                e.load(entry, bis);
+                return e.getDictionary();
+            }
+        }
+    } finally {
+        bis.close();
+        zin.close();
+    }
+    return null;
+}
+#method_after
+public ScilabList getDictionary() throws IOException {
+    LOG.entering("XcosPackage", "getDictionary");
+    final FileInputStream fis = new FileInputStream(file);
+    final ZipInputStream zin = new ZipInputStream(fis);
+    ZipEntry entry;
+    BufferedInputStream bis = new BufferedInputStream(zin);
+    try {
+        while ((entry = zin.getNextEntry()) != null) {
+            final String name = entry.getName();
+            if (name.equals(DICTIONARY_PATH)) {
+                DictionaryEntry e = new DictionaryEntry();
+                e.setup(this);
+                e.load(entry, bis);
+                return e.getDictionary();
+            }
+        }
+    } finally {
+        bis.close();
+        zin.close();
+        LOG.exiting("XcosPackage", "getDictionary");
+    }
+    return null;
+}
+#end_block
+
+#method_before
+public void checkHeader() throws IOException, TransformerException {
+    final FileInputStream fis = new FileInputStream(file);
+    final ZipInputStream zin = new ZipInputStream(fis);
+    ZipEntry entry;
+    try {
+        while ((entry = zin.getNextEntry()) != null) {
+            // extract data
+            // open output streams
+            final String name = entry.getName();
+            if (MIMETYPE.equals(name)) {
+                if (entry.getSize() != MIME_BYTES.length) {
+                    throw new IOException(INVALID_MIMETYPE);
+                }
+                final byte[] buf = new byte[MIME_BYTES.length];
+                zin.read(buf);
+                if (!Arrays.equals(MIME_BYTES, buf)) {
+                    throw new IOException(INVALID_MIMETYPE);
+                }
+            } else if (META_INF_MANIFEST_XML.equals(name)) {
+                final TransformerFactory tranFactory = ScilabTransformerFactory.newInstance();
+                final Transformer aTransformer = tranFactory.newTransformer();
+                // take care: to avoid closing input stream as the
+                // transformer will close the input stream.
+                BufferedInputStream bis = new BufferedInputStream(new EntryInputStream(zin));
+                final StreamSource src = new StreamSource(bis);
+                final DOMResult result = new DOMResult();
+                aTransformer.transform(src, result);
+                manifest = (Document) result.getNode();
+            // bis.close();
+            }
+        }
+    } finally {
+        zin.close();
+    }
+    if (hasInvalidManifest()) {
+        throw new IOException("META-INF/manifest.xml entry not found");
+    }
+}
+#method_after
+public void checkHeader() throws IOException, TransformerException {
+    final FileInputStream fis = new FileInputStream(file);
+    final ZipInputStream zin = new ZipInputStream(fis);
+    ZipEntry entry;
+    try {
+        while ((entry = zin.getNextEntry()) != null) {
+            // extract data
+            // open output streams
+            final String name = entry.getName();
+            if (MIMETYPE.equals(name)) {
+                if (entry.getSize() != MIME_BYTES.length) {
+                    throw new IOException(INVALID_MIMETYPE);
+                }
+                final byte[] buf = new byte[MIME_BYTES.length];
+                zin.read(buf);
+                if (!Arrays.equals(MIME_BYTES, buf)) {
+                    throw new IOException(INVALID_MIMETYPE);
+                }
+            } else if (META_INF_MANIFEST_XML.equals(name)) {
+                final TransformerFactory tranFactory = ScilabTransformerFactory.newInstance();
+                final Transformer aTransformer = tranFactory.newTransformer();
+                // take care: to avoid closing input stream as the
+                // transformer will close the input stream.
+                final StreamSource src = new StreamSource(new EntryInputStream(zin));
+                final DOMResult result = new DOMResult();
+                aTransformer.transform(src, result);
+                manifest = (Document) result.getNode();
+            }
+        }
+    } finally {
+        zin.close();
+    }
+    if (hasInvalidManifest()) {
+        throw new IOException("META-INF/manifest.xml entry not found");
+    }
+}
+#end_block
+
+#method_before
+public void store() throws IOException {
+    final FileOutputStream fos = new FileOutputStream(file);
+    final ZipOutputStream zout = new ZipOutputStream(fos);
+    try {
+        // add the header (standard package)
+        storeHeader(zout);
+        Entry entry;
+        // store the content
+        entry = new ContentEntry();
+        entry.setup(this);
+        entry.store(zout);
+        // store the manifest file
+        storeTrailer(zout);
+    } finally {
+        zout.close();
+    }
+}
+#method_after
+public void store() throws IOException {
+    final FileOutputStream fos = new FileOutputStream(file);
+    final ZipOutputStream zout = new ZipOutputStream(fos);
+    try {
+        // add the header (standard package)
+        storeHeader(zout);
+        // store the entries in encoding order
+        for (final Entry entry : availableEntries) {
+            entry.setup(this);
+            entry.store(zout);
+        }
+        // store the manifest file
+        storeTrailer(zout);
+    } finally {
+        zout.close();
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void setup(XcosPackage p) {
+    manifest = p.getManifest();
+    content = p.getContent();
+}
+#method_after
+@Override
+public void setup(XcosPackage p) {
+    manifest = p.getManifest();
+}
+#end_block
+
+#method_before
+@Override
+public void load(ZipEntry entry, InputStream stream) throws IOException {
+    ObjectInputStream ois = null;
+    try {
+        ois = new ObjectInputStream(stream);
+        dict = (ScilabList) ois.readObject();
+    } catch (IOException e) {
+        Logger.getLogger(DictionaryEntry.class.getName()).severe(e.getMessage());
+    } catch (ClassNotFoundException e) {
+        Logger.getLogger(DictionaryEntry.class.getName()).severe(e.getMessage());
+    } finally {
+        ois.close();
+    }
+}
+#method_after
+@Override
+public void load(ZipEntry entry, InputStream stream) throws IOException {
+    ObjectInputStream ois = null;
+    try {
+        ois = new ObjectInputStream(new BufferedInputStream(stream));
+        dict = (ScilabList) ois.readObject();
+    } catch (IOException e) {
+        Logger.getLogger(DictionaryEntry.class.getName()).severe(e.getMessage());
+    } catch (ClassNotFoundException e) {
+        Logger.getLogger(DictionaryEntry.class.getName()).severe(e.getMessage());
+    } finally {
+        ois.close();
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void store(ZipOutputStream stream) {
+    /*
+         * Append a ZipEntry
+         */
+    final ZipEntry entry = new ZipEntry(getFullPath());
+    ObjectOutputStream oos = null;
+    try {
+        stream.putNextEntry(entry);
+        oos = new ObjectOutputStream(new BufferedOutputStream(stream));
+        oos.writeObject(dict);
+        oos.flush();
+        /*
+             * Add an entry to the manifest file
+             */
+        final Element e = manifest.createElement("manifest:file-entry");
+        e.setAttribute("manifest:media-type", getMediaType());
+        e.setAttribute("manifest:full-path", getFullPath());
+        manifest.getFirstChild().appendChild(e);
+    } catch (IOException e) {
+        Logger.getLogger(DictionaryEntry.class.getName()).severe(e.getMessage());
+    }
+}
+#method_after
+@Override
+public void store(ZipOutputStream stream) throws IOException {
+    /*
+         * Append a ZipEntry
+         */
+    final ZipEntry entry = new ZipEntry(getFullPath());
+    stream.putNextEntry(entry);
+    /*
+         * Store content
+         */
+    LOG.entering("ObjectOutputStream", "writeObject");
+    ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(stream));
+    oos.writeObject(dict);
+    oos.flush();
+    LOG.exiting("ObjectOutputStream", "writeObject");
+    /*
+         * Add an entry to the manifest file
+         */
+    final Element e = manifest.createElement("manifest:file-entry");
+    e.setAttribute("manifest:media-type", getMediaType());
+    e.setAttribute("manifest:full-path", getFullPath());
+    manifest.getFirstChild().appendChild(e);
+}
+#end_block
+
+#method_before
+public static int export(String uid, int type, String fileName, ExportParams params) {
+    DrawerVisitor visitor = DrawerVisitor.getVisitor(uid);
+    Canvas canvas = visitor.getCanvas();
+    if (canvas instanceof JoGLCanvas && isBitmapFormat(types[type])) {
+        return exportBitmap(uid, type, fileName, true, params);
+    }
+    return exportVectorial(uid, type, fileName, params);
+}
+#method_after
+public static int export(String uid, int type, String fileName, ExportParams params) {
+    DrawerVisitor visitor = DrawerVisitor.getVisitor(uid);
+    if (visitor != null) {
+        Canvas canvas = visitor.getCanvas();
+        if (canvas instanceof JoGLCanvas && isBitmapFormat(types[type])) {
+            return exportBitmap(uid, type, fileName, true, params);
+        }
+    }
+    return exportVectorial(uid, type, fileName, params);
+}
+#end_block
+
+#method_before
+private Map<Class<? extends mxICell>, Deque<mxICell>> getTypedChildren(Set<Class<? extends mxICell>> types) {
+    Map<Class<? extends mxICell>, Deque<mxICell>> oldPorts = new HashMap<Class<? extends mxICell>, Deque<mxICell>>();
+    // Allocate all types set
+    for (Class<? extends mxICell> type : types) {
+        oldPorts.put(type, new LinkedList<mxICell>());
+    }
+    // sort children according to the ordering parameter (useful on
+    // scilab-5.2.x diagrams)
+    Collections.sort(children, new Comparator<Object>() {
+
+        @Override
+        public int compare(Object o1, Object o2) {
+            if (o1 instanceof BasicPort && o2 instanceof BasicPort) {
+                return ((BasicPort) o1).getOrdering() - ((BasicPort) o2).getOrdering();
+            } else {
+                return 0;
+            }
+        }
+    });
+    // children lookup
+    for (Object cell : children) {
+        Class<? extends Object> klass = cell.getClass();
+        while (klass != null) {
+            if (types.contains(klass)) {
+                break;
+            }
+            klass = klass.getSuperclass();
+        }
+        final Deque<mxICell> current = oldPorts.get(klass);
+        if (current != null) {
+            current.add((mxICell) cell);
+        }
+    }
+    return oldPorts;
+}
+#method_after
+private Map<Class<? extends mxICell>, Deque<mxICell>> getTypedChildren(Set<Class<? extends mxICell>> types) {
+    Map<Class<? extends mxICell>, Deque<mxICell>> oldPorts = new HashMap<Class<? extends mxICell>, Deque<mxICell>>();
+    // Allocate all types set
+    for (Class<? extends mxICell> type : types) {
+        oldPorts.put(type, new LinkedList<mxICell>());
+    }
+    // sort children according to the ordering parameter (useful on
+    // scilab-5.2.x diagrams)
+    sort(children);
+    // children lookup
+    for (Object cell : children) {
+        Class<? extends Object> klass = cell.getClass();
+        while (klass != null) {
+            if (types.contains(klass)) {
+                break;
+            }
+            klass = klass.getSuperclass();
+        }
+        final Deque<mxICell> current = oldPorts.get(klass);
+        if (current != null) {
+            current.add((mxICell) cell);
+        }
+    }
+    return oldPorts;
+}
+#end_block
+
+#method_before
+@Override
+public BasicBlock decode(ScilabType element, BasicBlock into) throws ScicosFormatException {
+    data = (ScilabMList) element;
+    BasicBlock block = into;
+    validate();
+    /*
+         * Instantiate the block if it doesn't exist
+         */
+    final String interfunction = ((ScilabString) data.get(INTERFUNCTION_INDEX)).getData()[0][0];
+    if (block == null) {
+        block = BlockFactory.createBlock(interfunction);
+    }
+    block = beforeDecode(element, block);
+    /*
+         * Allocate and setup ports
+         */
+    InputPortElement inElement = new InputPortElement(data);
+    final int numberOfInputPorts = inElement.getNumberOfInputPort();
+    for (int i = 0; i < numberOfInputPorts; i++) {
+        final BasicPort port = inElement.decode(data, null);
+        // do not use BasicPort#addPort() to avoid the view update
+        port.setOrdering(i + 1);
+        block.insert(port, i);
+    }
+    OutputPortElement outElement = new OutputPortElement(data);
+    final int numberOfOutputPorts = outElement.getNumberOfOutputPort();
+    for (int i = 0; i < numberOfOutputPorts; i++) {
+        final BasicPort port = outElement.decode(data, null);
+        // do not use BasicPort#addPort() to avoid the view update
+        port.setOrdering(i + 1);
+        block.insert(port, i);
+    }
+    /*
+         * Fill block with the data structure
+         */
+    int field = 1;
+    graphicElement.decode(data.get(field), block);
+    field++;
+    modelElement.decode(data.get(field), block);
+    field++;
+    block.setInterfaceFunctionName(interfunction);
+    field++;
+    fillDocStructure(data.get(field), block);
+    /*
+         * Set state dependent informations.
+         */
+    block.setOrdering(ordering);
+    ordering++;
+    block = afterDecode(element, block);
+    return block;
+}
+#method_after
+@Override
+public BasicBlock decode(ScilabType element, BasicBlock into) throws ScicosFormatException {
+    data = (ScilabMList) element;
+    BasicBlock block = into;
+    validate();
+    /*
+         * Instantiate the block if it doesn't exist
+         */
+    final String interfunction = ((ScilabString) data.get(INTERFUNCTION_INDEX)).getData()[0][0];
+    if (block == null) {
+        block = BlockFactory.createBlock(interfunction);
+    }
+    block = beforeDecode(element, block);
+    /*
+         * Allocate and setup ports
+         */
+    InputPortElement inElement = new InputPortElement(data);
+    final int numberOfInputPorts = inElement.getNumberOfInputPort();
+    for (int i = 0; i < numberOfInputPorts; i++) {
+        final BasicPort port = inElement.decode(data, null);
+        // do not use BasicPort#addPort() to avoid the view update
+        port.setOrdering(i + 1);
+        block.insert(port, i);
+    }
+    OutputPortElement outElement = new OutputPortElement(data);
+    final int numberOfOutputPorts = outElement.getNumberOfOutputPort();
+    for (int i = 0; i < numberOfOutputPorts; i++) {
+        final BasicPort port = outElement.decode(data, null);
+        // do not use BasicPort#addPort() to avoid the view update
+        port.setOrdering(i + 1);
+        block.insert(port, numberOfInputPorts + i);
+    }
+    /*
+         * Fill block with the data structure
+         */
+    int field = 1;
+    graphicElement.decode(data.get(field), block);
+    field++;
+    modelElement.decode(data.get(field), block);
+    field++;
+    block.setInterfaceFunctionName(interfunction);
+    field++;
+    fillDocStructure(data.get(field), block);
+    /*
+         * Set state dependent informations.
+         */
+    block.setOrdering(ordering);
+    ordering++;
+    block = afterDecode(element, block);
+    return block;
+}
+#end_block
+
+#method_before
+@Override
+public ScilabType encode(BasicBlock from, ScilabType element) {
+    data = (ScilabMList) element;
+    int field = 0;
+    ScilabType base;
+    if (data == null) {
+        data = allocateElement();
+        setupPortSize(from);
+    }
+    data = (ScilabMList) beforeEncode(from, data);
+    field++;
+    base = data.get(field);
+    base = graphicElement.encode(from, null);
+    data.set(field, base);
+    field++;
+    base = data.get(field);
+    base = modelElement.encode(from, null);
+    data.set(field, base);
+    field++;
+    base = new ScilabString(from.getInterfaceFunctionName());
+    data.set(field, base);
+    field++;
+    base = data.get(field);
+    ((ScilabList) base).add(new ScilabString(from.getId()));
+    /*
+         * Encoding the InputPorts and OutputPorts using their own elements
+         */
+    final InputPortElement inElement = new InputPortElement(data);
+    final OutputPortElement outElement = new OutputPortElement(data);
+    final int numberOfPorts = from.getChildCount();
+    for (int i = 0; i < numberOfPorts; i++) {
+        final Object instance = from.getChildAt(i);
+        if (instance instanceof InputPort) {
+            inElement.encode((InputPort) instance, data);
+        } else if (instance instanceof OutputPort) {
+            outElement.encode((OutputPort) instance, data);
+        }
+    }
+    /*
+         * post process for element shared fields
+         */
+    inElement.afterEncode();
+    outElement.afterEncode();
+    data = (ScilabMList) afterEncode(from, data);
+    return data;
+}
+#method_after
+@Override
+public ScilabType encode(BasicBlock from, ScilabType element) {
+    data = (ScilabMList) element;
+    int field = 0;
+    ScilabType base;
+    if (data == null) {
+        data = allocateElement();
+        setupPortSize(from);
+    }
+    data = (ScilabMList) beforeEncode(from, data);
+    field++;
+    base = data.get(field);
+    base = graphicElement.encode(from, null);
+    data.set(field, base);
+    field++;
+    base = data.get(field);
+    base = modelElement.encode(from, null);
+    data.set(field, base);
+    field++;
+    base = new ScilabString(from.getInterfaceFunctionName());
+    data.set(field, base);
+    field++;
+    base = data.get(field);
+    ((ScilabList) base).add(new ScilabString(from.getId()));
+    /*
+         * Encoding the InputPorts and OutputPorts using their own elements
+         */
+    final InputPortElement inElement = new InputPortElement(data);
+    final OutputPortElement outElement = new OutputPortElement(data);
+    final int numberOfPorts = from.getChildCount();
+    // assume the children are sorted by type
+    for (int i = 0; i < numberOfPorts; i++) {
+        final Object instance = from.getChildAt(i);
+        if (instance instanceof InputPort) {
+            inElement.encode((InputPort) instance, data);
+        } else if (instance instanceof OutputPort) {
+            outElement.encode((OutputPort) instance, data);
+        }
+    }
+    /*
+         * post process for element shared fields
+         */
+    inElement.afterEncode();
+    outElement.afterEncode();
+    data = (ScilabMList) afterEncode(from, data);
+    return data;
+}
+#end_block
+
+#method_before
+public static boolean startClosingOperationOnRoot() {
+    if (root != null) {
+        // STD mode
+        SwingScilabWindow win = getWindow(root);
+        if (win == null) {
+            return true;
+        }
+        return startClosingOperation(win);
+    } else if (deps.get(null).size() != 0) {
+        // NW mode
+        List<SwingScilabTab> list = new ArrayList<SwingScilabTab>();
+        for (SwingScilabTab tab : deps.get(null)) {
+            collectTabsToClose(tab, list);
+        }
+        return close(list, null, true, true);
+    } else {
+        return true;
+    }
+}
+#method_after
+public static boolean startClosingOperationOnRoot() {
+    if (root != null) {
+        // STD mode
+        SwingScilabWindow win = getWindow(root);
+        if (win == null) {
+            return true;
+        }
+        return startClosingOperation(win, true, true);
+    } else if (deps.get(null).size() != 0) {
+        // NW mode
+        List<SwingScilabTab> list = new ArrayList<SwingScilabTab>();
+        for (SwingScilabTab tab : deps.get(null)) {
+            collectTabsToClose(tab, list);
+        }
+        return close(list, null, true, true);
+    } else {
+        return true;
+    }
+}
+#end_block
+
+#method_before
+public static boolean startClosingOperation(SwingScilabWindow window) {
+    // blocks the shutting down. If it is not done, the Scilab process could stay alive.
+    try {
+        if (window != null) {
+            List<SwingScilabTab> list = new ArrayList<SwingScilabTab>();
+            if (window.getDockingPort() != null) {
+                Object[] dockArray = window.getDockingPort().getDockables().toArray();
+                for (int i = 0; i < dockArray.length; i++) {
+                    collectTabsToClose((SwingScilabTab) dockArray[i], list);
+                }
+                return close(list, window, true, true);
+            } else {
+                return true;
+            }
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return true;
+}
+#method_after
+public static boolean startClosingOperation(SwingScilabWindow window) {
+    return startClosingOperation(window, true, true);
+}
+#end_block
+
+#method_before
+public static boolean startClosingOperation(Window window) {
+    return startClosingOperation((SwingScilabWindow) window.getAsSimpleWindow());
+}
+#method_after
+public static boolean startClosingOperation(SwingScilabWindow window, boolean askToExit, boolean mustSave) {
+    // blocks the shutting down. If it is not done, the Scilab process could stay alive.
+    try {
+        if (window != null) {
+            List<SwingScilabTab> list = new ArrayList<SwingScilabTab>();
+            if (window.getDockingPort() != null) {
+                Object[] dockArray = window.getDockingPort().getDockables().toArray();
+                for (int i = 0; i < dockArray.length; i++) {
+                    collectTabsToClose((SwingScilabTab) dockArray[i], list);
+                }
+                return close(list, window, askToExit, mustSave);
+            } else {
+                return true;
+            }
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return true;
+}
+#end_block
+
+#method_before
+private static final boolean close(List<SwingScilabTab> list, SwingScilabWindow window, boolean askToExit, boolean mustSave) {
+    boolean ret = false;
+    if (!askToExit || canClose(list, window)) {
+        ret = true;
+        SwingScilabTab console = null;
+        try {
+            // kill it !
+            for (SwingScilabTab tab : list) {
+                if (tab.getPersistentId().equals(NULLUUID)) {
+                    console = tab;
+                    break;
+                }
+            }
+            // We remove the tabs which have a callback and no
+            // ClosingOperation
+            // To avoid annoying situations the tab will be undocked and
+            // closed
+            List<SwingScilabTab> tabsToRemove = new ArrayList<SwingScilabTab>();
+            for (SwingScilabTab tab : list) {
+                if (closingOps.get(tab) == null) {
+                    tab.setVisible(false);
+                    tab.getActionButton("undock").getAction().actionPerformed(null);
+                    Action action = ((SciClosingAction) tab.getActionButton(DockingConstants.CLOSE_ACTION).getAction()).getAction();
+                    if (action == null) {
+                        SwingScilabWindow win = getWindow(tab);
+                        if (win != null) {
+                            win.removeTabs(new SwingScilabTab[] { tab });
+                        }
+                    } else {
+                        action.actionPerformed(null);
+                    }
+                    tabsToRemove.add(tab);
+                }
+            }
+            list.removeAll(tabsToRemove);
+            // we group the tabs by win
+            Map<SwingScilabWindow, List<SwingScilabTab>> map = new HashMap<SwingScilabWindow, List<SwingScilabTab>>();
+            for (SwingScilabTab tab : list) {
+                SwingScilabWindow win = getWindow(tab);
+                if (win != null) {
+                    if (!map.containsKey(win)) {
+                        map.put(win, new ArrayList<SwingScilabTab>());
+                    }
+                    map.get(win).add(tab);
+                }
+            }
+            List<SwingScilabWindow> winsWithOneTab = new ArrayList<SwingScilabWindow>();
+            List<SwingScilabWindow> windowsToClose = new ArrayList<SwingScilabWindow>();
+            for (SwingScilabWindow win : map.keySet()) {
+                List<SwingScilabTab> listTabs = map.get(win);
+                int nbDockedTabs = win.getNbDockedObjects();
+                if (nbDockedTabs == listTabs.size()) {
+                    // win state
+                    if (mustSave) {
+                        WindowsConfigurationManager.saveWindowProperties(win);
+                    }
+                    windowsToClose.add(win);
+                } else {
+                    if (nbDockedTabs - listTabs.size() == 1) {
+                        winsWithOneTab.add(win);
+                    }
+                    // the window will stay opened
+                    if (mustSave) {
+                        for (SwingScilabTab tab : listTabs) {
+                            WindowsConfigurationManager.saveTabProperties(tab, true);
+                        }
+                    }
+                }
+            }
+            // The parent restoration will imply the child one
+            for (SwingScilabTab tab : list) {
+                SwingScilabTab parent = getParent(tab);
+                if (list.contains(parent) || parent == null) {
+                    if (parent != null) {
+                        WindowsConfigurationManager.makeDependency(parent.getPersistentId(), tab.getPersistentId());
+                    } else if (!tab.getPersistentId().equals(NULLUUID)) {
+                        // if the parent is null, we make a dependency with
+                        // the console which is the default root
+                        WindowsConfigurationManager.makeDependency(NULLUUID, tab.getPersistentId());
+                    }
+                } else {
+                    WindowsConfigurationManager.removeDependency(tab.getPersistentId());
+                }
+            }
+            WindowsConfigurationManager.clean();
+            // We destroy all the tabs: children before parents.
+            for (SwingScilabTab tab : list) {
+                tab.setVisible(false);
+                if (!tab.getPersistentId().equals(NULLUUID)) {
+                    try {
+                        closingOps.get(tab).destroy();
+                    } catch (Exception e) {
+                        // An error can occured during the destroy operation
+                        // We show it but it mustn't avoid the window
+                        // destruction
+                        e.printStackTrace();
+                    }
+                }
+            }
+            // removed tab
+            for (SwingScilabWindow win : map.keySet()) {
+                win.removeTabs(map.get(win).toArray(new SwingScilabTab[0]));
+            }
+            // It stays one docked tab so we remove close and undock action
+            for (SwingScilabWindow win : winsWithOneTab) {
+                Object[] dockArray = win.getDockingPort().getDockables().toArray();
+                SwingScilabTab.removeActions((SwingScilabTab) dockArray[0]);
+            }
+            // We wait until all the windows are definitly closed
+            while (windowsToClose.size() != 0) {
+                List<SwingScilabWindow> toRemove = new ArrayList<SwingScilabWindow>();
+                for (SwingScilabWindow win : windowsToClose) {
+                    WindowsConfigurationManager.removeWin(win.getUUID());
+                    if (win.isDisplayable()) {
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                        }
+                    } else {
+                        toRemove.add(win);
+                    }
+                    // dispose the window to release resources
+                    win.dispose();
+                }
+                windowsToClose.removeAll(toRemove);
+            }
+            // We remove the tabs from the cache
+            for (SwingScilabTab tab : list) {
+                ScilabTabFactory.getInstance().removeFromCache(tab.getPersistentId());
+                SwingScilabTab parent = getParent(tab);
+                List<SwingScilabTab> l = deps.get(parent);
+                if (l != null) {
+                    l.remove(tab);
+                }
+                deps.remove(tab);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (console != null) {
+                try {
+                    closingOps.get(console).destroy();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+    return ret;
+}
+#method_after
+private static final boolean close(List<SwingScilabTab> list, SwingScilabWindow window, boolean askToExit, boolean mustSave) {
+    boolean ret = false;
+    if (!askToExit || canClose(list, window)) {
+        ret = true;
+        SwingScilabTab console = null;
+        try {
+            // kill it !
+            for (SwingScilabTab tab : list) {
+                if (tab.getPersistentId().equals(NULLUUID)) {
+                    console = tab;
+                    break;
+                }
+            }
+            // We remove the tabs which have a callback and no
+            // ClosingOperation
+            // To avoid annoying situations the tab will be undocked and
+            // closed
+            List<SwingScilabTab> tabsToRemove = new ArrayList<SwingScilabTab>();
+            for (SwingScilabTab tab : list) {
+                if (closingOps.get(tab) == null) {
+                    tab.setVisible(false);
+                    tab.getActionButton("undock").getAction().actionPerformed(null);
+                    Action action = ((SciClosingAction) tab.getActionButton(DockingConstants.CLOSE_ACTION).getAction()).getAction();
+                    if (action == null) {
+                        SwingScilabWindow win = getWindow(tab);
+                        if (win != null) {
+                            win.removeTabs(new SwingScilabTab[] { tab });
+                        }
+                    } else {
+                        action.actionPerformed(null);
+                    }
+                    tabsToRemove.add(tab);
+                }
+            }
+            list.removeAll(tabsToRemove);
+            // we group the tabs by win
+            Map<SwingScilabWindow, List<SwingScilabTab>> map = new HashMap<SwingScilabWindow, List<SwingScilabTab>>();
+            for (SwingScilabTab tab : list) {
+                SwingScilabWindow win = getWindow(tab);
+                if (win != null) {
+                    if (!map.containsKey(win)) {
+                        map.put(win, new ArrayList<SwingScilabTab>());
+                    }
+                    map.get(win).add(tab);
+                }
+            }
+            List<SwingScilabWindow> winsWithOneTab = new ArrayList<SwingScilabWindow>();
+            List<SwingScilabWindow> windowsToClose = new ArrayList<SwingScilabWindow>();
+            for (SwingScilabWindow win : map.keySet()) {
+                List<SwingScilabTab> listTabs = map.get(win);
+                int nbDockedTabs = win.getNbDockedObjects();
+                if (nbDockedTabs == listTabs.size()) {
+                    // win state
+                    if (mustSave) {
+                        WindowsConfigurationManager.saveWindowProperties(win);
+                    }
+                    windowsToClose.add(win);
+                } else {
+                    if (nbDockedTabs - listTabs.size() == 1) {
+                        winsWithOneTab.add(win);
+                    }
+                    // the window will stay opened
+                    if (mustSave) {
+                        for (SwingScilabTab tab : listTabs) {
+                            WindowsConfigurationManager.saveTabProperties(tab, true);
+                        }
+                    }
+                }
+            }
+            // The parent restoration will imply the child one
+            for (SwingScilabTab tab : list) {
+                SwingScilabTab parent = getParent(tab);
+                if (list.contains(parent) || parent == null) {
+                    if (parent != null) {
+                        WindowsConfigurationManager.makeDependency(parent.getPersistentId(), tab.getPersistentId());
+                    } else if (!tab.getPersistentId().equals(NULLUUID)) {
+                        // if the parent is null, we make a dependency with
+                        // the console which is the default root
+                        WindowsConfigurationManager.makeDependency(NULLUUID, tab.getPersistentId());
+                    }
+                } else {
+                    WindowsConfigurationManager.removeDependency(tab.getPersistentId());
+                }
+            }
+            WindowsConfigurationManager.clean();
+            // We destroy all the tabs: children before parents.
+            for (SwingScilabTab tab : list) {
+                tab.setVisible(false);
+                if (!tab.getPersistentId().equals(NULLUUID)) {
+                    try {
+                        closingOps.get(tab).destroy();
+                    } catch (Exception e) {
+                        // An error can occured during the destroy operation
+                        // We show it but it mustn't avoid the window
+                        // destruction
+                        e.printStackTrace();
+                    }
+                }
+            }
+            // removed tab
+            for (SwingScilabWindow win : map.keySet()) {
+                win.removeTabs(map.get(win).toArray(new SwingScilabTab[0]));
+            }
+            // It stays one docked tab so we remove close and undock action
+            for (SwingScilabWindow win : winsWithOneTab) {
+                Object[] dockArray = win.getDockingPort().getDockables().toArray();
+                SwingScilabTab.removeActions((SwingScilabTab) dockArray[0]);
+            }
+            // We wait until all the windows are definitly closed
+            while (windowsToClose.size() != 0) {
+                List<SwingScilabWindow> toRemove = new ArrayList<SwingScilabWindow>();
+                for (SwingScilabWindow win : windowsToClose) {
+                    WindowsConfigurationManager.removeWin(win.getUUID());
+                    if (win.isDisplayable()) {
+                        Thread.yield();
+                    } else {
+                        toRemove.add(win);
+                    }
+                }
+                windowsToClose.removeAll(toRemove);
+            }
+            // We remove the tabs from the cache
+            for (SwingScilabTab tab : list) {
+                ScilabTabFactory.getInstance().removeFromCache(tab.getPersistentId());
+                SwingScilabTab parent = getParent(tab);
+                List<SwingScilabTab> l = deps.get(parent);
+                if (l != null) {
+                    l.remove(tab);
+                }
+                deps.remove(tab);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (console != null) {
+                try {
+                    closingOps.get(console).destroy();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+    return ret;
+}
+#end_block
+
+#method_before
+public static boolean canClose() {
+    SwingUtilities.invokeLater(new Runnable() {
+
+        @Override
+        public void run() {
+            exitCalled = true;
+            success = ClosingOperationsManager.startClosingOperationOnRoot();
+            exitCalled = false;
+            finish = true;
+        }
+    });
+    while (!finish) {
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            System.err.println(e);
+        }
+    }
+    finish = false;
+    return success;
+}
+#method_after
+public static boolean canClose() {
+    final Object lock = new Object();
+    SwingUtilities.invokeLater(new Runnable() {
+
+        @Override
+        public void run() {
+            exitCalled = true;
+            success = ClosingOperationsManager.startClosingOperationOnRoot();
+            exitCalled = false;
+            finish = true;
+            synchronized (lock) {
+                lock.notify();
+            }
+        }
+    });
+    try {
+        synchronized (lock) {
+            while (!finish) {
+                lock.wait();
+            }
+        }
+    } catch (InterruptedException e) {
+        System.err.println(e);
+    }
+    finish = false;
+    return success;
+}
+#end_block
+
+#method_before
+@Override
+public Point getCaretLocation() {
+    FontMetrics fontMetric = getFontMetrics(getFont());
+    String[] lines = null;
+    try {
+        lines = getStyledDocument().getText(0, getCaretPosition()).split(END_LINE);
+    } catch (BadLocationException e1) {
+        e1.printStackTrace();
+        return ERROR_POINT;
+    }
+    Point result = new Point(fontMetric.stringWidth(lines[lines.length - 1]), (lines.length * fontMetric.getHeight()));
+    // Translate for absolute coordinates
+    Component currentComponent = this;
+    while (currentComponent != null) {
+        result.translate(currentComponent.getLocation().x, currentComponent.getLocation().y);
+        currentComponent = currentComponent.getParent();
+        if (currentComponent instanceof JPanel) {
+            return result;
+        }
+    }
+    return result;
+}
+#method_after
+public Point getCaretLocation() {
+    FontMetrics fontMetric = getFontMetrics(getFont());
+    String[] lines = null;
+    try {
+        lines = getStyledDocument().getText(0, getCaretPosition()).split(END_LINE);
+    } catch (BadLocationException e1) {
+        e1.printStackTrace();
+        return ERROR_POINT;
+    }
+    Point result = new Point(fontMetric.stringWidth(lines[lines.length - 1]), (lines.length * fontMetric.getHeight()));
+    // Translate for absolute coordinates
+    Component currentComponent = this;
+    while (currentComponent != null) {
+        result.translate(currentComponent.getLocation().x, currentComponent.getLocation().y);
+        currentComponent = currentComponent.getParent();
+        if (currentComponent instanceof JPanel) {
+            return result;
+        }
+    }
+    return result;
+}
+#end_block
+
+#method_before
+public void setConsole(SciConsole c) {
+    console = c;
+    // Drag n' Drop handling
+    this.setDropTarget(new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, new SciDropTargetListener(console)));
+    // BUG 2510 fix: automatic validation of pasted lines
+    this.getDocument().addDocumentListener(new DocumentListener() {
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+        // Nothing to do in Scilab
+        }
+
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+            // Validates commands if followed by a carriage return
+            final String wholeTxt = console.getConfiguration().getInputParsingManager().getCommandLine();
+            if ((e.getLength()) > 1 && (wholeTxt.lastIndexOf(StringConstants.NEW_LINE) == (wholeTxt.length() - 1))) {
+                EventQueue.invokeLater(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        console.sendCommandsToScilab(wholeTxt, true, true);
+                    }
+                });
+            }
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+        // Nothing to do in Scilab
+        }
+    });
+    this.addKeyListener(new KeyListener() {
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+            if (keysForHistory == null) {
+                getKeysForHistory();
+            }
+            // key char is equal to 65535 when the hit key is only shift, meta, alt,...
+            if (e.getKeyChar() != 65535 && e.getKeyCode() != KeyEvent.VK_LEFT && e.getKeyCode() != KeyEvent.VK_RIGHT && !keysForHistory.contains(KeyStroke.getKeyStrokeForEvent(e))) {
+                if (console.getConfiguration().getHistoryManager().isInHistory()) {
+                    console.getConfiguration().getHistoryManager().setInHistory(false);
+                }
+            }
+            if (e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD && e.getKeyCode() == KeyEvent.VK_DELETE && e.getKeyChar() != KeyEvent.VK_DELETE) {
+                // Fix for bug 7238
+                e.setKeyCode(KeyEvent.VK_DECIMAL);
+            }
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+        // Nothing to do in Scilab
+        }
+
+        @Override
+        public void keyTyped(KeyEvent e) {
+        // Nothing to do in Scilab
+        }
+    });
+}
+#method_after
+public void setConsole(SciConsole c) {
+    console = c;
+    // Drag n' Drop handling
+    this.setDropTarget(new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, new SciDropTargetListener(console)));
+    // BUG 2510 fix: automatic validation of pasted lines
+    this.getDocument().addDocumentListener(new DocumentListener() {
+
+        public void changedUpdate(DocumentEvent e) {
+        // Nothing to do in Scilab
+        }
+
+        public void insertUpdate(DocumentEvent e) {
+            // Validates commands if followed by a carriage return
+            final String wholeTxt = console.getConfiguration().getInputParsingManager().getCommandLine();
+            if ((e.getLength()) > 1 && (wholeTxt.lastIndexOf(StringConstants.NEW_LINE) == (wholeTxt.length() - 1))) {
+                EventQueue.invokeLater(new Runnable() {
+
+                    public void run() {
+                        console.sendCommandsToScilab(wholeTxt, true, true);
+                    }
+                });
+            }
+        }
+
+        public void removeUpdate(DocumentEvent e) {
+        // Nothing to do in Scilab
+        }
+    });
+    this.addKeyListener(new KeyListener() {
+
+        public void keyPressed(KeyEvent e) {
+            if (keysForHistory == null) {
+                getKeysForHistory();
+            }
+            // key char is equal to 65535 when the hit key is only shift, meta, alt,...
+            if (e.getKeyChar() != 65535 && e.getKeyCode() != KeyEvent.VK_LEFT && e.getKeyCode() != KeyEvent.VK_RIGHT && !keysForHistory.contains(KeyStroke.getKeyStrokeForEvent(e))) {
+                if (console.getConfiguration().getHistoryManager().isInHistory()) {
+                    console.getConfiguration().getHistoryManager().setInHistory(false);
+                }
+            }
+            if (e.getKeyLocation() == KeyEvent.KEY_LOCATION_NUMPAD && e.getKeyCode() == KeyEvent.VK_DELETE && e.getKeyChar() != KeyEvent.VK_DELETE) {
+                // Fix for bug 7238
+                e.setKeyCode(KeyEvent.VK_DECIMAL);
+            }
+        }
+
+        public void keyReleased(KeyEvent e) {
+        // Nothing to do in Scilab
+        }
+
+        public void keyTyped(KeyEvent e) {
+        // Nothing to do in Scilab
+        }
+    });
+}
+#end_block
+
+#method_before
+@Override
+public void caretUpdate(CaretEvent e) {
+    ((SciOutputView) console.getConfiguration().getOutputView()).removeSelection();
+    String str = getText().substring(0, e.getDot());
+    int lastPos = str.lastIndexOf("\"$");
+    if (lastPos != -1) {
+        str = str.substring(lastPos);
+    }
+    Matcher matcher = latexPattern.matcher(str);
+    if (matcher.find() && matcher.end() == str.length()) {
+        String latex = matcher.group().replace("\'\'", "\'").replace("\"\"", "\"");
+        latex = latex.substring(2, latex.length());
+        int hl = ScilabLaTeXViewer.displayExpression(this, Integer.MAX_VALUE, latex, lastPos, e.getDot()) + 2;
+        int y = 0;
+        try {
+            Rectangle rect = modelToView(getCaretPosition());
+            y = (rect.height + rect.y + 1);
+        } catch (BadLocationException ex) {
+        }
+        int sheight = height;
+        height = y + hl;
+        if (height != sheight) {
+            validate();
+            console.updateScrollPosition();
+        }
+        isLatex = true;
+    } else {
+        if (isLatex) {
+            ScilabLaTeXViewer.removeLaTeXViewer(this);
+            if (height != -1) {
+                height = -1;
+                validate();
+            }
+            isLatex = false;
+        }
+    }
+}
+#method_after
+public void caretUpdate(CaretEvent e) {
+    ((SciOutputView) console.getConfiguration().getOutputView()).removeSelection();
+    String str = getText().substring(0, e.getDot());
+    int lastPos = str.lastIndexOf("\"$");
+    if (lastPos != -1) {
+        str = str.substring(lastPos);
+    }
+    Matcher matcher = latexPattern.matcher(str);
+    if (matcher.find() && matcher.end() == str.length()) {
+        String latex = matcher.group().replace("\'\'", "\'").replace("\"\"", "\"");
+        latex = latex.substring(2, latex.length());
+        int hl = ScilabLaTeXViewer.displayExpression(this, Integer.MAX_VALUE, latex, lastPos, e.getDot()) + 2;
+        int y = 0;
+        try {
+            Rectangle rect = modelToView(getCaretPosition());
+            y = (int) (rect.height + rect.y + 1);
+        } catch (BadLocationException ex) {
+        }
+        int sheight = height;
+        height = y + hl;
+        if (height != sheight) {
+            validate();
+            console.updateScrollPosition();
+        }
+        isLatex = true;
+    } else {
+        if (isLatex) {
+            ScilabLaTeXViewer.removeLaTeXViewer(this);
+            if (height != -1) {
+                height = -1;
+                validate();
+            }
+            isLatex = false;
+        }
+    }
+}
+#end_block
+
+#method_before
+@Override
+public Dimension getPreferredSize() {
+    Dimension dim;
+    try {
+        dim = super.getPreferredSize();
+    } catch (Exception e) {
+        // workaround bug 9442
+        // Should be removed with JDK 7
+        dim = new Dimension(0, 0);
+    }
+    if (height != -1) {
+        dim.height = Math.max(height, dim.height);
+    }
+    if (width != -1) {
+        dim.width = Math.max(width, dim.width);
+    }
+    return dim;
+}
+#method_after
+public Dimension getPreferredSize() {
+    Dimension dim;
+    try {
+        dim = super.getPreferredSize();
+    } catch (Exception e) {
+        // workaround bug 9442
+        // Should be removed with JDK 7
+        dim = new Dimension(0, 0);
+    }
+    if (height != -1) {
+        dim.height = Math.max(height, dim.height);
+    }
+    if (width != -1) {
+        dim.width = Math.max(width, dim.width);
+    }
+    return dim;
+}
+#end_block
+
+#method_before
+@Override
+public void setForeground(Color fg) {
+    super.setForeground(fg);
+    setCaretColor(fg);
+    repaint();
+}
+#method_after
+public void setForeground(Color fg) {
+    super.setForeground(fg);
+    setCaretColor(fg);
+    repaint();
+}
+#end_block
+
+#method_before
+@Override
+public View create(Element e) {
+    return new PlainView(e) {
+
+        @Override
+        public Container getContainer() {
+            return SciInputCommandView.this;
+        }
+    };
+}
+#method_after
+public View create(Element e) {
+    return new PlainView(e) {
+
+        public Container getContainer() {
+            return SciInputCommandView.this;
+        }
+    };
+}
+#end_block
+
+#method_before
+private void getKeysForHistory() {
+    getActionMap();
+    InputMap im = getInputMap();
+    KeyStroke[] keys = im.keys();
+    keysForHistory = new ArrayList<KeyStroke>();
+    for (KeyStroke key : keys) {
+        Object a = im.get(key);
+        if (a.equals("PREVIOUS_HISTORY_LINE") || a.equals("NEXT_HISTORY_LINE")) {
+            keysForHistory.add(key);
+        }
+    }
+}
+#method_after
+private void getKeysForHistory() {
+    ActionMap am = getActionMap();
+    InputMap im = getInputMap();
+    KeyStroke[] keys = im.keys();
+    keysForHistory = new ArrayList<KeyStroke>();
+    for (KeyStroke key : keys) {
+        Object a = im.get(key);
+        if (a.equals("PREVIOUS_HISTORY_LINE") || a.equals("NEXT_HISTORY_LINE")) {
+            keysForHistory.add(key);
+        }
+    }
+}
+#end_block
+
+#method_before
+public static SwingScilabWindow restoreWindow(String uuid, String defaultTabUuid, boolean restoreTab, boolean requestFocus) {
+    readDocument();
+    final boolean nullUUID = uuid.equals(NULLUUID);
+    // create the window and preserve the uuid if not null
+    final SwingScilabWindow window = (SwingScilabWindow) createWindow(uuid, !nullUUID).getAsSimpleWindow();
+    if (window == null) {
+        return null;
+    }
+    if (restoreTab) {
+        if (!nullUUID) {
+            final LayoutNodeSerializer serializer = new LayoutNodeSerializer();
+            final Element dockingPort = getDockingPort(uuid);
+            LayoutNode layoutNode = (LayoutNode) serializer.deserialize(dockingPort);
+            window.getDockingPort().importLayout(layoutNode);
+        } else if (defaultTabUuid != null && !defaultTabUuid.isEmpty()) {
+            SwingScilabTab defaultTab = ScilabTabFactory.getInstance().getTab(defaultTabUuid);
+            defaultTab.setParentWindowId(window.getElementId());
+            DockingManager.dock(defaultTab, window.getDockingPort());
+        }
+        for (SwingScilabTab tab : (Set<SwingScilabTab>) window.getDockingPort().getDockables()) {
+            tab.setParentWindowId(window.getElementId());
+        }
+        SwingScilabTab[] tabs = new SwingScilabTab[window.getNbDockedObjects()];
+        tabs = ((Set<SwingScilabTab>) window.getDockingPort().getDockables()).toArray(tabs);
+        // Be sur that the main tab will have the focus.
+        // Get the elder tab and activate it
+        final SwingScilabTab mainTab = ClosingOperationsManager.getElderTab(new ArrayList(Arrays.asList(tabs)));
+        BarUpdater.updateBars(mainTab.getParentWindowId(), mainTab.getMenuBar(), mainTab.getToolBar(), mainTab.getInfoBar(), mainTab.getName(), mainTab.getWindowIcon());
+        if (!ScilabConsole.isExistingConsole() && tabs.length == 1 && tabs[0].getPersistentId().equals(NULLUUID)) {
+            // null uuid is reserved to the console and in NW mode, there is no console.
+            return null;
+        }
+        for (SwingScilabTab tab : tabs) {
+            // each tab has now a window so it can be useful for the tab to set an icon window or to center a dialog...
+            EndedRestoration ended = endedRestoration.get(tab);
+            if (ended != null) {
+                ended.finish();
+                endedRestoration.remove(ended);
+            }
+        }
+        if (tabs.length == 1) {
+            // we remove undock and close buttons when there is only one View in the DockingPort
+            SwingScilabTab.removeActions(tabs[0]);
+        } else {
+            // we add undock and close buttons
+            for (SwingScilabTab tab : tabs) {
+                SwingScilabTab.addActions(tab);
+            }
+        }
+        window.setVisible(true);
+        // Return only when the window is displayable
+        while (!window.isDisplayable()) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                System.err.println(e);
+            }
+        }
+        if (requestFocus) {
+            SwingUtilities.invokeLater(new Runnable() {
+
+                @Override
+                public void run() {
+                    final Thread t = new Thread(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            synchronized (currentlyRestored) {
+                                while (currentlyRestored.size() > 0) {
+                                    try {
+                                        currentlyRestored.wait();
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                            // Be sure that te main tab or one of its subcomponent
+                            // will have the focus on start-up
+                            Component owner = null;
+                            while (owner == null && !mainTab.isAncestorOf(owner)) {
+                                mainTab.requestFocus();
+                                try {
+                                    Thread.sleep(100);
+                                } catch (InterruptedException e) {
+                                }
+                                owner = window.getFocusOwner();
+                            }
+                            ActiveDockableTracker.requestDockableActivation(mainTab);
+                            window.toFront();
+                        }
+                    });
+                    t.start();
+                }
+            });
+        }
+    }
+    return window;
+}
+#method_after
+public static SwingScilabWindow restoreWindow(String uuid, String defaultTabUuid, boolean restoreTab, boolean requestFocus) {
+    readDocument();
+    final boolean nullUUID = uuid.equals(NULLUUID);
+    // create the window and preserve the uuid if not null
+    final SwingScilabWindow window = (SwingScilabWindow) createWindow(uuid, !nullUUID).getAsSimpleWindow();
+    if (window == null) {
+        return null;
+    }
+    if (restoreTab) {
+        if (!nullUUID) {
+            final LayoutNodeSerializer serializer = new LayoutNodeSerializer();
+            final Element dockingPort = getDockingPort(uuid);
+            LayoutNode layoutNode = (LayoutNode) serializer.deserialize(dockingPort);
+            window.getDockingPort().importLayout(layoutNode);
+        } else if (defaultTabUuid != null && !defaultTabUuid.isEmpty()) {
+            SwingScilabTab defaultTab = ScilabTabFactory.getInstance().getTab(defaultTabUuid);
+            defaultTab.setParentWindowId(window.getElementId());
+            DockingManager.dock(defaultTab, window.getDockingPort());
+        }
+        for (SwingScilabTab tab : (Set<SwingScilabTab>) window.getDockingPort().getDockables()) {
+            tab.setParentWindowId(window.getElementId());
+        }
+        SwingScilabTab[] tabs = new SwingScilabTab[window.getNbDockedObjects()];
+        tabs = ((Set<SwingScilabTab>) window.getDockingPort().getDockables()).toArray(tabs);
+        // Be sur that the main tab will have the focus.
+        // Get the elder tab and activate it
+        final SwingScilabTab mainTab = ClosingOperationsManager.getElderTab(new ArrayList(Arrays.asList(tabs)));
+        BarUpdater.updateBars(mainTab.getParentWindowId(), mainTab.getMenuBar(), mainTab.getToolBar(), mainTab.getInfoBar(), mainTab.getName(), mainTab.getWindowIcon());
+        if (!ScilabConsole.isExistingConsole() && tabs.length == 1 && tabs[0].getPersistentId().equals(NULLUUID)) {
+            // null uuid is reserved to the console and in NW mode, there is no console.
+            return null;
+        }
+        for (SwingScilabTab tab : tabs) {
+            // each tab has now a window so it can be useful for the tab to set an icon window or to center a dialog...
+            EndedRestoration ended = endedRestoration.get(tab);
+            if (ended != null) {
+                ended.finish();
+                endedRestoration.remove(ended);
+            }
+        }
+        if (tabs.length == 1) {
+            // we remove undock and close buttons when there is only one View in the DockingPort
+            SwingScilabTab.removeActions(tabs[0]);
+        } else {
+            // we add undock and close buttons
+            for (SwingScilabTab tab : tabs) {
+                SwingScilabTab.addActions(tab);
+            }
+        }
+        window.setVisible(true);
+        // Return only when the window is displayable
+        while (!window.isDisplayable()) {
+            Thread.yield();
+        }
+        if (requestFocus) {
+            SwingUtilities.invokeLater(new Runnable() {
+
+                @Override
+                public void run() {
+                    final Thread t = new Thread(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            synchronized (currentlyRestored) {
+                                while (currentlyRestored.size() > 0) {
+                                    try {
+                                        currentlyRestored.wait();
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                            // Be sure that te main tab or one of its subcomponent
+                            // will have the focus on start-up
+                            Component owner = null;
+                            while (owner == null && !mainTab.isAncestorOf(owner)) {
+                                mainTab.requestFocus();
+                                Thread.yield();
+                                owner = window.getFocusOwner();
+                            }
+                            ActiveDockableTracker.requestDockableActivation(mainTab);
+                            window.toFront();
+                        }
+                    });
+                    t.start();
+                }
+            });
+        }
+    }
+    return window;
+}
+#end_block
+
+#method_before
+public static void displayAndWait() {
+    // Source version
+    String filename = SCIDIR + "/ACKNOWLEDGEMENTS";
+    if (!new File(filename).exists()) {
+        // Linux binary version
+        filename = SCIDIR + "/../../ACKNOWLEDGEMENTS";
+    }
+    createAboutBox(Messages.gettext("About Scilab..."), filename, Messages.gettext("Acknowledgements"));
+}
+#method_after
+public static void displayAndWait() {
+    // Source version
+    String filename = SCIDIR + "/ACKNOWLEDGEMENTS";
+    if (!new File(filename).exists()) {
+        // Linux binary
+        filename = SCIDIR + "/../../ACKNOWLEDGEMENTS";
+    // version
+    }
+    createAboutBox(Messages.gettext("About Scilab..."), filename);
+}
+#end_block
+
+#method_before
+public static void createAboutBox(String aboutTitle, String ackFile, String ackTitle) {
+    ImageIcon icon = new ImageIcon(IMAGEPATH);
+    icon.setImage(icon.getImage().getScaledInstance(icon.getIconWidth(), icon.getIconHeight(), java.awt.Image.SCALE_SMOOTH));
+    final JFrame ackBox = new JFrame();
+    ackBox.setIconImage(imageForIcon);
+    final JFrame aboutBox = new JFrame();
+    aboutBox.setIconImage(imageForIcon);
+    aboutBox.setTitle(Messages.gettext(aboutTitle));
+    aboutBox.setLayout(null);
+    aboutBox.setAlwaysOnTop(true);
+    aboutBox.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    aboutBox.setLocationRelativeTo(null);
+    aboutBox.setSize(icon.getIconWidth(), icon.getIconHeight() + 40);
+    ScilabSwingUtilities.closeOnEscape(aboutBox);
+    ScilabSwingUtilities.closeOnEscape(ackBox);
+    ImagePanel text = new ImagePanel();
+    text.setOpaque(false);
+    text.setEditable(false);
+    text.setSize(icon.getIconWidth(), icon.getIconHeight());
+    text.setVisible(true);
+    aboutBox.setContentPane(text);
+    aboutBox.setResizable(false);
+    JButton close = new JButton(Messages.gettext("Close"));
+    close.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent event) {
+            aboutBox.dispose();
+            ackBox.dispose();
+        }
+    });
+    aboutBox.add(close, 0);
+    close.setSize(80, 20);
+    close.setLocation(text.getWidth() - 90, text.getHeight() - 30);
+    Font closeFont = close.getFont();
+    close.setFont(closeFont.deriveFont(closeFont.getSize2D() * 0.7f));
+    if (ackFile != null && ackTitle != null) {
+        JButton acknowledgements = new JButton(ackTitle);
+        final String filename = ackFile;
+        final String finalAckTitle = ackTitle;
+        acknowledgements.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                StringBuilder contents = new StringBuilder();
+                try {
+                    BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(filename), "UTF8"));
+                    try {
+                        String line = null;
+                        while ((line = input.readLine()) != null) {
+                            contents.append(line);
+                            contents.append(System.getProperty("line.separator"));
+                        }
+                    } finally {
+                        input.close();
+                    }
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+                ackBox.setTitle(finalAckTitle);
+                ackBox.setLayout(null);
+                ackBox.setAlwaysOnTop(true);
+                ackBox.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                ackBox.setLocationRelativeTo(null);
+                ackBox.setSize(600, 400);
+                JTextPane text = new JTextPane();
+                text.setText(contents.toString());
+                text.setCaretPosition(0);
+                JScrollPane pane = new JScrollPane(text);
+                pane.setSize(600, 400);
+                ackBox.setContentPane(pane);
+                text.setEditable(false);
+                if (ScilabConsole.isExistingConsole()) {
+                    ackBox.setLocationRelativeTo((Component) ScilabConsole.getConsole().getAsSimpleConsole());
+                } else {
+                    ackBox.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2 - (aboutBox.getWidth() / 2), (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 2 - (aboutBox.getHeight() / 2));
+                }
+                ackBox.setVisible(true);
+            }
+        });
+        aboutBox.add(acknowledgements, 0);
+        acknowledgements.setSize(130, 20);
+        acknowledgements.setLocation(text.getWidth() - 90 - 140, text.getHeight() - 30);
+        Font ackFont = acknowledgements.getFont();
+        acknowledgements.setFont(ackFont.deriveFont(ackFont.getSize2D() * 0.7f));
+    }
+    if (ScilabConsole.isExistingConsole()) {
+        aboutBox.setLocationRelativeTo((Component) ScilabConsole.getConsole().getAsSimpleConsole());
+    } else {
+        aboutBox.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2 - (aboutBox.getWidth() / 2), (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 2 - (aboutBox.getHeight() / 2));
+    }
+    aboutBox.setVisible(true);
+}
+#method_after
+public static void createAboutBox(final String aboutTitle, final String ackFile) {
+    final JFrame aboutBox = new JFrame();
+    aboutBox.setIconImage(imageForIcon);
+    aboutBox.setTitle(Messages.gettext(aboutTitle));
+    aboutBox.setAlwaysOnTop(true);
+    aboutBox.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    aboutBox.setLocationRelativeTo(null);
+    ScilabSwingUtilities.closeOnEscape(aboutBox);
+    aboutBox.setContentPane(new AboutPanel(aboutBox, ackFile));
+    aboutBox.setResizable(false);
+    /*
+         * Pack then replace
+         */
+    aboutBox.pack();
+    if (ScilabConsole.isExistingConsole()) {
+        aboutBox.setLocationRelativeTo((Component) ScilabConsole.getConsole().getAsSimpleConsole());
+    } else {
+        aboutBox.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2 - (aboutBox.getWidth() / 2), (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 2 - (aboutBox.getHeight() / 2));
+    }
+    aboutBox.setVisible(true);
+}
+#end_block
+
+#method_before
+@Override
+public Sprite create(double value, DecimalFormat adaptedFormat, SpriteManager spriteManager) {
+    DecimalFormatSymbols decimalFormatSymbols = adaptedFormat.getDecimalFormatSymbols();
+    decimalFormatSymbols.setDecimalSeparator('.');
+    decimalFormatSymbols.setExponentSeparator("e");
+    adaptedFormat.setDecimalFormatSymbols(decimalFormatSymbols);
+    String text = adaptedFormat.format(value);
+    final TextEntity textEntity = new TextEntity(text);
+    textEntity.setTextAntiAliased(false);
+    textEntity.setTextUseFractionalMetrics(axes.getFontFractional());
+    textEntity.setTextColor(ColorFactory.createColor(colorMap, axes.getFontColor()));
+    Font font = FontManager.getSciFontManager().getFontFromIndex(axes.getFontStyle(), axes.getFontSize());
+    textEntity.setFont(font);
+    Dimension dimension = spriteManager.getSize(textEntity);
+    Sprite sprite = spriteManager.createSprite(dimension.width + 1, dimension.height + 1);
+    sprite.setDrawer(new SpriteDrawer() {
+
+        @Override
+        public void draw(SpriteDrawingTools drawingTools) {
+            drawingTools.draw(textEntity, 0, 0);
+        }
+
+        @Override
+        public OriginPosition getOriginPosition() {
+            return SpriteDrawer.OriginPosition.UPPER_LEFT;
+        }
+    });
+    return sprite;
+}
+#method_after
+@Override
+public Sprite create(double value, DecimalFormat adaptedFormat, SpriteManager spriteManager) {
+    DecimalFormatSymbols decimalFormatSymbols = adaptedFormat.getDecimalFormatSymbols();
+    decimalFormatSymbols.setDecimalSeparator('.');
+    decimalFormatSymbols.setExponentSeparator("e");
+    adaptedFormat.setDecimalFormatSymbols(decimalFormatSymbols);
+    String text = adaptedFormat.format(value).replaceAll("E", "e");
+    final TextEntity textEntity = new TextEntity(text);
+    textEntity.setTextAntiAliased(false);
+    textEntity.setTextUseFractionalMetrics(axes.getFontFractional());
+    textEntity.setTextColor(ColorFactory.createColor(colorMap, axes.getFontColor()));
+    Font font = FontManager.getSciFontManager().getFontFromIndex(axes.getFontStyle(), axes.getFontSize());
+    textEntity.setFont(font);
+    Dimension dimension = spriteManager.getSize(textEntity);
+    Sprite sprite = spriteManager.createSprite(dimension.width + 1, dimension.height + 1);
+    sprite.setDrawer(new SpriteDrawer() {
+
+        @Override
+        public void draw(SpriteDrawingTools drawingTools) {
+            drawingTools.draw(textEntity, 0, 0);
+        }
+
+        @Override
+        public OriginPosition getOriginPosition() {
+            return SpriteDrawer.OriginPosition.UPPER_LEFT;
+        }
+    });
+    return sprite;
+}
+#end_block
+
+#method_before
+@Override
+public void paintShape(mxGraphics2DCanvas canvas, String text, mxCellState state, Map<String, Object> style) {
+    CellRendererPane rendererPane = canvas.getRendererPane();
+    Rectangle rect = state.getRectangle();
+    if (rect.isEmpty()) {
+        rect.grow(1, 1);
+    }
+    Graphics2D g = canvas.getGraphics();
+    if (rendererPane != null && (g.getClipBounds() == null || g.getClipBounds().intersects(rect))) {
+        final double scale = canvas.getScale();
+        final int x = rect.x;
+        final int y = rect.y;
+        final int w = rect.width;
+        final int h = rect.height;
+        if (g.hitClip(x, y, w, h)) {
+            AffineTransform at = g.getTransform();
+            final int sx = (int) (x / scale) + mxConstants.LABEL_INSET;
+            final int sy = (int) (y / scale) + mxConstants.LABEL_INSET;
+            g.scale(scale, scale);
+            Color textColor = mxUtils.getColor(style, mxConstants.STYLE_FONTCOLOR, Color.BLACK);
+            rendererPane.setForeground(textColor);
+            // parse the text and cache it if valid. Will throw an exception
+            // if the text is not valid but the text must have been already
+            // checked on ScilabCanvas#getTextShape(...).
+            Icon icon = ScilabGraphUtils.getTexIcon(text);
+            final int iw = icon.getIconWidth();
+            final int ih = icon.getIconHeight();
+            final int dx = ((int) (w / scale) - iw) / 2;
+            final int dy = ((int) (h / scale) - ih) / 2;
+            icon.paintIcon(rendererPane, g, sx + dx, sy + dy);
+            // Restores the previous transformation
+            g.setTransform(at);
+        }
+    }
+}
+#method_after
+@Override
+public void paintShape(mxGraphics2DCanvas canvas, String text, mxCellState state, Map<String, Object> style) {
+    CellRendererPane rendererPane = canvas.getRendererPane();
+    Rectangle rect = state.getRectangle();
+    if (rect.isEmpty()) {
+        rect.grow(1, 1);
+    }
+    Graphics2D g = canvas.getGraphics();
+    if (rendererPane != null && (g.getClipBounds() == null || g.getClipBounds().intersects(rect))) {
+        final double scale = canvas.getScale();
+        final int x = rect.x;
+        final int y = rect.y;
+        final int w = rect.width;
+        final int h = rect.height;
+        if (g.hitClip(x, y, w, h)) {
+            AffineTransform at = g.getTransform();
+            final double sx = (x / scale);
+            final double sy = (y / scale);
+            final double sw = w / scale;
+            final double sh = h / scale;
+            g.scale(scale, scale);
+            // handle text color
+            Color textColor = mxUtils.getColor(style, mxConstants.STYLE_FONTCOLOR, Color.BLACK);
+            rendererPane.setForeground(textColor);
+            // TODO: handle horizontal align
+            final Object align = mxUtils.getString(style, mxConstants.STYLE_ALIGN, mxConstants.ALIGN_CENTER);
+            final double horizAlignProportion;
+            if (align.equals(mxConstants.ALIGN_LEFT)) {
+                horizAlignProportion = 0;
+            } else if (align.equals(mxConstants.ALIGN_RIGHT)) {
+                horizAlignProportion = 1.0;
+            } else {
+                horizAlignProportion = 0.5;
+            }
+            // TODO: handle vertical align
+            final Object vertAlign = mxUtils.getString(style, mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_MIDDLE);
+            final double vertAlignProportion;
+            if (vertAlign.equals(mxConstants.ALIGN_TOP)) {
+                vertAlignProportion = 0;
+            } else if (vertAlign.equals(mxConstants.ALIGN_BOTTOM)) {
+                vertAlignProportion = 1.0;
+            } else {
+                vertAlignProportion = 0.5;
+            }
+            // parse the text and cache it if valid. Will throw an exception
+            // if the text is not valid but the text must have been already
+            // checked on ScilabCanvas#getTextShape(...).
+            final Icon icon = ScilabGraphUtils.getTexIcon(text);
+            final int iw = icon.getIconWidth();
+            final int ih = icon.getIconHeight();
+            final double dx = (sw - iw) / 2;
+            final double dy = (sh - ih) / 2;
+            icon.paintIcon(rendererPane, g, (int) (sx + dx), (int) (sy + dy));
+            // Restores the previous transformation
+            g.setTransform(at);
+        }
+    }
+}
+#end_block
+

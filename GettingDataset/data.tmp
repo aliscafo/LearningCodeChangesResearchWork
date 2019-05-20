@@ -1,0 +1,1023 @@
+
+f
+^class MyMagicWrapper {
+public static Map < String , String > METHOD_1 ( ) { return VAR_1 ; }
+} 
+
+π
+Æclass MyMagicWrapper {
+protected TYPE_1 METHOD_1 ( TYPE_2 < TYPE_3 > repo , RevCommit commit ) throws Exception { return METHOD_2 ( repo , commit , null , null , null ) ; }
+} (
+u
+kclass MyMagicWrapper {
+public synchronized static Map < String , String > METHOD_1 ( ) { return VAR_1 ; }
+} (
+ø
+∂class MyMagicWrapper {
+protected TYPE_1 METHOD_1 ( TYPE_2 < TYPE_3 > repo , RevCommit commit ) throws Exception { return METHOD_2 ( repo , commit , null , null , null , false ) ; }
+} 
+_
+Wclass MyMagicWrapper {
+public TYPE_1 comment ( String id ) { throw new TYPE_2 ( ) ; }
+} (
+s
+oclass MyMagicWrapper {
+public TYPE_1 comment ( String id ) throws RestApiException { throw new TYPE_2 ( ) ; }
+}
+≈
+ºclass MyMagicWrapper {
+protected boolean validate ( ) { if ( ! super . validate ( ) ) { return false ; } if ( METHOD_1 ( ) == null ) { return failValidation ( VAR_1 ) ; } return true ; }
+} 2
+~
+tclass MyMagicWrapper {
+public void METHOD_1 ( ) throws OrmException , TYPE_1 { METHOD_2 ( ) . update ( VAR_1 ) ; }
+} =(
+¡
+∂class MyMagicWrapper {
+protected boolean validate ( ) { if ( ! super . validate ( ) ) { return false ; } if ( METHOD_1 ( ) == null ) { return METHOD_2 ( VAR_1 ) ; } return true ; }
+} 3(
+s
+kclass MyMagicWrapper {
+public void METHOD_1 ( ) throws OrmException { METHOD_2 ( ) . update ( VAR_1 ) ; }
+} <
+®
+üclass MyMagicWrapper {
+public void METHOD_1 ( boolean VAR_1 , String VAR_2 ) { VAR_3 . METHOD_3 ( VAR_1 ) ; if ( ! VAR_1 ) { VAR_4 . METHOD_4 ( VAR_2 ) ; } }
+} 
+Ñ
+zclass MyMagicWrapper {
+public void METHOD_1 ( Guid value ) { VAR_1 = new TYPE_1 < Guid > ( ) ; VAR_1 . add ( value ) ; }
+} )(
+«
+ºclass MyMagicWrapper {
+public void METHOD_1 ( boolean VAR_1 , String VAR_2 ) { VAR_3 . METHOD_2 ( VAR_1 ) ; VAR_3 . METHOD_3 ( VAR_1 ) ; if ( ! VAR_1 ) { VAR_4 . METHOD_4 ( VAR_2 ) ; } }
+} (
+}
+uclass MyMagicWrapper {
+public void METHOD_1 ( Guid value ) { VAR_1 = new TYPE_1 < > ( ) ; VAR_1 . add ( value ) ; }
+} (
+N
+Fclass MyMagicWrapper {
+public TYPE_1 METHOD_1 ( ) { return VAR_2 ; }
+}	 Z
+•
+öclass MyMagicWrapper {
+public static TYPE_1 METHOD_1 ( int changeId , String VAR_1 ) { return change ( changeId ) . view ( STRING_1 ) . id ( VAR_1 ) ; }
+}
+ e(
+o
+eclass MyMagicWrapper {
+public TYPE_1 METHOD_1 ( ) { VAR_1 . println ( STRING_1 ) ; return VAR_2 ; }
+}	 [(
+ë
+àclass MyMagicWrapper {
+public boolean METHOD_1 ( TYPE_1 version ) { return ( Boolean ) METHOD_2 ( VAR_1 , version . toString ( ) ) ; }
+} F
+–
+≈class MyMagicWrapper {
+protected void METHOD_1 ( ) throws HyracksDataException { super . METHOD_1 ( ) ; VAR_1 . METHOD_2 ( ) ; VAR_1 . METHOD_3 ( ) ; VAR_1 . create ( ) ; VAR_1 . METHOD_4 ( ) ; }
+} Q(
+ö
+èclass MyMagicWrapper {
+public static boolean METHOD_1 ( TYPE_1 version ) { return ( Boolean ) METHOD_2 ( VAR_1 , version . toString ( ) ) ; }
+} G(
+À
+¬class MyMagicWrapper {
+public void METHOD_1 ( ) throws HyracksDataException { super . METHOD_1 ( ) ; VAR_1 . METHOD_2 ( ) ; VAR_1 . METHOD_3 ( ) ; VAR_1 . create ( ) ; VAR_1 . METHOD_4 ( ) ; }
+} P
+n
+eclass MyMagicWrapper {
+public ChangeInfo get ( ) throws RestApiException { throw new TYPE_1 ( ) ; }
+} Ç
+ 
+æclass MyMagicWrapper {
+protected boolean validate ( ) { if ( METHOD_1 ( ) == null ) { METHOD_2 ( VAR_1 ) ; return false ; } if ( ! super . validate ( ) ) { return false ; } return true ; }
+} ç(
+X
+Mclass MyMagicWrapper {
+public ChangeInfo get ( ) { throw new TYPE_1 ( ) ; }
+} É(
+‘
+ class MyMagicWrapper {
+protected boolean validate ( ) { if ( METHOD_1 ( ) == null ) { addValidationMessage ( VAR_1 ) ; return false ; } if ( ! super . validate ( ) ) { return false ; } return true ; }
+} å
+Ÿ
+–class MyMagicWrapper {
+protected void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 VAR_2 ) { if ( VAR_1 . METHOD_2 ( ) == null ) { VAR_1 . METHOD_3 ( new ArrayList < > ( ) ) ; } VAR_1 . METHOD_2 ( ) . add ( VAR_2 ) ; }
+} n
+g
+]class MyMagicWrapper {
+public void METHOD_1 ( String [ ] VAR_1 ) throws RemoteException { }
+} y(
+‚
+◊class MyMagicWrapper {
+protected void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 VAR_2 ) { if ( VAR_1 . METHOD_2 ( ) == null ) { VAR_1 . METHOD_3 ( new ArrayList < TYPE_2 > ( ) ) ; } VAR_1 . METHOD_2 ( ) . add ( VAR_2 ) ; }
+} o(
+N
+Fclass MyMagicWrapper {
+public void METHOD_1 ( String [ ] VAR_1 ) { }
+} x
+c
+Zclass MyMagicWrapper {
+public void METHOD_1 ( Integer VAR_1 ) { this . VAR_1 = VAR_1 ; }
+} ™
+¶
+öclass MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 [ ] VAR_1 ) { for ( int i = 0 ; i < VAR_2 ; i ++ ) { VAR_3 [ i ] = VAR_1 [ i ] . METHOD_2 ( ) ; } }
+} µ(
+t
+iclass MyMagicWrapper {
+public void METHOD_1 ( Integer VAR_1 ) { this . VAR_1 = VAR_1 . METHOD_2 ( ) ; }
+} ´(
+ï
+ãclass MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 [ ] VAR_1 ) { for ( int i = 0 ; i < VAR_2 ; i ++ ) { VAR_3 [ i ] = VAR_1 [ i ] ; } }
+} ¥
+ä
+Äclass MyMagicWrapper {
+private void METHOD_1 ( ) { METHOD_2 ( ) . METHOD_3 ( METHOD_4 ( ) . getEntity ( ) ) ; METHOD_5 ( ) ; }
+} ñ
+Z
+Oclass MyMagicWrapper {
+public void METHOD_1 ( int VAR_1 ) { VAR_2 = VAR_1 ; }
+} °(
+ò
+åclass MyMagicWrapper {
+private void METHOD_1 ( ) { METHOD_2 ( ) . METHOD_3 ( ( Boolean ) METHOD_4 ( ) . getEntity ( ) ) ; METHOD_5 ( ) ; }
+} ó(
+|
+sclass MyMagicWrapper {
+public TYPE_1 METHOD_1 ( TYPE_2 network ) { super . METHOD_1 ( network ) ; return this ; }
+} “
+p
+eclass MyMagicWrapper {
+public void METHOD_1 ( ArrayList < Guid > VAR_1 ) { this . VAR_1 = VAR_1 ; }
+} ›(
+Ç
+wclass MyMagicWrapper {
+public TYPE_1 METHOD_1 ( TYPE_2 network ) { return ( TYPE_1 ) super . METHOD_1 ( network ) ; }
+} ”(
+i
+`class MyMagicWrapper {
+public void METHOD_1 ( List < Guid > VAR_1 ) { this . VAR_1 = VAR_1 ; }
+} ‹
+Æ
+§class MyMagicWrapper {
+protected TYPE_1 METHOD_1 ( ) { if ( VAR_1 == null ) { VAR_1 = METHOD_2 ( ) . get ( getParameters ( ) . METHOD_3 ( ) ) ; } return VAR_1 ; }
+} æ
+ï
+âclass MyMagicWrapper {
+public ArrayList < DiskImage > METHOD_1 ( ) { return VAR_1 != null ? VAR_1 : new ArrayList < DiskImage > ( ) ; }
+} …(
+π
+≠class MyMagicWrapper {
+protected TYPE_1 METHOD_1 ( ) { if ( VAR_1 == null ) { VAR_1 = METHOD_2 ( ) . get ( ( Guid ) getParameters ( ) . METHOD_3 ( ) ) ; } return VAR_1 ; }
+} ø(
+`
+Wclass MyMagicWrapper {
+public ArrayList < DiskImage > METHOD_1 ( ) { return VAR_1 ; }
+} »
+∆
+ºclass MyMagicWrapper {
+public void METHOD_1 ( ) { String VAR_1 = STRING_1 ; Map < String , String > VAR_2 = new HashMap < > ( ) ; assertEquals ( VAR_1 , TYPE_1 . METHOD_2 ( VAR_2 ) ) ; }
+} ˙
+r
+gclass MyMagicWrapper {
+public TYPE_1 id ( TYPE_2 id ) { this . id = METHOD_1 ( id ) ; return this ; }
+} Ö(
+Õ
+¡class MyMagicWrapper {
+public void METHOD_1 ( ) { String VAR_1 = STRING_1 ; Map < String , String > VAR_2 = new HashMap < > ( ) ; assert ( VAR_1 . equals ( TYPE_1 . METHOD_2 ( VAR_2 ) ) ) ; }
+} ˚(
+c
+Zclass MyMagicWrapper {
+public TYPE_1 id ( TYPE_2 id ) { this . id = id ; return this ; }
+} Ñ
+©
+üclass MyMagicWrapper {
+void METHOD_1 ( int seq , TYPE_1 item , int VAR_1 , int VAR_2 , int VAR_3 ) throws RemoteException { throw new TYPE_2 ( STRING_1 ) ; }
+} Ê
+}
+rclass MyMagicWrapper {
+void METHOD_1 ( TYPE_1 VAR_1 ) throws RemoteException { throw new TYPE_2 ( STRING_1 ) ; }
+} Ò(
+°
+ïclass MyMagicWrapper {
+void METHOD_1 ( TYPE_1 item , int VAR_1 , int VAR_2 , int VAR_3 ) throws RemoteException { throw new TYPE_2 ( STRING_1 ) ; }
+} Á(
+Ö
+|class MyMagicWrapper {
+void METHOD_1 ( int seq , TYPE_1 VAR_1 ) throws RemoteException { throw new TYPE_2 ( STRING_1 ) ; }
+} 
+ü
+ïclass MyMagicWrapper {
+private static void METHOD_1 ( ) { severities.put ( VAR_1 , AuditLogSeverity.NORMAL ) ; severities.put ( VAR_2 , VAR_3 ) ; }
+} ¢
+¥
+®class MyMagicWrapper {
+public void METHOD_1 ( String value ) { if ( ! TYPE_1 . METHOD_2 ( name , value ) ) { name = value ; METHOD_3 ( new TYPE_2 ( STRING_1 ) ) ; } }
+} ≠(
+£
+óclass MyMagicWrapper {
+private static void METHOD_1 ( ) { mSeverities.put ( VAR_1 , AuditLogSeverity.NORMAL ) ; mSeverities.put ( VAR_2 , VAR_3 ) ; }
+} £(
+Ø
+•class MyMagicWrapper {
+public void METHOD_1 ( String value ) { if ( ! Objects.equals ( name , value ) ) { name = value ; METHOD_3 ( new TYPE_2 ( STRING_1 ) ) ; } }
+} ¨
+‰
+⁄class MyMagicWrapper {
+public static Boolean METHOD_1 ( Context context , String name ) { int id = getId ( context , VAR_1 , name ) ; if ( id == 0 ) { return null ; } return METHOD_2 ( context ) . METHOD_1 ( id ) ; }
+} é
+p
+eclass MyMagicWrapper {
+public TYPE_1 current ( ) throws RestApiException { throw new TYPE_2 ( ) ; }
+} ô(
+‚
+÷class MyMagicWrapper {
+public static Boolean METHOD_1 ( Context context , String name ) { int id = getId ( context , VAR_1 , name ) ; if ( id == 0 ) return null ; return METHOD_2 ( context ) . METHOD_1 ( id ) ; }
+} è(
+V
+Mclass MyMagicWrapper {
+public TYPE_1 current ( ) { throw new TYPE_2 ( ) ; }
+} ò
+}
+tclass MyMagicWrapper {
+public void METHOD_1 ( String VAR_1 ) { this . VAR_1 = VAR_1 == null ? STRING_1 : VAR_1 ; }
+}!  
+É
+xclass MyMagicWrapper {
+void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 VAR_2 ) { this . VAR_1 = VAR_1 ; this . VAR_2 = VAR_2 ; }
+}" ’(
+É
+xclass MyMagicWrapper {
+public void METHOD_1 ( String VAR_1 ) { this . VAR_1 = ( VAR_1 == null ) ? STRING_1 : VAR_1 ; }
+}! À(
+à
+class MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 VAR_2 ) { this . VAR_1 = VAR_1 ; this . VAR_2 = VAR_2 ; }
+}" ‘
+l
+cclass MyMagicWrapper {
+public void METHOD_1 ( ) { METHOD_3 ( null ) ; Frontend . METHOD_4 ( ) ; }
+} ∂
+‰
+ÿclass MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 request , TYPE_2 VAR_1 , TYPE_3 VAR_2 ) { TYPE_4 VAR_3 = new TYPE_4 ( VAR_2 ) ; TYPE_5 VAR_4 = VAR_5 ; METHOD_2 ( VAR_4 , VAR_1 , 0 , VAR_6 , VAR_7 , VAR_3 ) ; }
+}  ¡(
+}
+rclass MyMagicWrapper {
+public void METHOD_1 ( ) { METHOD_2 ( ) ; METHOD_3 ( null ) ; Frontend . METHOD_4 ( ) ; }
+} ∑(
+W
+Nclass MyMagicWrapper {
+public String METHOD_1 ( ) { throw new TYPE_1 ( ) ; }
+}$ Ë
+p
+eclass MyMagicWrapper {
+public static TYPE_1 METHOD_1 ( int id ) { return call ( id , STRING_1 ) ; }
+}% Û(
+q
+fclass MyMagicWrapper {
+public String METHOD_1 ( ) throws RestApiException { throw new TYPE_1 ( ) ; }
+}$ È(
+à
+¸class MyMagicWrapper {
+public static void METHOD_1 ( AsyncQuery aQuery , Guid VAR_1 , Guid VAR_2 , Guid VAR_3 ) { TYPE_1 parameters = new TYPE_1 ( VAR_1 , VAR_2 , VAR_3 , true ) ; Frontend . METHOD_2 ( ) . runQuery ( VAR_4 , parameters , aQuery ) ; }
+}# ﬂ(
+ˇ
+ıclass MyMagicWrapper {
+public void METHOD_1 ( AsyncQuery aQuery , Guid VAR_1 , Guid VAR_2 , Guid VAR_3 ) { TYPE_1 parameters = new TYPE_1 ( VAR_1 , VAR_2 , VAR_3 , true ) ; Frontend . METHOD_2 ( ) . runQuery ( VAR_4 , parameters , aQuery ) ; }
+}# ﬁ
+L
+Cclass MyMagicWrapper {
+public long METHOD_1 ( ) { return size ; }
+}( ê
+t
+iclass MyMagicWrapper {
+public Boolean METHOD_1 ( TYPE_1 VAR_1 ) { return VAR_2 . METHOD_2 ( VAR_1 ) ; }
+}) õ(
+P
+Eclass MyMagicWrapper {
+public TYPE_1 METHOD_1 ( ) { return size ; }
+}( ë(
+r
+iclass MyMagicWrapper {
+public boolean METHOD_1 ( TYPE_1 VAR_1 ) { return VAR_2 . METHOD_2 ( VAR_1 ) ; }
+}) ö
+ù
+ìclass MyMagicWrapper {
+private Object METHOD_1 ( TYPE_1 p ) { int VAR_1 ; String [ ] response ; response = p . METHOD_2 ( ) ; return response ; }
+}& ¸
+é
+Çclass MyMagicWrapper {
+private static boolean METHOD_1 ( final TYPE_1 cmd ) { return cmd . METHOD_2 ( ) . METHOD_3 ( VAR_1 ) ; }
+}' á(
+°
+ïclass MyMagicWrapper {
+protected Object METHOD_1 ( TYPE_1 p ) { int VAR_1 ; String [ ] response ; response = p . METHOD_2 ( ) ; return response ; }
+}& ˝(
+Ö
+|class MyMagicWrapper {
+private static boolean METHOD_1 ( TYPE_1 cmd ) { return cmd . METHOD_2 ( ) . METHOD_3 ( VAR_1 ) ; }
+}' Ü
+œ
+≈class MyMagicWrapper {
+public void METHOD_1 ( ) throws IOException { VAR_1 = new TYPE_1 ( VAR_2 ) ; VAR_1 . METHOD_1 ( VAR_3 , VAR_4 ) ; verify ( VAR_2 ) . METHOD_1 ( server , VAR_3 , VAR_4 ) ; }
+}, ∏
+¢
+ñclass MyMagicWrapper {
+public static TYPE_1 METHOD_1 ( ) { return new TYPE_2 ( ) . status ( VAR_1 ) . message ( TYPE_3 . empty ( ) ) . build ( ) ; }
+}- √(
+⁄
+Œclass MyMagicWrapper {
+public void METHOD_1 ( ) throws IOException { VAR_1 = new TYPE_1 ( VAR_2 ) ; VAR_1 . METHOD_1 ( server , VAR_3 , VAR_4 ) ; verify ( VAR_2 ) . METHOD_1 ( server , VAR_3 , VAR_4 ) ; }
+}, π(
+~
+uclass MyMagicWrapper {
+public static TYPE_1 METHOD_1 ( ) { return new TYPE_2 ( ) . status ( VAR_1 ) . build ( ) ; }
+}- ¬
+á
+~class MyMagicWrapper {
+public static String METHOD_1 ( String name ) { return TYPE_1 . METHOD_2 ( VAR_1 , name , false ) ; }
+}* §
+æ
+≤class MyMagicWrapper {
+public static String METHOD_1 ( File VAR_1 ) throws IOException { return TYPE_1 . METHOD_2 ( METHOD_3 ( VAR_1 ) , METHOD_4 ( VAR_1 ) ) . METHOD_5 ( ) ; }
+}+ Ø(
+Å
+vclass MyMagicWrapper {
+public static String METHOD_1 ( String name ) { return TYPE_1 . METHOD_2 ( VAR_1 , name ) ; }
+}* •(
+≠
+£class MyMagicWrapper {
+public static String METHOD_1 ( File VAR_1 ) throws IOException { return TYPE_1 . METHOD_2 ( METHOD_3 ( VAR_1 ) , METHOD_4 ( VAR_1 ) ) ; }
+}+ Æ
+™
+†class MyMagicWrapper {
+protected void METHOD_1 ( ) throws IOException { if ( VAR_1 != null ) { VAR_1 . METHOD_2 ( ) ; } if ( fd != null ) { METHOD_3 ( ) ; } }
+}0 ‡
+°
+ïclass MyMagicWrapper {
+protected void METHOD_1 ( final TYPE_1 req , final TYPE_2 VAR_1 ) throws IOException , TYPE_3 { METHOD_2 ( req , VAR_1 ) ; }
+}1 Î(
+®
+úclass MyMagicWrapper {
+protected void METHOD_1 ( ) throws IOException { if ( VAR_1 != null ) { VAR_1 . METHOD_2 ( ) ; } if ( fd != null ) METHOD_3 ( ) ; }
+}0 ·(
+ì
+âclass MyMagicWrapper {
+protected void METHOD_1 ( TYPE_1 req , TYPE_2 VAR_1 ) throws IOException , TYPE_3 { METHOD_2 ( req , VAR_1 ) ; }
+}1 Í
+`
+Wclass MyMagicWrapper {
+public boolean METHOD_1 ( ) { return get ( VAR_1 , false ) ; }
+}. Ã
+’
+…class MyMagicWrapper {
+protected boolean validate ( ) { if ( getParameters ( ) . METHOD_1 ( ) == null || METHOD_2 ( ) == null ) { METHOD_3 ( VAR_1 ) ; return false ; } return super . validate ( ) ; }
+}/ ◊(
+b
+Wclass MyMagicWrapper {
+public Boolean METHOD_1 ( ) { return get ( VAR_1 , false ) ; }
+}. Õ(
+ﬂ
+’class MyMagicWrapper {
+protected boolean validate ( ) { if ( getParameters ( ) . METHOD_1 ( ) == null || METHOD_2 ( ) == null ) { addValidationMessage ( VAR_1 ) ; return false ; } return super . validate ( ) ; }
+}/ ÷
+¸
+Úclass MyMagicWrapper {
+protected boolean METHOD_1 ( ) { if ( getParameters ( ) . METHOD_2 ( ) == VAR_1 && getParameters ( ) . METHOD_3 ( ) . equals ( getParameters ( ) . METHOD_4 ( ) ) ) { return failValidation ( VAR_2 ) ; } return true ; }
+}3 ˛
+|
+qclass MyMagicWrapper {
+private static TYPE_1 METHOD_1 ( TYPE_2 as ) { return METHOD_1 ( as . METHOD_2 ( ) ) ; }
+}4 â(
+¯
+Ïclass MyMagicWrapper {
+protected boolean METHOD_1 ( ) { if ( getParameters ( ) . METHOD_2 ( ) == VAR_1 && getParameters ( ) . METHOD_3 ( ) . equals ( getParameters ( ) . METHOD_4 ( ) ) ) { return METHOD_5 ( VAR_2 ) ; } return true ; }
+}3 ˇ(
+Ä
+wclass MyMagicWrapper {
+private static TYPE_1 METHOD_1 ( TYPE_2 group ) { return METHOD_1 ( group . METHOD_2 ( ) ) ; }
+}4 à
+é
+Çclass MyMagicWrapper {
+protected boolean validate ( ) { if ( getVm ( ) == null ) { return METHOD_1 ( VAR_1 ) ; } return true ; }
+}2 ı(
+í
+àclass MyMagicWrapper {
+protected boolean validate ( ) { if ( getVm ( ) == null ) { return failValidation ( VAR_1 ) ; } return true ; }
+}2 Ù
+õ
+ëclass MyMagicWrapper {
+public void METHOD_1 ( ) { List < TYPE_1 > result = VAR_1 . METHOD_2 ( VAR_2 , VAR_4 , false ) ; METHOD_3 ( result ) ; }
+}7 ¶
+»
+ºclass MyMagicWrapper {
+public void METHOD_1 ( Integer [ ] position ) { VAR_1 . position [ 0 ] = position [ 0 ] . METHOD_2 ( ) ; VAR_1 . position [ 1 ] = position [ 1 ] . METHOD_2 ( ) ; }
+}8 ±(
+•
+ôclass MyMagicWrapper {
+public void METHOD_1 ( ) { List < TYPE_1 > result = VAR_1 . METHOD_2 ( VAR_2 , VAR_3 , VAR_4 , false ) ; METHOD_3 ( result ) ; }
+}7 ß(
+®
+ûclass MyMagicWrapper {
+public void METHOD_1 ( Integer [ ] position ) { VAR_1 . position [ 0 ] = position [ 0 ] ; VAR_1 . position [ 1 ] = position [ 1 ] ; }
+}8 ∞
+p
+gclass MyMagicWrapper {
+public void METHOD_1 ( Integer value ) { this . VAR_1 . METHOD_1 ( value ) ; }
+}5 í
+•
+ôclass MyMagicWrapper {
+public static void METHOD_1 ( Object VAR_1 , int VAR_2 ) { for ( int i = 0 ; i < VAR_2 ; i ++ ) { VAR_3 . format ( VAR_1 ) ; } }
+}6 ù(
+r
+gclass MyMagicWrapper {
+public void METHOD_1 ( Integer value ) { this . VAR_1 . METHOD_2 ( value ) ; }
+}5 ì(
+ü
+ïclass MyMagicWrapper {
+public static void METHOD_1 ( Object obj , int VAR_2 ) { for ( int i = 0 ; i < VAR_2 ; i ++ ) { VAR_3 . format ( obj ) ; } }
+}6 ú
+≈
+ªclass MyMagicWrapper {
+void METHOD_1 ( int seq , List < TYPE_1 > VAR_1 , TYPE_2 metadata , int VAR_2 , int VAR_3 , int VAR_4 ) throws RemoteException { throw new TYPE_3 ( STRING_1 ) ; }
+}; Œ
+Ê
+⁄class MyMagicWrapper {
+public List < TYPE_1 > METHOD_1 ( ) { List < TYPE_1 > VAR_1 = new ArrayList < TYPE_1 > ( ) ; for ( TYPE_2 VAR_2 : METHOD_2 ( ) ) { VAR_1 . METHOD_3 ( VAR_2 . METHOD_1 ( ) ) ; } return VAR_1 ; }
+}< Ÿ(
+Ω
+±class MyMagicWrapper {
+void METHOD_1 ( List < TYPE_1 > VAR_1 , TYPE_2 metadata , int VAR_2 , int VAR_3 , int VAR_4 ) throws RemoteException { throw new TYPE_3 ( STRING_1 ) ; }
+}; œ(
+›
+”class MyMagicWrapper {
+public List < TYPE_1 > METHOD_1 ( ) { List < TYPE_1 > VAR_1 = new ArrayList < > ( ) ; for ( TYPE_2 VAR_2 : METHOD_2 ( ) ) { VAR_1 . METHOD_3 ( VAR_2 . METHOD_1 ( ) ) ; } return VAR_1 ; }
+}< ÿ
+ÿ
+Œclass MyMagicWrapper {
+private static TYPE_1 METHOD_1 ( ) throws Exception { TYPE_2 context = TYPE_2 . METHOD_2 ( STRING_1 ) ; context . METHOD_3 ( null , null , null ) ; return context . METHOD_4 ( ) ; }
+}9 ∫
+è
+Éclass MyMagicWrapper {
+public void METHOD_1 ( ) { log.info ( STRING_1 ) ; for ( TYPE_1 VAR_1 : VAR_2 ) { METHOD_1 ( VAR_1 ) ; } }
+}: ≈(
+”
+«class MyMagicWrapper {
+private TYPE_1 METHOD_1 ( ) throws Exception { TYPE_2 context = TYPE_2 . METHOD_2 ( STRING_1 ) ; context . METHOD_3 ( null , null , null ) ; return context . METHOD_4 ( ) ; }
+}9 ª(
+ê
+Üclass MyMagicWrapper {
+public void METHOD_1 ( ) { log . debug ( STRING_1 ) ; for ( TYPE_1 VAR_1 : VAR_2 ) { METHOD_1 ( VAR_1 ) ; } }
+}: ƒ
+á
+~class MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 msg ) { this . METHOD_2 ( VAR_1 ) . METHOD_3 ( msg ) ; }
+}? ˆ
+ü
+ìclass MyMagicWrapper {
+public TYPE_1 < ? > METHOD_1 ( Guid VAR_1 ) { return METHOD_1 ( VAR_2 . get ( ) . get ( VAR_1 ) , METHOD_2 ( VAR_1 ) ) ; }
+}@ Å(
+‘
+»class MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 msg ) { this . METHOD_2 ( VAR_1 ) . METHOD_3 ( msg ) ; for ( TYPE_3 listener : VAR_2 ) { listener . METHOD_4 ( VAR_1 , msg ) ; } }
+}? ˜(
+ì
+âclass MyMagicWrapper {
+public TYPE_1 < ? > METHOD_1 ( Guid VAR_1 ) { return METHOD_1 ( VAR_2 . get ( VAR_1 ) , METHOD_2 ( VAR_1 ) ) ; }
+}@ Ä
+ö
+êclass MyMagicWrapper {
+private void METHOD_1 ( String VAR_1 , String [ ] args ) throws Exception { METHOD_1 ( VAR_1 , args , null , null ) ; }
+}= ‚
+r
+gclass MyMagicWrapper {
+public TYPE_1 id ( int id ) throws RestApiException { throw new TYPE_2 ( ) ; }
+}> Ì(
+ï
+âclass MyMagicWrapper {
+private void METHOD_1 ( String VAR_1 , String [ ] args ) throws Exception { METHOD_1 ( VAR_1 , args , null ) ; }
+}= „(
+X
+Oclass MyMagicWrapper {
+public TYPE_1 id ( int id ) { throw new TYPE_2 ( ) ; }
+}> Ï
+à
+class MyMagicWrapper {
+public void METHOD_1 ( Integer [ ] VAR_1 ) { VAR_2 [ 0 ] = VAR_1 [ 0 ] ; VAR_2 [ 1 ] = VAR_1 [ 1 ] ; }
+}C û
+T
+Iclass MyMagicWrapper {
+public void index ( ) { throw new TYPE_1 ( ) ; }
+}D ©(
+©
+ùclass MyMagicWrapper {
+public void METHOD_1 ( Integer [ ] VAR_1 ) { VAR_2 [ 0 ] = VAR_1 [ 0 ] . METHOD_2 ( ) ; VAR_2 [ 1 ] = VAR_1 [ 1 ] . METHOD_2 ( ) ; }
+}C ü(
+j
+aclass MyMagicWrapper {
+public void index ( ) throws RestApiException { throw new TYPE_1 ( ) ; }
+}D ®
+ƒ
+∏class MyMagicWrapper {
+private boolean METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 VAR_2 ) { TYPE_3 VAR_3 = VAR_4 . METHOD_2 ( VAR_1 , VAR_2 ) ; return VAR_3 != null && VAR_3 . METHOD_1 ( ) ; }
+}B ï(
+P
+Eclass MyMagicWrapper {
+protected void METHOD_1 ( TYPE_1 VAR_1 ) { }
+}A ã(
+¡
+∑class MyMagicWrapper {
+public boolean METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 VAR_2 ) { TYPE_3 VAR_3 = VAR_4 . METHOD_2 ( VAR_1 , VAR_2 ) ; return VAR_3 != null && VAR_3 . METHOD_1 ( ) ; }
+}B î
+q
+hclass MyMagicWrapper {
+public synchronized void METHOD_1 ( ) { VAR_2 . set ( true ) ; METHOD_2 ( ) ; }
+}G ∆
+ä
+class MyMagicWrapper {
+void METHOD_1 ( ) { getTable ( ) . METHOD_2 ( ) ; getTable ( ) . METHOD_3 ( VAR_1 . METHOD_4 ( ) ) ; }
+}H —(
+¢
+ñclass MyMagicWrapper {
+public synchronized void METHOD_1 ( ) { VAR_1 . println ( STRING_1 + toString ( ) ) ; VAR_2 . set ( true ) ; METHOD_2 ( ) ; }
+}G «(
+U
+Lclass MyMagicWrapper {
+void METHOD_1 ( ) { getTable ( ) . METHOD_2 ( ) ; }
+}H –
+S
+Jclass MyMagicWrapper {
+public void METHOD_1 ( ) { METHOD_2 ( VAR_1 ) ; }
+}E ≤
+Õ
+¡class MyMagicWrapper {
+private boolean METHOD_1 ( TYPE_1 parameters ) { if ( parameters . METHOD_2 ( ) . equals ( parameters . METHOD_3 ( ) ) ) { return METHOD_4 ( VAR_1 ) ; } return true ; }
+}F Ω(
+f
+[class MyMagicWrapper {
+public void METHOD_1 ( ) throws Exception { METHOD_2 ( VAR_1 ) ; }
+}E ≥(
+—
+«class MyMagicWrapper {
+private boolean METHOD_1 ( TYPE_1 parameters ) { if ( parameters . METHOD_2 ( ) . equals ( parameters . METHOD_3 ( ) ) ) { return failValidation ( VAR_1 ) ; } return true ; }
+}F º
+é
+Ñclass MyMagicWrapper {
+public void METHOD_1 ( Guid VAR_1 ) { TYPE_1 . METHOD_2 ( ) . METHOD_3 ( VAR_2 , new TYPE_2 ( VAR_1 ) ) ; }
+}K Ó
+p
+eclass MyMagicWrapper {
+public void start ( String VAR_1 , TYPE_1 VAR_2 ) throws RemoteException { }
+}L ˘(
+‘
+»class MyMagicWrapper {
+public void METHOD_1 ( Guid VAR_1 ) { TYPE_1 . METHOD_2 ( ) . METHOD_3 ( VAR_2 , new TYPE_2 ( VAR_1 ) ) ; TYPE_1 . METHOD_2 ( ) . METHOD_3 ( VAR_3 , new TYPE_2 ( VAR_1 ) ) ; }
+}K Ô(
+W
+Nclass MyMagicWrapper {
+public void start ( String VAR_1 , TYPE_1 VAR_2 ) { }
+}L ¯
+Á
+›class MyMagicWrapper {
+public void METHOD_1 ( ) throws Exception { TYPE_1 VAR_1 = new TYPE_1 ( ) ; VAR_1 . METHOD_2 ( null ) ; assertThat ( new TYPE_2 ( VAR_1 , new TYPE_3 ( ) ) . METHOD_3 ( ) , METHOD_4 ( VAR_3 ) ) ; }
+}I ⁄
+P
+Eclass MyMagicWrapper {
+protected void METHOD_1 ( TYPE_1 e ) { { } }
+}J Â(
+Ò
+Âclass MyMagicWrapper {
+public void METHOD_1 ( ) throws Exception { TYPE_1 VAR_1 = new TYPE_1 ( ) ; VAR_1 . METHOD_2 ( null ) ; assertThat ( new TYPE_2 ( VAR_1 , new TYPE_3 ( ) , VAR_2 ) . METHOD_3 ( ) , METHOD_4 ( VAR_3 ) ) ; }
+}I €(
+J
+Aclass MyMagicWrapper {
+protected void METHOD_1 ( TYPE_1 e ) { }
+}J ‰
+∫
+∞class MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 VAR_1 ) { super . METHOD_1 ( VAR_1 ) ; VAR_1 . METHOD_2 ( new ArrayList < TYPE_2 > ( ) ) ; VAR_1 . METHOD_3 ( false ) ; }
+}O ñ
+ñ
+äclass MyMagicWrapper {
+public Set < TYPE_1 > METHOD_1 ( ConnectPoint VAR_1 , final ConnectPoint VAR_2 ) { throw new TYPE_2 ( VAR_3 ) ; }
+}P °(
+‡
+‘class MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 VAR_1 ) { super . METHOD_1 ( VAR_1 ) ; VAR_1 . METHOD_2 ( new ArrayList < TYPE_2 > ( ) ) ; VAR_1 . METHOD_3 ( false ) ; VAR_1 . METHOD_4 ( METHOD_5 ( ) ) ; }
+}O ó(
+é
+Ñclass MyMagicWrapper {
+public Set < TYPE_1 > METHOD_1 ( ConnectPoint VAR_1 , ConnectPoint VAR_2 ) { throw new TYPE_2 ( VAR_3 ) ; }
+}P †
+Ω
+≥class MyMagicWrapper {
+TYPE_1 . Type METHOD_1 ( ) { if ( VAR_1 == null ) { return ( ( VAR_2 . size ( ) > 2 ) ? VAR_3 : VAR_4 ) ; } else { return TYPE_2 . valueOf ( VAR_1 ) ; } }
+}M Ç
+V
+Kclass MyMagicWrapper {
+public Guid METHOD_1 ( ) { return this . VAR_1 ; }
+}N ç(
+¿
+¥class MyMagicWrapper {
+TYPE_1 . Type METHOD_1 ( ) { if ( VAR_1 == null ) { return ( ( VAR_2 . size ( ) > 2 ) ? VAR_3 : VAR_4 ) ; } else { return TYPE_2 . METHOD_2 ( VAR_1 ) ; } }
+}M É(
+M
+Dclass MyMagicWrapper {
+public Guid METHOD_1 ( ) { return VAR_1 ; }
+}N å
+f
+]class MyMagicWrapper {
+public Boolean METHOD_1 ( ) { return this . VAR_1 . METHOD_1 ( ) ; }
+}R ¥
+¬
+∂class MyMagicWrapper {
+public TYPE_1 . ArrayList < TYPE_2 > METHOD_1 ( TYPE_3 VAR_1 , TYPE_1 . ArrayList < TYPE_4 > parameters ) { return METHOD_2 ( VAR_1 , parameters , true ) ; }
+}S ø(
+h
+]class MyMagicWrapper {
+public Boolean METHOD_1 ( ) { return this . VAR_1 . METHOD_2 ( ) ; }
+}R µ(
+Æ
+§class MyMagicWrapper {
+public ArrayList < TYPE_2 > METHOD_1 ( TYPE_3 VAR_1 , ArrayList < TYPE_4 > parameters ) { return METHOD_2 ( VAR_1 , parameters , true ) ; }
+}S æ
+µ
+©class MyMagicWrapper {
+public void METHOD_1 ( String VAR_1 , String VAR_2 ) throws IOException { if ( log . METHOD_2 ( ) ) log . debug ( STRING_1 , VAR_1 , VAR_2 ) ; }
+}Q ´(
+∑
+≠class MyMagicWrapper {
+public void METHOD_1 ( String VAR_1 , String VAR_2 ) throws IOException { if ( log . METHOD_2 ( ) ) { log . debug ( STRING_1 , VAR_1 , VAR_2 ) ; } }
+}Q ™
+f
+]class MyMagicWrapper {
+protected Guid METHOD_1 ( ) { return METHOD_2 ( ) . METHOD_3 ( ) ; }
+}V ‹
+`
+Uclass MyMagicWrapper {
+public TYPE_1 METHOD_1 ( ) { return state . METHOD_1 ( ) ; }
+}W Á(
+w
+lclass MyMagicWrapper {
+protected Guid METHOD_1 ( ) { return METHOD_2 ( ) . METHOD_3 ( ) . METHOD_4 ( ) ; }
+}V ›(
+W
+Nclass MyMagicWrapper {
+TYPE_1 METHOD_1 ( ) { return state . METHOD_1 ( ) ; }
+}W Ê
+e
+\class MyMagicWrapper {
+public TYPE_1 METHOD_1 ( ) { return METHOD_2 ( ) . METHOD_1 ( ) ; }
+}T »
+—
+≈class MyMagicWrapper {
+public static void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 < ? extends TYPE_3 > VAR_2 , String VAR_3 ) { TYPE_3 VAR_4 = VAR_1 . METHOD_2 ( VAR_2 ) ; METHOD_3 ( VAR_4 , VAR_3 ) ; }
+}U ”(
+j
+_class MyMagicWrapper {
+protected TYPE_1 METHOD_1 ( ) { return METHOD_2 ( ) . METHOD_1 ( ) ; }
+}T …(
+»
+æclass MyMagicWrapper {
+static void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 < ? extends TYPE_3 > VAR_2 , String VAR_3 ) { TYPE_3 VAR_4 = VAR_1 . METHOD_2 ( VAR_2 ) ; METHOD_3 ( VAR_4 , VAR_3 ) ; }
+}U “
+´
+°class MyMagicWrapper {
+protected TYPE_1 METHOD_1 ( TYPE_2 < TYPE_3 > repo ) throws Exception { return METHOD_1 ( repo , null , null , null , null , false ) ; }
+}Z Ñ
+è
+Éclass MyMagicWrapper {
+public View METHOD_1 ( ) { if ( METHOD_2 ( ) == 0 ) return null ; return METHOD_3 ( METHOD_2 ( ) - 1 ) ; }
+}[ è(
+•
+ôclass MyMagicWrapper {
+protected TYPE_1 METHOD_1 ( TYPE_2 < TYPE_3 > repo ) throws Exception { return METHOD_1 ( repo , null , null , null , null ) ; }
+}Z Ö(
+ë
+áclass MyMagicWrapper {
+public View METHOD_1 ( ) { if ( METHOD_2 ( ) == 0 ) { return null ; } return METHOD_3 ( METHOD_2 ( ) - 1 ) ; }
+}[ é
+ì
+âclass MyMagicWrapper {
+public boolean METHOD_1 ( TYPE_1 key , TYPE_2 value ) { return METHOD_2 ( VAR_1 . METHOD_1 ( key , value ) ) ; }
+}X 
+ÿ
+Ãclass MyMagicWrapper {
+public void METHOD_1 ( ) throws IOException { VAR_1 = new TYPE_1 ( VAR_2 ) ; VAR_1 . METHOD_1 ( VAR_3 , VAR_4 , VAR_5 ) ; verify ( VAR_2 ) . METHOD_1 ( VAR_3 , VAR_4 , VAR_5 ) ; }
+}Y ˚(
+ï
+âclass MyMagicWrapper {
+public Boolean METHOD_1 ( TYPE_1 key , TYPE_2 value ) { return METHOD_2 ( VAR_1 . METHOD_1 ( key , value ) ) ; }
+}X Ò(
+ﬂ
+’class MyMagicWrapper {
+public void METHOD_1 ( ) throws IOException { VAR_1 = new TYPE_1 ( VAR_2 ) ; VAR_1 . METHOD_1 ( VAR_3 , VAR_4 , VAR_5 ) ; verify ( VAR_2 ) . METHOD_1 ( server , VAR_3 , VAR_4 , VAR_5 ) ; }
+}Y ˙
+p
+gclass MyMagicWrapper {
+public final int METHOD_1 ( ) { return TYPE_1 . hash ( name , parameters ) ; }
+}^ ¨
+©
+ùclass MyMagicWrapper {
+private TYPE_1 METHOD_1 ( boolean VAR_1 , boolean VAR_2 ) throws Exception { return METHOD_1 ( STRING_1 , VAR_1 , VAR_2 , true ) ; }
+}_ ∑(
+r
+gclass MyMagicWrapper {
+final public int METHOD_1 ( ) { return TYPE_1 . hash ( name , parameters ) ; }
+}^ ≠(
+Æ
+§class MyMagicWrapper {
+private TYPE_1 METHOD_1 ( boolean VAR_1 , boolean VAR_2 ) throws Exception { return METHOD_1 ( STRING_1 , VAR_1 , VAR_2 , true , true ) ; }
+}_ ∂
+„
+Ÿclass MyMagicWrapper {
+public static TYPE_1 METHOD_1 ( TYPE_2 VAR_1 , long VAR_2 , long VAR_3 , int VAR_4 , TYPE_3 options ) { return TYPE_4 . METHOD_1 ( VAR_1 , VAR_2 , VAR_3 , VAR_4 , options , VAR_5 , false ) ; }
+}\ ò
+â
+~class MyMagicWrapper {
+public Map < String , TYPE_1 > files ( int VAR_1 ) throws RestApiException { throw new TYPE_2 ( ) ; }
+}] £(
+‰
+ÿclass MyMagicWrapper {
+public static TYPE_1 METHOD_1 ( TYPE_2 VAR_1 , long VAR_2 , long VAR_3 , int VAR_4 , TYPE_3 options ) { return TYPE_4 . METHOD_1 ( VAR_1 , VAR_2 , VAR_3 , VAR_4 , options , VAR_5 , true ) ; }
+}\ ô(
+o
+fclass MyMagicWrapper {
+public Map < String , TYPE_1 > files ( int VAR_1 ) { throw new TYPE_2 ( ) ; }
+}] ¢
+©
+üclass MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 model ) { if ( model . METHOD_2 ( ) . getEntity ( ) ) { METHOD_3 ( model ) ; } else { METHOD_4 ( ) ; } }
+}b ‘
+ú
+êclass MyMagicWrapper {
+public void METHOD_1 ( String VAR_1 ) { if ( VAR_2 == null ) { VAR_2 = new TYPE_1 < > ( ) ; } VAR_2 . add ( VAR_1 ) ; }
+}c ﬂ(
+∑
+´class MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 model ) { if ( ( Boolean ) model . METHOD_2 ( ) . getEntity ( ) ) { METHOD_3 ( model ) ; } else { METHOD_4 ( ) ; } }
+}b ’(
+c
+Zclass MyMagicWrapper {
+public void METHOD_1 ( String VAR_1 ) { VAR_2 . add ( VAR_1 ) ; }
+}c ﬁ
+^
+Uclass MyMagicWrapper {
+public TYPE_1 METHOD_1 ( ) { return VAR_1 . METHOD_1 ( ) ; }
+}` ¿
+Ä
+uclass MyMagicWrapper {
+public void METHOD_1 ( ) throws Exception { METHOD_2 ( STRING_1 , false , METHOD_3 ( ) ) ; }
+}a À(
+Y
+Nclass MyMagicWrapper {
+TYPE_1 METHOD_1 ( ) { return VAR_1 . METHOD_1 ( ) ; }
+}` ¡(
+t
+kclass MyMagicWrapper {
+public void METHOD_1 ( ) { METHOD_2 ( STRING_1 , false , true , METHOD_3 ( ) ) ; }
+}a  
+ 
+æclass MyMagicWrapper {
+protected void METHOD_1 ( String VAR_1 , TYPE_1 < TYPE_2 > event ) throws IOException { VAR_2 . index ( new TYPE_3 ( VAR_1 ) ) ; log . debug ( STRING_1 , VAR_1 ) ; }
+}f ˝(
+µ
+´class MyMagicWrapper {
+protected void METHOD_1 ( String VAR_1 , TYPE_1 < TYPE_2 > event ) { VAR_2 . index ( new TYPE_3 ( VAR_1 ) ) ; log . debug ( STRING_1 , VAR_1 ) ; }
+}f ¸
+å
+Çclass MyMagicWrapper {
+protected List < RevCommit > METHOD_1 ( ) throws IOException { return METHOD_1 ( project , STRING_1 ) ; }
+}d Ë
+`
+Uclass MyMagicWrapper {
+public boolean METHOD_1 ( ) { return VAR_1 || VAR_2 == 1 ; }
+}e Û(
+å
+Äclass MyMagicWrapper {
+protected List < RevCommit > METHOD_1 ( ) throws Exception { return METHOD_1 ( project , STRING_1 ) ; }
+}d È(
+P
+Gclass MyMagicWrapper {
+public boolean METHOD_1 ( ) { return VAR_1 ; }
+}e Ú
+à
+class MyMagicWrapper {
+private void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 params ) { log . debug ( STRING_1 , VAR_1 , params ) ; }
+}i ö
+ß
+õclass MyMagicWrapper {
+public static void METHOD_1 ( Object VAR_1 , int VAR_2 ) { for ( int i = 0 ; i < VAR_2 ; i ++ ) { VAR_3 . METHOD_1 ( VAR_1 ) ; } }
+}j •(
+©
+ùclass MyMagicWrapper {
+private void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 params ) { if ( log . METHOD_2 ( ) ) { log . debug ( STRING_1 , VAR_1 , params ) ; } }
+}i õ(
+°
+óclass MyMagicWrapper {
+public static void METHOD_1 ( Object obj , int VAR_2 ) { for ( int i = 0 ; i < VAR_2 ; i ++ ) { VAR_3 . METHOD_1 ( obj ) ; } }
+}j §
+í
+àclass MyMagicWrapper {
+public TYPE_1 build ( ) throws TYPE_2 { return new TYPE_1 ( VAR_1 , VAR_2 , VAR_4 , VAR_5 , VAR_6 , VAR_7 ) ; }
+}g Ü
+Ÿ
+Õclass MyMagicWrapper {
+public TYPE_1 METHOD_1 ( String VAR_1 , String VAR_2 ) { Map < String , Object > VAR_3 = VAR_4 . METHOD_1 ( VAR_1 , VAR_2 ) ; TYPE_1 VAR_5 = new TYPE_1 ( VAR_3 ) ; return VAR_5 ; }
+}h ë(
+ú
+êclass MyMagicWrapper {
+public TYPE_1 build ( ) throws TYPE_2 { return new TYPE_1 ( VAR_1 , VAR_2 , VAR_3 , VAR_4 , VAR_5 , VAR_6 , VAR_7 ) ; }
+}g á(
+¿
+∂class MyMagicWrapper {
+public TYPE_1 METHOD_1 ( String VAR_1 , String VAR_2 ) { Map < String , Object > VAR_3 = VAR_4 . METHOD_1 ( VAR_1 , VAR_2 ) ; return new TYPE_1 ( VAR_3 ) ; }
+}h ê
+è
+Öclass MyMagicWrapper {
+private void METHOD_1 ( TYPE_3 connection ) { synchronized ( VAR_3 ) { VAR_3 . METHOD_3 ( connection ) ; } }
+}m ¬
+s
+hclass MyMagicWrapper {
+public void METHOD_1 ( String path , boolean VAR_1 ) { throw new TYPE_1 ( ) ; }
+}n Õ(
+–
+ƒclass MyMagicWrapper {
+private void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 key ) { TYPE_3 connection = METHOD_2 ( VAR_1 , key , VAR_2 ) ; synchronized ( VAR_3 ) { VAR_3 . METHOD_3 ( connection ) ; } }
+}m √(
+ä
+Äclass MyMagicWrapper {
+public void METHOD_1 ( String path , boolean VAR_1 ) throws RestApiException { throw new TYPE_1 ( ) ; }
+}n Ã
+å
+Çclass MyMagicWrapper {
+public void METHOD_1 ( boolean VAR_1 ) { if ( VAR_2 == null ) { return ; } VAR_2 . METHOD_1 ( VAR_1 ) ; }
+}k Æ
+ó
+ãclass MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 VAR_1 ) { METHOD_2 ( VAR_1 , VAR_2 ) ; TYPE_2 event = VAR_3 . METHOD_1 ( VAR_1 ) ; }
+}l π(
+â
+~class MyMagicWrapper {
+public void METHOD_1 ( boolean VAR_1 ) { if ( VAR_2 == null ) return ; VAR_2 . METHOD_1 ( VAR_1 ) ; }
+}k Ø(
+Ö
+|class MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 VAR_1 ) { METHOD_2 ( VAR_1 , VAR_2 ) ; VAR_3 . METHOD_1 ( VAR_1 ) ; }
+}l ∏
+á
+~class MyMagicWrapper {
+protected boolean METHOD_1 ( String VAR_1 ) { return ! TYPE_1 . METHOD_2 ( VAR_1 ) . METHOD_3 ( ) ; }
+}p ‡
+ù
+ëclass MyMagicWrapper {
+private Object METHOD_1 ( TYPE_1 p ) { int VAR_1 ; byte [ ] response ; response = p . METHOD_2 ( ) ; return response ; }
+}q Î(
+á
+|class MyMagicWrapper {
+private boolean METHOD_1 ( String VAR_1 ) { return ! TYPE_1 . METHOD_2 ( VAR_1 ) . METHOD_3 ( ) ; }
+}p ·(
+ù
+ìclass MyMagicWrapper {
+protected Object METHOD_1 ( TYPE_1 p ) { int VAR_1 ; byte [ ] response ; response = p . METHOD_2 ( ) ; return response ; }
+}q Í
+ú
+íclass MyMagicWrapper {
+private boolean METHOD_1 ( ) { final TYPE_1 network = METHOD_2 ( ) ; return network != null && network . METHOD_3 ( ) ; }
+}o ÷
+¢
+ñclass MyMagicWrapper {
+private boolean METHOD_1 ( ) { final TYPE_1 network = METHOD_2 ( ) ; return ( network != null && network . METHOD_3 ( ) ) ; }
+}o ◊(
+à
+class MyMagicWrapper {
+private void METHOD_1 ( final TYPE_1 result ) { VAR_1 . METHOD_1 ( result ) ; VAR_1 . METHOD_2 ( ) ; }
+}t à	
+ç
+Åclass MyMagicWrapper {
+protected void METHOD_1 ( final TYPE_1 result ) { VAR_1 . METHOD_1 ( result ) ; VAR_1 . METHOD_2 ( ) ; }
+}t â	(
+c
+Zclass MyMagicWrapper {
+protected void METHOD_1 ( TYPE_1 VAR_1 ) { METHOD_2 ( VAR_1 ) ; }
+}r Ù
+å
+Äclass MyMagicWrapper {
+public void METHOD_1 ( String path , boolean VAR_1 ) throws RestApiException { throw new TYPE_1 ( ) ; }
+}s ˇ(
+c
+Xclass MyMagicWrapper {
+private void METHOD_1 ( TYPE_1 VAR_1 ) { METHOD_2 ( VAR_1 ) ; }
+}r ı(
+q
+hclass MyMagicWrapper {
+public void METHOD_1 ( String path , boolean VAR_1 ) { throw new TYPE_1 ( ) ; }
+}s ˛
+º
+≤class MyMagicWrapper {
+public void METHOD_1 ( ) throws Exception { METHOD_3 ( VAR_2 ) ; METHOD_4 ( ) ; METHOD_3 ( VAR_3 ) ; METHOD_5 ( ) ; METHOD_3 ( VAR_3 ) ; METHOD_6 ( ) ; }
+}w ¶	
+z
+oclass MyMagicWrapper {
+public int METHOD_1 ( ) { return TYPE_1 . hash ( VAR_1 , type ( ) , METHOD_2 ( ) ) ; }
+}x ±	(
+˙
+Óclass MyMagicWrapper {
+public void METHOD_1 ( ) throws Exception { TYPE_1 VAR_1 = METHOD_2 ( ) ; METHOD_3 ( VAR_1 , VAR_2 ) ; METHOD_4 ( VAR_1 ) ; METHOD_3 ( VAR_1 , VAR_3 ) ; METHOD_5 ( ) ; METHOD_3 ( VAR_1 , VAR_3 ) ; METHOD_6 ( ) ; }
+}w ß	(
+x
+oclass MyMagicWrapper {
+public int METHOD_1 ( ) { return TYPE_1 . hash ( type ( ) , METHOD_2 ( ) , VAR_1 ) ; }
+}x ∞	
+◊
+Õclass MyMagicWrapper {
+public void METHOD_1 ( ) { assertFalse ( command . validate ( ) ) ; assertTrue ( command . getReturnValue ( ) . getValidationMessages ( ) . contains ( TYPE_1 . toString ( ) ) ) ; }
+}u í	
+æ
+≤class MyMagicWrapper {
+private Object METHOD_1 ( TYPE_1 p ) { int [ ] response = ( int [ ] ) METHOD_2 ( p ) ; if ( VAR_1 >= 1 ) { VAR_2 = response [ 0 ] ; } return response ; }
+}v ù	(
+Ã
+¿class MyMagicWrapper {
+public void METHOD_1 ( ) { assertFalse ( command . validate ( ) ) ; assertTrue ( command . getReturnValue ( ) . METHOD_2 ( ) . contains ( TYPE_1 . toString ( ) ) ) ; }
+}u ì	(
+æ
+¥class MyMagicWrapper {
+protected Object METHOD_1 ( TYPE_1 p ) { int [ ] response = ( int [ ] ) METHOD_2 ( p ) ; if ( VAR_1 >= 1 ) { VAR_2 = response [ 0 ] ; } return response ; }
+}v ú	
+r
+iclass MyMagicWrapper {
+public TYPE_1 METHOD_1 ( String id ) { return METHOD_2 ( new TYPE_2 ( id ) ) ; }
+}{ Œ	
+Y
+Nclass MyMagicWrapper {
+boolean METHOD_1 ( ) { return VAR_1 . isEmpty ( ) ; }
+}| Ÿ	(
+{
+pclass MyMagicWrapper {
+public TYPE_1 METHOD_1 ( String id ) { return METHOD_2 ( new TYPE_2 ( id , this ) ) ; }
+}{ œ	(
+^
+Uclass MyMagicWrapper {
+public boolean METHOD_1 ( ) { return VAR_1 . isEmpty ( ) ; }
+}| ÿ	
+^
+Sclass MyMagicWrapper {
+public static final TYPE_1 METHOD_1 ( ) { return VAR_1 ; }
+}z ≈	(
+ü
+ìclass MyMagicWrapper {
+public TYPE_1 METHOD_1 ( String [ ] VAR_1 ) { if ( VAR_2 != null ) { return VAR_2 . METHOD_1 ( VAR_1 ) ; } return null ; }
+}y ª	(
+V
+Mclass MyMagicWrapper {
+public static TYPE_1 METHOD_1 ( ) { return VAR_1 ; }
+}z ƒ	
+^
+Uclass MyMagicWrapper {
+public TYPE_1 METHOD_1 ( ) { return VAR_1 . METHOD_2 ( ) ; }
+} ˆ	
+¨
+üclass MyMagicWrapper {
+public String METHOD_1 ( ) { String VAR_1 = STRING_1 + TYPE_1 . toString ( this . VAR_2 ) + STRING_2 ; return VAR_1 + METHOD_2 ( ) ; }
+}Ä Å
+(
+Y
+Nclass MyMagicWrapper {
+TYPE_1 METHOD_1 ( ) { return VAR_1 . METHOD_2 ( ) ; }
+} ˜	(
+ì
+àclass MyMagicWrapper {
+public String METHOD_1 ( ) { return STRING_1 + TYPE_1 . toString ( this . VAR_2 ) + STRING_2 + METHOD_2 ( ) ; }
+}Ä Ä
+
+‘
+ class MyMagicWrapper {
+public TYPE_1 METHOD_1 ( ) throws HyracksDataException { TYPE_3 VAR_1 = VAR_2 . METHOD_2 ( ) ; return METHOD_3 ( VAR_3 , VAR_1 . METHOD_4 ( ) , VAR_1 . METHOD_5 ( ) , true ) ; }
+}} ‚	
+¡
+µclass MyMagicWrapper {
+public void METHOD_1 ( ) throws TYPE_1 , AnalysisException { METHOD_2 ( STRING_1 ) ; METHOD_3 ( STRING_2 , STRING_3 ) ; METHOD_3 ( STRING_4 , STRING_5 ) ; }
+}~ Ì	(
+‚
+÷class MyMagicWrapper {
+protected TYPE_1 METHOD_1 ( ) throws HyracksDataException , TYPE_2 { TYPE_3 VAR_1 = VAR_2 . METHOD_2 ( ) ; return METHOD_3 ( VAR_3 , VAR_1 . METHOD_4 ( ) , VAR_1 . METHOD_5 ( ) , true ) ; }
+}} „	(
+¥
+™class MyMagicWrapper {
+public void METHOD_1 ( ) throws ImpalaException { METHOD_2 ( STRING_1 ) ; METHOD_3 ( STRING_2 , STRING_3 ) ; METHOD_3 ( STRING_4 , STRING_5 ) ; }
+}~ Ï	
+ö
+èclass MyMagicWrapper {
+public synchronized void METHOD_1 ( TYPE_1 ... VAR_1 ) { for ( TYPE_1 VAR_2 : VAR_1 ) { VAR_3 . remove ( VAR_2 ) ; } }
+}Å ä
+
+†
+ìclass MyMagicWrapper {
+public boolean METHOD_1 ( TYPE_1 ... VAR_1 ) { for ( TYPE_1 VAR_2 : VAR_1 ) { VAR_3 . remove ( VAR_2 ) ; } return true ; }
+}Å ã
+(

@@ -1,0 +1,3593 @@
+65
+#method_before
+private void evaluateMaintenanceHostCommandProgress(List<Guid> childCmdIds, CommandBase<?> rootCommand) {
+    UpgradeHostParameters parameters = (UpgradeHostParameters) rootCommand.getParameters();
+    VdsDynamic host = vdsDynamicDao.get(parameters.getVdsId());
+    switch(host.getStatus()) {
+        // Wait till moving to maintenance ends
+        case PreparingForMaintenance:
+            break;
+        // Invoke the upgrade action
+        case Maintenance:
+            log.info("Host '{}' is on maintenance mode. Proceeding with Upgrade process.", getHostName(parameters.getVdsId()));
+            invokeHostUpgrade(rootCommand, parameters);
+            break;
+        // Any other status implies maintenance action failed, and the callback cannot proceed with the upgrade
+        default:
+            if (isMaintenanceCommandExecuted(childCmdIds) || maintenanceCmdFailed(childCmdIds)) {
+                log.error("Host '{}' failed to move to maintenance mode. Upgrade process is terminated.", getHostName(parameters.getVdsId()));
+                auditLogDirector.log(rootCommand, AuditLogType.VDS_MAINTENANCE_FAILED);
+                rootCommand.setCommandStatus(CommandStatus.FAILED);
+            }
+            break;
+    }
+}
+#method_after
+private void evaluateMaintenanceHostCommandProgress(List<Guid> childCmdIds, CommandBase<?> rootCommand) {
+    UpgradeHostParameters parameters = (UpgradeHostParameters) rootCommand.getParameters();
+    VdsDynamic host = vdsDynamicDao.get(parameters.getVdsId());
+    switch(host.getStatus()) {
+        // Wait till moving to maintenance ends
+        case PreparingForMaintenance:
+            break;
+        // Invoke the upgrade action
+        case Maintenance:
+            log.info("Host '{}' is on maintenance mode. Proceeding with Upgrade process.", getHostName(parameters.getVdsId()));
+            invokeHostUpgrade(rootCommand, parameters);
+            break;
+        // Any other status implies maintenance action failed, and the callback cannot proceed with the upgrade
+        default:
+            if (isMaintenanceCommandExecuted(childCmdIds) || hasMaintenanceCmdFailed(childCmdIds)) {
+                log.error("Host '{}' failed to move to maintenance mode. Upgrade process is terminated.", getHostName(parameters.getVdsId()));
+                auditLogDirector.log(rootCommand, AuditLogType.VDS_MAINTENANCE_FAILED);
+                rootCommand.setCommandStatus(CommandStatus.FAILED);
+            }
+            break;
+    }
+}
+#end_block
+
+#method_before
+private boolean isActiveVds() {
+    VDS vds = vdsDao.get(getParameters().getId());
+    if (vds == null || vds.getStatus() != VDSStatus.Up) {
+        getQueryReturnValue().setExceptionString(String.format("Cannot fetch storage devices, host %s is not UP.", vds.getHostName()));
+        getQueryReturnValue().setSucceeded(false);
+        return false;
+    }
+    return true;
+}
+#method_after
+private boolean isActiveVds() {
+    VDS vds = vdsDao.get(getParameters().getId());
+    if (vds == null) {
+        getQueryReturnValue().setExceptionString(EngineMessage.CANNOT_FETCH_STORAGE_DEVICES_HOST_DOESNT_EXIST_ANYMORE.toString());
+    } else if (vds.getStatus() != VDSStatus.Up) {
+        getQueryReturnValue().setExceptionString(String.format("Cannot fetch storage devices, host %s is not UP.", vds.getHostName()));
+    } else {
+        return true;
+    }
+    getQueryReturnValue().setSucceeded(false);
+    return false;
+}
+#end_block
+
+#method_before
+private void logInvocationCallbackError(Throwable throwable) {
+    try {
+        log.error("Exception in invokeCallbackMethods: {}", ExceptionUtils.getRootCauseMessage(throwable));
+        log.debug("Exception", throwable);
+    } catch (Throwable t) {
+    // ignore
+    }
+}
+#method_after
+private void logInvocationCallbackError(Throwable throwable) {
+    try {
+        log.error("Exception in invokeCallbackMethods: {}", ExceptionUtils.getRootCauseMessage(throwable));
+        log.debug("Exception", throwable);
+    } catch (Throwable t) {
+        // log the stacktrace to the stdout as the exception was raised somewhere inside logging code
+        t.printStackTrace(System.out);
+    }
+}
+#end_block
+
+#method_before
+private void finalizeCommand(CommandBase<?> commandBase, boolean succeeded) {
+    if (!commandBase.isExecutedAsChildCommand()) {
+        commandCoordinatorUtil.removeAllCommandsInHierarchy(commandBase.getCommandId());
+    }
+    executionHandler.endJob(commandBase.getExecutionContext(), succeeded);
+}
+#method_after
+private void finalizeCommand(CommandBase<?> command, boolean succeeded) {
+    if (!command.isExecutedAsChildCommand()) {
+        commandCoordinatorUtil.removeAllCommandsInHierarchy(command.getCommandId());
+    }
+    executionHandler.endJob(command.getExecutionContext(), succeeded);
+}
+#end_block
+
+#method_before
+private void finalizeCommand(CommandBase<?> commandBase, boolean succeeded) {
+    if (!commandBase.isExecutedAsChildCommand()) {
+        commandCoordinatorUtil.removeAllCommandsInHierarchy(commandBase.getCommandId());
+    }
+    executionHandler.endJob(commandBase.getExecutionContext(), succeeded);
+}
+#method_after
+private void finalizeCommand(CommandBase<?> command, boolean succeeded) {
+    if (!command.isExecutedAsChildCommand()) {
+        commandCoordinatorUtil.removeAllCommandsInHierarchy(command.getCommandId());
+    }
+    executionHandler.endJob(command.getExecutionContext(), succeeded);
+}
+#end_block
+
+#method_before
+protected void copyDiskImage(DiskImage diskImage, Guid srcStorageDomainId, Guid destStorageDomainId, Guid diskProfileId, ActionType parentCommandType) {
+    DiskImage newDiskImage = imagesHandler.cloneDiskImage(destStorageDomainId, Guid.newGuid(), Guid.newGuid(), diskImage, diskProfileId, getVmSnapshotId(), diskInfoDestinationMap != null ? diskInfoDestinationMap.get(diskImage.getId()) : null);
+    ImagesHandler.setDiskAlias(newDiskImage, getVm());
+    String clonedDiskNameSuffix = "_" + getVm().getName();
+    newDiskImage.setDiskAlias(newDiskImage.getDiskAlias() + clonedDiskNameSuffix);
+    MoveOrCopyImageGroupParameters parameters = createCopyParameters(newDiskImage, srcStorageDomainId, diskImage.getId(), diskImage.getImageId(), parentCommandType);
+    parameters.setRevertDbOperationScope(ImageDbOperationScope.IMAGE);
+    ActionReturnValue result = executeChildCopyingCommand(parameters);
+    handleCopyResult(diskImage, newDiskImage, result);
+}
+#method_after
+protected void copyDiskImage(DiskImage diskImage, Guid srcStorageDomainId, Guid destStorageDomainId, Guid diskProfileId, ActionType parentCommandType) {
+    DiskImage newDiskImage = imagesHandler.cloneDiskImage(destStorageDomainId, Guid.newGuid(), Guid.newGuid(), diskImage, diskProfileId, getVmSnapshotId(), diskInfoDestinationMap != null ? diskInfoDestinationMap.get(diskImage.getId()) : null);
+    ImagesHandler.setDiskAlias(newDiskImage, getVm());
+    newDiskImage.setDiskAlias(String.format("%s_%s", newDiskImage.getDiskAlias(), getVm().getName()));
+    MoveOrCopyImageGroupParameters parameters = createCopyParameters(newDiskImage, srcStorageDomainId, diskImage.getId(), diskImage.getImageId(), parentCommandType);
+    parameters.setRevertDbOperationScope(ImageDbOperationScope.IMAGE);
+    ActionReturnValue result = executeChildCopyingCommand(parameters);
+    handleCopyResult(diskImage, newDiskImage, result);
+}
+#end_block
+
+#method_before
+@Mapping(from = VDS.class, to = Host.class)
+public static Host map(VDS entity, Host template) {
+    Host model = template != null ? template : new Host();
+    model.setId(entity.getId().toString());
+    model.setName(entity.getName());
+    model.setComment(entity.getComment());
+    if (entity.getClusterId() != null) {
+        Cluster cluster = new Cluster();
+        cluster.setId(entity.getClusterId().toString());
+        model.setCluster(cluster);
+    }
+    model.setAddress(entity.getHostName());
+    if (entity.getPort() > 0) {
+        model.setPort(entity.getPort());
+    }
+    // We return always STOMP because support for XML-RPC was removed in version 4.1 of the engine.
+    model.setProtocol(HostProtocol.STOMP);
+    HostStatus status = map(entity.getStatus(), null);
+    model.setStatus(status);
+    if (entity.getExternalStatus() != null) {
+        ExternalStatus externalStatus = ExternalStatusMapper.map(entity.getExternalStatus());
+        model.setExternalStatus(externalStatus);
+    }
+    if (status == HostStatus.NON_OPERATIONAL) {
+        model.setStatusDetail(entity.getNonOperationalReason().name().toLowerCase());
+    } else if (status == HostStatus.MAINTENANCE || status == HostStatus.PREPARING_FOR_MAINTENANCE) {
+        model.setStatusDetail(entity.getMaintenanceReason());
+    }
+    Spm spm = new Spm();
+    spm.setPriority(entity.getVdsSpmPriority());
+    if (entity.getSpmStatus() != null) {
+        spm.setStatus(mapSpmStatus(entity.getSpmStatus()));
+    }
+    model.setSpm(spm);
+    if (entity.getVersion() != null && entity.getVersion().getMajor() != -1 && entity.getVersion().getMinor() != -1 && entity.getVersion().getRevision() != -1 && entity.getVersion().getBuild() != -1) {
+        Version version = new Version();
+        version.setMajor(entity.getVersion().getMajor());
+        version.setMinor(entity.getVersion().getMinor());
+        version.setRevision(entity.getVersion().getRevision());
+        version.setBuild(entity.getVersion().getBuild());
+        version.setFullVersion(entity.getVersion().getRpmName());
+        model.setVersion(version);
+    }
+    model.setOs(mapOperatingSystem(entity));
+    model.setKsm(new Ksm());
+    model.getKsm().setEnabled(Boolean.TRUE.equals(entity.getKsmState()));
+    model.setTransparentHugepages(new TransparentHugePages());
+    model.getTransparentHugepages().setEnabled(!(entity.getTransparentHugePagesState() == null || entity.getTransparentHugePagesState() == VdsTransparentHugePagesState.Never));
+    if (entity.getIScsiInitiatorName() != null) {
+        model.setIscsi(new IscsiDetails());
+        model.getIscsi().setInitiator(entity.getIScsiInitiatorName());
+    }
+    model.setPowerManagement(map(entity, (PowerManagement) null));
+    model.setHardwareInformation(map(entity, (HardwareInformation) null));
+    model.setSsh(map(entity.getStaticData(), null));
+    Cpu cpu = new Cpu();
+    CpuTopology cpuTopology = new CpuTopology();
+    if (entity.getCpuSockets() != null) {
+        cpuTopology.setSockets(entity.getCpuSockets());
+        if (entity.getCpuCores() != null) {
+            cpuTopology.setCores(entity.getCpuCores() / entity.getCpuSockets());
+            if (entity.getCpuThreads() != null) {
+                cpuTopology.setThreads(entity.getCpuThreads() / entity.getCpuCores());
+            }
+        }
+    }
+    cpu.setTopology(cpuTopology);
+    cpu.setName(entity.getCpuModel());
+    cpu.setType(entity.getClusterCpuName());
+    if (entity.getCpuSpeedMh() != null) {
+        cpu.setSpeed(new BigDecimal(entity.getCpuSpeedMh()));
+    }
+    model.setCpu(cpu);
+    VmSummary vmSummary = new VmSummary();
+    vmSummary.setActive(entity.getVmActive());
+    vmSummary.setMigrating(entity.getVmMigrating());
+    vmSummary.setTotal(entity.getVmCount());
+    model.setSummary(vmSummary);
+    if (entity.getVdsType() != null) {
+        HostType type = map(entity.getVdsType(), null);
+        model.setType(type);
+    }
+    model.setMemory(Long.valueOf(entity.getPhysicalMemMb() == null ? 0 : entity.getPhysicalMemMb() * BYTES_IN_MEGABYTE));
+    model.setMaxSchedulingMemory((int) entity.getMaxSchedulingMemory() * BYTES_IN_MEGABYTE);
+    if (entity.getLibvirtVersion() != null && entity.getLibvirtVersion().getMajor() != -1 && entity.getLibvirtVersion().getMinor() != -1 && entity.getLibvirtVersion().getRevision() != -1 && entity.getLibvirtVersion().getBuild() != -1) {
+        Version version = new Version();
+        version.setMajor(entity.getLibvirtVersion().getMajor());
+        version.setMinor(entity.getLibvirtVersion().getMinor());
+        version.setRevision(entity.getLibvirtVersion().getRevision());
+        version.setBuild(entity.getLibvirtVersion().getBuild());
+        version.setFullVersion(entity.getLibvirtVersion().getRpmName());
+        model.setLibvirtVersion(version);
+    }
+    if (entity.getConsoleAddress() != null && !"".equals(entity.getConsoleAddress())) {
+        model.setDisplay(new Display());
+        model.getDisplay().setAddress(entity.getConsoleAddress());
+    }
+    model.setKdumpStatus(map(entity.getKdumpStatus(), null));
+    model.setSeLinux(map(entity, (SeLinux) null));
+    model.setAutoNumaStatus(map(entity.getAutoNumaBalancing(), null));
+    model.setNumaSupported(entity.isNumaSupport());
+    if (entity.getHostProviderId() != null) {
+        model.setExternalHostProvider(new ExternalHostProvider());
+        model.getExternalHostProvider().setId(entity.getHostProviderId().toString());
+    }
+    model.setUpdateAvailable(entity.isUpdateAvailable());
+    HostDevicePassthrough devicePassthrough = model.getDevicePassthrough();
+    if (devicePassthrough == null) {
+        devicePassthrough = new HostDevicePassthrough();
+        model.setDevicePassthrough(devicePassthrough);
+    }
+    devicePassthrough.setEnabled(entity.isHostDevicePassthroughEnabled());
+    if (entity.getHostName() != null) {
+        String subject = CertificateSubjectHelper.getCertificateSubject(entity.getHostName());
+        model.setCertificate(new Certificate());
+        model.getCertificate().setSubject(subject);
+        model.getCertificate().setOrganization(subject.split(",")[0].replace("O=", ""));
+    }
+    return model;
+}
+#method_after
+@Mapping(from = VDS.class, to = Host.class)
+public static Host map(VDS entity, Host template) {
+    Host model = template != null ? template : new Host();
+    model.setId(entity.getId().toString());
+    model.setName(entity.getName());
+    model.setComment(entity.getComment());
+    if (entity.getClusterId() != null) {
+        Cluster cluster = new Cluster();
+        cluster.setId(entity.getClusterId().toString());
+        model.setCluster(cluster);
+    }
+    model.setAddress(entity.getHostName());
+    if (entity.getPort() > 0) {
+        model.setPort(entity.getPort());
+    }
+    // We return always STOMP because support for XML-RPC was removed in version 4.1 of the engine.
+    model.setProtocol(HostProtocol.STOMP);
+    HostStatus status = map(entity.getStatus(), null);
+    model.setStatus(status);
+    if (entity.getExternalStatus() != null) {
+        ExternalStatus externalStatus = ExternalStatusMapper.map(entity.getExternalStatus());
+        model.setExternalStatus(externalStatus);
+    }
+    if (status == HostStatus.NON_OPERATIONAL) {
+        model.setStatusDetail(entity.getNonOperationalReason().name().toLowerCase());
+    } else if (status == HostStatus.MAINTENANCE || status == HostStatus.PREPARING_FOR_MAINTENANCE) {
+        model.setStatusDetail(entity.getMaintenanceReason());
+    }
+    Spm spm = new Spm();
+    spm.setPriority(entity.getVdsSpmPriority());
+    if (entity.getSpmStatus() != null) {
+        spm.setStatus(mapSpmStatus(entity.getSpmStatus()));
+    }
+    model.setSpm(spm);
+    if (entity.getVersion() != null && entity.getVersion().getMajor() != -1 && entity.getVersion().getMinor() != -1 && entity.getVersion().getRevision() != -1 && entity.getVersion().getBuild() != -1) {
+        Version version = new Version();
+        version.setMajor(entity.getVersion().getMajor());
+        version.setMinor(entity.getVersion().getMinor());
+        version.setRevision(entity.getVersion().getRevision());
+        version.setBuild(entity.getVersion().getBuild());
+        version.setFullVersion(entity.getVersion().getRpmName());
+        model.setVersion(version);
+    }
+    model.setOs(mapOperatingSystem(entity));
+    model.setKsm(new Ksm());
+    model.getKsm().setEnabled(Boolean.TRUE.equals(entity.getKsmState()));
+    model.setTransparentHugepages(new TransparentHugePages());
+    model.getTransparentHugepages().setEnabled(!(entity.getTransparentHugePagesState() == null || entity.getTransparentHugePagesState() == VdsTransparentHugePagesState.Never));
+    if (entity.getIScsiInitiatorName() != null) {
+        model.setIscsi(new IscsiDetails());
+        model.getIscsi().setInitiator(entity.getIScsiInitiatorName());
+    }
+    model.setPowerManagement(map(entity, (PowerManagement) null));
+    model.setHardwareInformation(map(entity, (HardwareInformation) null));
+    model.setSsh(map(entity.getStaticData(), null));
+    Cpu cpu = new Cpu();
+    CpuTopology cpuTopology = new CpuTopology();
+    if (entity.getCpuSockets() != null) {
+        cpuTopology.setSockets(entity.getCpuSockets());
+        if (entity.getCpuCores() != null) {
+            cpuTopology.setCores(entity.getCpuCores() / entity.getCpuSockets());
+            if (entity.getCpuThreads() != null) {
+                cpuTopology.setThreads(entity.getCpuThreads() / entity.getCpuCores());
+            }
+        }
+    }
+    cpu.setTopology(cpuTopology);
+    cpu.setName(entity.getCpuModel());
+    if (entity.getCpuName() != null) {
+        cpu.setType(entity.getCpuName().getCpuName());
+    }
+    if (entity.getCpuSpeedMh() != null) {
+        cpu.setSpeed(new BigDecimal(entity.getCpuSpeedMh()));
+    }
+    model.setCpu(cpu);
+    VmSummary vmSummary = new VmSummary();
+    vmSummary.setActive(entity.getVmActive());
+    vmSummary.setMigrating(entity.getVmMigrating());
+    vmSummary.setTotal(entity.getVmCount());
+    model.setSummary(vmSummary);
+    if (entity.getVdsType() != null) {
+        HostType type = map(entity.getVdsType(), null);
+        model.setType(type);
+    }
+    model.setMemory(Long.valueOf(entity.getPhysicalMemMb() == null ? 0 : entity.getPhysicalMemMb() * BYTES_IN_MEGABYTE));
+    model.setMaxSchedulingMemory((int) entity.getMaxSchedulingMemory() * BYTES_IN_MEGABYTE);
+    if (entity.getLibvirtVersion() != null && entity.getLibvirtVersion().getMajor() != -1 && entity.getLibvirtVersion().getMinor() != -1 && entity.getLibvirtVersion().getRevision() != -1 && entity.getLibvirtVersion().getBuild() != -1) {
+        Version version = new Version();
+        version.setMajor(entity.getLibvirtVersion().getMajor());
+        version.setMinor(entity.getLibvirtVersion().getMinor());
+        version.setRevision(entity.getLibvirtVersion().getRevision());
+        version.setBuild(entity.getLibvirtVersion().getBuild());
+        version.setFullVersion(entity.getLibvirtVersion().getRpmName());
+        model.setLibvirtVersion(version);
+    }
+    if (entity.getConsoleAddress() != null && !"".equals(entity.getConsoleAddress())) {
+        model.setDisplay(new Display());
+        model.getDisplay().setAddress(entity.getConsoleAddress());
+    }
+    model.setKdumpStatus(map(entity.getKdumpStatus(), null));
+    model.setSeLinux(map(entity, (SeLinux) null));
+    model.setAutoNumaStatus(map(entity.getAutoNumaBalancing(), null));
+    model.setNumaSupported(entity.isNumaSupport());
+    if (entity.getHostProviderId() != null) {
+        model.setExternalHostProvider(new ExternalHostProvider());
+        model.getExternalHostProvider().setId(entity.getHostProviderId().toString());
+    }
+    model.setUpdateAvailable(entity.isUpdateAvailable());
+    HostDevicePassthrough devicePassthrough = model.getDevicePassthrough();
+    if (devicePassthrough == null) {
+        devicePassthrough = new HostDevicePassthrough();
+        model.setDevicePassthrough(devicePassthrough);
+    }
+    devicePassthrough.setEnabled(entity.isHostDevicePassthroughEnabled());
+    if (entity.getHostName() != null) {
+        String subject = CertificateSubjectHelper.getCertificateSubject(entity.getHostName());
+        model.setCertificate(new Certificate());
+        model.getCertificate().setSubject(subject);
+        model.getCertificate().setOrganization(subject.split(",")[0].replace("O=", ""));
+    }
+    return model;
+}
+#end_block
+
+#method_before
+public NetworkAttachment mapNetworkAttachment(Map<Guid, NetworkAttachment> attachmentsById, org.ovirt.engine.api.model.NetworkAttachment model) {
+    Mapper<org.ovirt.engine.api.model.NetworkAttachment, NetworkAttachment> networkAttachmentMapper = getMapper(org.ovirt.engine.api.model.NetworkAttachment.class, NetworkAttachment.class);
+    NetworkAttachment attachment = networkAttachmentMapper.map(model, null);
+    if (model.isSetId()) {
+        Guid attachmentId = asGuid(model.getId());
+        attachment = networkAttachmentMapper.map(model, attachmentsById.get(attachmentId));
+    } else if (model.isSetNetwork() && (model.getNetwork().isSetName() || model.getNetwork().isSetId())) {
+        for (Map.Entry<Guid, NetworkAttachment> backendNetworkAttachmentMapEntry : attachmentsById.entrySet()) {
+            NetworkAttachment backendNetworkAttachment = backendNetworkAttachmentMapEntry.getValue();
+            String backendNetworkName = backendNetworkAttachment.getNetworkName();
+            String backendNetworkId = backendNetworkAttachment.getNetworkId().toString();
+            if (backendNetworkName.equals(model.getNetwork().getName()) || backendNetworkId.equals(model.getNetwork().getId())) {
+                attachment = networkAttachmentMapper.map(model, backendNetworkAttachment);
+            }
+        }
+    }
+    return attachment;
+}
+#method_after
+public NetworkAttachment mapNetworkAttachment(Map<Guid, NetworkAttachment> attachmentsById, org.ovirt.engine.api.model.NetworkAttachment model) {
+    Mapper<org.ovirt.engine.api.model.NetworkAttachment, NetworkAttachment> networkAttachmentMapper = getMapper(org.ovirt.engine.api.model.NetworkAttachment.class, NetworkAttachment.class);
+    NetworkAttachment attachment = null;
+    if (model.isSetId()) {
+        attachment = attachmentsById.get(asGuid(model.getId()));
+    } else if (model.isSetNetwork() && (model.getNetwork().isSetName() || model.getNetwork().isSetId())) {
+        for (Map.Entry<Guid, NetworkAttachment> backendNetworkAttachmentMapEntry : attachmentsById.entrySet()) {
+            NetworkAttachment backendNetworkAttachment = backendNetworkAttachmentMapEntry.getValue();
+            String backendNetworkName = backendNetworkAttachment.getNetworkName();
+            String backendNetworkId = backendNetworkAttachment.getNetworkId().toString();
+            if (backendNetworkName.equals(model.getNetwork().getName()) || backendNetworkId.equals(model.getNetwork().getId())) {
+                attachment = backendNetworkAttachment;
+                break;
+            }
+        }
+    }
+    return networkAttachmentMapper.map(model, attachment);
+}
+#end_block
+
+#method_before
+public static DiskImage createSnapshotMetadataDisk(VM vm, String diskDescription) {
+    DiskImage image = createMetadataDisk(diskDescription);
+    image.setDiskAlias(String.format(VM_SNAPSHOT_METADATA_DISK_ALIAS, vm.getName()));
+    image.setImageStatus(ImageStatus.OK);
+    return image;
+}
+#method_after
+public static DiskImage createSnapshotMetadataDisk(String vmName, String diskDescription) {
+    DiskImage image = createMetadataDisk(diskDescription);
+    image.setDiskAlias(String.format(VM_SNAPSHOT_METADATA_DISK_ALIAS, vmName));
+    image.setImageStatus(ImageStatus.OK);
+    return image;
+}
+#end_block
+
+#method_before
+private DiskImage createMetadataDisk(VM vm, Snapshot snapshot) {
+    StorageDomainStatic sd = validateStorageDomainExistsInDb(snapshot, memoryDiskDomainMap.get(snapshot.getMetadataDiskId()));
+    DiskImage disk = isMemoryDiskAlreadyExistsInDb(snapshot, snapshot.getMetadataDiskId());
+    if (sd == null || disk != null) {
+        return null;
+    }
+    DiskImage memoryDisk = MemoryUtils.createSnapshotMetadataDisk(vm, MemoryUtils.generateMemoryDiskDescription(vm, snapshot.getDescription()));
+    memoryDisk.setId(snapshot.getMetadataDiskId());
+    memoryDisk.setImageId(getMemoryDiskImageId(snapshot.getMetadataDiskId()));
+    memoryDisk.setStorageIds(new ArrayList<>(Collections.singletonList(sd.getId())));
+    memoryDisk.setStoragePoolId(getStoragePoolId());
+    memoryDisk.setCreationDate(snapshot.getCreationDate());
+    memoryDisk.setActive(true);
+    memoryDisk.setWipeAfterDelete(vm.getDiskList().stream().anyMatch(DiskImage::isWipeAfterDelete));
+    return memoryDisk;
+}
+#method_after
+private DiskImage createMetadataDisk(VM vm, Snapshot snapshot) {
+    StorageDomainStatic sd = validateStorageDomainExistsInDb(snapshot, memoryDiskDomainMap.get(snapshot.getMetadataDiskId()));
+    DiskImage disk = isMemoryDiskAlreadyExistsInDb(snapshot, snapshot.getMetadataDiskId());
+    if (sd == null || disk != null) {
+        return null;
+    }
+    DiskImage memoryDisk = MemoryUtils.createSnapshotMetadataDisk(vm.getName(), MemoryUtils.generateMemoryDiskDescription(vm, snapshot.getDescription()));
+    memoryDisk.setId(snapshot.getMetadataDiskId());
+    memoryDisk.setImageId(getMemoryDiskImageId(snapshot.getMetadataDiskId()));
+    memoryDisk.setStorageIds(new ArrayList<>(Collections.singletonList(sd.getId())));
+    memoryDisk.setStoragePoolId(getStoragePoolId());
+    memoryDisk.setCreationDate(snapshot.getCreationDate());
+    memoryDisk.setActive(true);
+    memoryDisk.setWipeAfterDelete(vm.getDiskList().stream().anyMatch(DiskImage::isWipeAfterDelete));
+    return memoryDisk;
+}
+#end_block
+
+#method_before
+private Guid addMetadataDisk() {
+    DiskImage metadataDisk = MemoryUtils.createSnapshotMetadataDisk(vm, MemoryUtils.generateMemoryDiskDescription(vm, snapshotDescription));
+    metadataDisk.setWipeAfterDelete(wipeAfterDelete);
+    return addDisk(metadataDisk);
+}
+#method_after
+private Guid addMetadataDisk() {
+    DiskImage metadataDisk = MemoryUtils.createSnapshotMetadataDisk(vm.getName(), MemoryUtils.generateMemoryDiskDescription(vm, snapshotDescription));
+    metadataDisk.setWipeAfterDelete(wipeAfterDelete);
+    return addDisk(metadataDisk);
+}
+#end_block
+
+#method_before
+private DbUser buildUser(boolean externalSsoEnabled, T params, String authzName) {
+    DbUser dbUser = dbUserDao.getByExternalId(authzName, params.getPrincipalId());
+    DbUser user = new DbUser(dbUser);
+    user.setId(dbUser == null ? Guid.newGuid() : dbUser.getId());
+    user.setExternalId(params.getPrincipalId());
+    user.setDomain(authzName);
+    user.setEmail(params.getEmail());
+    user.setFirstName(params.getFirstName());
+    user.setLastName(params.getLastName());
+    user.setNamespace(params.getNamespace());
+    user.setLoginName(params.getPrincipalName());
+    List<Guid> groupIds = new ArrayList<>();
+    Map<String, ExtMap> groupRecords = new HashMap<>();
+    flatGroups((Collection<ExtMap>) params.getGroupIds(), groupRecords);
+    for (Map.Entry<String, ExtMap> group : groupRecords.entrySet()) {
+        String name = group.getValue().get(Authz.GroupRecord.NAME);
+        // The domain is empty for predefined ovirt-administrator group
+        String domain = name.equals("ovirt-administrator") ? "" : authzName;
+        // If external sso integration is enabled we retrieve the group by their name and domain. We do not have
+        // the external id for the groups in the OpenID Connect claim set.
+        DbGroup dbGroup = externalSsoEnabled ? dbGroupDao.getByNameAndDomain(name, domain) : dbGroupDao.getByExternalId(authzName, group.getKey());
+        if (dbGroup != null) {
+            dbGroup.setName(name);
+            dbGroupDao.update(dbGroup);
+            groupIds.add(dbGroup.getId());
+        }
+    }
+    user.setGroupIds(groupIds);
+    user.setAdmin(!roleDao.getAnyAdminRoleForUserAndGroups(user.getId(), StringUtils.join(user.getGroupIds(), ",")).isEmpty());
+    if (dbUser == null) {
+        dbUserDao.save(user);
+    } else if (!dbUser.equals(user)) {
+        dbUserDao.update(user);
+    }
+    return user;
+}
+#method_after
+private DbUser buildUser(T params, String authzName) {
+    boolean externalSsoEnabled = EngineLocalConfig.getInstance().getBoolean("ENGINE_SSO_ENABLE_EXTERNAL_SSO");
+    DbUser dbUser = dbUserDao.getByExternalId(authzName, params.getPrincipalId());
+    DbUser user = new DbUser(dbUser);
+    user.setId(dbUser == null ? Guid.newGuid() : dbUser.getId());
+    user.setExternalId(externalSsoEnabled ? Guid.newGuid().toString() : params.getPrincipalId());
+    user.setDomain(authzName);
+    user.setEmail(params.getEmail());
+    user.setFirstName(params.getFirstName());
+    user.setLastName(params.getLastName());
+    user.setNamespace(params.getNamespace());
+    user.setLoginName(params.getPrincipalName());
+    List<Guid> groupIds = new ArrayList<>();
+    Map<String, ExtMap> groupRecords = new HashMap<>();
+    flatGroups((Collection<ExtMap>) params.getGroupIds(), groupRecords);
+    for (Map.Entry<String, ExtMap> group : groupRecords.entrySet()) {
+        String name = group.getValue().get(Authz.GroupRecord.NAME);
+        // The domain is empty for predefined ovirt-administrator group
+        String domain = name.equals(OVIRT_ADMINISTRATOR) ? "" : authzName;
+        // If external sso integration is enabled we retrieve the group by their name and domain. We do not have
+        // the external id for the groups in the OpenID Connect claim set.
+        DbGroup dbGroup = externalSsoEnabled ? dbGroupDao.getByNameAndDomain(name, domain) : dbGroupDao.getByExternalId(authzName, group.getKey());
+        if (dbGroup != null) {
+            dbGroup.setName(name);
+            dbGroupDao.update(dbGroup);
+            groupIds.add(dbGroup.getId());
+        }
+    }
+    user.setGroupIds(groupIds);
+    user.setAdmin(!roleDao.getAnyAdminRoleForUserAndGroups(user.getId(), StringUtils.join(user.getGroupIds(), ",")).isEmpty());
+    if (dbUser == null) {
+        dbUserDao.save(user);
+    } else if (!dbUser.equals(user)) {
+        dbUserDao.update(user);
+    }
+    return user;
+}
+#end_block
+
+#method_before
+@Override
+protected void executeCommand() {
+    final AuthenticationProfile profile = AuthenticationProfileRepository.getInstance().getProfile(getParameters().getProfileName());
+    sourceIp = getParameters().getSourceIp();
+    if (profile == null) {
+        setSucceeded(false);
+    } else {
+        final boolean externalSsoEnabled = EngineLocalConfig.getInstance().getBoolean("ENGINE_SSO_ENABLE_EXTERNAL_SSO");
+        final DbUser user = buildUser(externalSsoEnabled, getParameters(), profile.getAuthzName());
+        boolean isAdmin = !roleDao.getAnyAdminRoleForUserAndGroups(user.getId(), StringUtils.join(user.getGroupIds(), ",")).isEmpty();
+        user.setAdmin(isAdmin);
+        setCurrentUser(user);
+        setUserName(String.format("%s@%s", getCurrentUser().getLoginName(), getCurrentUser().getDomain()));
+        if (getParameters().isAdminRequired() && !isAdmin) {
+            setSucceeded(false);
+        } else if (permissionDao.getEntityPermissionsForUserAndGroups(user.getId(), StringUtils.join(user.getGroupIds(), ","), ActionGroup.LOGIN, BOTTOM_OBJECT_ID, VdcObjectType.Bottom, true) == null) {
+            setSucceeded(false);
+        } else {
+            String engineSessionId = sessionDataContainer.generateEngineSessionId();
+            sessionDataContainer.setSourceIp(engineSessionId, getParameters().getSourceIp());
+            sessionDataContainer.setUser(engineSessionId, user);
+            sessionDataContainer.refresh(engineSessionId);
+            sessionDataContainer.setProfile(engineSessionId, profile);
+            sessionDataContainer.setPrincipalName(engineSessionId, getParameters().getPrincipalName());
+            sessionDataContainer.setSsoAccessToken(engineSessionId, getParameters().getSsoToken());
+            sessionDataContainer.setSsoOvirtAppApiScope(engineSessionId, getParameters().getAppScope());
+            getReturnValue().setActionReturnValue(engineSessionId);
+            setSucceeded(true);
+            sessionId = engineSessionId;
+        }
+    }
+}
+#method_after
+@Override
+protected void executeCommand() {
+    final AuthenticationProfile profile = AuthenticationProfileRepository.getInstance().getProfile(getParameters().getProfileName());
+    sourceIp = getParameters().getSourceIp();
+    if (profile == null) {
+        setSucceeded(false);
+    } else {
+        final DbUser user = buildUser(getParameters(), profile.getAuthzName());
+        boolean isAdmin = !roleDao.getAnyAdminRoleForUserAndGroups(user.getId(), StringUtils.join(user.getGroupIds(), ",")).isEmpty();
+        user.setAdmin(isAdmin);
+        setCurrentUser(user);
+        setUserName(String.format("%s@%s", getCurrentUser().getLoginName(), getCurrentUser().getDomain()));
+        if (getParameters().isAdminRequired() && !isAdmin) {
+            setSucceeded(false);
+        } else if (permissionDao.getEntityPermissionsForUserAndGroups(user.getId(), StringUtils.join(user.getGroupIds(), ","), ActionGroup.LOGIN, BOTTOM_OBJECT_ID, VdcObjectType.Bottom, true) == null) {
+            setSucceeded(false);
+        } else {
+            String engineSessionId = sessionDataContainer.generateEngineSessionId();
+            sessionDataContainer.setSourceIp(engineSessionId, getParameters().getSourceIp());
+            sessionDataContainer.setUser(engineSessionId, user);
+            sessionDataContainer.refresh(engineSessionId);
+            sessionDataContainer.setProfile(engineSessionId, profile);
+            sessionDataContainer.setPrincipalName(engineSessionId, getParameters().getPrincipalName());
+            sessionDataContainer.setSsoAccessToken(engineSessionId, getParameters().getSsoToken());
+            sessionDataContainer.setSsoOvirtAppApiScope(engineSessionId, getParameters().getAppScope());
+            getReturnValue().setActionReturnValue(engineSessionId);
+            setSucceeded(true);
+            sessionId = engineSessionId;
+        }
+    }
+}
+#end_block
+
+#method_before
+boolean isMonitoringNeeded(VDSStatus status) {
+    switch(status) {
+        default:
+            return false;
+        case Up:
+        // for monitoring but it's currently not final.
+        case Initializing:
+            return true;
+    }
+}
+#method_after
+boolean isMonitoringNeeded(VDSStatus status) {
+    switch(status) {
+        default:
+            return false;
+        case Up:
+        case Error:
+        case NonOperational:
+        case PreparingForMaintenance:
+            return true;
+    }
+}
+#end_block
+
+#method_before
+public static Stream<Arguments> monitoringNeededByStatus() {
+    return Stream.of(// host status              is monitoring needed
+    Arguments.of(Up, true), Arguments.of(NonResponsive, false), Arguments.of(Error, false), Arguments.of(NonOperational, false), Arguments.of(PreparingForMaintenance, false), Arguments.of(Initializing, true), Arguments.of(Connecting, false), Arguments.of(Unassigned, false), Arguments.of(Down, false), Arguments.of(Maintenance, false), Arguments.of(Installing, false), Arguments.of(InstallFailed, false), Arguments.of(Reboot, false), Arguments.of(PendingApproval, false), Arguments.of(InstallingOS, false), Arguments.of(Kdumping, false));
+}
+#method_after
+public static Stream<Arguments> monitoringNeededByStatus() {
+    return Stream.of(// host status              is monitoring needed
+    Arguments.of(Up, true), Arguments.of(NonResponsive, false), Arguments.of(Error, true), Arguments.of(NonOperational, true), Arguments.of(PreparingForMaintenance, true), Arguments.of(Initializing, false), Arguments.of(Connecting, false), Arguments.of(Unassigned, false), Arguments.of(Down, false), Arguments.of(Maintenance, false), Arguments.of(Installing, false), Arguments.of(InstallFailed, false), Arguments.of(Reboot, false), Arguments.of(PendingApproval, false), Arguments.of(InstallingOS, false), Arguments.of(Kdumping, false));
+}
+#end_block
+
+#method_before
+public VDS clone() {
+    VDS vds = new VDS();
+    vds.setClusterId(getClusterId());
+    vds.setClusterCpuName(getClusterCpuName());
+    vds.setCpuName(getCpuName());
+    vds.setClusterDescription(getClusterDescription());
+    vds.setId(getId());
+    vds.setVdsName(getName());
+    vds.setHostName(getHostName());
+    vds.setComment(getComment());
+    vds.setPort(getPort());
+    vds.setSshPort(getSshPort());
+    vds.setSshUsername(getSshUsername());
+    vds.setStatus(getStatus());
+    vds.setExternalStatus(getExternalStatus());
+    vds.setHardwareManufacturer(getHardwareManufacturer());
+    vds.setHardwareProductName(getHardwareProductName());
+    vds.setHardwareVersion(getHardwareVersion());
+    vds.setHardwareSerialNumber(getHardwareSerialNumber());
+    vds.setHardwareUUID(getHardwareUUID());
+    vds.setHardwareFamily(getHardwareFamily());
+    vds.setCpuCores(getCpuCores());
+    vds.setCpuThreads(getCpuThreads());
+    vds.setCpuModel(getCpuModel());
+    vds.setOnlineCpus(getOnlineCpus());
+    vds.setCpuSpeedMh(getCpuSpeedMh());
+    vds.setIfTotalSpeed(getIfTotalSpeed());
+    vds.setKvmEnabled(getKvmEnabled());
+    vds.setPhysicalMemMb(getPhysicalMemMb());
+    vds.setCpuIdle(getCpuIdle());
+    vds.setCpuLoad(getCpuLoad());
+    vds.setCpuSys(getCpuSys());
+    vds.setCpuUser(getCpuUser());
+    vds.setMemCommited(getMemCommited());
+    vds.setVmActive(getVmActive());
+    vds.setVmCount(getVmCount());
+    vds.setVmMigrating(getVmMigrating());
+    vds.setUsageMemPercent(getUsageMemPercent());
+    vds.setUsageCpuPercent(getUsageCpuPercent());
+    vds.setUsageNetworkPercent(getUsageNetworkPercent());
+    vds.setReservedMem(getReservedMem());
+    vds.setBootTime(getBootTime());
+    vds.setGuestOverhead(getGuestOverhead());
+    vds.setPreviousStatus(getPreviousStatus());
+    vds.setMemAvailable(getMemAvailable());
+    vds.setMemShared(getMemShared());
+    vds.setSoftwareVersion(getSoftwareVersion());
+    vds.setVersionName(getVersionName());
+    vds.setVersion(getVersion());
+    vds.setServerSslEnabled(isServerSslEnabled());
+    vds.setCpuFlags(getCpuFlags());
+    vds.setNetConfigDirty(getNetConfigDirty());
+    vds.setPmEnabled(isPmEnabled());
+    vds.setPmKdumpDetection(isPmKdumpDetection());
+    vds.setConsoleAddress(getConsoleAddress());
+    vds.setHBAs(getHBAs());
+    vds.setVdsSpmPriority(getVdsSpmPriority());
+    vds.setOtpValidity(getOtpValidity());
+    vds.setKernelVersion(getKernelVersion());
+    vds.setKvmVersion(getKvmVersion());
+    vds.setLibvirtVersion(getLibvirtVersion());
+    vds.setGlusterfsCliVersion(getGlusterfsCliVersion());
+    vds.setGlusterVersion(getGlusterVersion());
+    vds.setLibrbdVersion(getLibrbdVersion());
+    vds.setHooksStr(getHooksStr());
+    vds.setActiveNic(getActiveNic());
+    vds.setPowerManagementControlledByPolicy(isPowerManagementControlledByPolicy());
+    vds.setDisablePowerManagementPolicy(isDisablePowerManagementPolicy());
+    vds.setHighlyAvailableScore(getHighlyAvailableScore());
+    vds.setHighlyAvailableIsConfigured(getHighlyAvailableIsConfigured());
+    vds.setHighlyAvailableIsActive(getHighlyAvailableIsActive());
+    vds.setHighlyAvailableGlobalMaintenance(getHighlyAvailableGlobalMaintenance());
+    vds.setHighlyAvailableLocalMaintenance(getHighlyAvailableLocalMaintenance());
+    vds.setBalloonEnabled(isBalloonEnabled());
+    vds.setNumaNodeList(getNumaNodeList());
+    vds.setAutoNumaBalancing(getAutoNumaBalancing());
+    vds.setFenceAgents(getFenceAgents());
+    vds.setClusterCompatibilityVersion(getClusterCompatibilityVersion());
+    vds.setUpdateAvailable(isUpdateAvailable());
+    vds.setHostDevicePassthroughEnabled(isHostDevicePassthroughEnabled());
+    vds.setHostedEngineHost(isHostedEngineHost());
+    vds.setCurrentKernelCmdline(getCurrentKernelCmdline());
+    vds.setLastStoredKernelCmdline(getLastStoredKernelCmdline());
+    vds.setKernelCmdlineParsable(isKernelCmdlineParsable());
+    vds.setKernelCmdlineBlacklistNouveau(isKernelCmdlineBlacklistNouveau());
+    vds.setKernelCmdlineIommu(isKernelCmdlineIommu());
+    vds.setKernelCmdlineKvmNested(isKernelCmdlineKvmNested());
+    vds.setKernelCmdlinePciRealloc(isKernelCmdlinePciRealloc());
+    vds.setKernelCmdlineUnsafeInterrupts(isKernelCmdlineUnsafeInterrupts());
+    vds.setGlusterPeerStatus(getGlusterPeerStatus());
+    vds.setKernelFeatures(getKernelFeatures());
+    vds.setOvsVersion(getOvsVersion());
+    DnsResolverConfiguration originalDnsResolverConfiguration = getReportedDnsResolverConfiguration();
+    if (originalDnsResolverConfiguration != null) {
+        vds.setReportedDnsResolverConfiguration(new DnsResolverConfiguration(originalDnsResolverConfiguration));
+    }
+    vds.setInFenceFlow(isInFenceFlow());
+    vds.setNetworkOperationInProgress(isNetworkOperationInProgress());
+    return vds;
+}
+#method_after
+public VDS clone() {
+    VDS vds = new VDS();
+    vds.setClusterId(getClusterId());
+    vds.setClusterCpuName(getClusterCpuName());
+    vds.setCpuName(getCpuName());
+    vds.setClusterDescription(getClusterDescription());
+    vds.setId(getId());
+    vds.setVdsName(getName());
+    vds.setHostName(getHostName());
+    vds.setComment(getComment());
+    vds.setPort(getPort());
+    vds.setSshPort(getSshPort());
+    vds.setSshUsername(getSshUsername());
+    vds.setStatus(getStatus());
+    vds.setExternalStatus(getExternalStatus());
+    vds.setHardwareManufacturer(getHardwareManufacturer());
+    vds.setHardwareProductName(getHardwareProductName());
+    vds.setHardwareVersion(getHardwareVersion());
+    vds.setHardwareSerialNumber(getHardwareSerialNumber());
+    vds.setHardwareUUID(getHardwareUUID());
+    vds.setHardwareFamily(getHardwareFamily());
+    vds.setCpuCores(getCpuCores());
+    vds.setCpuThreads(getCpuThreads());
+    vds.setCpuModel(getCpuModel());
+    vds.setOnlineCpus(getOnlineCpus());
+    vds.setCpuSpeedMh(getCpuSpeedMh());
+    vds.setIfTotalSpeed(getIfTotalSpeed());
+    vds.setKvmEnabled(getKvmEnabled());
+    vds.setPhysicalMemMb(getPhysicalMemMb());
+    vds.setCpuIdle(getCpuIdle());
+    vds.setCpuLoad(getCpuLoad());
+    vds.setCpuSys(getCpuSys());
+    vds.setCpuUser(getCpuUser());
+    vds.setMemCommited(getMemCommited());
+    vds.setVmActive(getVmActive());
+    vds.setVmCount(getVmCount());
+    vds.setVmMigrating(getVmMigrating());
+    vds.setUsageMemPercent(getUsageMemPercent());
+    vds.setUsageCpuPercent(getUsageCpuPercent());
+    vds.setUsageNetworkPercent(getUsageNetworkPercent());
+    vds.setReservedMem(getReservedMem());
+    vds.setBootTime(getBootTime());
+    vds.setGuestOverhead(getGuestOverhead());
+    vds.setPreviousStatus(getPreviousStatus());
+    vds.setMemAvailable(getMemAvailable());
+    vds.setMemShared(getMemShared());
+    vds.setSoftwareVersion(getSoftwareVersion());
+    vds.setVersionName(getVersionName());
+    vds.setVersion(getVersion());
+    vds.setServerSslEnabled(isServerSslEnabled());
+    vds.setCpuFlags(getCpuFlags());
+    vds.setNetConfigDirty(getNetConfigDirty());
+    vds.setPmEnabled(isPmEnabled());
+    vds.setPmKdumpDetection(isPmKdumpDetection());
+    vds.setConsoleAddress(getConsoleAddress());
+    vds.setHBAs(getHBAs());
+    vds.setVdsSpmPriority(getVdsSpmPriority());
+    vds.setOtpValidity(getOtpValidity());
+    vds.setKernelVersion(getKernelVersion());
+    vds.setKvmVersion(getKvmVersion());
+    vds.setLibvirtVersion(getLibvirtVersion());
+    vds.setGlusterfsCliVersion(getGlusterfsCliVersion());
+    vds.setGlusterVersion(getGlusterVersion());
+    vds.setLibrbdVersion(getLibrbdVersion());
+    vds.setHooksStr(getHooksStr());
+    vds.setActiveNic(getActiveNic());
+    vds.setPowerManagementControlledByPolicy(isPowerManagementControlledByPolicy());
+    vds.setDisablePowerManagementPolicy(isDisablePowerManagementPolicy());
+    vds.setHighlyAvailableScore(getHighlyAvailableScore());
+    vds.setHighlyAvailableIsConfigured(getHighlyAvailableIsConfigured());
+    vds.setHighlyAvailableIsActive(getHighlyAvailableIsActive());
+    vds.setHighlyAvailableGlobalMaintenance(getHighlyAvailableGlobalMaintenance());
+    vds.setHighlyAvailableLocalMaintenance(getHighlyAvailableLocalMaintenance());
+    vds.setBalloonEnabled(isBalloonEnabled());
+    vds.setNumaNodeList(getNumaNodeList());
+    vds.setAutoNumaBalancing(getAutoNumaBalancing());
+    vds.setFenceAgents(getFenceAgents());
+    vds.setClusterCompatibilityVersion(getClusterCompatibilityVersion());
+    vds.setUpdateAvailable(isUpdateAvailable());
+    vds.setHostDevicePassthroughEnabled(isHostDevicePassthroughEnabled());
+    vds.setHostedEngineHost(isHostedEngineHost());
+    vds.setCurrentKernelCmdline(getCurrentKernelCmdline());
+    vds.setLastStoredKernelCmdline(getLastStoredKernelCmdline());
+    vds.setKernelCmdlineParsable(isKernelCmdlineParsable());
+    vds.setKernelCmdlineBlacklistNouveau(isKernelCmdlineBlacklistNouveau());
+    vds.setKernelCmdlineIommu(isKernelCmdlineIommu());
+    vds.setKernelCmdlineKvmNested(isKernelCmdlineKvmNested());
+    vds.setKernelCmdlinePciRealloc(isKernelCmdlinePciRealloc());
+    vds.setKernelCmdlineUnsafeInterrupts(isKernelCmdlineUnsafeInterrupts());
+    vds.setGlusterPeerStatus(getGlusterPeerStatus());
+    vds.setKernelFeatures(getKernelFeatures());
+    vds.setOvsVersion(getOvsVersion());
+    vds.setDomains(getDomains());
+    DnsResolverConfiguration originalDnsResolverConfiguration = getReportedDnsResolverConfiguration();
+    if (originalDnsResolverConfiguration != null) {
+        vds.setReportedDnsResolverConfiguration(new DnsResolverConfiguration(originalDnsResolverConfiguration));
+    }
+    vds.setInFenceFlow(isInFenceFlow());
+    vds.setNetworkOperationInProgress(isNetworkOperationInProgress());
+    return vds;
+}
+#end_block
+
+#method_before
+private static void updateVDSDomainData(VDS vds, Map<String, Object> struct) {
+    if (struct.containsKey(VdsProperties.domains)) {
+        Map<String, Object> domains = (Map<String, Object>) struct.get(VdsProperties.domains);
+        ArrayList<VDSDomainsData> domainsData = new ArrayList<>();
+        for (Map.Entry<String, ?> value : domains.entrySet()) {
+            try {
+                VDSDomainsData data = new VDSDomainsData();
+                data.setDomainId(new Guid(value.getKey().toString()));
+                Map<String, Object> internalValue = (Map<String, Object>) value.getValue();
+                double lastCheck = 0;
+                data.setCode((Integer) internalValue.get(VdsProperties.code));
+                if (internalValue.containsKey(VdsProperties.lastCheck)) {
+                    lastCheck = Double.parseDouble((String) internalValue.get(VdsProperties.lastCheck));
+                }
+                data.setLastCheck(lastCheck);
+                double delay = 0;
+                if (internalValue.containsKey(VdsProperties.delay)) {
+                    delay = Double.parseDouble((String) internalValue.get(VdsProperties.delay));
+                }
+                data.setDelay(delay);
+                Boolean actual = Boolean.TRUE;
+                if (internalValue.containsKey(VdsProperties.actual)) {
+                    actual = (Boolean) internalValue.get(VdsProperties.actual);
+                }
+                data.setActual(actual);
+                domainsData.add(data);
+            } catch (Exception e) {
+                log.error("failed building domains: {}", e.getMessage());
+                log.debug("Exception", e);
+            }
+        }
+        vds.setDomains(domainsData);
+    }
+}
+#method_after
+private static void updateVDSDomainData(VDS vds, Map<String, Object> struct) {
+    if (struct.containsKey(VdsProperties.domains)) {
+        Map<String, Object> domains = (Map<String, Object>) struct.get(VdsProperties.domains);
+        ArrayList<VDSDomainsData> domainsData = new ArrayList<>();
+        for (Map.Entry<String, ?> value : domains.entrySet()) {
+            try {
+                VDSDomainsData data = new VDSDomainsData();
+                data.setDomainId(new Guid(value.getKey().toString()));
+                Map<String, Object> internalValue = (Map<String, Object>) value.getValue();
+                double lastCheck = 0;
+                data.setCode((Integer) internalValue.get(VdsProperties.code));
+                if (internalValue.containsKey(VdsProperties.lastCheck)) {
+                    lastCheck = Double.parseDouble((String) internalValue.get(VdsProperties.lastCheck));
+                }
+                data.setLastCheck(lastCheck);
+                double delay = 0;
+                if (internalValue.containsKey(VdsProperties.delay)) {
+                    delay = Double.parseDouble((String) internalValue.get(VdsProperties.delay));
+                }
+                data.setDelay(delay);
+                Boolean actual = Boolean.TRUE;
+                if (internalValue.containsKey(VdsProperties.actual)) {
+                    actual = (Boolean) internalValue.get(VdsProperties.actual);
+                }
+                data.setActual(actual);
+                Boolean acquired = Boolean.FALSE;
+                if (internalValue.containsKey(VdsProperties.acquired)) {
+                    acquired = (Boolean) internalValue.get(VdsProperties.acquired);
+                }
+                data.setAcquired(acquired);
+                domainsData.add(data);
+            } catch (Exception e) {
+                log.error("failed building domains: {}", e.getMessage());
+                log.debug("Exception", e);
+            }
+        }
+        vds.setDomains(domainsData);
+    }
+}
+#end_block
+
+#method_before
+private void optimizeVolumesForVirtStore(final List<GlusterVolumeEntity> volumeList) {
+    if (getConfirmWindow() != null) {
+        setConfirmWindow(null);
+    }
+    AsyncDataProvider.getInstance().getConfigFromCache(new GetConfigurationValueParameters(ConfigValues.GlusterVolumeOptionGroupVirtValue, AsyncDataProvider.getInstance().getDefaultConfigurationVersion()), new AsyncQuery<String>(optionGroupVirt -> AsyncDataProvider.getInstance().getConfigFromCache(new GetConfigurationValueParameters(ConfigValues.GlusterVolumeOptionOwnerUserVirtValue, AsyncDataProvider.getInstance().getDefaultConfigurationVersion()), new AsyncQuery<String>(optionOwnerUserVirt -> AsyncDataProvider.getInstance().getConfigFromCache(new GetConfigurationValueParameters(ConfigValues.GlusterVolumeOptionOwnerGroupVirtValue, AsyncDataProvider.getInstance().getDefaultConfigurationVersion()), new AsyncQuery<String>(optionOwnerGroupVirt -> {
+        ArrayList<ActionParametersBase> list = new ArrayList<>();
+        for (GlusterVolumeEntity volume : volumeList) {
+            Guid volumeId = volume.getId();
+            // $NON-NLS-1$
+            list.add(new GlusterVolumeOptionParameters(getOption(volumeId, "group", optionGroupVirt)));
+            // $NON-NLS-1$
+            list.add(new GlusterVolumeOptionParameters(getOption(volumeId, "storage.owner-uid", optionOwnerUserVirt)));
+            // $NON-NLS-1$
+            list.add(new GlusterVolumeOptionParameters(getOption(volumeId, "storage.owner-gid", optionOwnerGroupVirt)));
+            // $NON-NLS-1$ $NON-NLS-2$
+            list.add(new GlusterVolumeOptionParameters(getOption(volumeId, "performance.strict-o-direct", "on")));
+            // $NON-NLS-1$ $NON-NLS-2$
+            list.add(new GlusterVolumeOptionParameters(getOption(volumeId, "network.remote-dio", "off")));
+            // $NON-NLS-1$//$NON-NLS-2$
+            final GlusterVolumeOptionEntity checkOption = getOption(volumeId, "network.ping-timeout", "30");
+            if (volume.getOptions().stream().noneMatch(obj -> obj.getKey().equalsIgnoreCase(checkOption.getKey()))) {
+                // $NON-NLS-1$
+                list.add(new GlusterVolumeOptionParameters(checkOption));
+            }
+        }
+        Frontend.getInstance().runMultipleAction(ActionType.SetGlusterVolumeOption, list);
+    }))))));
+}
+#method_after
+private void optimizeVolumesForVirtStore(final List<GlusterVolumeEntity> volumeList) {
+    if (getConfirmWindow() != null) {
+        setConfirmWindow(null);
+    }
+    AsyncDataProvider.getInstance().getConfigFromCache(new GetConfigurationValueParameters(ConfigValues.GlusterVolumeOptionGroupVirtValue, AsyncDataProvider.getInstance().getDefaultConfigurationVersion()), new AsyncQuery<String>(optionGroupVirt -> AsyncDataProvider.getInstance().getConfigFromCache(new GetConfigurationValueParameters(ConfigValues.GlusterVolumeOptionOwnerUserVirtValue, AsyncDataProvider.getInstance().getDefaultConfigurationVersion()), new AsyncQuery<String>(optionOwnerUserVirt -> AsyncDataProvider.getInstance().getConfigFromCache(new GetConfigurationValueParameters(ConfigValues.GlusterVolumeOptionOwnerGroupVirtValue, AsyncDataProvider.getInstance().getDefaultConfigurationVersion()), new AsyncQuery<String>(optionOwnerGroupVirt -> {
+        ArrayList<ActionParametersBase> list = new ArrayList<>();
+        for (GlusterVolumeEntity volume : volumeList) {
+            Guid volumeId = volume.getId();
+            // $NON-NLS-1$
+            list.add(new GlusterVolumeOptionParameters(getOption(volumeId, "group", optionGroupVirt)));
+            // $NON-NLS-1$
+            list.add(new GlusterVolumeOptionParameters(getOption(volumeId, "storage.owner-uid", optionOwnerUserVirt)));
+            // $NON-NLS-1$
+            list.add(new GlusterVolumeOptionParameters(getOption(volumeId, "storage.owner-gid", optionOwnerGroupVirt)));
+            // $NON-NLS-1$ $NON-NLS-2$
+            list.add(new GlusterVolumeOptionParameters(getOption(volumeId, "performance.strict-o-direct", "on")));
+            // $NON-NLS-1$ $NON-NLS-2$
+            list.add(new GlusterVolumeOptionParameters(getOption(volumeId, "network.remote-dio", "off")));
+            // $NON-NLS-1$ $NON-NLS-2$
+            list.add(new GlusterVolumeOptionParameters(getOption(volumeId, "cluster.granular-entry-heal", "enable")));
+            // $NON-NLS-1$//$NON-NLS-2$
+            final GlusterVolumeOptionEntity checkOption = getOption(volumeId, "network.ping-timeout", "30");
+            if (volume.getOptions().stream().noneMatch(obj -> obj.getKey().equalsIgnoreCase(checkOption.getKey()))) {
+                // $NON-NLS-1$
+                list.add(new GlusterVolumeOptionParameters(checkOption));
+            }
+        }
+        Frontend.getInstance().runMultipleAction(ActionType.SetGlusterVolumeOption, list);
+    }))))));
+}
+#end_block
+
+#method_before
+private void DiskInterface_SelectedItemChanged() {
+    boolean isLunDisk = getDiskStorageType().getEntity() == DiskStorageType.LUN;
+    DiskInterface diskInterface = getDiskInterface().getSelectedItem();
+    getIsSgIoUnfiltered().setIsAvailable(isLunDisk && DiskInterface.VirtIO_SCSI.equals(diskInterface));
+    getIsScsiPassthrough().setIsAvailable(isLunDisk && DiskInterface.VirtIO_SCSI.equals(diskInterface));
+    getIsUsingScsiReservation().setIsAvailable(isLunDisk && DiskInterface.VirtIO_SCSI.equals(diskInterface));
+    getIsReadOnly().setIsAvailable(!DiskInterface.IDE.equals(diskInterface) && !DiskInterface.SATA.equals(diskInterface));
+    updatePassDiscardAvailability();
+    updateScsiPassthroughChangeability();
+    updateScsiReservationChangeability();
+    updateReadOnlyChangeability();
+    updatePlugChangeability();
+    updatePassDiscardChangeability();
+    updateWipeAfterDeleteChangeability();
+}
+#method_after
+private void DiskInterface_SelectedItemChanged() {
+    boolean isLunDisk = getDiskStorageType().getEntity() == DiskStorageType.LUN;
+    DiskInterface diskInterface = getDiskInterface().getSelectedItem();
+    getIsSgIoUnfiltered().setIsAvailable(isLunDisk && DiskInterface.VirtIO_SCSI.equals(diskInterface));
+    getIsScsiPassthrough().setIsAvailable(isLunDisk && DiskInterface.VirtIO_SCSI.equals(diskInterface));
+    getIsUsingScsiReservation().setIsAvailable(isLunDisk && DiskInterface.VirtIO_SCSI.equals(diskInterface));
+    getIsReadOnly().setIsAvailable(diskInterface != DiskInterface.IDE && diskInterface != DiskInterface.SATA);
+    updatePassDiscardAvailability();
+    updateScsiPassthroughChangeability();
+    updateScsiReservationChangeability();
+    updateReadOnlyChangeability();
+    updatePlugChangeability();
+    updatePassDiscardChangeability();
+    updateWipeAfterDeleteChangeability();
+}
+#end_block
+
+#method_before
+private VmDevice createMemoryDevice() {
+    Map<String, Object> specParams = new HashMap<>();
+    Guid guid = Guid.newGuid();
+    String alias = FeatureSupported.isDomainXMLSupported(getVm().getClusterCompatibilityVersion()) ? String.format("ua-%s", guid.toString()) : "";
+    specParams.put(DEVICE_SIZE_FIELD_KEY, String.valueOf(getParameters().getMemoryDeviceSizeMb()));
+    specParams.put(DEVICE_NODE_FIELD_KEY, String.valueOf(getParameters().getNumaNode()));
+    return new VmDevice(new VmDeviceId(guid, getVmId()), VmDeviceGeneralType.MEMORY, VmDeviceType.MEMORY.getName(), "", specParams, true, true, false, alias, null, null, null);
+}
+#method_after
+private VmDevice createMemoryDevice() {
+    Map<String, Object> specParams = new HashMap<>();
+    Guid guid = Guid.newGuid();
+    String alias = FeatureSupported.isDomainXMLSupported(getVm().getClusterCompatibilityVersion()) ? String.format("%s%s", DomainXmlUtils.USER_ALIAS_PREFIX, guid) : "";
+    specParams.put(DEVICE_SIZE_FIELD_KEY, String.valueOf(getParameters().getMemoryDeviceSizeMb()));
+    specParams.put(DEVICE_NODE_FIELD_KEY, String.valueOf(getParameters().getNumaNode()));
+    return new VmDevice(new VmDeviceId(guid, getVmId()), VmDeviceGeneralType.MEMORY, VmDeviceType.MEMORY.getName(), "", specParams, true, true, false, alias, null, null, null);
+}
+#end_block
+
+#method_before
+public static Map<String, Object> createVmMemoryDeviceMap(VmDevice vmDevice) {
+    Map<String, Object> memDeviceData = new HashMap<>();
+    memDeviceData.put(VdsProperties.Type, vmDevice.getType().getValue());
+    memDeviceData.put(VdsProperties.Device, vmDevice.getDevice());
+    if (StringUtils.isNotBlank(vmDevice.getAddress())) {
+        memDeviceData.put(VdsProperties.Address, StringMapUtils.string2Map(vmDevice.getAddress()));
+    }
+    memDeviceData.put(VdsProperties.SpecParams, vmDevice.getSpecParams());
+    memDeviceData.put(VdsProperties.DeviceId, vmDevice.getId().getDeviceId().toString());
+    if (!vmDevice.getAlias().equals("")) {
+        // Alias is empty in legacy non-XML Engine mode
+        memDeviceData.put(VdsProperties.Alias, vmDevice.getAlias());
+    }
+    memDeviceData.put("size", VmDeviceCommonUtils.getSizeOfMemoryDeviceMb(vmDevice).orElse(0));
+    memDeviceData.put("node", VmDeviceCommonUtils.getSpecParamsIntValue(vmDevice, VmDeviceCommonUtils.SPEC_PARAM_NODE).orElse(0));
+    return memDeviceData;
+}
+#method_after
+public static Map<String, Object> createVmMemoryDeviceMap(VmDevice vmDevice) {
+    Map<String, Object> memDeviceData = new HashMap<>();
+    memDeviceData.put(VdsProperties.Type, vmDevice.getType().getValue());
+    memDeviceData.put(VdsProperties.Device, vmDevice.getDevice());
+    if (StringUtils.isNotBlank(vmDevice.getAddress())) {
+        memDeviceData.put(VdsProperties.Address, StringMapUtils.string2Map(vmDevice.getAddress()));
+    }
+    memDeviceData.put(VdsProperties.SpecParams, vmDevice.getSpecParams());
+    memDeviceData.put(VdsProperties.DeviceId, vmDevice.getId().getDeviceId().toString());
+    if (!vmDevice.getAlias().isEmpty()) {
+        // Alias is empty in legacy non-XML Engine mode
+        memDeviceData.put(VdsProperties.Alias, vmDevice.getAlias());
+    }
+    memDeviceData.put("size", VmDeviceCommonUtils.getSizeOfMemoryDeviceMb(vmDevice).orElse(0));
+    memDeviceData.put("node", VmDeviceCommonUtils.getSpecParamsIntValue(vmDevice, VmDeviceCommonUtils.SPEC_PARAM_NODE).orElse(0));
+    return memDeviceData;
+}
+#end_block
+
+#method_before
+@Override
+protected void executeCommand() {
+    if (getParameters().getShouldBeLogged()) {
+        auditLogDirector.log(this, AuditLogType.PERSIST_HOST_SETUP_NETWORK_ON_HOST);
+    }
+    HostSetupNetworksParameters params = new HostSetupNetworksParameters(getParameters());
+    // in order for the HostSetupNetworksCommand to use its own lock, the lock properties
+    // passed to it should be null. see HostSetupNetworksCommand#getLockProperties()
+    params.setLockProperties(null);
+    ActionReturnValue returnValue = runInternalAction(ActionType.HostSetupNetworks, params, cloneContextAndDetachFromParent());
+    if (returnValue.getSucceeded()) {
+        boolean changesDetected = checkForChanges();
+        if (changesDetected) {
+            VdsActionParameters parameters = new VdsActionParameters(getParameters().getVdsId());
+            parameters.setShouldBeLogged(false);
+            parameters.setCorrelationId(getCorrelationId());
+            returnValue = runInternalAction(ActionType.CommitNetworkChanges, parameters, cloneContextAndDetachFromParent());
+        }
+    }
+    if (!returnValue.getSucceeded()) {
+        propagateFailure(returnValue);
+    }
+    setSucceeded(returnValue.getSucceeded());
+}
+#method_after
+@Override
+protected void executeCommand() {
+    if (getParameters().getShouldBeLogged()) {
+        auditLogDirector.log(this, AuditLogType.PERSIST_HOST_SETUP_NETWORK_ON_HOST);
+    }
+    HostSetupNetworksParameters params = new HostSetupNetworksParameters(getParameters());
+    params.setCorrelationId(getParameters().getCorrelationId());
+    ActionReturnValue returnValue = runInternalAction(ActionType.HostSetupNetworks, params, cloneContextAndDetachFromParent());
+    if (returnValue.getSucceeded()) {
+        boolean changesDetected = checkForChanges();
+        if (changesDetected) {
+            VdsActionParameters parameters = new VdsActionParameters(getParameters().getVdsId());
+            parameters.setShouldBeLogged(false);
+            parameters.setCorrelationId(getCorrelationId());
+            returnValue = runInternalAction(ActionType.CommitNetworkChanges, parameters, cloneContextAndDetachFromParent());
+        }
+    }
+    if (!returnValue.getSucceeded()) {
+        propagateFailure(returnValue);
+    }
+    setSucceeded(returnValue.getSucceeded());
+}
+#end_block
+
+#method_before
+@SuppressWarnings("incomplete-switch")
+private void writeCpu(boolean addVmNumaNodes) {
+    writer.writeStartElement("cpu");
+    String cpuType = vm.getCpuName();
+    if (vm.isUseHostCpuFlags()) {
+        cpuType = "hostPassthrough";
+    }
+    switch(vm.getClusterArch().getFamily()) {
+        case x86:
+        case s390x:
+            writer.writeAttributeString("match", "exact");
+            // is this a list of strings??..
+            switch(cpuType) {
+                case "hostPassthrough":
+                    writer.writeAttributeString("mode", "host-passthrough");
+                    break;
+                case "hostModel":
+                    writer.writeAttributeString("mode", "host-model");
+                    break;
+                default:
+                    String[] typeAndFlags = cpuType.split(",");
+                    writer.writeElement("model", typeAndFlags[0]);
+                    writeCpuFlags(typeAndFlags);
+                    break;
+            }
+            break;
+        case ppc:
+            writer.writeAttributeString("mode", "host-model");
+            // needs to be lowercase for libvirt
+            String[] typeAndFlags = cpuType.split(",");
+            writer.writeElement("model", typeAndFlags[0].toLowerCase());
+            writeCpuFlags(typeAndFlags);
+    }
+    if ((boolean) Config.getValue(ConfigValues.SendSMPOnRunVm)) {
+        writer.writeStartElement("topology");
+        writer.writeAttributeString("cores", Integer.toString(vm.getCpuPerSocket()));
+        writer.writeAttributeString("threads", Integer.toString(vm.getThreadsPerCpu()));
+        int vcpus = FeatureSupported.supportedInConfig(ConfigValues.HotPlugCpuSupported, vm.getCompatibilityVersion(), vm.getClusterArch()) ? VmCpuCountHelper.calcMaxVCpu(vm, vm.getClusterCompatibilityVersion()) : vm.getNumOfCpus();
+        writer.writeAttributeString("sockets", String.valueOf(vcpus / vm.getCpuPerSocket() / vm.getThreadsPerCpu()));
+        writer.writeEndElement();
+    }
+    if (addVmNumaNodes) {
+        writer.writeStartElement("numa");
+        NumaSettingFactory.buildVmNumaNodeSetting(vmNumaNodesSupplier.get()).forEach(vmNumaNode -> {
+            writer.writeStartElement("cell");
+            writer.writeAttributeString("id", vmNumaNode.get(VdsProperties.NUMA_NODE_INDEX).toString());
+            writer.writeAttributeString("cpus", vmNumaNode.get(VdsProperties.NUMA_NODE_CPU_LIST).toString());
+            writer.writeAttributeString("memory", String.valueOf((long) Integer.parseInt((String) vmNumaNode.get(VdsProperties.VM_NUMA_NODE_MEM)) * 1024));
+            if (HugePageUtils.isHugepagesShared(vm.getStaticData())) {
+                writer.writeAttributeString("memAccess", "shared");
+            }
+            writer.writeEndElement();
+        });
+        writer.writeEndElement();
+    }
+    writer.writeEndElement();
+}
+#method_after
+@SuppressWarnings("incomplete-switch")
+private void writeCpu(boolean addVmNumaNodes) {
+    writer.writeStartElement("cpu");
+    String cpuType = vm.getCpuName();
+    if (vm.isUseHostCpuFlags()) {
+        cpuType = "hostPassthrough";
+    }
+    switch(vm.getClusterArch().getFamily()) {
+        case x86:
+        case s390x:
+            writer.writeAttributeString("match", "exact");
+            // is this a list of strings??..
+            switch(cpuType) {
+                case "hostPassthrough":
+                    writer.writeAttributeString("mode", "host-passthrough");
+                    break;
+                case "hostModel":
+                    writer.writeAttributeString("mode", "host-model");
+                    break;
+                default:
+                    String[] typeAndFlags = cpuType.split(",");
+                    writer.writeElement("model", typeAndFlags[0]);
+                    writeCpuFlags(typeAndFlags);
+                    break;
+            }
+            break;
+        case ppc:
+            writer.writeAttributeString("mode", "host-model");
+            // needs to be lowercase for libvirt
+            String[] typeAndFlags = cpuType.split(",");
+            writer.writeElement("model", typeAndFlags[0].toLowerCase());
+            writeCpuFlags(typeAndFlags);
+    }
+    if ((boolean) Config.getValue(ConfigValues.SendSMPOnRunVm)) {
+        writer.writeStartElement("topology");
+        writer.writeAttributeString("cores", Integer.toString(vm.getCpuPerSocket()));
+        writer.writeAttributeString("threads", Integer.toString(vm.getThreadsPerCpu()));
+        int vcpus = FeatureSupported.supportedInConfig(ConfigValues.HotPlugCpuSupported, vm.getCompatibilityVersion(), vm.getClusterArch()) ? VmCpuCountHelper.calcMaxVCpu(vm, vm.getClusterCompatibilityVersion()) : vm.getNumOfCpus();
+        writer.writeAttributeString("sockets", String.valueOf(vcpus / vm.getCpuPerSocket() / vm.getThreadsPerCpu()));
+        writer.writeEndElement();
+    }
+    if (addVmNumaNodes) {
+        writer.writeStartElement("numa");
+        NumaSettingFactory.buildVmNumaNodeSetting(vmNumaNodesSupplier.get()).forEach(vmNumaNode -> {
+            writer.writeStartElement("cell");
+            writer.writeAttributeString("id", vmNumaNode.get(VdsProperties.NUMA_NODE_INDEX).toString());
+            writer.writeAttributeString("cpus", vmNumaNode.get(VdsProperties.NUMA_NODE_CPU_LIST).toString());
+            writer.writeAttributeString("memory", String.valueOf(Long.parseLong((String) vmNumaNode.get(VdsProperties.VM_NUMA_NODE_MEM)) * 1024));
+            if (HugePageUtils.isHugepagesShared(vm.getStaticData())) {
+                writer.writeAttributeString("memAccess", "shared");
+            }
+            writer.writeEndElement();
+        });
+        writer.writeEndElement();
+    }
+    writer.writeEndElement();
+}
+#end_block
+
+#method_before
+private void writeDisk(VmDevice device, Disk disk, DiskVmElement dve, String dev, int pinTo) {
+    // <disk type='file' device='disk' snapshot='no'>
+    // <driver name='qemu' type='qcow2' cache='none'/>
+    // <source file='/path/to/image'/>
+    // <target dev='hda' bus='ide'/>
+    // <serial>54-a672-23e5b495a9ea</serial>
+    // </disk>
+    writer.writeStartElement("disk");
+    writeGeneralDiskAttributes(device, disk, dve);
+    writeDiskTarget(dve, dev);
+    writeDiskSource(device, disk, dev);
+    writeDiskDriver(device, disk, dve, pinTo);
+    writeAlias(device);
+    writeAddress(device);
+    writeBootOrder(device.getBootOrder());
+    if (disk.getDiskStorageType() != DiskStorageType.LUN) {
+        writer.writeElement("serial", disk.getId().toString());
+    }
+    if (device.getReadOnly()) {
+        writer.writeElement("readonly");
+    }
+    if (device.getSnapshotId() == null && disk.isShareable()) {
+        writer.writeElement("shareable");
+    }
+    if (disk.getDiskStorageType() == DiskStorageType.IMAGE) {
+        writeIoTune((DiskImage) disk);
+    }
+    if (disk.getDiskStorageType() == DiskStorageType.CINDER) /**
+     * && case RBD
+     */
+    {
+        writeNetworkDiskAuth((CinderDisk) disk);
+    }
+    writer.writeEndElement();
+}
+#method_after
+private void writeDisk(VmDevice device, Disk disk, DiskVmElement dve, String dev, int pinTo) {
+    // <disk type='file' device='disk' snapshot='no'>
+    // <driver name='qemu' type='qcow2' cache='none'/>
+    // <source file='/path/to/image'/>
+    // <target dev='hda' bus='ide'/>
+    // <serial>54-a672-23e5b495a9ea</serial>
+    // </disk>
+    writer.writeStartElement("disk");
+    writeGeneralDiskAttributes(device, disk, dve);
+    writeDiskTarget(dve, dev);
+    writeDiskSource(device, disk, dev, dve);
+    writeDiskDriver(device, disk, dve, pinTo);
+    writeAlias(device);
+    writeAddress(device);
+    writeBootOrder(device.getBootOrder());
+    if (disk.getDiskStorageType() != DiskStorageType.LUN) {
+        writer.writeElement("serial", disk.getId().toString());
+    }
+    if (device.getReadOnly()) {
+        writer.writeElement("readonly");
+    }
+    if (device.getSnapshotId() == null && disk.isShareable()) {
+        writer.writeElement("shareable");
+    }
+    if (disk.getDiskStorageType() == DiskStorageType.IMAGE) {
+        writeIoTune((DiskImage) disk);
+    }
+    if (disk.getDiskStorageType() == DiskStorageType.CINDER) /**
+     * && case RBD
+     */
+    {
+        writeNetworkDiskAuth((CinderDisk) disk);
+    }
+    writer.writeEndElement();
+}
+#end_block
+
+#method_before
+private void writeDiskSource(VmDevice device, Disk disk, String dev) {
+    writer.writeStartElement("source");
+    switch(disk.getDiskStorageType()) {
+        case IMAGE:
+            DiskImage diskImage = (DiskImage) disk;
+            // Change parameters for the HE disk
+            if (vm.isHostedEngine()) {
+                // Hosted engine disk images have to have empty storage pool ID,
+                // so they can be mounted even if storage pool is not connected.
+                diskImage.setStoragePoolId(Guid.Empty);
+                diskImage.setPropagateErrors(PropagateErrors.Off);
+                // The disk requires a lease
+                addVolumeLease(diskImage.getImageId(), diskImage.getStorageIds().get(0));
+            }
+            String diskType = this.vmInfoBuildUtils.getDiskType(this.vm, diskImage, device);
+            switch(diskType) {
+                case "block":
+                    writer.writeAttributeString("dev", vmInfoBuildUtils.getPathToImage(diskImage));
+                    break;
+                case "network":
+                    String[] volInfo = vmInfoBuildUtils.getGlusterVolInfo(disk);
+                    // drop to the 'file' case as a fallback.
+                    if (volInfo != null) {
+                        writer.writeAttributeString("protocol", "gluster");
+                        writer.writeAttributeString("name", String.format("%s/%s/images/%s/%s", volInfo[1], diskImage.getStorageIds().get(0), diskImage.getId(), diskImage.getImageId()));
+                        writer.writeStartElement("host");
+                        writer.writeAttributeString("name", volInfo[0]);
+                        writer.writeAttributeString("port", "0");
+                        writer.writeEndElement();
+                        break;
+                    }
+                case "file":
+                    writer.writeAttributeString("file", vmInfoBuildUtils.getPathToImage(diskImage));
+                    break;
+            }
+            diskMetadata.put(dev, createDiskParams(diskImage));
+            break;
+        case LUN:
+            LunDisk lunDisk = (LunDisk) disk;
+            writer.writeAttributeString("dev", String.format("/dev/mapper/%s", lunDisk.getLun().getLUNId()));
+            diskMetadata.put(dev, Collections.singletonMap("GUID", lunDisk.getLun().getLUNId()));
+            break;
+        case CINDER:
+            // case RBD
+            CinderDisk cinderDisk = (CinderDisk) disk;
+            Map<String, Object> connectionInfoData = cinderDisk.getCinderConnectionInfo().getData();
+            writer.writeAttributeString("protocol", cinderDisk.getCinderConnectionInfo().getDriverVolumeType());
+            writer.writeAttributeString("name", connectionInfoData.get("name").toString());
+            List<String> hostAddresses = (List<String>) connectionInfoData.get("hosts");
+            List<String> hostPorts = (List<String>) connectionInfoData.get("ports");
+            // (Cinder should ensure that the addresses and ports lists are synced in order).
+            for (int i = 0; i < hostAddresses.size(); i++) {
+                writer.writeStartElement("host");
+                writer.writeAttributeString("name", hostAddresses.get(i));
+                writer.writeAttributeString("port", hostPorts.get(i));
+                // If no transport is specified, "tcp" is assumed.
+                writer.writeEndElement();
+            }
+            break;
+    }
+    writer.writeEndElement();
+}
+#method_after
+private void writeDiskSource(VmDevice device, Disk disk, String dev, DiskVmElement dve) {
+    writer.writeStartElement("source");
+    switch(disk.getDiskStorageType()) {
+        case IMAGE:
+            DiskImage diskImage = (DiskImage) disk;
+            // Change parameters for the HE disk
+            if (vm.isHostedEngine()) {
+                // Hosted engine disk images have to have empty storage pool ID,
+                // so they can be mounted even if storage pool is not connected.
+                diskImage.setStoragePoolId(Guid.Empty);
+                diskImage.setPropagateErrors(PropagateErrors.Off);
+                // The disk requires a lease
+                addVolumeLease(diskImage.getImageId(), diskImage.getStorageIds().get(0));
+            }
+            String diskType = this.vmInfoBuildUtils.getDiskType(this.vm, diskImage, device);
+            switch(diskType) {
+                case "block":
+                    writer.writeAttributeString("dev", vmInfoBuildUtils.getPathToImage(diskImage));
+                    break;
+                case "network":
+                    String[] volInfo = vmInfoBuildUtils.getGlusterVolInfo(disk);
+                    // drop to the 'file' case as a fallback.
+                    if (volInfo != null) {
+                        writer.writeAttributeString("protocol", "gluster");
+                        writer.writeAttributeString("name", String.format("%s/%s/images/%s/%s", volInfo[1], diskImage.getStorageIds().get(0), diskImage.getId(), diskImage.getImageId()));
+                        writer.writeStartElement("host");
+                        writer.writeAttributeString("name", volInfo[0]);
+                        writer.writeAttributeString("port", "0");
+                        writer.writeEndElement();
+                        break;
+                    }
+                case "file":
+                    writer.writeAttributeString("file", vmInfoBuildUtils.getPathToImage(diskImage));
+                    break;
+            }
+            diskMetadata.put(dev, createDiskParams(diskImage));
+            break;
+        case LUN:
+            LunDisk lunDisk = (LunDisk) disk;
+            writer.writeAttributeString("dev", String.format("/dev/mapper/%s", lunDisk.getLun().getLUNId()));
+            diskMetadata.put(dev, Collections.singletonMap("GUID", lunDisk.getLun().getLUNId()));
+            if (dve.isUsingScsiReservation()) {
+                writer.writeStartElement("reservations");
+                writer.writeAttributeString("managed", "yes");
+                writer.writeEndElement();
+            }
+            break;
+        case CINDER:
+            // case RBD
+            CinderDisk cinderDisk = (CinderDisk) disk;
+            Map<String, Object> connectionInfoData = cinderDisk.getCinderConnectionInfo().getData();
+            writer.writeAttributeString("protocol", cinderDisk.getCinderConnectionInfo().getDriverVolumeType());
+            writer.writeAttributeString("name", connectionInfoData.get("name").toString());
+            List<String> hostAddresses = (List<String>) connectionInfoData.get("hosts");
+            List<String> hostPorts = (List<String>) connectionInfoData.get("ports");
+            // (Cinder should ensure that the addresses and ports lists are synced in order).
+            for (int i = 0; i < hostAddresses.size(); i++) {
+                writer.writeStartElement("host");
+                writer.writeAttributeString("name", hostAddresses.get(i));
+                writer.writeAttributeString("port", hostPorts.get(i));
+                // If no transport is specified, "tcp" is assumed.
+                writer.writeEndElement();
+            }
+            break;
+    }
+    writer.writeEndElement();
+}
+#end_block
+
+#method_before
+protected void updateWatchdog(Guid templateId) {
+    // do not update if this flag is not set
+    if (getParameters().isUpdateWatchdog()) {
+        QueryReturnValue query = runInternalQuery(QueryType.GetWatchdog, new IdQueryParameters(templateId));
+        List<VmWatchdog> watchdogs = query.getReturnValue();
+        if (watchdogs.isEmpty() && getParameters().getWatchdog() == null) {
+            return;
+        }
+        WatchdogParameters parameters = new WatchdogParameters();
+        parameters.setVm(false);
+        parameters.setClusterIndependent(getVmTemplate().getTemplateType() == VmEntityType.INSTANCE_TYPE || isBlankTemplate());
+        parameters.setId(templateId);
+        parameters.setCompensationEnabled(isCompensationEnabled());
+        if (getParameters().getWatchdog() != null) {
+            parameters.setAction(getParameters().getWatchdog().getAction());
+            parameters.setModel(getParameters().getWatchdog().getModel());
+            if (watchdogs.isEmpty()) {
+                runInternalAction(ActionType.AddWatchdog, parameters, cloneContextChildWithCompensation());
+            } else {
+                // there is a watchdog in the vm, we have to update.
+                runInternalAction(ActionType.UpdateWatchdog, parameters, cloneContextChildWithCompensation());
+            }
+        } else {
+            // there is a watchdog in the vm, there should not be any, so let's delete
+            runInternalAction(ActionType.RemoveWatchdog, parameters, cloneContextChildWithCompensation());
+        }
+    }
+}
+#method_after
+protected void updateWatchdog(Guid templateId) {
+    // do not update if this flag is not set
+    if (getParameters().isUpdateWatchdog()) {
+        QueryReturnValue query = runInternalQuery(QueryType.GetWatchdog, new IdQueryParameters(templateId));
+        List<VmWatchdog> watchdogs = query.getReturnValue();
+        if (watchdogs.isEmpty() && getParameters().getWatchdog() == null) {
+            return;
+        }
+        WatchdogParameters parameters = new WatchdogParameters();
+        parameters.setVm(false);
+        parameters.setClusterIndependent(getVmTemplate().getTemplateType() == VmEntityType.INSTANCE_TYPE || isBlankTemplate());
+        parameters.setId(templateId);
+        if (getParameters().getWatchdog() != null) {
+            parameters.setAction(getParameters().getWatchdog().getAction());
+            parameters.setModel(getParameters().getWatchdog().getModel());
+            if (watchdogs.isEmpty()) {
+                runInternalAction(ActionType.AddWatchdog, parameters, cloneContextAndDetachFromParent());
+            } else {
+                // there is a watchdog in the vm, we have to update.
+                runInternalAction(ActionType.UpdateWatchdog, parameters, cloneContextAndDetachFromParent());
+            }
+        } else {
+            // there is a watchdog in the vm, there should not be any, so let's delete
+            runInternalAction(ActionType.RemoveWatchdog, parameters, cloneContextAndDetachFromParent());
+        }
+    }
+}
+#end_block
+
+#method_before
+protected void updateRngDevice(Guid templateId) {
+    // do not update if this flag is not set
+    if (getParameters().isUpdateRngDevice()) {
+        QueryReturnValue query = runInternalQuery(QueryType.GetRngDevice, new IdQueryParameters(templateId));
+        List<VmRngDevice> rngDevs = query.getReturnValue();
+        if (getParameters().getRngDevice() != null) {
+            getParameters().getRngDevice().setVmId(templateId);
+        }
+        ActionReturnValue rngCommandResult = null;
+        if (rngDevs.isEmpty()) {
+            if (getParameters().getRngDevice() != null) {
+                RngDeviceParameters params = new RngDeviceParameters(getParameters().getRngDevice(), false);
+                params.setCompensationEnabled(isCompensationEnabled());
+                rngCommandResult = runInternalAction(ActionType.AddRngDevice, params, cloneContextChildWithCompensation());
+            }
+        } else {
+            if (getParameters().getRngDevice() == null) {
+                RngDeviceParameters params = new RngDeviceParameters(rngDevs.get(0), false);
+                params.setCompensationEnabled(isCompensationEnabled());
+                rngCommandResult = runInternalAction(ActionType.RemoveRngDevice, params, cloneContextChildWithCompensation());
+            } else {
+                RngDeviceParameters params = new RngDeviceParameters(getParameters().getRngDevice(), false);
+                params.getRngDevice().setDeviceId(rngDevs.get(0).getDeviceId());
+                params.setCompensationEnabled(isCompensationEnabled());
+                rngCommandResult = runInternalAction(ActionType.UpdateRngDevice, params, cloneContextChildWithCompensation());
+            }
+        }
+        if (rngCommandResult != null && !rngCommandResult.getSucceeded()) {
+            getReturnValue().setSucceeded(false);
+        }
+    }
+}
+#method_after
+protected void updateRngDevice(Guid templateId) {
+    // do not update if this flag is not set
+    if (getParameters().isUpdateRngDevice()) {
+        QueryReturnValue query = runInternalQuery(QueryType.GetRngDevice, new IdQueryParameters(templateId));
+        List<VmRngDevice> rngDevs = query.getReturnValue();
+        if (getParameters().getRngDevice() != null) {
+            getParameters().getRngDevice().setVmId(templateId);
+        }
+        ActionReturnValue rngCommandResult = null;
+        if (rngDevs.isEmpty()) {
+            if (getParameters().getRngDevice() != null) {
+                RngDeviceParameters params = new RngDeviceParameters(getParameters().getRngDevice(), false);
+                params.setCompensationEnabled(isCompensationEnabledByCaller());
+                rngCommandResult = runInternalAction(ActionType.AddRngDevice, params, cloneContextWithNoCleanupCompensation());
+            }
+        } else {
+            if (getParameters().getRngDevice() == null) {
+                RngDeviceParameters params = new RngDeviceParameters(rngDevs.get(0), false);
+                params.setCompensationEnabled(isCompensationEnabledByCaller());
+                rngCommandResult = runInternalAction(ActionType.RemoveRngDevice, params, cloneContextWithNoCleanupCompensation());
+            } else {
+                RngDeviceParameters params = new RngDeviceParameters(getParameters().getRngDevice(), false);
+                params.getRngDevice().setDeviceId(rngDevs.get(0).getDeviceId());
+                params.setCompensationEnabled(isCompensationEnabledByCaller());
+                rngCommandResult = runInternalAction(ActionType.UpdateRngDevice, params, cloneContextWithNoCleanupCompensation());
+            }
+        }
+        if (rngCommandResult != null && !rngCommandResult.getSucceeded()) {
+            getReturnValue().setSucceeded(false);
+        }
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected void init() {
+    super.init();
+    setVmTemplate(getParameters().getVmTemplateData());
+    setVmTemplateId(getVmTemplate().getId());
+    setClusterId(getVmTemplate().getClusterId());
+    oldTemplate = vmTemplateDao.get(getVmTemplate().getId());
+    if (getCluster() != null) {
+        setStoragePoolId(getCluster().getStoragePoolId() != null ? getCluster().getStoragePoolId() : Guid.Empty);
+    }
+    Version compatibilityVersion = isBlankTemplate() || isInstanceType() ? Version.getLast() : CompatibilityVersionUtils.getEffective(getVmTemplate(), this::getCluster);
+    if (getCluster() != null || isBlankTemplate()) {
+        getVmPropertiesUtils().separateCustomPropertiesToUserAndPredefined(compatibilityVersion, getParameters().getVmTemplateData());
+        if (oldTemplate != null) {
+            getVmPropertiesUtils().separateCustomPropertiesToUserAndPredefined(compatibilityVersion, oldTemplate);
+        }
+    }
+    vmHandler.autoSelectUsbPolicy(getParameters().getVmTemplateData());
+    vmHandler.updateDefaultTimeZone(getParameters().getVmTemplateData());
+    vmHandler.autoSelectDefaultDisplayType(getVmTemplateId(), getParameters().getVmTemplateData(), getCluster(), getParameters().getGraphicsDevices());
+    vmHandler.autoSelectResumeBehavior(getParameters().getVmTemplateData(), getCluster());
+    if (isCompensationEnabled()) {
+        getVmDeviceUtils().setCompensationContext(getCompensationContext());
+    }
+}
+#method_after
+@Override
+protected void init() {
+    super.init();
+    setVmTemplate(getParameters().getVmTemplateData());
+    setVmTemplateId(getVmTemplate().getId());
+    setClusterId(getVmTemplate().getClusterId());
+    oldTemplate = vmTemplateDao.get(getVmTemplate().getId());
+    if (getCluster() != null) {
+        setStoragePoolId(getCluster().getStoragePoolId() != null ? getCluster().getStoragePoolId() : Guid.Empty);
+    }
+    Version compatibilityVersion = isBlankTemplate() || isInstanceType() ? Version.getLast() : CompatibilityVersionUtils.getEffective(getVmTemplate(), this::getCluster);
+    if (getCluster() != null || isBlankTemplate()) {
+        getVmPropertiesUtils().separateCustomPropertiesToUserAndPredefined(compatibilityVersion, getParameters().getVmTemplateData());
+        if (oldTemplate != null) {
+            getVmPropertiesUtils().separateCustomPropertiesToUserAndPredefined(compatibilityVersion, oldTemplate);
+        }
+    }
+    vmHandler.autoSelectUsbPolicy(getParameters().getVmTemplateData());
+    vmHandler.updateDefaultTimeZone(getParameters().getVmTemplateData());
+    vmHandler.autoSelectDefaultDisplayType(getVmTemplateId(), getParameters().getVmTemplateData(), getCluster(), getParameters().getGraphicsDevices());
+    vmHandler.autoSelectResumeBehavior(getParameters().getVmTemplateData(), getCluster());
+    getVmDeviceUtils().setCompensationContext(getCompensationContextIfEnabledByCaller());
+}
+#end_block
+
+#method_before
+@Override
+protected void executeCommand() {
+    if (!isInstanceType() && !isBlankTemplate()) {
+        vmHandler.warnMemorySizeLegal(getParameters().getVmTemplateData(), getVmTemplate().getCompatibilityVersion());
+    }
+    // This cannot be reverted using compensation, but it should not be needed
+    vmStaticDao.incrementDbGeneration(getVmTemplate().getId());
+    updateOriginalTemplateNameOnDerivedVms();
+    List<Guid> oldIconIds = Collections.emptyList();
+    if (isTemplate()) {
+        oldIconIds = iconUtils.updateVmIcon(oldTemplate, getVmTemplate(), getParameters().getVmLargeIcon());
+    }
+    updateVmTemplate();
+    iconUtils.removeUnusedIcons(oldIconIds, isCompensationEnabled() ? getCompensationContext() : null);
+    updateWatchdog(getParameters().getVmTemplateData().getId());
+    updateRngDevice(getParameters().getVmTemplateData().getId());
+    updateGraphicsDevice();
+    checkTrustedService();
+    updateVmsOfInstanceType();
+    setSucceeded(true);
+}
+#method_after
+@Override
+protected void executeCommand() {
+    if (!isInstanceType() && !isBlankTemplate()) {
+        vmHandler.warnMemorySizeLegal(getParameters().getVmTemplateData(), getVmTemplate().getCompatibilityVersion());
+    }
+    // This cannot be reverted using compensation, but it should not be needed
+    vmStaticDao.incrementDbGeneration(getVmTemplate().getId());
+    updateOriginalTemplateNameOnDerivedVms();
+    List<Guid> oldIconIds = Collections.emptyList();
+    if (isTemplate()) {
+        oldIconIds = iconUtils.updateVmIcon(oldTemplate, getVmTemplate(), getParameters().getVmLargeIcon());
+    }
+    updateVmTemplate();
+    iconUtils.removeUnusedIcons(oldIconIds, getCompensationContextIfEnabledByCaller());
+    updateWatchdog(getParameters().getVmTemplateData().getId());
+    updateRngDevice(getParameters().getVmTemplateData().getId());
+    updateGraphicsDevice();
+    checkTrustedService();
+    updateVmsOfInstanceType();
+    compensationStateChanged();
+    setSucceeded(true);
+}
+#end_block
+
+#method_before
+private void updateVmsOfInstanceType() {
+    if (!isInstanceType()) {
+        return;
+    }
+    // get vms from db
+    List<VM> vmsToUpdate = vmDao.getVmsListByInstanceType(getVmTemplateId());
+    for (VM vm : vmsToUpdate) {
+        VmManagementParametersBase params = new VmManagementParametersBase(vm);
+        params.setApplyChangesLater(true);
+        params.setCompensationEnabled(isCompensationEnabled());
+        runInternalAction(ActionType.UpdateVm, params, cloneContext().withCompensationContext(new ChildCompensationWrapper(getCompensationContext())));
+    }
+}
+#method_after
+private void updateVmsOfInstanceType() {
+    if (!isInstanceType()) {
+        return;
+    }
+    // Currently, compensation is only used when this command is called from UpdateClusterCommand,
+    // and it does not update instances.
+    // TODO - Add compensation support if needed.
+    throwIfCompensationEnabled();
+    // get vms from db
+    List<VM> vmsToUpdate = vmDao.getVmsListByInstanceType(getVmTemplateId());
+    for (VM vm : vmsToUpdate) {
+        VmManagementParametersBase params = new VmManagementParametersBase(vm);
+        params.setApplyChangesLater(true);
+        runInternalAction(ActionType.UpdateVm, params);
+    }
+}
+#end_block
+
+#method_before
+private void updateOriginalTemplateNameOnDerivedVms() {
+    boolean templateNameChanged = !Objects.equals(oldTemplate.getName(), getVmTemplate().getName());
+    if (templateNameChanged) {
+        if (isCompensationEnabled()) {
+            getCompensationContext().snapshotObject(new TemplateOriginalNameCompensation(getVmTemplateId(), oldTemplate.getName()));
+        }
+        vmDao.updateOriginalTemplateName(getVmTemplate().getId(), getVmTemplate().getName());
+    }
+}
+#method_after
+private void updateOriginalTemplateNameOnDerivedVms() {
+    boolean templateNameChanged = !Objects.equals(oldTemplate.getName(), getVmTemplate().getName());
+    if (templateNameChanged) {
+        // Currently, compensation is only used when this command is called from UpdateClusterCommand,
+        // and it does not change the template name.
+        // TODO - Add compensation support if needed.
+        throwIfCompensationEnabled();
+        vmDao.updateOriginalTemplateName(getVmTemplate().getId(), getVmTemplate().getName());
+    }
+}
+#end_block
+
+#method_before
+private void updateVmTemplate() {
+    vmHandler.updateVmInitToDB(getVmTemplate(), isCompensationEnabled() ? getCompensationContext() : null);
+    if (isCompensationEnabled()) {
+        VmTemplate originalTemplate = vmTemplateDao.get(getVmTemplateId());
+        getCompensationContext().snapshotEntityUpdated(originalTemplate);
+    }
+    vmTemplateDao.update(getVmTemplate());
+    // also update the smartcard device
+    getVmDeviceUtils().updateSmartcardDevice(getVmTemplateId(), getParameters().getVmTemplateData().isSmartcardEnabled());
+    // update audio device
+    getVmDeviceUtils().updateSoundDevice(oldTemplate, getVmTemplate(), getVmTemplate().getCompatibilityVersion(), getParameters().isSoundDeviceEnabled());
+    getVmDeviceUtils().updateConsoleDevice(getVmTemplateId(), getParameters().isConsoleEnabled());
+    if (oldTemplate.getUsbPolicy() != getVmTemplate().getUsbPolicy() || oldTemplate.getVmType() != getVmTemplate().getVmType()) {
+        getVmDeviceUtils().updateUsbSlots(oldTemplate, getVmTemplate());
+    }
+    getVmDeviceUtils().updateVirtioScsiController(getVmTemplate(), getParameters().isVirtioScsiEnabled());
+    if (getParameters().isBalloonEnabled() != null) {
+        getVmDeviceUtils().updateMemoryBalloon(getVmTemplateId(), getParameters().isBalloonEnabled());
+    }
+    getVmDeviceUtils().updateVideoDevices(oldTemplate, getParameters().getVmTemplateData());
+}
+#method_after
+private void updateVmTemplate() {
+    vmHandler.updateVmInitToDB(getVmTemplate(), getCompensationContextIfEnabledByCaller());
+    CompensationUtils.updateEntity(getVmTemplate(), vmTemplateDao, getCompensationContextIfEnabledByCaller());
+    // also update the smartcard device
+    getVmDeviceUtils().updateSmartcardDevice(getVmTemplateId(), getParameters().getVmTemplateData().isSmartcardEnabled());
+    // update audio device
+    getVmDeviceUtils().updateSoundDevice(oldTemplate, getVmTemplate(), getVmTemplate().getCompatibilityVersion(), getParameters().isSoundDeviceEnabled());
+    getVmDeviceUtils().updateConsoleDevice(getVmTemplateId(), getParameters().isConsoleEnabled());
+    if (oldTemplate.getUsbPolicy() != getVmTemplate().getUsbPolicy() || oldTemplate.getVmType() != getVmTemplate().getVmType()) {
+        getVmDeviceUtils().updateUsbSlots(oldTemplate, getVmTemplate());
+    }
+    getVmDeviceUtils().updateVirtioScsiController(getVmTemplate(), getParameters().isVirtioScsiEnabled());
+    if (getParameters().isBalloonEnabled() != null) {
+        getVmDeviceUtils().updateMemoryBalloon(getVmTemplateId(), getParameters().isBalloonEnabled());
+    }
+    getVmDeviceUtils().updateVideoDevices(oldTemplate, getParameters().getVmTemplateData());
+}
+#end_block
+
+#method_before
+private void updateGraphicsDevice() {
+    for (GraphicsType type : getParameters().getGraphicsDevices().keySet()) {
+        GraphicsDevice vmGraphicsDevice = getGraphicsDevOfType(type);
+        if (vmGraphicsDevice == null) {
+            if (getParameters().getGraphicsDevices().get(type) != null) {
+                getParameters().getGraphicsDevices().get(type).setVmId(getVmTemplateId());
+                GraphicsParameters parameters = new GraphicsParameters(getParameters().getGraphicsDevices().get(type));
+                parameters.setVm(false);
+                parameters.setCompensationEnabled(isCompensationEnabled());
+                runInternalAction(ActionType.AddGraphicsDevice, parameters, cloneContextChildWithCompensation());
+            }
+        } else {
+            if (getParameters().getGraphicsDevices().get(type) == null) {
+                GraphicsParameters parameters = new GraphicsParameters(vmGraphicsDevice);
+                parameters.setVm(false);
+                parameters.setCompensationEnabled(isCompensationEnabled());
+                runInternalAction(ActionType.RemoveGraphicsDevice, parameters, cloneContextChildWithCompensation());
+            } else {
+                getParameters().getGraphicsDevices().get(type).setDeviceId(vmGraphicsDevice.getDeviceId());
+                getParameters().getGraphicsDevices().get(type).setVmId(getVmTemplateId());
+                GraphicsParameters parameters = new GraphicsParameters(getParameters().getGraphicsDevices().get(type));
+                parameters.setVm(false);
+                parameters.setCompensationEnabled(isCompensationEnabled());
+                runInternalAction(ActionType.UpdateGraphicsDevice, parameters, cloneContextChildWithCompensation());
+            }
+        }
+    }
+}
+#method_after
+private void updateGraphicsDevice() {
+    for (GraphicsType type : getParameters().getGraphicsDevices().keySet()) {
+        GraphicsDevice vmGraphicsDevice = getGraphicsDevOfType(type);
+        if (vmGraphicsDevice == null) {
+            if (getParameters().getGraphicsDevices().get(type) != null) {
+                getParameters().getGraphicsDevices().get(type).setVmId(getVmTemplateId());
+                GraphicsParameters parameters = new GraphicsParameters(getParameters().getGraphicsDevices().get(type));
+                parameters.setVm(false);
+                parameters.setCompensationEnabled(isCompensationEnabledByCaller());
+                runInternalAction(ActionType.AddGraphicsDevice, parameters, cloneContextWithNoCleanupCompensation());
+            }
+        } else {
+            if (getParameters().getGraphicsDevices().get(type) == null) {
+                GraphicsParameters parameters = new GraphicsParameters(vmGraphicsDevice);
+                parameters.setVm(false);
+                parameters.setCompensationEnabled(isCompensationEnabledByCaller());
+                runInternalAction(ActionType.RemoveGraphicsDevice, parameters, cloneContextWithNoCleanupCompensation());
+            } else {
+                getParameters().getGraphicsDevices().get(type).setDeviceId(vmGraphicsDevice.getDeviceId());
+                getParameters().getGraphicsDevices().get(type).setVmId(getVmTemplateId());
+                GraphicsParameters parameters = new GraphicsParameters(getParameters().getGraphicsDevices().get(type));
+                parameters.setVm(false);
+                parameters.setCompensationEnabled(isCompensationEnabledByCaller());
+                runInternalAction(ActionType.UpdateGraphicsDevice, parameters, cloneContextWithNoCleanupCompensation());
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+public void addVmInitToDB(VmInit vmInit, CompensationContext compensationContext) {
+    if (vmInit != null) {
+        VmInit oldVmInit = vmInitDao.get(vmInit.getId());
+        if (oldVmInit == null) {
+            if (compensationContext != null) {
+                compensationContext.snapshotNewEntity(vmInit);
+            }
+            vmInitDao.save(vmInit);
+        } else {
+            if (compensationContext != null) {
+                compensationContext.snapshotEntityUpdated(oldVmInit);
+            }
+            if (vmInit.isPasswordAlreadyStored()) {
+                // since we are not always returning the password in
+                // updateVmInitFromDB()
+                // method (we don't want to display it in the UI/API) we
+                // don't want to override
+                // the password if the flag is on
+                vmInit.setRootPassword(oldVmInit.getRootPassword());
+            }
+            vmInitDao.update(vmInit);
+        }
+    }
+}
+#method_after
+public void addVmInitToDB(VmInit vmInit, CompensationContext compensationContext) {
+    if (vmInit != null) {
+        VmInit oldVmInit = vmInitDao.get(vmInit.getId());
+        if (oldVmInit == null) {
+            CompensationUtils.saveEntity(vmInit, vmInitDao, compensationContext);
+        } else {
+            if (vmInit.isPasswordAlreadyStored()) {
+                // since we are not always returning the password in
+                // updateVmInitFromDB()
+                // method (we don't want to display it in the UI/API) we
+                // don't want to override
+                // the password if the flag is on
+                vmInit.setRootPassword(oldVmInit.getRootPassword());
+            }
+            CompensationUtils.updateEntity(vmInit, oldVmInit, vmInitDao, compensationContext);
+        }
+    }
+}
+#end_block
+
+#method_before
+public void removeVmInitFromDB(VmBase vm, CompensationContext compensationContext) {
+    if (compensationContext != null) {
+        VmInit init = vmInitDao.get(vm.getId());
+        if (init != null) {
+            compensationContext.snapshotEntity(init);
+        }
+    }
+    vmInitDao.remove(vm.getId());
+}
+#method_after
+public void removeVmInitFromDB(VmBase vm, CompensationContext compensationContext) {
+    CompensationUtils.removeEntity(vm.getId(), vmInitDao, compensationContext);
+}
+#end_block
+
+#method_before
+@Override
+protected void executeCommand() {
+    final VDS vds = getVds();
+    try (EngineLock monitoringLock = acquireMonitorLock("Activate host")) {
+        executionHandler.updateSpecificActionJobCompleted(vds.getId(), ActionType.MaintenanceVds, false);
+        setSucceeded(setVdsStatus(VDSStatus.Unassigned).getSucceeded());
+        if (getSucceeded()) {
+            TransactionSupport.executeInNewTransaction(() -> {
+                // set network to operational / non-operational
+                List<Network> networks = networkDao.getAllForCluster(vds.getClusterId());
+                networkClusterHelper.setStatus(vds.getClusterId(), networks);
+                return null;
+            });
+            // Start glusterd service on the node, which would haven been stopped due to maintenance
+            if (vds.getClusterSupportsGlusterService()) {
+                runVdsCommand(VDSCommandType.ManageGlusterService, new GlusterServiceVDSParameters(vds.getId(), Arrays.asList("glusterd"), "restart"));
+                // starting vdo service
+                GlusterStatus isRunning = glusterUtil.isVDORunning(vds.getId());
+                switch(isRunning) {
+                    case DOWN:
+                        log.info("VDO service is down in host : '{}' , starting VDO service", vds.getId());
+                        startVDOService(vds);
+                        break;
+                    case UP:
+                        log.info("VDO service is up in host : '{}' , skipping starting of VDO service", vds.getId());
+                        break;
+                    case UNKNOWN:
+                        log.info("VDO service is not installed host : '{}' , ignoring to start VDO service", vds.getId());
+                        break;
+                }
+            }
+        }
+    }
+}
+#method_after
+@Override
+protected void executeCommand() {
+    final VDS vds = getVds();
+    try (EngineLock monitoringLock = acquireMonitorLock("Activate host")) {
+        executionHandler.updateSpecificActionJobCompleted(vds.getId(), ActionType.MaintenanceVds, false);
+        setSucceeded(setVdsStatus(VDSStatus.Unassigned).getSucceeded());
+        if (getSucceeded()) {
+            TransactionSupport.executeInNewTransaction(() -> {
+                // set network to operational / non-operational
+                List<Network> networks = networkDao.getAllForCluster(vds.getClusterId());
+                networkClusterHelper.setStatus(vds.getClusterId(), networks);
+                return null;
+            });
+            // Start glusterd service on the node, which would haven been stopped due to maintenance
+            if (vds.getClusterSupportsGlusterService()) {
+                runVdsCommand(VDSCommandType.ManageGlusterService, new GlusterServiceVDSParameters(vds.getId(), Arrays.asList("glusterd"), "restart"));
+                // starting vdo service
+                GlusterStatus isRunning = glusterUtil.isVDORunning(vds.getId());
+                switch(isRunning) {
+                    case DOWN:
+                        log.info("VDO service is down in host : '{}' with id '{}', starting VDO service", vds.getHostName(), vds.getId());
+                        startVDOService(vds);
+                        break;
+                    case UP:
+                        log.info("VDO service is up in host : '{}' with id '{}', skipping starting of VDO service", vds.getHostName(), vds.getId());
+                        break;
+                    case UNKNOWN:
+                        log.info("VDO service is not installed host : '{}' with id '{}', ignoring to start VDO service", vds.getHostName(), vds.getId());
+                        break;
+                }
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+public void startVDOService(VDS vds) {
+    // starting VDO service
+    boolean succeeded = runVdsCommand(VDSCommandType.ManageGlusterService, new GlusterServiceVDSParameters(vds.getId(), Arrays.asList("vdo"), "restart")).getSucceeded();
+    if (!succeeded) {
+        log.error("Failed to start VDO service while activating the host '{}'", vds.getHostName());
+    }
+}
+#method_after
+public void startVDOService(VDS vds) {
+    // starting VDO service
+    boolean succeeded = runVdsCommand(VDSCommandType.ManageGlusterService, new GlusterServiceVDSParameters(vds.getId(), Arrays.asList("vdo"), "restart")).getSucceeded();
+    if (!succeeded) {
+        log.error("Failed to start VDO service while activating the host '{}' with id '{}'", vds.getHostName(), vds.getId());
+    }
+}
+#end_block
+
+#method_before
+public GlusterStatus isVDORunning(Guid vdsId) {
+    VDSReturnValue returnValue = resourceManager.runVdsCommand(VDSCommandType.ManageGlusterService, new GlusterServiceVDSParameters(vdsId, Arrays.asList("vdo"), "status"));
+    if (!returnValue.getSucceeded()) {
+        log.error("Failed to check VDO running status of host : '{}' ", vdsId);
+        return GlusterStatus.UNKNOWN;
+    }
+    ArrayList<GlusterServerService> returnList = (ArrayList<GlusterServerService>) returnValue.getReturnValue();
+    if (returnList == null || returnList.isEmpty()) {
+        log.error("Failed to check VDO running status of host : '{}' returned empty object", vdsId);
+        return GlusterStatus.UNKNOWN;
+    }
+    GlusterServerService gss = returnList.get(0);
+    if (gss != null) {
+        return gss.getStatus().getStatusMsg().equalsIgnoreCase("Up") ? GlusterStatus.UP : GlusterStatus.DOWN;
+    }
+    return GlusterStatus.UNKNOWN;
+}
+#method_after
+public GlusterStatus isVDORunning(Guid vdsId) {
+    VDSReturnValue returnValue = resourceManager.runVdsCommand(VDSCommandType.ManageGlusterService, new GlusterServiceVDSParameters(vdsId, Arrays.asList("vdo"), "status"));
+    if (!returnValue.getSucceeded()) {
+        log.error("Failed to check VDO running status of host : '{}' ", vdsId);
+        return GlusterStatus.UNKNOWN;
+    }
+    ArrayList<GlusterServerService> returnList = (ArrayList<GlusterServerService>) returnValue.getReturnValue();
+    if (returnList == null || returnList.isEmpty()) {
+        log.error("Failed to check VDO running status of host : '{}' returned empty object", vdsId);
+        return GlusterStatus.UNKNOWN;
+    }
+    GlusterServerService gss = returnList.get(0);
+    if (gss != null) {
+        return gss.getStatus().getStatusMsg().equalsIgnoreCase("Up") ? GlusterStatus.UP : GlusterStatus.DOWN;
+    }
+    log.info("Failed to check VDO running status of host : '{}' ", vdsId);
+    return GlusterStatus.UNKNOWN;
+}
+#end_block
+
+#method_before
+public void addComboActionButton(ActionButtonDefinition<T> buttonDef, List<ActionButtonDefinition<T>> subActions) {
+    ActionButton newButton = getView().addDropdownComboActionButton(buttonDef, subActions, this);
+    actionButtonDefinitions.add(buttonDef);
+    for (ActionButtonDefinition ab : subActions) {
+        actionButtonDefinitions.add(ab);
+    }
+    initButton(buttonDef, newButton);
+}
+#method_after
+public void addComboActionButton(ActionButtonDefinition<T> buttonDef, List<ActionButtonDefinition<T>> subActions) {
+    ActionButton newButton = getView().addDropdownComboActionButton(buttonDef, subActions, this);
+    actionButtonDefinitions.add(buttonDef);
+    initButton(buttonDef, newButton);
+}
+#end_block
+
+#method_before
+public void addComboActionButtonWithContexts(ActionButtonDefinition<T> buttonDef, List<ActionButtonDefinition<T>> subActions) {
+    ActionButton newButton = getView().addDropdownComboActionButton(buttonDef, subActions, this);
+    actionButtonDefinitions.add(buttonDef);
+    initButton(buttonDef, newButton);
+}
+#method_after
+public void addComboActionButtonWithContexts(ActionButtonDefinition<T> buttonDef, List<ActionButtonDefinition<T>> subActions) {
+    ActionButton newButton = getView().addDropdownComboActionButton(buttonDef, subActions, this);
+    actionButtonDefinitions.add(buttonDef);
+    for (ActionButtonDefinition ab : subActions) {
+        actionButtonDefinitions.add(ab);
+    }
+    initButton(buttonDef, newButton);
+}
+#end_block
+
+#method_before
+private void updateCurrentMemory(VM newVm) {
+    int currentMemory = getVm().getMemSizeMb();
+    int newAmountOfMemory = newVm.getMemSizeMb();
+    if (getVm().getStatus().isNotRunning()) {
+        newVmStatic.setMemSizeMb(newAmountOfMemory);
+        return;
+    }
+    if (getVm().getStatus() != VMStatus.Up) {
+        newVmStatic.setMemSizeMb(currentMemory);
+        log.warn("Memory update {}MB -> {}MB of VM {} ({}) left out. Memory can't be updated in current VM state ({}).", currentMemory, newAmountOfMemory, getVm().getName(), getVm().getId(), getVm().getStatus());
+        return;
+    }
+    if (VmCommonUtils.isMemoryToBeHotplugged(getVm(), newVm)) {
+        final int memoryAddedMb = newAmountOfMemory - currentMemory;
+        final int factor = Config.<Integer>getValue(ConfigValues.HotPlugMemoryBlockSizeMb);
+        final boolean memoryDividable = memoryAddedMb % factor == 0;
+        if (!memoryDividable) {
+            addCustomValue("memoryAdded", String.valueOf(memoryAddedMb));
+            addCustomValue("requiredFactor", String.valueOf(factor));
+            auditLogDirector.log(this, AuditLogType.FAILED_HOT_SET_MEMORY_NOT_DIVIDABLE);
+            newVmStatic.setMemSizeMb(currentMemory);
+            return;
+        }
+        hotPlugMemory(memoryAddedMb);
+        return;
+    }
+    if (currentMemory > newAmountOfMemory) {
+        hotUnplugMemory(newVm);
+    }
+}
+#method_after
+private void updateCurrentMemory(VM newVm) {
+    int currentMemory = getVm().getMemSizeMb();
+    int newAmountOfMemory = newVm.getMemSizeMb();
+    if (getVm().getStatus().isNotRunning()) {
+        newVmStatic.setMemSizeMb(newAmountOfMemory);
+        return;
+    }
+    if (getVm().getStatus() != VMStatus.Up) {
+        newVmStatic.setMemSizeMb(currentMemory);
+        log.warn("Memory update {}MB -> {}MB of VM {} ({}) left out. Memory can't be updated in current VM state ({}).", currentMemory, newAmountOfMemory, getVm().getName(), getVm().getId(), getVm().getStatus());
+        return;
+    }
+    if (VmCommonUtils.isMemoryToBeHotplugged(getVm(), newVm)) {
+        // Temporarily setting to the currentMemory. It will be increased in hotPlugMemory().
+        newVmStatic.setMemSizeMb(currentMemory);
+        final int memoryAddedMb = newAmountOfMemory - currentMemory;
+        final int factor = Config.<Integer>getValue(ConfigValues.HotPlugMemoryBlockSizeMb);
+        final boolean memoryDividable = memoryAddedMb % factor == 0;
+        if (!memoryDividable) {
+            addCustomValue("memoryAdded", String.valueOf(memoryAddedMb));
+            addCustomValue("requiredFactor", String.valueOf(factor));
+            auditLogDirector.log(this, AuditLogType.FAILED_HOT_SET_MEMORY_NOT_DIVIDABLE);
+            return;
+        }
+        hotPlugMemory(memoryAddedMb);
+        return;
+    }
+    if (currentMemory > newAmountOfMemory) {
+        hotUnplugMemory(newVm);
+    }
+}
+#end_block
+
+#method_before
+@Override
+public StatusOnlyReturn add_image_ticket(String ticketId, String[] ops, long timeout, long size, String url, String filename, boolean sparse, String transfer) {
+    Map<String, Object> ticketDict = new HashMap<>();
+    ticketDict.put("uuid", ticketId);
+    ticketDict.put("timeout", timeout);
+    ticketDict.put("ops", ops);
+    ticketDict.put("size", size);
+    ticketDict.put("url", url);
+    ticketDict.put("sparse", sparse);
+    ticketDict.put("transfer_id", transfer);
+    // filename is null by default, and only specified by the UI
+    if (filename != null) {
+        ticketDict.put("filename", filename);
+    }
+    JsonRpcRequest request = new RequestBuilder("Host.add_image_ticket").withParameter("ticket", ticketDict).build();
+    Map<String, Object> response = new FutureMap(this.client, request);
+    return new StatusOnlyReturn(response);
+}
+#method_after
+@Override
+public StatusOnlyReturn add_image_ticket(String ticketId, String[] ops, long timeout, long size, String url, String filename, boolean sparse, String transferId) {
+    Map<String, Object> ticketDict = new HashMap<>();
+    ticketDict.put("uuid", ticketId);
+    ticketDict.put("timeout", timeout);
+    ticketDict.put("ops", ops);
+    ticketDict.put("size", size);
+    ticketDict.put("url", url);
+    ticketDict.put("sparse", sparse);
+    ticketDict.put("transfer_id", transferId);
+    // filename is null by default, and only specified by the UI
+    if (filename != null) {
+        ticketDict.put("filename", filename);
+    }
+    JsonRpcRequest request = new RequestBuilder("Host.add_image_ticket").withParameter("ticket", ticketDict).build();
+    Map<String, Object> response = new FutureMap(this.client, request);
+    return new StatusOnlyReturn(response);
+}
+#end_block
+
+#method_before
+private boolean addImageTicketToProxy(Guid imagedTicketId, String signedTicket) {
+    log.info("Adding image ticket to ovirt-imageio-proxy, id {}", imagedTicketId);
+    try {
+        HttpURLConnection connection = getProxyConnection(getProxyUri() + TICKETS_PATH);
+        connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+        connection.setRequestMethod("PUT");
+        // Send request
+        log.debug(String.format("Add image ticket to proxy request: %s", connection.toString()));
+        try (OutputStream outputStream = connection.getOutputStream()) {
+            outputStream.write(signedTicket.getBytes(StandardCharsets.UTF_8));
+            outputStream.flush();
+        }
+        int responseCode = connection.getResponseCode();
+        log.debug(String.format("Add image ticket to proxy response: code - %d, message - %s", connection.getResponseCode(), connection.getResponseMessage()));
+        if (responseCode != HttpURLConnection.HTTP_OK) {
+            throw new RuntimeException(String.format("Request to imageio-proxy failed, response code: %s", responseCode));
+        }
+    } catch (Exception ex) {
+        log.error("Failed to add image ticket to ovirt-imageio-proxy", ex);
+        return false;
+    }
+    return true;
+}
+#method_after
+private boolean addImageTicketToProxy(Guid imagedTicketId, String signedTicket) {
+    log.info("Adding image ticket to ovirt-imageio-proxy, id {}", imagedTicketId);
+    try {
+        HttpURLConnection connection = getProxyConnection(getProxyUri() + TICKETS_PATH);
+        connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+        connection.setRequestMethod("PUT");
+        // Send request
+        try (OutputStream outputStream = connection.getOutputStream()) {
+            outputStream.write(signedTicket.getBytes(StandardCharsets.UTF_8));
+            outputStream.flush();
+        }
+        int responseCode = connection.getResponseCode();
+        if (responseCode != HttpURLConnection.HTTP_OK) {
+            throw new RuntimeException(String.format("Request to imageio-proxy failed, response code: %s", responseCode));
+        }
+    } catch (Exception ex) {
+        log.error("Failed to add image ticket to ovirt-imageio-proxy", ex.getMessage());
+        return false;
+    }
+    return true;
+}
+#end_block
+
+#method_before
+@Override
+protected ToStringBuilder appendAttributes(ToStringBuilder tsb) {
+    return super.appendAttributes(tsb).append("operations", getOperations()).append("size", getSize()).append("url", getUrl()).append("filename", getFilename()).append("sparse", isSparse());
+}
+#method_after
+@Override
+protected ToStringBuilder appendAttributes(ToStringBuilder tsb) {
+    return super.appendAttributes(tsb).append("operations", getOperations()).append("size", getSize()).append("url", getUrl()).append("filename", getFilename()).append("sparse", isSparse()).append("transferId", getTransferId());
+}
+#end_block
+
+#method_before
+private void evaluateMaintenanceHostCommandProgress(MaintenanceVdsCommand<MaintenanceVdsParameters> maintenanceCommand) {
+    MaintenanceVdsParameters parameters = maintenanceCommand.getParameters();
+    VdsDynamic host = vdsDynamicDao.get(parameters.getVdsId());
+    switch(host.getStatus()) {
+        // Wait till moving to maintenance ends
+        case PreparingForMaintenance:
+            break;
+        // Stop Gluster processes
+        case Maintenance:
+            log.info("Host '{}' is on maintenance mode. Stoping all gluster services.", getHostName(parameters.getVdsId()));
+            stopGlusterServices(parameters.getVdsId());
+            stopVDOService(parameters.getVdsId());
+            maintenanceCommand.setCommandStatus(CommandStatus.SUCCEEDED);
+            break;
+        // Any other status implies maintenance action failed, and the callback cannot proceed with stopping gluster's services
+        default:
+            if (isMaintenanceCommandExecuted(maintenanceCommand)) {
+                log.info("Host '{}' failed to move to maintenance mode. Could not stop Gluster services.", getHostName(parameters.getVdsId()));
+                maintenanceCommand.setCommandStatus(CommandStatus.FAILED);
+            }
+            break;
+    }
+}
+#method_after
+private void evaluateMaintenanceHostCommandProgress(MaintenanceVdsCommand<MaintenanceVdsParameters> maintenanceCommand) {
+    MaintenanceVdsParameters parameters = maintenanceCommand.getParameters();
+    VdsDynamic host = vdsDynamicDao.get(parameters.getVdsId());
+    switch(host.getStatus()) {
+        // Wait till moving to maintenance ends
+        case PreparingForMaintenance:
+            break;
+        // Stop Gluster processes
+        case Maintenance:
+            log.info("Host '{}' is on maintenance mode. Stoping all gluster services.", getHostName(parameters.getVdsId()));
+            stopGlusterServices(parameters.getVdsId());
+            GlusterStatus isRunning = glusterUtil.isVDORunning(parameters.getVdsId());
+            switch(isRunning) {
+                case DOWN:
+                    log.info("VDO service is down in host : '{}' , skipping stopping of VDO service", parameters.getVdsId());
+                    break;
+                case UP:
+                    log.info("VDO service is up in host : '{}' ,  stopping VDO service", parameters.getVdsId());
+                    stopVDOService(parameters.getVdsId());
+                    break;
+                case UNKNOWN:
+                    log.info("VDO service is not installed host : '{}' , ignoring stop VDO service", parameters.getVdsId());
+                    break;
+            }
+            maintenanceCommand.setCommandStatus(CommandStatus.SUCCEEDED);
+            break;
+        // Any other status implies maintenance action failed, and the callback cannot proceed with stopping gluster's services
+        default:
+            if (isMaintenanceCommandExecuted(maintenanceCommand)) {
+                log.info("Host '{}' failed to move to maintenance mode. Could not stop Gluster services.", getHostName(parameters.getVdsId()));
+                maintenanceCommand.setCommandStatus(CommandStatus.FAILED);
+            }
+            break;
+    }
+}
+#end_block
+
+#method_before
+private void stopVDOService(Guid vdsId) {
+    // stopping VDO service
+    boolean succeeded = resourceManager.runVdsCommand(VDSCommandType.ManageGlusterService, new GlusterServiceVDSParameters(vdsId, Arrays.asList("vdo"), "stop")).getSucceeded();
+    if (!succeeded) {
+        log.error("Failed to stop VDO service while moving the host '{}' to maintenance", getHostName(vdsId));
+    }
+}
+#method_after
+private void stopVDOService(Guid vdsId) {
+    boolean succeeded = resourceManager.runVdsCommand(VDSCommandType.ManageGlusterService, new GlusterServiceVDSParameters(vdsId, Arrays.asList("vdo"), "stop")).getSucceeded();
+    if (!succeeded) {
+        log.error("Failed to stop VDO service while moving the host '{}' to maintenance", getHostName(vdsId));
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected void executeCommand() {
+    final VDS vds = getVds();
+    try (EngineLock monitoringLock = acquireMonitorLock("Activate host")) {
+        executionHandler.updateSpecificActionJobCompleted(vds.getId(), ActionType.MaintenanceVds, false);
+        setSucceeded(setVdsStatus(VDSStatus.Unassigned).getSucceeded());
+        if (getSucceeded()) {
+            TransactionSupport.executeInNewTransaction(() -> {
+                // set network to operational / non-operational
+                List<Network> networks = networkDao.getAllForCluster(vds.getClusterId());
+                networkClusterHelper.setStatus(vds.getClusterId(), networks);
+                return null;
+            });
+            // Start glusterd service on the node, which would haven been stopped due to maintenance
+            if (vds.getClusterSupportsGlusterService()) {
+                runVdsCommand(VDSCommandType.ManageGlusterService, new GlusterServiceVDSParameters(vds.getId(), Arrays.asList("glusterd"), "restart"));
+                // starting vdo service
+                startVDOService(vds);
+            }
+        }
+    }
+}
+#method_after
+@Override
+protected void executeCommand() {
+    final VDS vds = getVds();
+    try (EngineLock monitoringLock = acquireMonitorLock("Activate host")) {
+        executionHandler.updateSpecificActionJobCompleted(vds.getId(), ActionType.MaintenanceVds, false);
+        setSucceeded(setVdsStatus(VDSStatus.Unassigned).getSucceeded());
+        if (getSucceeded()) {
+            TransactionSupport.executeInNewTransaction(() -> {
+                // set network to operational / non-operational
+                List<Network> networks = networkDao.getAllForCluster(vds.getClusterId());
+                networkClusterHelper.setStatus(vds.getClusterId(), networks);
+                return null;
+            });
+            // Start glusterd service on the node, which would haven been stopped due to maintenance
+            if (vds.getClusterSupportsGlusterService()) {
+                runVdsCommand(VDSCommandType.ManageGlusterService, new GlusterServiceVDSParameters(vds.getId(), Arrays.asList("glusterd"), "restart"));
+                // starting vdo service
+                GlusterStatus isRunning = glusterUtil.isVDORunning(vds.getId());
+                switch(isRunning) {
+                    case DOWN:
+                        log.info("VDO service is down in host : '{}' , starting VDO service", vds.getId());
+                        startVDOService(vds);
+                        break;
+                    case UP:
+                        log.info("VDO service is up in host : '{}' , skipping starting of VDO service", vds.getId());
+                        break;
+                    case UNKNOWN:
+                        log.info("VDO service is not installed host : '{}' , ignoring to start VDO service", vds.getId());
+                        break;
+                }
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+public void startVDOService(VDS vds) {
+    // starting VDO service
+    boolean succeeded = runVdsCommand(VDSCommandType.ManageGlusterService, new GlusterServiceVDSParameters(vds.getId(), Arrays.asList("vdo"), "restart")).getSucceeded();
+    if (!succeeded) {
+        log.error("Failed to stop VDO service while moving the host '{}' to maintenance", vds.getHostName());
+    }
+}
+#method_after
+public void startVDOService(VDS vds) {
+    // starting VDO service
+    boolean succeeded = runVdsCommand(VDSCommandType.ManageGlusterService, new GlusterServiceVDSParameters(vds.getId(), Arrays.asList("vdo"), "restart")).getSucceeded();
+    if (!succeeded) {
+        log.error("Failed to start VDO service while activating the host '{}'", vds.getHostName());
+    }
+}
+#end_block
+
+#method_before
+private void updateCurrentMemory(VM newVm) {
+    int currentMemory = getVm().getMemSizeMb();
+    int newAmountOfMemory = newVm.getMemSizeMb();
+    if (getVm().getStatus().isNotRunning()) {
+        newVmStatic.setMemSizeMb(newAmountOfMemory);
+        return;
+    }
+    if (getVm().getStatus() != VMStatus.Up) {
+        newVmStatic.setMemSizeMb(currentMemory);
+        log.warn("Memory update {}MB -> {}MB of VM {} ({}) left out. Memory can't be updated in current VM state ({}).", currentMemory, newAmountOfMemory, getVm().getName(), getVm().getId(), getVm().getStatus());
+        return;
+    }
+    if (VmCommonUtils.isMemoryToBeHotplugged(getVm(), newVm)) {
+        final int memoryAddedMb = newAmountOfMemory - currentMemory;
+        final int factor = Config.<Integer>getValue(ConfigValues.HotPlugMemoryBlockSizeMb);
+        final boolean memoryDividable = memoryAddedMb % factor == 0;
+        if (!memoryDividable) {
+            addCustomValue("memoryAdded", String.valueOf(memoryAddedMb));
+            addCustomValue("requiredFactor", String.valueOf(factor));
+            auditLogDirector.log(this, AuditLogType.FAILED_HOT_SET_MEMORY_NOT_DIVIDABLE);
+            newVmStatic.setMemSizeMb(currentMemory);
+            return;
+        }
+        hotSetMemory(currentMemory, newAmountOfMemory);
+        return;
+    }
+    if (currentMemory > newAmountOfMemory) {
+        hotUnplugMemory(newVm);
+    }
+}
+#method_after
+private void updateCurrentMemory(VM newVm) {
+    int currentMemory = getVm().getMemSizeMb();
+    int newAmountOfMemory = newVm.getMemSizeMb();
+    if (getVm().getStatus().isNotRunning()) {
+        newVmStatic.setMemSizeMb(newAmountOfMemory);
+        return;
+    }
+    if (getVm().getStatus() != VMStatus.Up) {
+        newVmStatic.setMemSizeMb(currentMemory);
+        log.warn("Memory update {}MB -> {}MB of VM {} ({}) left out. Memory can't be updated in current VM state ({}).", currentMemory, newAmountOfMemory, getVm().getName(), getVm().getId(), getVm().getStatus());
+        return;
+    }
+    if (VmCommonUtils.isMemoryToBeHotplugged(getVm(), newVm)) {
+        final int memoryAddedMb = newAmountOfMemory - currentMemory;
+        final int factor = Config.<Integer>getValue(ConfigValues.HotPlugMemoryBlockSizeMb);
+        final boolean memoryDividable = memoryAddedMb % factor == 0;
+        if (!memoryDividable) {
+            addCustomValue("memoryAdded", String.valueOf(memoryAddedMb));
+            addCustomValue("requiredFactor", String.valueOf(factor));
+            auditLogDirector.log(this, AuditLogType.FAILED_HOT_SET_MEMORY_NOT_DIVIDABLE);
+            newVmStatic.setMemSizeMb(currentMemory);
+            return;
+        }
+        hotPlugMemory(memoryAddedMb);
+        return;
+    }
+    if (currentMemory > newAmountOfMemory) {
+        hotUnplugMemory(newVm);
+    }
+}
+#end_block
+
+#method_before
+public static org.ovirt.engine.core.common.businessentities.LogMaxMemoryUsedThresholdType mapFromModel(LogMaxMemoryUsedThresholdType logMaxMemoryUsedThresholdType) {
+    switch(logMaxMemoryUsedThresholdType) {
+        case PERCENTAGE:
+            return org.ovirt.engine.core.common.businessentities.LogMaxMemoryUsedThresholdType.PERCENTAGE;
+        case ABSOLUTE_VALUE:
+            return org.ovirt.engine.core.common.businessentities.LogMaxMemoryUsedThresholdType.ABSOLUTE_VALUE;
+        default:
+            throw new IllegalArgumentException("Unknown log max memory used threshold type value: " + logMaxMemoryUsedThresholdType);
+    }
+}
+#method_after
+public static org.ovirt.engine.core.common.businessentities.LogMaxMemoryUsedThresholdType mapFromModel(LogMaxMemoryUsedThresholdType logMaxMemoryUsedThresholdType) {
+    switch(logMaxMemoryUsedThresholdType) {
+        case PERCENTAGE:
+            return org.ovirt.engine.core.common.businessentities.LogMaxMemoryUsedThresholdType.PERCENTAGE;
+        case ABSOLUTE_VALUE_IN_MB:
+            return org.ovirt.engine.core.common.businessentities.LogMaxMemoryUsedThresholdType.ABSOLUTE_VALUE;
+        default:
+            throw new IllegalArgumentException("Unknown log max memory used threshold type value: " + logMaxMemoryUsedThresholdType);
+    }
+}
+#end_block
+
+#method_before
+public static LogMaxMemoryUsedThresholdType mapToModel(org.ovirt.engine.core.common.businessentities.LogMaxMemoryUsedThresholdType logMaxMemoryUsedThresholdType) {
+    if (logMaxMemoryUsedThresholdType == null) {
+        return null;
+    }
+    switch(logMaxMemoryUsedThresholdType) {
+        case PERCENTAGE:
+            return LogMaxMemoryUsedThresholdType.PERCENTAGE;
+        case ABSOLUTE_VALUE:
+            return LogMaxMemoryUsedThresholdType.ABSOLUTE_VALUE;
+        default:
+            throw new IllegalArgumentException("Unknown log max memory used threshold type value: " + logMaxMemoryUsedThresholdType);
+    }
+}
+#method_after
+public static LogMaxMemoryUsedThresholdType mapToModel(org.ovirt.engine.core.common.businessentities.LogMaxMemoryUsedThresholdType logMaxMemoryUsedThresholdType) {
+    if (logMaxMemoryUsedThresholdType == null) {
+        return null;
+    }
+    switch(logMaxMemoryUsedThresholdType) {
+        case PERCENTAGE:
+            return LogMaxMemoryUsedThresholdType.PERCENTAGE;
+        case ABSOLUTE_VALUE:
+            return LogMaxMemoryUsedThresholdType.ABSOLUTE_VALUE_IN_MB;
+        default:
+            throw new IllegalArgumentException("Unknown log max memory used threshold type value: " + logMaxMemoryUsedThresholdType);
+    }
+}
+#end_block
+
+#method_before
+@InputDetail
+default void inputDetail() {
+    mandatory(connection().path());
+    mandatory(connection().vfsType());
+    optional(connection().address());
+    optional(connection().mountOptions());
+    optional(connection().glusterVolumeId());
+}
+#method_after
+@InputDetail
+default void inputDetail() {
+    mandatory(connection().path());
+    mandatory(connection().vfsType());
+    optional(connection().address());
+    optional(connection().mountOptions());
+    optional(connection().glusterVolume());
+}
+#end_block
+
+#method_before
+@InputDetail
+default void inputDetail() {
+    optional(connection().path());
+    optional(connection().vfsType());
+    optional(connection().address());
+    optional(connection().mountOptions());
+    optional(connection().glusterVolumeId());
+}
+#method_after
+@InputDetail
+default void inputDetail() {
+    optional(connection().path());
+    optional(connection().vfsType());
+    optional(connection().address());
+    optional(connection().mountOptions());
+    optional(connection().glusterVolume());
+}
+#end_block
+
+#method_before
+@Override
+public List<Pair<Guid, Integer>> score(Cluster cluster, List<VDS> hosts, VM vm, Map<String, String> parameters) {
+    // If the VM has NUMA nodes, this unit is skipped
+    if (!vmNumaNodeDao.getAllVmNumaNodeByVmId(vm.getId()).isEmpty()) {
+        return hosts.stream().map(host -> new Pair<>(host.getId(), 1)).collect(Collectors.toList());
+    }
+    List<Pair<Guid, Integer>> scores = new ArrayList<>();
+    for (VDS host : hosts) {
+        int score = 1;
+        if (host.isNumaSupport() && numaUtils.countNumaNodesWhereVmFits(vm.getStaticData(), host.getId()) == 0) {
+            score = getMaxSchedulerWeight();
+        }
+        scores.add(new Pair<>(host.getId(), score));
+    }
+    return scores;
+}
+#method_after
+@Override
+public List<Pair<Guid, Integer>> score(Cluster cluster, List<VDS> hosts, VM vm, Map<String, String> parameters) {
+    // VMs with NUMA nodes should use NUMA pinning to have good performance.
+    if (!vmNumaNodeDao.getAllVmNumaNodeByVmId(vm.getId()).isEmpty()) {
+        return hosts.stream().map(host -> new Pair<>(host.getId(), 1)).collect(Collectors.toList());
+    }
+    List<Pair<Guid, Integer>> scores = new ArrayList<>();
+    for (VDS host : hosts) {
+        int score = 1;
+        if (host.isNumaSupport() && numaUtils.countNumaNodesWhereVmFits(vm.getStaticData(), host.getId()) == 0) {
+            score = getMaxSchedulerWeight();
+        }
+        scores.add(new Pair<>(host.getId(), score));
+    }
+    return scores;
+}
+#end_block
+
+#method_before
+protected void updateWatchdog(Guid templateId) {
+    // do not update if this flag is not set
+    if (getParameters().isUpdateWatchdog()) {
+        QueryReturnValue query = runInternalQuery(QueryType.GetWatchdog, new IdQueryParameters(templateId));
+        List<VmWatchdog> watchdogs = query.getReturnValue();
+        if (watchdogs.isEmpty() && getParameters().getWatchdog() == null) {
+            return;
+        }
+        WatchdogParameters parameters = new WatchdogParameters();
+        parameters.setVm(false);
+        parameters.setClusterIndependent(getVmTemplate().getTemplateType() == VmEntityType.INSTANCE_TYPE || isBlankTemplate());
+        parameters.setId(templateId);
+        if (getParameters().getWatchdog() != null) {
+            parameters.setAction(getParameters().getWatchdog().getAction());
+            parameters.setModel(getParameters().getWatchdog().getModel());
+            if (watchdogs.isEmpty()) {
+                runInternalAction(ActionType.AddWatchdog, parameters, cloneContextAndDetachFromParent());
+            } else {
+                // there is a watchdog in the vm, we have to update.
+                runInternalAction(ActionType.UpdateWatchdog, parameters, cloneContextAndDetachFromParent());
+            }
+        } else if (!watchdogs.isEmpty()) {
+            // there is a watchdog in the vm, there should not be any, so let's delete
+            runInternalAction(ActionType.RemoveWatchdog, parameters, cloneContextAndDetachFromParent());
+        }
+    }
+}
+#method_after
+protected void updateWatchdog(Guid templateId) {
+    // do not update if this flag is not set
+    if (getParameters().isUpdateWatchdog()) {
+        QueryReturnValue query = runInternalQuery(QueryType.GetWatchdog, new IdQueryParameters(templateId));
+        List<VmWatchdog> watchdogs = query.getReturnValue();
+        if (watchdogs.isEmpty() && getParameters().getWatchdog() == null) {
+            return;
+        }
+        WatchdogParameters parameters = new WatchdogParameters();
+        parameters.setVm(false);
+        parameters.setClusterIndependent(getVmTemplate().getTemplateType() == VmEntityType.INSTANCE_TYPE || isBlankTemplate());
+        parameters.setId(templateId);
+        if (getParameters().getWatchdog() != null) {
+            parameters.setAction(getParameters().getWatchdog().getAction());
+            parameters.setModel(getParameters().getWatchdog().getModel());
+            if (watchdogs.isEmpty()) {
+                runInternalAction(ActionType.AddWatchdog, parameters, cloneContextAndDetachFromParent());
+            } else {
+                // there is a watchdog in the vm, we have to update.
+                runInternalAction(ActionType.UpdateWatchdog, parameters, cloneContextAndDetachFromParent());
+            }
+        } else {
+            // there is a watchdog in the vm, there should not be any, so let's delete
+            runInternalAction(ActionType.RemoveWatchdog, parameters, cloneContextAndDetachFromParent());
+        }
+    }
+}
+#end_block
+
+#method_before
+private void updateWatchdog() {
+    // do not update if this flag is not set
+    if (getParameters().isUpdateWatchdog()) {
+        QueryReturnValue query = runInternalQuery(QueryType.GetWatchdog, new IdQueryParameters(getParameters().getVmId()));
+        List<VmWatchdog> watchdogs = query.getReturnValue();
+        if (watchdogs.isEmpty() && getParameters().getWatchdog() == null) {
+            return;
+        }
+        WatchdogParameters parameters = new WatchdogParameters();
+        parameters.setId(getParameters().getVmId());
+        if (getParameters().getWatchdog() != null) {
+            parameters.setAction(getParameters().getWatchdog().getAction());
+            parameters.setModel(getParameters().getWatchdog().getModel());
+            if (watchdogs.isEmpty()) {
+                runInternalAction(ActionType.AddWatchdog, parameters, cloneContextAndDetachFromParent());
+            } else {
+                // there is a watchdog in the vm, we have to update.
+                runInternalAction(ActionType.UpdateWatchdog, parameters, cloneContextAndDetachFromParent());
+            }
+        } else if (!watchdogs.isEmpty()) {
+            // there is a watchdog in the vm, there should not be any, so let's delete
+            runInternalAction(ActionType.RemoveWatchdog, parameters, cloneContextAndDetachFromParent());
+        }
+    }
+}
+#method_after
+private void updateWatchdog() {
+    // do not update if this flag is not set
+    if (getParameters().isUpdateWatchdog()) {
+        QueryReturnValue query = runInternalQuery(QueryType.GetWatchdog, new IdQueryParameters(getParameters().getVmId()));
+        List<VmWatchdog> watchdogs = query.getReturnValue();
+        if (watchdogs.isEmpty() && getParameters().getWatchdog() == null) {
+            return;
+        }
+        WatchdogParameters parameters = new WatchdogParameters();
+        parameters.setId(getParameters().getVmId());
+        if (getParameters().getWatchdog() != null) {
+            parameters.setAction(getParameters().getWatchdog().getAction());
+            parameters.setModel(getParameters().getWatchdog().getModel());
+            if (watchdogs.isEmpty()) {
+                runInternalAction(ActionType.AddWatchdog, parameters, cloneContextAndDetachFromParent());
+            } else {
+                // there is a watchdog in the vm, we have to update.
+                runInternalAction(ActionType.UpdateWatchdog, parameters, cloneContextAndDetachFromParent());
+            }
+        } else {
+            // there is a watchdog in the vm, there should not be any, so let's delete
+            runInternalAction(ActionType.RemoveWatchdog, parameters, cloneContextAndDetachFromParent());
+        }
+    }
+}
+#end_block
+
+#method_before
+public void refreshSelfHealData(Cluster cluster) {
+    VDS upServer = glusterUtil.getRandomUpServer(cluster.getId());
+    if (upServer == null) {
+        log.debug("No server UP in cluster '{}'. Can't refresh self heal data at this point.", cluster.getName());
+        return;
+    }
+    for (GlusterVolumeEntity volume : volumeDao.getByClusterId(cluster.getId())) {
+        log.debug("Refreshing self heal status for volume '{}' of cluster '{}'", volume.getName(), cluster.getName());
+        // self heal info can be fetched only for started volumes
+        if (volume.isOnline()) {
+            try {
+                refreshSelfHealData(upServer, volume);
+            } catch (Exception e) {
+                log.error("Error while refreshing brick statuses for volume '{}' of cluster '{}': {}", volume.getName(), cluster.getName(), e.getMessage());
+                log.debug("Exception", e);
+            }
+        }
+    }
+}
+#method_after
+public void refreshSelfHealData(Cluster cluster) {
+    VDS upServer = glusterUtil.getRandomUpServer(cluster.getId());
+    if (upServer == null) {
+        log.debug("No server UP in cluster '{}'. Can't refresh self heal data at this point.", cluster.getName());
+        return;
+    }
+    for (GlusterVolumeEntity volume : volumeDao.getByClusterId(cluster.getId())) {
+        log.debug("Refreshing self heal status for volume '{}' of cluster '{}'", volume.getName(), cluster.getName());
+        // and for replica type volumes
+        if (volume.isOnline() && volume.getVolumeType().isReplicatedType()) {
+            try {
+                refreshSelfHealData(upServer, volume);
+            } catch (Exception e) {
+                log.error("Error while refreshing brick statuses for volume '{}' of cluster '{}': {}", volume.getName(), cluster.getName(), e.getMessage());
+                log.debug("Exception", e);
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+public String exportVm(VM vm, FullEntityOvfData fullEntityOvfData, Version version) {
+    updateBootOrderOnDevices(vm.getStaticData(), false);
+    final OvfVmWriter vmWriter;
+    if (vm.isHostedEngine()) {
+        Cluster cluster = clusterDao.get(vm.getClusterId());
+        String cpuId = cpuFlagsManagerHandler.getCpuId(cluster.getCpuName(), cluster.getCompatibilityVersion());
+        String engineXml = null;
+        if (Version.v4_2.lessOrEquals(cluster.getCompatibilityVersion())) {
+            engineXml = generateEngineXml(vm, cpuId, cluster.getEmulatedMachine());
+        }
+        vmWriter = new HostedEngineOvfWriter(vm, fullEntityOvfData, version, cluster.getEmulatedMachine(), cpuId, osRepository, engineXml);
+    } else {
+        vmWriter = new OvfVmWriter(vm, fullEntityOvfData, version, osRepository, getMemoryDiskForSnapshots(vm));
+    }
+    return vmWriter.build().getStringRepresentation();
+}
+#method_after
+public String exportVm(VM vm, FullEntityOvfData fullEntityOvfData, Version version) {
+    updateBootOrderOnDevices(vm.getStaticData(), false);
+    final OvfVmWriter vmWriter;
+    if (vm.isHostedEngine()) {
+        Cluster cluster = clusterDao.get(vm.getClusterId());
+        String cpuId = cpuFlagsManagerHandler.getCpuId(cluster.getCpuName(), cluster.getCompatibilityVersion());
+        String engineXml = null;
+        if (FeatureSupported.isDomainXMLSupported(cluster.getCompatibilityVersion())) {
+            engineXml = generateEngineXml(vm, cpuId, cluster.getEmulatedMachine());
+        }
+        vmWriter = new HostedEngineOvfWriter(vm, fullEntityOvfData, version, cluster.getEmulatedMachine(), cpuId, osRepository, engineXml);
+    } else {
+        vmWriter = new OvfVmWriter(vm, fullEntityOvfData, version, osRepository, getMemoryDiskForSnapshots(vm));
+    }
+    return vmWriter.build().getStringRepresentation();
+}
+#end_block
+
+#method_before
+@Override
+public void executeCommand(UICommand command) {
+    super.executeCommand(command);
+    if (command.equals(getNewVolumeCommand())) {
+        newVolume();
+    } else if (command.equals(getRemoveVolumeCommand())) {
+        removeVolume();
+    } else if (command.getName().equals("closeConfirmationWindow")) {
+        // $NON-NLS-1$
+        closeConfirmationWindow();
+    } else if (command.getName().equalsIgnoreCase("Cancel")) {
+        // $NON-NLS-1$
+        cancel();
+    } else if (command.getName().equals("onCreateVolume")) {
+        // $NON-NLS-1$
+        onCreateVolume();
+    } else if (command.equals(getStartCommand())) {
+        start();
+    } else if (command.equals(getStopCommand())) {
+        stop();
+    } else if (command.equals(getStartRebalanceCommand())) {
+        startRebalance();
+    } else if (command.equals(getStopRebalanceCommand())) {
+        stopRebalance();
+    } else if (command.equals(getNewGeoRepSessionCommand())) {
+        setWindow(null);
+        createNewGeoRepSession();
+    } else if (command.getName().equals("onStopRebalance")) {
+        // $NON-NLS-1$
+        onStopRebalance();
+    } else if (command.equals(getStatusRebalanceCommand())) {
+        showRebalanceStatus();
+    } else if (command.getName().equals("CancelConfirmation")) {
+        // $NON-NLS-1$
+        setConfirmWindow(null);
+    } else if (command.getName().equals("CancelRebalanceStatus")) {
+        // $NON-NLS-1$
+        cancelRebalanceStatus();
+    } else if (command.equals(getOptimizeForVirtStoreCommand())) {
+        optimizeForVirtStore();
+    } else if (command.getName().equals("onStop")) {
+        // $NON-NLS-1$
+        onStop();
+    } else if (command.getName().equals("OnRemove")) {
+        // $NON-NLS-1$
+        onRemoveVolume();
+    } else if (command.getName().equals("stop_rebalance_from_status")) {
+        // $NON-NLS-1$
+        stopRebalance();
+    } else if (command.equals(getStartVolumeProfilingCommand()) || command.getName().equals("startProfiling")) {
+        // $NON-NLS-1$
+        startVolumeProfiling();
+    } else if (command.equals(getStopVolumeProfilingCommand()) || command.getName().equals("stopProfiling")) {
+        // $NON-NLS-1$
+        stopVolumeProfiling();
+    } else if (command.equals(getShowVolumeProfileDetailsCommand()) || command.getName().equals("showProfileDetails")) {
+        // $NON-NLS-1$
+        showVolumeProfiling();
+    } else if (command.getName().equalsIgnoreCase("closeProfileStats")) {
+        // $NON-NLS-1$
+        setWindow(null);
+    } else if (command.getName().equalsIgnoreCase("CancelOptimizeForVirtStore")) {
+        // $NON-NLS-1$
+        setConfirmWindow(null);
+    } else if (command.getName().equalsIgnoreCase("ConfirmOptimiseForVirtStore")) {
+        // $NON-NLS-1$
+        List<GlusterVolumeEntity> selectedVolumes = new ArrayList<>();
+        for (Object selectedVolume : getSelectedItems()) {
+            selectedVolumes.add((GlusterVolumeEntity) selectedVolume);
+        }
+        optimizeVolumesForVirtStore(selectedVolumes);
+    } else if (command.equals(getConfigureClusterSnapshotOptionsCommand())) {
+        configureClusterSnapshotOptions();
+    } else if (command.getName().equalsIgnoreCase("confirmConfigureClusterSnapshotOptions")) {
+        // $NON-NLS-1$
+        confirmConfigureClusterSnapshotOptions();
+    } else if (command.getName().equalsIgnoreCase("onConfigureClusterSnapshotOptions")) {
+        // $NON-NLS-1$
+        onConfigureClusterSnapshotOptions();
+    } else if (command.equals(getConfigureVolumeSnapshotOptionsCommand())) {
+        configureVolumeSnapshotOptions();
+    } else if (command.getName().equalsIgnoreCase("confirmConfigureVolumeSnapshotOptions")) {
+        // $NON-NLS-1$
+        confirmConfigureVolumeSnapshotOptions();
+    } else if (command.getName().equalsIgnoreCase("onConfigureVolumeSnapshotOptions")) {
+        // $NON-NLS-1$
+        onConfigureVolumeSnapshotOptions();
+    } else if (command.equals(getCreateSnapshotCommand())) {
+        setWindow(null);
+        createVolumeSnapshot();
+    } else if (command.getName().equalsIgnoreCase("onCreateSnapshot")) {
+        // $NON-NLS-1$
+        onCreateSnapshot();
+    } else if (command.equals(getEditSnapshotScheduleCommand())) {
+        editSnapshotSchedule();
+    } else if (command.getName().equalsIgnoreCase("onEditSnapshotSchedule")) {
+        // $NON-NLS-1$
+        onEditSnapshotSchedule();
+    } else if (command.getName().equalsIgnoreCase("onEditSnapshotScheduleInternal")) {
+        // $NON-NLS-1$
+        onEditSnapshotScheduleInternal();
+    } else if (command.getName().equals("startVolumeWithForceOption")) {
+        // $NON-NLS-1$
+        prepareForStartVolume(false);
+    } else if (command.getName().equalsIgnoreCase("onCreateSession")) {
+        // $NON-NLS-1$
+        onCreateSession();
+    }
+}
+#method_after
+@Override
+public void executeCommand(UICommand command) {
+    super.executeCommand(command);
+    if (command.equals(getNewVolumeCommand())) {
+        newVolume();
+    } else if (command.equals(getRemoveVolumeCommand())) {
+        removeVolume();
+    } else if (command.getName().equals("closeConfirmationWindow")) {
+        // $NON-NLS-1$
+        closeConfirmationWindow();
+    } else if (command.getName().equalsIgnoreCase("Cancel")) {
+        // $NON-NLS-1$
+        cancel();
+    } else if (command.getName().equals("onCreateVolume")) {
+        // $NON-NLS-1$
+        onCreateVolume();
+    } else if (command.equals(getStartCommand())) {
+        start();
+    } else if (command.equals(getStopCommand())) {
+        stop();
+    } else if (command.equals(getStartRebalanceCommand())) {
+        startRebalance();
+    } else if (command.equals(getStopRebalanceCommand())) {
+        stopRebalance();
+    } else if (command.equals(getNewGeoRepSessionCommand())) {
+        createNewGeoRepSession();
+    } else if (command.getName().equals("onStopRebalance")) {
+        // $NON-NLS-1$
+        onStopRebalance();
+    } else if (command.equals(getStatusRebalanceCommand())) {
+        showRebalanceStatus();
+    } else if (command.getName().equals("CancelConfirmation")) {
+        // $NON-NLS-1$
+        setConfirmWindow(null);
+    } else if (command.getName().equals("CancelRebalanceStatus")) {
+        // $NON-NLS-1$
+        cancelRebalanceStatus();
+    } else if (command.equals(getOptimizeForVirtStoreCommand())) {
+        optimizeForVirtStore();
+    } else if (command.getName().equals("onStop")) {
+        // $NON-NLS-1$
+        onStop();
+    } else if (command.getName().equals("OnRemove")) {
+        // $NON-NLS-1$
+        onRemoveVolume();
+    } else if (command.getName().equals("stop_rebalance_from_status")) {
+        // $NON-NLS-1$
+        stopRebalance();
+    } else if (command.equals(getStartVolumeProfilingCommand()) || command.getName().equals("startProfiling")) {
+        // $NON-NLS-1$
+        startVolumeProfiling();
+    } else if (command.equals(getStopVolumeProfilingCommand()) || command.getName().equals("stopProfiling")) {
+        // $NON-NLS-1$
+        stopVolumeProfiling();
+    } else if (command.equals(getShowVolumeProfileDetailsCommand()) || command.getName().equals("showProfileDetails")) {
+        // $NON-NLS-1$
+        showVolumeProfiling();
+    } else if (command.getName().equalsIgnoreCase("closeProfileStats")) {
+        // $NON-NLS-1$
+        setWindow(null);
+    } else if (command.getName().equalsIgnoreCase("CancelOptimizeForVirtStore")) {
+        // $NON-NLS-1$
+        setConfirmWindow(null);
+    } else if (command.getName().equalsIgnoreCase("ConfirmOptimiseForVirtStore")) {
+        // $NON-NLS-1$
+        List<GlusterVolumeEntity> selectedVolumes = new ArrayList<>();
+        for (Object selectedVolume : getSelectedItems()) {
+            selectedVolumes.add((GlusterVolumeEntity) selectedVolume);
+        }
+        optimizeVolumesForVirtStore(selectedVolumes);
+    } else if (command.equals(getConfigureClusterSnapshotOptionsCommand())) {
+        configureClusterSnapshotOptions();
+    } else if (command.getName().equalsIgnoreCase("confirmConfigureClusterSnapshotOptions")) {
+        // $NON-NLS-1$
+        confirmConfigureClusterSnapshotOptions();
+    } else if (command.getName().equalsIgnoreCase("onConfigureClusterSnapshotOptions")) {
+        // $NON-NLS-1$
+        onConfigureClusterSnapshotOptions();
+    } else if (command.equals(getConfigureVolumeSnapshotOptionsCommand())) {
+        configureVolumeSnapshotOptions();
+    } else if (command.getName().equalsIgnoreCase("confirmConfigureVolumeSnapshotOptions")) {
+        // $NON-NLS-1$
+        confirmConfigureVolumeSnapshotOptions();
+    } else if (command.getName().equalsIgnoreCase("onConfigureVolumeSnapshotOptions")) {
+        // $NON-NLS-1$
+        onConfigureVolumeSnapshotOptions();
+    } else if (command.equals(getCreateSnapshotCommand())) {
+        setWindow(null);
+        createVolumeSnapshot();
+    } else if (command.getName().equalsIgnoreCase("onCreateSnapshot")) {
+        // $NON-NLS-1$
+        onCreateSnapshot();
+    } else if (command.equals(getEditSnapshotScheduleCommand())) {
+        editSnapshotSchedule();
+    } else if (command.getName().equalsIgnoreCase("onEditSnapshotSchedule")) {
+        // $NON-NLS-1$
+        onEditSnapshotSchedule();
+    } else if (command.getName().equalsIgnoreCase("onEditSnapshotScheduleInternal")) {
+        // $NON-NLS-1$
+        onEditSnapshotScheduleInternal();
+    } else if (command.getName().equals("startVolumeWithForceOption")) {
+        // $NON-NLS-1$
+        prepareForStartVolume(false);
+    } else if (command.getName().equalsIgnoreCase("onCreateSession")) {
+        // $NON-NLS-1$
+        onCreateSession();
+    }
+}
+#end_block
+
+#method_before
+private void updateGeoRepStatus(GlusterVolumeEntity volume, GlusterGeoRepSession session) {
+    // check if all bricks in the volume are UP
+    if (!areAllBricksActiveInVolume(volume)) {
+        log.info("Not all bricks are up for this  volume '{}' ", volume.getName());
+        throw new EngineException(EngineError.GlusterVolumeGeoRepSyncFailed, "Not all bricks are up for this volume");
+    }
+    List<Set<GeoRepSessionStatus>> list = new ArrayList<>();
+    // grouped node status
+    int replicaCount = volume.getReplicaCount() == 0 ? 1 : volume.getReplicaCount();
+    for (int i = 0; i < volume.getBricks().size(); i = i + replicaCount) {
+        Set<GeoRepSessionStatus> subVolumeStatusSet = new HashSet<>();
+        int j = 0;
+        while (j < replicaCount) {
+            Guid brickId = volume.getBricks().get(i + j).getId();
+            subVolumeStatusSet.add(getStatusForBrickFromSession(session, brickId));
+            j++;
+        }
+        list.add(subVolumeStatusSet);
+    }
+    session.setStatus(GeoRepSessionStatus.ACTIVE);
+    // iterate through grouped status to set consolidated status
+    for (Set<GeoRepSessionStatus> subVolumeStatusValues : list) {
+        if (subVolumeStatusValues.contains(GeoRepSessionStatus.ACTIVE)) {
+            // healthy
+            continue;
+        } else if (subVolumeStatusValues.contains(GeoRepSessionStatus.FAULTY)) {
+            session.setStatus(GeoRepSessionStatus.FAULTY);
+            // if any one of the sub-volume is faulty, the overall session status if faulty
+            return;
+        }
+        // override status in case of these values
+        if (ArrayUtils.contains(overridableStatuses, session.getStatus())) {
+            if (subVolumeStatusValues.size() == 1) {
+                session.setStatus((GeoRepSessionStatus) subVolumeStatusValues.toArray()[0]);
+            } else {
+                // if status values in sub-volume are not the same, what do we do?
+                // this should not happen, so we'll log it for now
+                log.info("Multiple status values found in volume '{}'", session.getMasterVolumeName());
+            }
+        }
+    }
+}
+#method_after
+private void updateGeoRepStatus(GlusterVolumeEntity volume, GlusterGeoRepSession session) {
+    List<Set<GeoRepSessionStatus>> list = new ArrayList<>();
+    // grouped node status
+    int replicaCount = volume.getReplicaCount() == 0 ? 1 : volume.getReplicaCount();
+    if (replicaCount > volume.getBricks().size()) {
+        session.setStatus(GeoRepSessionStatus.UNKNOWN);
+        log.info("Not all bricks are available for this volume. replicaCount : {} , volumeBrickCount: {}", replicaCount, volume.getBricks().size());
+        return;
+    }
+    for (int i = 0; i < volume.getBricks().size(); i = i + replicaCount) {
+        Set<GeoRepSessionStatus> subVolumeStatusSet = new HashSet<>();
+        int j = 0;
+        while (j < replicaCount) {
+            Guid brickId = volume.getBricks().get(i + j).getId();
+            subVolumeStatusSet.add(getStatusForBrickFromSession(session, brickId));
+            j++;
+        }
+        list.add(subVolumeStatusSet);
+    }
+    session.setStatus(GeoRepSessionStatus.ACTIVE);
+    // iterate through grouped status to set consolidated status
+    for (Set<GeoRepSessionStatus> subVolumeStatusValues : list) {
+        if (subVolumeStatusValues.contains(GeoRepSessionStatus.ACTIVE)) {
+            // healthy
+            continue;
+        } else if (subVolumeStatusValues.contains(GeoRepSessionStatus.FAULTY)) {
+            session.setStatus(GeoRepSessionStatus.FAULTY);
+            // if any one of the sub-volume is faulty, the overall session status if faulty
+            return;
+        }
+        // override status in case of these values
+        if (ArrayUtils.contains(overridableStatuses, session.getStatus())) {
+            if (subVolumeStatusValues.size() == 1) {
+                session.setStatus((GeoRepSessionStatus) subVolumeStatusValues.toArray()[0]);
+            } else {
+                // if status values in sub-volume are not the same, what do we do?
+                // this should not happen, so we'll log it for now
+                log.info("Multiple status values found in volume '{}'", session.getMasterVolumeName());
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+// Main List Model
+@Provides
+@Singleton
+public MainModelProvider<VmTemplate, TemplateListModel> getTemplateListProvider(EventBus eventBus, final Provider<DefaultConfirmationPopupPresenterWidget> defaultConfirmPopupProvider, final Provider<TemplateEditPresenterWidget> popupProvider, final Provider<VmExportPopupPresenterWidget> exportPopupProvider, final Provider<VmExportOvaPopupPresenterWidget> exportOvaPopupProvider, final Provider<VmPopupPresenterWidget> createVmPopupProvider, final Provider<RemoveConfirmationPopupPresenterWidget> removeConfirmPopupProvider, final Provider<TemplateListModel> modelProvider, final Provider<VmDiskPopupPresenterWidget> newDiskPopupProvider, final Provider<SingleSelectionVmDiskAttachPopupPresenterWidget> attachDiskPopupProvider, final Provider<VmHighPerformanceConfigurationPresenterWidget> highPerformanceConfigurationProvider) {
+    MainViewModelProvider<VmTemplate, TemplateListModel> result = new MainViewModelProvider<VmTemplate, TemplateListModel>(eventBus, defaultConfirmPopupProvider) {
+
+        @Override
+        public AbstractModelBoundPopupPresenterWidget<? extends Model, ?> getModelPopup(TemplateListModel source, UICommand lastExecutedCommand, Model windowModel) {
+            TemplateListModel model = getModel();
+            if (lastExecutedCommand == model.getEditCommand()) {
+                return popupProvider.get();
+            } else if (lastExecutedCommand == getModel().getExportCommand()) {
+                return exportPopupProvider.get();
+            } else if (lastExecutedCommand == getModel().getExportOvaCommand()) {
+                return exportOvaPopupProvider.get();
+            } else if (lastExecutedCommand == getModel().getCreateVmFromTemplateCommand()) {
+                if (windowModel instanceof AttachDiskModel) {
+                    return attachDiskPopupProvider.get();
+                } else if ((windowModel instanceof NewDiskModel) || (windowModel instanceof EditDiskModel)) {
+                    return newDiskPopupProvider.get();
+                } else {
+                    return createVmPopupProvider.get();
+                }
+            } else {
+                return super.getModelPopup(source, lastExecutedCommand, windowModel);
+            }
+        }
+
+        @Override
+        public AbstractModelBoundPopupPresenterWidget<? extends ConfirmationModel, ?> getConfirmModelPopup(TemplateListModel source, UICommand lastExecutedCommand) {
+            if (lastExecutedCommand == getModel().getRemoveCommand()) {
+                return removeConfirmPopupProvider.get();
+            } else if ("OnSave".equals(lastExecutedCommand.getName())) {
+                // $NON-NLS-1$
+                return defaultConfirmPopupProvider.get();
+            } else if (// $NON-NLS-1$
+            "OnSaveVm".equals(lastExecutedCommand.getName()) && source.getConfirmWindow() instanceof VmHighPerformanceConfigurationModel) {
+                return highPerformanceConfigurationProvider.get();
+            } else {
+                return super.getConfirmModelPopup(source, lastExecutedCommand);
+            }
+        }
+    };
+    result.setModelProvider(modelProvider);
+    return result;
+}
+#method_after
+// Main List Model
+@Provides
+@Singleton
+public MainModelProvider<VmTemplate, TemplateListModel> getTemplateListProvider(EventBus eventBus, final Provider<DefaultConfirmationPopupPresenterWidget> defaultConfirmPopupProvider, final Provider<TemplateEditPresenterWidget> popupProvider, final Provider<VmExportPopupPresenterWidget> exportPopupProvider, final Provider<ExportOvaPopupPresenterWidget> exportOvaPopupProvider, final Provider<VmPopupPresenterWidget> createVmPopupProvider, final Provider<RemoveConfirmationPopupPresenterWidget> removeConfirmPopupProvider, final Provider<TemplateListModel> modelProvider, final Provider<VmDiskPopupPresenterWidget> newDiskPopupProvider, final Provider<SingleSelectionVmDiskAttachPopupPresenterWidget> attachDiskPopupProvider, final Provider<VmHighPerformanceConfigurationPresenterWidget> highPerformanceConfigurationProvider) {
+    MainViewModelProvider<VmTemplate, TemplateListModel> result = new MainViewModelProvider<VmTemplate, TemplateListModel>(eventBus, defaultConfirmPopupProvider) {
+
+        @Override
+        public AbstractModelBoundPopupPresenterWidget<? extends Model, ?> getModelPopup(TemplateListModel source, UICommand lastExecutedCommand, Model windowModel) {
+            TemplateListModel model = getModel();
+            if (lastExecutedCommand == model.getEditCommand()) {
+                return popupProvider.get();
+            } else if (lastExecutedCommand == getModel().getExportCommand()) {
+                return exportPopupProvider.get();
+            } else if (lastExecutedCommand == getModel().getExportOvaCommand()) {
+                return exportOvaPopupProvider.get();
+            } else if (lastExecutedCommand == getModel().getCreateVmFromTemplateCommand()) {
+                if (windowModel instanceof AttachDiskModel) {
+                    return attachDiskPopupProvider.get();
+                } else if ((windowModel instanceof NewDiskModel) || (windowModel instanceof EditDiskModel)) {
+                    return newDiskPopupProvider.get();
+                } else {
+                    return createVmPopupProvider.get();
+                }
+            } else {
+                return super.getModelPopup(source, lastExecutedCommand, windowModel);
+            }
+        }
+
+        @Override
+        public AbstractModelBoundPopupPresenterWidget<? extends ConfirmationModel, ?> getConfirmModelPopup(TemplateListModel source, UICommand lastExecutedCommand) {
+            if (lastExecutedCommand == getModel().getRemoveCommand()) {
+                return removeConfirmPopupProvider.get();
+            } else if ("OnSave".equals(lastExecutedCommand.getName())) {
+                // $NON-NLS-1$
+                return defaultConfirmPopupProvider.get();
+            } else if (// $NON-NLS-1$
+            "OnSaveVm".equals(lastExecutedCommand.getName()) && source.getConfirmWindow() instanceof VmHighPerformanceConfigurationModel) {
+                return highPerformanceConfigurationProvider.get();
+            } else {
+                return super.getConfirmModelPopup(source, lastExecutedCommand);
+            }
+        }
+    };
+    result.setModelProvider(modelProvider);
+    return result;
+}
+#end_block
+
+#method_before
+public void vmTypeChanged(VmType vmType) {
+    if (basedOnCustomInstanceType()) {
+        // this field is normally taken from instance type. If the "custom" is selected, then it is supposed to use the default
+        // determined by vm type
+        getModel().getIsSoundcardEnabled().setEntity(vmType == VmType.Desktop);
+    }
+    getModel().getAllowConsoleReconnect().setEntity(vmType == VmType.Server);
+    getModel().getIoThreadsEnabled().setEntity(vmType == VmType.Server || vmType == VmType.HighPerformance);
+    // High Performance
+    if (vmType == VmType.HighPerformance) {
+        // Console tab
+        getModel().getIsHeadlessModeEnabled().setEntity(true);
+        getModel().getIsConsoleDeviceEnabled().setEntity(true);
+        getModel().getUsbPolicy().setSelectedItem(UsbPolicy.DISABLED);
+        getModel().getIsSmartcardEnabled().setEntity(false);
+        // High Availability tab
+        getModel().getWatchdogModel().setSelectedItem(null);
+        getModel().getWatchdogAction().setSelectedItem(getModel().getWatchdogAction().getItems().iterator().next());
+        // Random Generator tab
+        getModel().getIsRngEnabled().setEntity(true);
+        // Host tab
+        getModel().getMigrationMode().setItems(Arrays.asList(MigrationSupport.IMPLICITLY_NON_MIGRATABLE, MigrationSupport.PINNED_TO_HOST));
+        getModel().getMigrationMode().setSelectedItem(MigrationSupport.IMPLICITLY_NON_MIGRATABLE);
+        if (!clusterHasPpcArchitecture()) {
+            getModel().getHostCpu().setEntity(true);
+        }
+        // Resource allocation tab
+        getModel().getMemoryBalloonDeviceEnabled().setEntity(false);
+        if (getModel().getMultiQueues().getIsAvailable()) {
+            getModel().getMultiQueues().setEntity(true);
+        }
+    } else {
+        getModel().getMigrationMode().setItems(Arrays.asList(MigrationSupport.values()));
+    }
+}
+#method_after
+public void vmTypeChanged(VmType vmType) {
+    if (basedOnCustomInstanceType()) {
+        // this field is normally taken from instance type. If the "custom" is selected, then it is supposed to use the default
+        // determined by vm type & ppc architecture
+        getModel().getIsSoundcardEnabled().setEntity(vmType == VmType.Desktop && !clusterHasPpcArchitecture());
+    }
+    getModel().getAllowConsoleReconnect().setEntity(vmType == VmType.Server);
+    getModel().getIoThreadsEnabled().setEntity(vmType == VmType.Server || vmType == VmType.HighPerformance);
+    // High Performance
+    if (vmType == VmType.HighPerformance) {
+        // Console tab
+        getModel().getIsHeadlessModeEnabled().setEntity(true);
+        getModel().getIsConsoleDeviceEnabled().setEntity(true);
+        getModel().getUsbPolicy().setSelectedItem(UsbPolicy.DISABLED);
+        getModel().getIsSmartcardEnabled().setEntity(false);
+        // High Availability tab
+        getModel().getWatchdogModel().setSelectedItem(null);
+        getModel().getWatchdogAction().setSelectedItem(getModel().getWatchdogAction().getItems().iterator().next());
+        // Random Generator tab
+        getModel().getIsRngEnabled().setEntity(true);
+        // Host tab
+        getModel().getMigrationMode().setItems(Arrays.asList(MigrationSupport.IMPLICITLY_NON_MIGRATABLE, MigrationSupport.PINNED_TO_HOST));
+        getModel().getMigrationMode().setSelectedItem(MigrationSupport.IMPLICITLY_NON_MIGRATABLE);
+        if (!clusterHasPpcArchitecture()) {
+            getModel().getHostCpu().setEntity(true);
+        }
+        // Resource allocation tab
+        getModel().getMemoryBalloonDeviceEnabled().setEntity(false);
+        if (getModel().getMultiQueues().getIsAvailable()) {
+            getModel().getMultiQueues().setEntity(true);
+        }
+    } else {
+        getModel().getMigrationMode().setItems(Arrays.asList(MigrationSupport.values()));
+    }
+}
+#end_block
+
+#method_before
+public void queryBackend(final boolean isBrickSelected) {
+    startProgress(ConstantsManager.getInstance().getConstants().fetchingDataMessage());
+    AsyncDataProvider.getInstance().getGlusterVolumeProfilingStatistics(new AsyncQuery<>(returnValue -> {
+        stopProgress();
+        GlusterVolumeProfileInfo profileInfoEntity = returnValue.getReturnValue();
+        if ((profileInfoEntity == null) || !returnValue.getSucceeded()) {
+            setSuccessfulProfileStatsFetch(false);
+            if (isBrickSelected) {
+                showNfsProfileStats(profileInfoEntity);
+            } else {
+                showProfileStats(profileInfoEntity);
+            }
+        } else {
+            GlusterVolumeProfileInfo aggregatedProfileInfo = new GlusterVolumeProfileInfo();
+            aggregatedProfileInfo.setBrickProfileDetails((profileInfoEntity.getBrickProfileDetails() != null) ? profileInfoEntity.getBrickProfileDetails() : getProfileInfo().getBrickProfileDetails());
+            aggregatedProfileInfo.setNfsProfileDetails((profileInfoEntity.getNfsProfileDetails() != null) ? profileInfoEntity.getNfsProfileDetails() : getProfileInfo().getNfsProfileDetails());
+            setProfileExportUrl(formProfileUrl(clusterId.toString(), volumeId.toString(), isBrickSelected));
+            setProfileInfo(aggregatedProfileInfo);
+            setSuccessfulProfileStatsFetch(true);
+            setTitle(ConstantsManager.getInstance().getMessages().volumeProfilingStatsTitle(volumeName));
+            if (isBrickSelected) {
+                showNfsProfileStats(profileInfoEntity);
+            } else {
+                showProfileStats(profileInfoEntity);
+            }
+        }
+    }), clusterId, volumeId, isBrickSelected);
+}
+#method_after
+public void queryBackend(final boolean isNfs) {
+    startProgress(ConstantsManager.getInstance().getConstants().fetchingDataMessage());
+    AsyncDataProvider.getInstance().getGlusterVolumeProfilingStatistics(new AsyncQuery<>(returnValue -> {
+        stopProgress();
+        GlusterVolumeProfileInfo profileInfoEntity = returnValue.getReturnValue();
+        if ((profileInfoEntity == null) || !returnValue.getSucceeded()) {
+            setSuccessfulProfileStatsFetch(false);
+            if (isNfs) {
+                showNfsProfileStats(profileInfoEntity);
+            } else {
+                showProfileStats(profileInfoEntity);
+            }
+        } else {
+            GlusterVolumeProfileInfo aggregatedProfileInfo = new GlusterVolumeProfileInfo();
+            aggregatedProfileInfo.setBrickProfileDetails((profileInfoEntity.getBrickProfileDetails() != null) ? profileInfoEntity.getBrickProfileDetails() : getProfileInfo().getBrickProfileDetails());
+            aggregatedProfileInfo.setNfsProfileDetails((profileInfoEntity.getNfsProfileDetails() != null) ? profileInfoEntity.getNfsProfileDetails() : getProfileInfo().getNfsProfileDetails());
+            setProfileExportUrl(formProfileUrl(clusterId.toString(), volumeId.toString(), isNfs));
+            setProfileInfo(aggregatedProfileInfo);
+            setSuccessfulProfileStatsFetch(true);
+            setTitle(ConstantsManager.getInstance().getMessages().volumeProfilingStatsTitle(volumeName));
+            if (isNfs) {
+                showNfsProfileStats(profileInfoEntity);
+            } else {
+                showProfileStats(profileInfoEntity);
+            }
+        }
+    }), clusterId, volumeId, isNfs);
+}
+#end_block
+
+#method_before
+@Override
+public void edit(final VolumeProfileStatisticsModel object) {
+    driver.edit(object);
+    volumeProfileStats.asEditor().edit(object.getCumulativeStatistics());
+    nfsServerProfileStats.asEditor().edit(object.getNfsServerProfileStats());
+    profileRunTime.setText(object.getProfileRunTime());
+    nfsProfileRunTime.setText(object.getNfsProfileRunTime());
+    bytesRead.setText(object.getBytesRead());
+    nfsBytesRead.setText(object.getNfsBytesRead());
+    bytesWritten.setText(object.getBytesWritten());
+    nfsBytesWritten.setText(object.getNfsBytesWritten());
+    ClickHandler brickTabClickHandler = event -> object.queryBackend(false);
+    brickRefreshIcon.setRefreshIconClickListener(brickTabClickHandler);
+    ClickHandler nfsTabClickHandler = event -> object.queryBackend(false);
+    nfsRefreshIcon.setRefreshIconClickListener(nfsTabClickHandler);
+    object.getPropertyChangedEvent().addListener((ev, sender, args) -> {
+        if (args.propertyName.equals("brickProfileRunTimeChanged")) {
+            // $NON-NLS-1$
+            profileRunTime.setText(object.getProfileRunTime());
+        }
+        if (args.propertyName.equals("brickProfileDataRead")) {
+            // $NON-NLS-1$
+            bytesRead.setText(object.getBytesRead());
+        }
+        if (args.propertyName.equals("brickProfileDataWritten")) {
+            // $NON-NLS-1$
+            bytesWritten.setText(object.getBytesWritten());
+        }
+        if (args.propertyName.equals("nfsProfileRunTimeChanged")) {
+            // $NON-NLS-1$
+            nfsProfileRunTime.setText(object.getNfsProfileRunTime());
+        }
+        if (args.propertyName.equals("nfsProfileDataRead")) {
+            // $NON-NLS-1$
+            nfsBytesRead.setText(object.getNfsBytesRead());
+        }
+        if (args.propertyName.equals("nfsProfileDataWritten")) {
+            // $NON-NLS-1$
+            nfsBytesWritten.setText(object.getNfsBytesWritten());
+        }
+        if (args.propertyName.equals("statusOfFetchingProfileStats")) {
+            // $NON-NLS-1$
+            boolean disableErrorLabels = !object.isSuccessfulProfileStatsFetch();
+            if (!disableErrorLabels) {
+                String url = object.getProfileExportUrl();
+                // $NON-NLS-1$
+                boolean isBrickTabSelected = !url.contains(";nfsStatistics=true");
+                initAnchor(url, isBrickTabSelected ? brickProfileAnchor : nfsProfileAnchor);
+            }
+            bricksError.setVisible(disableErrorLabels);
+            nfsError.setVisible(disableErrorLabels);
+        }
+    });
+}
+#method_after
+@Override
+public void edit(final VolumeProfileStatisticsModel object) {
+    driver.edit(object);
+    volumeProfileStats.asEditor().edit(object.getCumulativeStatistics());
+    nfsServerProfileStats.asEditor().edit(object.getNfsServerProfileStats());
+    profileRunTime.setText(object.getProfileRunTime());
+    nfsProfileRunTime.setText(object.getNfsProfileRunTime());
+    bytesRead.setText(object.getBytesRead());
+    nfsBytesRead.setText(object.getNfsBytesRead());
+    bytesWritten.setText(object.getBytesWritten());
+    nfsBytesWritten.setText(object.getNfsBytesWritten());
+    ClickHandler brickTabClickHandler = event -> object.queryBackend(false);
+    brickRefreshIcon.setRefreshIconClickListener(brickTabClickHandler);
+    ClickHandler nfsTabClickHandler = event -> object.queryBackend(true);
+    nfsRefreshIcon.setRefreshIconClickListener(nfsTabClickHandler);
+    object.getPropertyChangedEvent().addListener((ev, sender, args) -> {
+        if (args.propertyName.equals("brickProfileRunTimeChanged")) {
+            // $NON-NLS-1$
+            profileRunTime.setText(object.getProfileRunTime());
+        }
+        if (args.propertyName.equals("brickProfileDataRead")) {
+            // $NON-NLS-1$
+            bytesRead.setText(object.getBytesRead());
+        }
+        if (args.propertyName.equals("brickProfileDataWritten")) {
+            // $NON-NLS-1$
+            bytesWritten.setText(object.getBytesWritten());
+        }
+        if (args.propertyName.equals("nfsProfileRunTimeChanged")) {
+            // $NON-NLS-1$
+            nfsProfileRunTime.setText(object.getNfsProfileRunTime());
+        }
+        if (args.propertyName.equals("nfsProfileDataRead")) {
+            // $NON-NLS-1$
+            nfsBytesRead.setText(object.getNfsBytesRead());
+        }
+        if (args.propertyName.equals("nfsProfileDataWritten")) {
+            // $NON-NLS-1$
+            nfsBytesWritten.setText(object.getNfsBytesWritten());
+        }
+        if (args.propertyName.equals("statusOfFetchingProfileStats")) {
+            // $NON-NLS-1$
+            boolean disableErrorLabels = !object.isSuccessfulProfileStatsFetch();
+            if (!disableErrorLabels) {
+                String url = object.getProfileExportUrl();
+                // $NON-NLS-1$
+                boolean isBrickTabSelected = !url.contains(";nfsStatistics=true");
+                initAnchor(url, isBrickTabSelected ? brickProfileAnchor : nfsProfileAnchor);
+            }
+            bricksError.setVisible(disableErrorLabels);
+            nfsError.setVisible(disableErrorLabels);
+        }
+    });
+}
+#end_block
+
+#method_before
+@InputDetail
+default void inputDetail() {
+    optional(vm().bios().bootMenu().enabled());
+    optional(vm().comment());
+    optional(vm().cpu().topology().cores());
+    optional(vm().cpu().topology().sockets());
+    optional(vm().cpu().topology().threads());
+    optional(vm().cpuProfile().id());
+    optional(vm().deleteProtected());
+    optional(vm().description());
+    optional(vm().display().allowOverride());
+    optional(vm().display().copyPasteEnabled());
+    optional(vm().display().disconnectAction());
+    optional(vm().display().fileTransferEnabled());
+    optional(vm().display().keyboardLayout());
+    optional(vm().display().monitors());
+    optional(vm().display().smartcardEnabled());
+    optional(vm().display().type());
+    optional(vm().domain().name());
+    optional(vm().highAvailability().enabled());
+    optional(vm().highAvailability().priority());
+    optional(vm().largeIcon().data());
+    optional(vm().largeIcon().id());
+    optional(vm().largeIcon().mediaType());
+    optional(vm().memory());
+    optional(vm().memoryPolicy().ballooning());
+    optional(vm().memoryPolicy().guaranteed());
+    optional(vm().migration().autoConverge());
+    optional(vm().migration().compressed());
+    optional(vm().migrationDowntime());
+    optional(vm().numaTuneMode());
+    optional(vm().origin());
+    optional(vm().os().cmdline());
+    optional(vm().os().initrd());
+    optional(vm().os().kernel());
+    optional(vm().os().type());
+    optional(vm().placementPolicy().affinity());
+    optional(vm().quota().id());
+    optional(vm().rngDevice().rate().bytes());
+    optional(vm().rngDevice().rate().period());
+    optional(vm().rngDevice().source());
+    optional(vm().serialNumber().policy());
+    optional(vm().serialNumber().value());
+    optional(vm().smallIcon().id());
+    optional(vm().startPaused());
+    optional(vm().stateless());
+    optional(vm().timeZone().name());
+    optional(vm().tunnelMigration());
+    optional(vm().type());
+    optional(vm().usb().enabled());
+    optional(vm().usb().type());
+    optional(vm().virtioScsi().enabled());
+    or(optional(vm().placementPolicy().hosts()[COLLECTION].id()), optional(vm().placementPolicy().hosts()[COLLECTION].name()));
+    optional(vm().customProperties()[COLLECTION].name());
+    optional(vm().customProperties()[COLLECTION].value());
+    optional(vm().payloads()[COLLECTION].files()[COLLECTION].name());
+    optional(vm().payloads()[COLLECTION].files()[COLLECTION].content());
+    optional(vm().payloads()[COLLECTION].type());
+    optional(vm().payloads()[COLLECTION].volumeId());
+    optional(vm().sso().methods()[COLLECTION].id());
+    optional(vm().cpu().cpuTune().vcpuPins()[COLLECTION].cpuSet());
+    optional(vm().cpu().cpuTune().vcpuPins()[COLLECTION].vcpu());
+    optional(vm().storageErrorResumeBehaviour());
+}
+#method_after
+@InputDetail
+default void inputDetail() {
+    optional(vm().bios().bootMenu().enabled());
+    optional(vm().comment());
+    optional(vm().cpu().topology().cores());
+    optional(vm().cpu().topology().sockets());
+    optional(vm().cpu().topology().threads());
+    optional(vm().cpuProfile().id());
+    optional(vm().deleteProtected());
+    optional(vm().description());
+    optional(vm().display().allowOverride());
+    optional(vm().display().copyPasteEnabled());
+    optional(vm().display().disconnectAction());
+    optional(vm().display().fileTransferEnabled());
+    optional(vm().display().keyboardLayout());
+    optional(vm().display().monitors());
+    optional(vm().display().smartcardEnabled());
+    optional(vm().display().type());
+    optional(vm().domain().name());
+    optional(vm().highAvailability().enabled());
+    optional(vm().highAvailability().priority());
+    optional(vm().largeIcon().data());
+    optional(vm().largeIcon().id());
+    optional(vm().largeIcon().mediaType());
+    optional(vm().memory());
+    optional(vm().memoryPolicy().ballooning());
+    optional(vm().memoryPolicy().guaranteed());
+    optional(vm().migration().autoConverge());
+    optional(vm().migration().compressed());
+    optional(vm().migrationDowntime());
+    optional(vm().numaTuneMode());
+    optional(vm().origin());
+    optional(vm().os().cmdline());
+    optional(vm().os().initrd());
+    optional(vm().os().kernel());
+    optional(vm().os().type());
+    optional(vm().placementPolicy().affinity());
+    optional(vm().quota().id());
+    optional(vm().rngDevice().rate().bytes());
+    optional(vm().rngDevice().rate().period());
+    optional(vm().rngDevice().source());
+    optional(vm().serialNumber().policy());
+    optional(vm().serialNumber().value());
+    optional(vm().smallIcon().id());
+    optional(vm().startPaused());
+    optional(vm().stateless());
+    optional(vm().timeZone().name());
+    optional(vm().tunnelMigration());
+    optional(vm().type());
+    optional(vm().usb().enabled());
+    optional(vm().usb().type());
+    optional(vm().virtioScsi().enabled());
+    or(optional(vm().placementPolicy().hosts()[COLLECTION].id()), optional(vm().placementPolicy().hosts()[COLLECTION].name()));
+    optional(vm().customProperties()[COLLECTION].name());
+    optional(vm().customProperties()[COLLECTION].value());
+    optional(vm().payloads()[COLLECTION].files()[COLLECTION].name());
+    optional(vm().payloads()[COLLECTION].files()[COLLECTION].content());
+    optional(vm().payloads()[COLLECTION].type());
+    optional(vm().payloads()[COLLECTION].volumeId());
+    optional(vm().sso().methods()[COLLECTION].id());
+    optional(vm().cpu().cpuTune().vcpuPins()[COLLECTION].cpuSet());
+    optional(vm().cpu().cpuTune().vcpuPins()[COLLECTION].vcpu());
+    optional(vm().storageErrorResumeBehaviour());
+    optional(vm().multiQueuesEnabled());
+}
+#end_block
+

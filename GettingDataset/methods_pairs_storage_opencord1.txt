@@ -1,0 +1,4436 @@
+100
+#method_before
+private SubscriberAndDeviceInformation getSubscriber(ConnectPoint port) {
+    String portName = deviceService.getPort(port).annotations().value(AnnotationKeys.PORT_NAME);
+    return subsService.get(portName);
+}
+#method_after
+SubscriberAndDeviceInformation getSubscriber(ConnectPoint cp) {
+    Port port = deviceService.getPort(cp);
+    checkNotNull(port, "Invalid connect point");
+    String portName = port.annotations().value(AnnotationKeys.PORT_NAME);
+    return subsService.get(portName);
+}
+#end_block
+
+#method_before
+private List<UUID> getOltChildJobs() {
+    log.debug("Spinning off OLT child job....");
+    Map<String, Object> dataForOLTChild = ImmutableMap.of();
+    return Lists.newArrayList(jobsDataAccessService.add(jobFactory.createChildJob(JobType.OLTCreation, JobStatus.CREATING, new DummyAsyncRequest(), UUID.randomUUID(), getSharedData(), ImmutableMap.of())));
+}
+#method_after
+private List<UUID> getOltChildJobs() {
+    log.debug("Spinning off OLT child job....");
+    Map<String, Object> dataForOLTChild = ImmutableMap.of();
+    return Lists.newArrayList(jobsDataAccessService.add(jobFactory.createChildJob(JobType.OLTCreation, JobStatus.CREATING, new DummyAsyncRequest(), getSharedData(), ImmutableMap.of())));
+}
+#end_block
+
+#method_before
+@Override
+public String toString() {
+    return MoreObjects.toStringHelper(this).add("status", status).add("type", type).add("templateId", templateId).add("uuid", uuid).add("takenBy", takenBy).add("userId", userId).add("age", age).add("createdDate", createdDate).add("modifiedDate", modifiedDate).add("deletedAt", deletedAt).add("data", data).toString();
+}
+#method_after
+@Override
+public String toString() {
+    return MoreObjects.toStringHelper(this).add("status", status).add("type", type).add("uuid", uuid).add("takenBy", takenBy).add("userId", userId).add("age", age).add("createdDate", createdDate).add("modifiedDate", modifiedDate).add("deletedAt", deletedAt).add("data", data).toString();
+}
+#end_block
+
+#method_before
+@Override
+public OsamJob createRootJob(JobType jobType, AsyncJobRequest request, UUID templateId, String userId, Integer indexInBulk, Map<String, Object> jobData) {
+    OsamJob job = new OsamJob();
+    job.setStatus(JobStatus.PENDING);
+    job.setUuid(UUID.randomUUID());
+    job.setUserId(userId);
+    job.setTypeAndData(jobType, jobData);
+    job.setSharedData(new JobSharedData(job.getUuid(), userId, request));
+    job.setTemplateId(templateId);
+    job.setIndexInBulk(indexInBulk);
+    return job;
+}
+#method_after
+@Override
+public OsamJob createRootJob(JobType jobType, AsyncJobRequest request, String userId, Integer indexInBulk, Map<String, Object> jobData) {
+    OsamJob job = new OsamJob();
+    job.setStatus(JobStatus.PENDING);
+    job.setUuid(UUID.randomUUID());
+    job.setUserId(userId);
+    job.setTypeAndData(jobType, jobData);
+    job.setSharedData(new JobSharedData(job.getUuid(), userId, request));
+    job.setIndexInBulk(indexInBulk);
+    return job;
+}
+#end_block
+
+#method_before
+@Override
+public OsamJob createChildJob(JobType jobType, JobStatus jobStatus, AsyncJobRequest request, UUID templateId, JobSharedData parentSharedData, Map<String, Object> jobData) {
+    OsamJob job = new OsamJob();
+    job.setStatus(jobStatus);
+    job.setUuid(UUID.randomUUID());
+    job.setUserId(parentSharedData.getUserId());
+    job.setTypeAndData(jobType, jobData);
+    job.setSharedData(new JobSharedData(job.getUuid(), request, parentSharedData));
+    job.setTemplateId(templateId);
+    return job;
+}
+#method_after
+@Override
+public OsamJob createChildJob(JobType jobType, JobStatus jobStatus, AsyncJobRequest request, JobSharedData parentSharedData, Map<String, Object> jobData) {
+    OsamJob job = new OsamJob();
+    job.setStatus(jobStatus);
+    job.setUuid(UUID.randomUUID());
+    job.setUserId(parentSharedData.getUserId());
+    job.setTypeAndData(jobType, jobData);
+    job.setSharedData(new JobSharedData(job.getUuid(), request, parentSharedData));
+    return job;
+}
+#end_block
+
+#method_before
+private OsamJob setNextCommandInJob(NextCommand nextCommand, OsamJob job) {
+    // TODO Pavel find out about templateId
+    log.debug("transforming job {}: {}/{} -> {}{}", // log.debug("transforming job {} of {}: {}/{} -> {}{}",
+    String.valueOf(job.getUuid()).substring(0, 8), // String.valueOf(job.getTemplateId()).substring(0, 8),
+    job.getStatus(), job.getType(), nextCommand.getStatus(), nextCommand.getCommand() != null ? ("/" + nextCommand.getCommand().getType()) : "");
+    job.setStatus(nextCommand.getStatus());
+    if (nextCommand.getCommand() != null) {
+        job.setTypeAndData(nextCommand.getCommand().getType(), nextCommand.getCommand().getData());
+    }
+    return job;
+}
+#method_after
+private OsamJob setNextCommandInJob(NextCommand nextCommand, OsamJob job) {
+    log.debug("transforming job {}: {}/{} -> {}{}", String.valueOf(job.getUuid()).substring(0, 8), job.getStatus(), job.getType(), nextCommand.getStatus(), nextCommand.getCommand() != null ? ("/" + nextCommand.getCommand().getType()) : "");
+    job.setStatus(nextCommand.getStatus());
+    if (nextCommand.getCommand() != null) {
+        job.setTypeAndData(nextCommand.getCommand().getType(), nextCommand.getCommand().getData());
+    }
+    return job;
+}
+#end_block
+
+#method_before
+/* private boolean isMsoNewApiActive() {
+        return featureManager.isActive(Features.FLAG_ASYNC_INSTANTIATION);
+    }*/
+private void tryMutingJobFromException(Exception e) {
+    // If there's JobException in the stack, read job uuid from
+    // the exception, and mute it in DB.
+    final int indexOfJobException = ExceptionUtils.indexOfThrowable(e, JobException.class);
+    if (indexOfJobException >= 0) {
+        try {
+            final JobException jobException = (JobException) ExceptionUtils.getThrowableList(e).get(indexOfJobException);
+            log.info("muting job: {} ({})", jobException.getJobUuid(), jobException.toString());
+            final boolean success = jobsDataAccessService.mute(jobException.getJobUuid());
+            if (!success) {
+                log.error("failed to mute job {}", jobException.getJobUuid());
+            }
+        } catch (Exception e1) {
+            log.error("failed to mute job: {}", e1, e1);
+        }
+    }
+}
+#method_after
+private void tryMutingJobFromException(Exception e) {
+    // If there's JobException in the stack, read job uuid from
+    // the exception, and mute it in DB.
+    final int indexOfJobException = ExceptionUtils.indexOfThrowable(e, JobException.class);
+    if (indexOfJobException >= 0) {
+        try {
+            final JobException jobException = (JobException) ExceptionUtils.getThrowableList(e).get(indexOfJobException);
+            log.info("muting job: {} ({})", jobException.getJobUuid(), jobException.toString());
+            final boolean success = jobsDataAccessService.mute(jobException.getJobUuid());
+            if (!success) {
+                log.error("failed to mute job {}", jobException.getJobUuid());
+            }
+        } catch (Exception e1) {
+            log.error("failed to mute job: {}", e1, e1);
+        }
+    }
+}
+#end_block
+
+#method_before
+@Test
+public void testCreateServiceInstantiationJob() {
+    IJobFactory jobAdapter = new JobFactory();
+    JobType jobType = JobType.NoOp;
+    IJobFactory.AsyncJobRequest request = new JobCommandFactoryTest.MockedRequest(42, "nothing");
+    UUID templateId = UUID.randomUUID();
+    String userId = "ou012t";
+    String optimisticUniqueServiceInstanceName = "optimisticUniqueServiceInstanceName";
+    int indexInBulk = RandomUtils.nextInt();
+    OsamJob job = jobAdapter.createRootJob(jobType, request, templateId, userId, indexInBulk, ImmutableMap.of());
+    assertEquals(job.getType(), jobType);
+    assertEquals(job.getSharedData().getRequest(), request);
+    assertEquals(job.getSharedData().getRequestType(), request.getClass());
+    assertEquals(job.getSharedData().getUserId(), userId);
+    assertEquals(job.getSharedData().getJobUuid(), job.getUuid());
+    assertEquals(job.getSharedData().getRootJobId(), job.getUuid());
+    assertNotNull(job.getUuid());
+    assertEquals(job.getTemplateId(), templateId);
+    assertEquals((int) job.getIndexInBulk(), indexInBulk);
+    assertEquals(job.getStatus(), JobStatus.PENDING);
+}
+#method_after
+@Test
+public void testCreateServiceInstantiationJob() {
+    IJobFactory jobAdapter = new JobFactory();
+    JobType jobType = JobType.NoOp;
+    IJobFactory.AsyncJobRequest request = new JobCommandFactoryTest.MockedRequest(42, "nothing");
+    String userId = "ou012t";
+    String optimisticUniqueServiceInstanceName = "optimisticUniqueServiceInstanceName";
+    int indexInBulk = RandomUtils.nextInt();
+    OsamJob job = jobAdapter.createRootJob(jobType, request, userId, indexInBulk, ImmutableMap.of());
+    assertEquals(job.getType(), jobType);
+    assertEquals(job.getSharedData().getRequest(), request);
+    assertEquals(job.getSharedData().getRequestType(), request.getClass());
+    assertEquals(job.getSharedData().getUserId(), userId);
+    assertEquals(job.getSharedData().getJobUuid(), job.getUuid());
+    assertEquals(job.getSharedData().getRootJobId(), job.getUuid());
+    assertNotNull(job.getUuid());
+    assertEquals((int) job.getIndexInBulk(), indexInBulk);
+    assertEquals(job.getStatus(), JobStatus.PENDING);
+}
+#end_block
+
+#method_before
+@Test
+public void testCreateChildJob() {
+    IJobFactory jobAdapter = new JobFactory();
+    UUID templateId = UUID.randomUUID();
+    String userId = "ou012t";
+    String optimisticUniqueServiceInstanceName = "optimisticUniqueServiceInstanceName";
+    int indexInBulk = RandomUtils.nextInt();
+    OsamJob grandJob = jobAdapter.createRootJob(JobType.HttpCall, new JobCommandFactoryTest.MockedRequest(99, "anything"), templateId, userId, indexInBulk, ImmutableMap.of());
+    JobStatus jobStatus = JobStatus.PAUSE;
+    JobType jobType = JobType.NoOp;
+    IJobFactory.AsyncJobRequest request = new JobCommandFactoryTest.MockedRequest(42, "nothing");
+    OsamJob parentJob = jobAdapter.createChildJob(jobType, jobStatus, request, UUID.randomUUID(), grandJob.getSharedData(), ImmutableMap.of());
+    assertEquals(parentJob.getType(), jobType);
+    assertEquals(parentJob.getSharedData().getRequest(), request);
+    assertEquals(parentJob.getSharedData().getRequestType(), request.getClass());
+    assertEquals(parentJob.getSharedData().getUserId(), userId);
+    assertEquals(parentJob.getSharedData().getJobUuid(), parentJob.getUuid());
+    assertNotNull(parentJob.getUuid());
+    assertNotEquals(parentJob.getUuid(), grandJob.getUuid());
+    assertEquals(parentJob.getStatus(), jobStatus);
+    assertEquals(parentJob.getSharedData().getRootJobId(), grandJob.getUuid());
+    JobStatus jobStatus2 = JobStatus.IN_PROGRESS;
+    JobType jobType2 = JobType.HttpCall;
+    IJobFactory.AsyncJobRequest request2 = new JobCommandFactoryTest.MockedRequest(66, "abc");
+    OsamJob job = jobAdapter.createChildJob(jobType2, jobStatus2, request2, UUID.randomUUID(), parentJob.getSharedData(), ImmutableMap.of());
+    assertEquals(job.getType(), jobType2);
+    assertEquals(job.getSharedData().getRequest(), request2);
+    assertEquals(job.getSharedData().getRequestType(), request2.getClass());
+    assertEquals(job.getSharedData().getUserId(), userId);
+    assertEquals(job.getSharedData().getJobUuid(), job.getUuid());
+    assertNotNull(job.getUuid());
+    assertNotEquals(job.getUuid(), parentJob.getUuid());
+    assertEquals(job.getStatus(), jobStatus2);
+    assertEquals(job.getSharedData().getRootJobId(), grandJob.getUuid());
+}
+#method_after
+@Test
+public void testCreateChildJob() {
+    IJobFactory jobAdapter = new JobFactory();
+    String userId = "ou012t";
+    String optimisticUniqueServiceInstanceName = "optimisticUniqueServiceInstanceName";
+    int indexInBulk = RandomUtils.nextInt();
+    OsamJob grandJob = jobAdapter.createRootJob(JobType.HttpCall, new JobCommandFactoryTest.MockedRequest(99, "anything"), userId, indexInBulk, ImmutableMap.of());
+    JobStatus jobStatus = JobStatus.PAUSE;
+    JobType jobType = JobType.NoOp;
+    IJobFactory.AsyncJobRequest request = new JobCommandFactoryTest.MockedRequest(42, "nothing");
+    OsamJob parentJob = jobAdapter.createChildJob(jobType, jobStatus, request, grandJob.getSharedData(), ImmutableMap.of());
+    assertEquals(parentJob.getType(), jobType);
+    assertEquals(parentJob.getSharedData().getRequest(), request);
+    assertEquals(parentJob.getSharedData().getRequestType(), request.getClass());
+    assertEquals(parentJob.getSharedData().getUserId(), userId);
+    assertEquals(parentJob.getSharedData().getJobUuid(), parentJob.getUuid());
+    assertNotNull(parentJob.getUuid());
+    assertNotEquals(parentJob.getUuid(), grandJob.getUuid());
+    assertEquals(parentJob.getStatus(), jobStatus);
+    assertEquals(parentJob.getSharedData().getRootJobId(), grandJob.getUuid());
+    JobStatus jobStatus2 = JobStatus.IN_PROGRESS;
+    JobType jobType2 = JobType.HttpCall;
+    IJobFactory.AsyncJobRequest request2 = new JobCommandFactoryTest.MockedRequest(66, "abc");
+    OsamJob job = jobAdapter.createChildJob(jobType2, jobStatus2, request2, parentJob.getSharedData(), ImmutableMap.of());
+    assertEquals(job.getType(), jobType2);
+    assertEquals(job.getSharedData().getRequest(), request2);
+    assertEquals(job.getSharedData().getRequestType(), request2.getClass());
+    assertEquals(job.getSharedData().getUserId(), userId);
+    assertEquals(job.getSharedData().getJobUuid(), job.getUuid());
+    assertNotNull(job.getUuid());
+    assertNotEquals(job.getUuid(), parentJob.getUuid());
+    assertEquals(job.getStatus(), jobStatus2);
+    assertEquals(job.getSharedData().getRootJobId(), grandJob.getUuid());
+}
+#end_block
+
+#method_before
+@Override
+public List<UUID> pushBulkJob(String userId, boolean isSuccessful, boolean isOltDependant) {
+    List<UUID> uuids = new ArrayList<>();
+    Date createdBulkDate = Calendar.getInstance().getTime();
+    int bulkSize = 1;
+    UUID templateId = UUID.randomUUID();
+    for (int i = 0; i < bulkSize; i++) {
+        OsamJob job = jobFactory.createRootJob(JobType.ChassisCreation, new DummyAsyncRequest(), templateId, userId, i, ImmutableMap.of("isSuccessful", isSuccessful, "isOltDependant", isOltDependant));
+        UUID jobId = jobsDataAccessService.add(job);
+        uuids.add(jobId);
+    }
+    return uuids;
+}
+#method_after
+@Override
+public List<UUID> pushBulkJob(String userId, boolean isSuccessful, boolean isOltDependant) {
+    List<UUID> uuids = new ArrayList<>();
+    Date createdBulkDate = Calendar.getInstance().getTime();
+    int bulkSize = 1;
+    for (int i = 0; i < bulkSize; i++) {
+        OsamJob job = jobFactory.createRootJob(JobType.ChassisCreation, new DummyAsyncRequest(), userId, i, ImmutableMap.of("isSuccessful", isSuccessful, "isOltDependant", isOltDependant));
+        UUID jobId = jobsDataAccessService.add(job);
+        uuids.add(jobId);
+    }
+    return uuids;
+}
+#end_block
+
+#method_before
+@BeforeMethod
+public void initMocks() {
+    MockitoAnnotations.initMocks(this);
+    when(jobCommandFactory.toCommand(any())).thenReturn(jobCommand);
+    originalData = new IJobFactory.AsyncJobRequest() {
+
+        public final Map datum = ImmutableMap.of("some", "data");
+
+        public final String foobar = "aux";
+    };
+    originalType = JobType.HttpCall;
+    jobUnderTest = new JobFactory().createRootJob(originalType, originalData, UUID.randomUUID(), "my user id", RandomUtils.nextInt(), ImmutableMap.of());
+}
+#method_after
+@BeforeMethod
+public void initMocks() {
+    MockitoAnnotations.initMocks(this);
+    when(jobCommandFactory.toCommand(any())).thenReturn(jobCommand);
+    originalData = new IJobFactory.AsyncJobRequest() {
+
+        public final Map datum = ImmutableMap.of("some", "data");
+
+        public final String foobar = "aux";
+    };
+    originalType = JobType.HttpCall;
+    jobUnderTest = new JobFactory().createRootJob(originalType, originalData, "my user id", RandomUtils.nextInt(), ImmutableMap.of());
+}
+#end_block
+
+#method_before
+@GetMapping("/chassis/olt")
+public ResponseEntity<Map<String, OLTChassisDTO>> getAllOLTDevices() {
+    try {
+        return new ResponseEntity<>(DTOMapper.convertFromOLT(deviceService.getAllOLTSlots()), HttpStatus.OK);
+    } catch (Exception e) {
+        return super.proceedException(e);
+    }
+}
+#method_after
+@GetMapping("/chassis/olt")
+public ResponseEntity<Map<String, List<OLTChassisDTO>>> getAllOLTDevices() {
+    try {
+        return new ResponseEntity<>(DTOMapper.convertFromOLT(deviceService.getAllOLTSlots()), HttpStatus.OK);
+    } catch (Exception e) {
+        return super.proceedException(e);
+    }
+}
+#end_block
+
+#method_before
+@GetMapping("/chassis/olt/ont")
+public ResponseEntity<Map<String, ONTDTO>> getAllONTDevices() {
+    try {
+        return new ResponseEntity<>(DTOMapper.convertFromONTDevice(deviceService.getAllONTDevices()), HttpStatus.OK);
+    } catch (Exception e) {
+        return super.proceedException(e);
+    }
+}
+#method_after
+@GetMapping("/chassis/olt/ont")
+public ResponseEntity<Map<String, List<ONTDTO>>> getAllONTDevices() {
+    try {
+        return new ResponseEntity<>(DTOMapper.convertFromONTDevice(deviceService.getAllONTDevices()), HttpStatus.OK);
+    } catch (Exception e) {
+        return super.proceedException(e);
+    }
+}
+#end_block
+
+#method_before
+public static Map<String, OLTChassisDTO> convertFromOLT(List<OLTSlot> oltSlots) {
+    return oltSlots.stream().collect(Collectors.toMap(x -> x.getChassis().getClli(), x -> convertFromOLT(x)));
+}
+#method_after
+public static Map<String, List<OLTChassisDTO>> convertFromOLT(List<OLTSlot> oltSlots) {
+    return oltSlots.stream().map(x -> convertFromOLT(x)).collect(Collectors.toList()).stream().collect(Collectors.groupingBy(OLTChassisDTO::getClli));
+}
+#end_block
+
+#method_before
+public static ONTDTO convertFromONTDevice(ONTDevice ontDevice) {
+    ONTDTO ontdto = new ONTDTO();
+    ontdto.setSerialNumber(ontDevice.getSerialNumber());
+    ontdto.setPortNumber(ontDevice.getOLTPort().getPortNumber());
+    ontdto.setId(ontDevice.getId());
+    ontdto.setSlotNumber(ontDevice.getOLTPort().getOltSlot().getNumber());
+    return ontdto;
+}
+#method_after
+public static ONTDTO convertFromONTDevice(ONTDevice ontDevice) {
+    ONTDTO ontdto = new ONTDTO();
+    ontdto.setSerialNumber(ontDevice.getSerialNumber());
+    ontdto.setPortNumber(ontDevice.getOLTPort().getPortNumber());
+    ontdto.setId(ontDevice.getId());
+    ontdto.setSlotNumber(ontDevice.getOLTPort().getOltSlot().getNumber());
+    ontdto.setClli(ontDevice.getOLTPort().getOltSlot().getChassis().getClli());
+    return ontdto;
+}
+#end_block
+
+#method_before
+public static Map<String, ONTDTO> convertFromONTDevice(List<ONTDevice> ontDevices) {
+    return ontDevices.stream().collect(Collectors.toMap(x -> x.getOLTPort().getOltSlot().getChassis().getClli(), x -> convertFromONTDevice(x)));
+}
+#method_after
+public static Map<String, List<ONTDTO>> convertFromONTDevice(List<ONTDevice> ontDevices) {
+    return ontDevices.stream().map(x -> convertFromONTDevice(x)).collect(Collectors.toList()).stream().collect(Collectors.groupingBy(ONTDTO::getClli));
+}
+#end_block
+
+#method_before
+public String createChassis(Chassis chassis) {
+    String deviceID = null;
+    log.info("createChassis begin");
+    String clli = chassis.getClli();
+    int rack = chassis.getRack();
+    int shelf = chassis.getShelf();
+    if (chassis.getAccessPod() == null) {
+        throw new NotFoundException("Access pod not found");
+    }
+    String xosIP = chassis.getAccessPod().getCoreIp();
+    int port = Integer.parseInt(chassis.getAccessPod().getCorePort());
+    String user = chassis.getAccessPod().getUsername();
+    String pass = chassis.getAccessPod().getPassword();
+    AddChassisMessage request = AddChassisMessage.newBuilder().setCLLI(clli).setRack(rack).setShelf(shelf).setXOSIP(xosIP).setXOSPort(port).setXOSUser(user).setXOSPassword(pass).build();
+    AddChassisReturn response = blockingStub.createChassis(request);
+    deviceID = response.getDeviceID();
+    log.info("createChassis with device id : " + deviceID);
+    return deviceID;
+}
+#method_after
+public String createChassis(Chassis chassis) {
+    String deviceID = null;
+    log.info("createChassis begin, chassis: {}", chassis);
+    String clli = chassis.getClli();
+    int rack = chassis.getRack();
+    int shelf = chassis.getShelf();
+    if (chassis.getAccessPod() == null) {
+        throw new NotFoundException("Access pod not found");
+    }
+    String xosIP = chassis.getAccessPod().getCoreIp();
+    int port = Integer.parseInt(chassis.getAccessPod().getCorePort());
+    String user = chassis.getAccessPod().getUsername();
+    String pass = chassis.getAccessPod().getPassword();
+    AddChassisMessage request = AddChassisMessage.newBuilder().setCLLI(clli).setRack(rack).setShelf(shelf).setXOSIP(xosIP).setXOSPort(port).setXOSUser(user).setXOSPassword(pass).build();
+    AddChassisReturn response = blockingStub.createChassis(request);
+    deviceID = response.getDeviceID();
+    log.info("createChassis with device id : " + deviceID);
+    return deviceID;
+}
+#end_block
+
+#method_before
+public String createOLTChassis(OLTSlot olt) {
+    String deviceID = null, chassisDeviceId = null;
+    try {
+        log.info("createOLTChassis begin : {}", olt.toString());
+        String clli = olt.getChassis().getClli();
+        AddOLTChassisMessage.OltDriver oltDriver = AddOLTChassisMessage.OltDriver.forNumber((olt.getOltDriver().ordinal()));
+        AddOLTChassisMessage.OltType oltType = AddOLTChassisMessage.OltType.forNumber((olt.getOltType().ordinal()));
+        AddOLTChassisMessage request = AddOLTChassisMessage.newBuilder().setCLLI(clli).setDriver(oltDriver).setNumPorts(NUMBER_OF_OLT_PORTS).setSlotPort(olt.getPort()).setSlotIP(olt.getIpAddress()).setType(oltType).build();
+        AddOLTChassisReturn response = blockingStub.createOLTChassis(request);
+        deviceID = response.getDeviceID();
+        chassisDeviceId = response.getChassisDeviceID();
+        log.info("createOLTChassis with device id : {} chassisDeviceId : {}", chassisDeviceId, deviceID);
+    } catch (RuntimeException e) {
+        log.error("createOLTChassis RPC failed", e);
+    }
+    return deviceID;
+}
+#method_after
+public String createOLTChassis(OLTSlot olt) {
+    String deviceID = null, chassisDeviceId = null;
+    try {
+        log.info("createOLTChassis begin, olt:{}", olt);
+        String clli = olt.getChassis().getClli();
+        AddOLTChassisMessage.OltDriver oltDriver = AddOLTChassisMessage.OltDriver.forNumber((olt.getOltDriver().ordinal()));
+        AddOLTChassisMessage.OltType oltType = AddOLTChassisMessage.OltType.forNumber((olt.getOltType().ordinal()));
+        AddOLTChassisMessage request = AddOLTChassisMessage.newBuilder().setCLLI(clli).setDriver(oltDriver).setNumPorts(NUMBER_OF_OLT_PORTS).setSlotPort(olt.getPort()).setSlotIP(olt.getIpAddress()).setType(oltType).build();
+        AddOLTChassisReturn response = blockingStub.createOLTChassis(request);
+        deviceID = response.getDeviceID();
+        chassisDeviceId = response.getChassisDeviceID();
+        log.info("createOLTChassis with device id : {} chassisDeviceId : {}", chassisDeviceId, deviceID);
+    } catch (RuntimeException e) {
+        log.error("createOLTChassis RPC failed", e);
+    }
+    return deviceID;
+}
+#end_block
+
+#method_before
+public boolean provisionONT(String clli, int slotNumber, int portNumber, int ontNumber, String serialNumber) {
+    boolean result = false;
+    try {
+        log.info("provisionONT begin");
+        AddOntMessage request = AddOntMessage.newBuilder().setCLLI(clli).setPortNumber(portNumber).setSlotNumber(slotNumber).setOntNumber(ontNumber).setSerialNumber(serialNumber).build();
+        AddOntReturn response = blockingStub.provisionOnt(request);
+        result = response.getSuccess();
+        log.info("provisionONT with device id : {} success : {}" + serialNumber, result);
+    } catch (RuntimeException e) {
+        log.error("provisionONT RPC failed", e);
+    }
+    return result;
+}
+#method_after
+public boolean provisionONT(String clli, int slotNumber, int portNumber, int ontNumber, String serialNumber) {
+    boolean result = false;
+    try {
+        log.info("provisionONT begin, clli: {}, slotNumber: {}, portNumber:{}, ontNumber:{}, serialNumber:{}", clli, slotNumber, portNumber, ontNumber, serialNumber);
+        AddOntMessage request = AddOntMessage.newBuilder().setCLLI(clli).setPortNumber(portNumber).setSlotNumber(slotNumber).setOntNumber(ontNumber).setSerialNumber(serialNumber).build();
+        AddOntReturn response = blockingStub.provisionOnt(request);
+        result = response.getSuccess();
+        log.info("provisionONT with device id : {} success : {}" + serialNumber, result);
+    } catch (RuntimeException e) {
+        log.error("provisionONT RPC failed", e);
+    }
+    return result;
+}
+#end_block
+
+#method_before
+@Activate
+public void activate(ComponentContext context) {
+    modified(context);
+    appId = coreService.registerApplication(APP_NAME);
+    componentConfigService.registerProperties(getClass());
+    eventDispatcher.addSink(AccessDeviceEvent.class, listenerRegistry);
+    networkConfig.registerConfigFactory(configFactory);
+    networkConfig.addListener(configListener);
+    // look for all provisioned devices in Sadis and create EAPOL flows for the
+    // UNI ports
+    Iterable<Device> devices = deviceService.getDevices();
+    for (Device d : devices) {
+        checkAndCreateEapolFlows(d);
+    }
+    deviceService.addListener(deviceListener);
+    log.info("Started with Application ID {}", appId.id());
+}
+#method_after
+@Activate
+public void activate(ComponentContext context) {
+    eventExecutor = newSingleThreadScheduledExecutor(groupedThreads("onos/olt", "events-%d", log));
+    modified(context);
+    appId = coreService.registerApplication(APP_NAME);
+    componentConfigService.registerProperties(getClass());
+    eventDispatcher.addSink(AccessDeviceEvent.class, listenerRegistry);
+    // look for all provisioned devices in Sadis and create EAPOL flows for the
+    // UNI ports
+    Iterable<Device> devices = deviceService.getDevices();
+    for (Device d : devices) {
+        checkAndCreateDeviceFlows(d);
+    }
+    deviceService.addListener(deviceListener);
+    log.info("Started with Application ID {}", appId.id());
+}
+#end_block
+
+#method_before
+@Deactivate
+public void deactivate() {
+    componentConfigService.unregisterProperties(getClass(), false);
+    deviceService.removeListener(deviceListener);
+    networkConfig.removeListener(configListener);
+    networkConfig.unregisterConfigFactory(configFactory);
+    eventDispatcher.removeSink(AccessDeviceEvent.class);
+    log.info("Stopped");
+}
+#method_after
+@Deactivate
+public void deactivate() {
+    componentConfigService.unregisterProperties(getClass(), false);
+    deviceService.removeListener(deviceListener);
+    eventDispatcher.removeSink(AccessDeviceEvent.class);
+    log.info("Stopped");
+}
+#end_block
+
+#method_before
+@Override
+public void event(DeviceEvent event) {
+    DeviceId devId = event.subject().id();
+    Device dev = event.subject();
+    if (event.type() != DeviceEvent.Type.PORT_STATS_UPDATED) {
+        log.debug("Olt got {} event for {}", event.type(), event.subject());
+    }
+    switch(event.type()) {
+        // olt firmware handles correct behaviour.
+        case PORT_ADDED:
+            if (isUniPort(dev, event.port())) {
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_ADDED, devId, event.port()));
+                if (event.port().isEnabled()) {
+                    processFilteringObjectives(devId, event.port().number(), true);
+                }
+            }
+            break;
+        case PORT_REMOVED:
+            String portName = event.port().annotations().value(AnnotationKeys.PORT_NAME);
+            SubscriberAndDeviceInformation subscriber = subsService.get(portName);
+            if (subscriber == null) {
+                log.warn("Subscriber {} not found", portName);
+                break;
+            }
+            Port uplinkPort = getUplinkPort(dev);
+            if (uplinkPort == null) {
+                log.warn("No uplink port found for device {}", dev);
+                break;
+            }
+            Optional<VlanId> defaultVlan = Optional.empty();
+            unprovisionSubscriber(devId, uplinkPort.number(), event.port().number(), subscriber.cTag(), subscriber.sTag(), defaultVlan);
+            if (isUniPort(dev, event.port())) {
+                if (event.port().isEnabled()) {
+                    processFilteringObjectives(devId, event.port().number(), false);
+                }
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_REMOVED, devId, event.port()));
+            }
+            break;
+        case PORT_UPDATED:
+            if (!isUniPort(dev, event.port())) {
+                break;
+            }
+            if (event.port().isEnabled()) {
+                processFilteringObjectives(devId, event.port().number(), true);
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_ADDED, devId, event.port()));
+            } else {
+                processFilteringObjectives(devId, event.port().number(), false);
+            }
+            break;
+        case DEVICE_ADDED:
+            post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_CONNECTED, devId, null, null));
+            // Send UNI_ADDED events for all existing ports
+            deviceService.getPorts(devId).stream().filter(p -> isUniPort(dev, p)).filter(Port::isEnabled).forEach(p -> post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_ADDED, devId, p)));
+            checkAndCreateEapolFlows(dev);
+            break;
+        case DEVICE_REMOVED:
+            deviceService.getPorts(devId).stream().filter(p -> isUniPort(dev, p)).forEach(p -> post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_REMOVED, devId, p)));
+            post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_DISCONNECTED, devId, null, null));
+            break;
+        case DEVICE_AVAILABILITY_CHANGED:
+            if (deviceService.isAvailable(devId)) {
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_CONNECTED, devId, null, null));
+            } else {
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_DISCONNECTED, devId, null, null));
+            }
+            break;
+        case DEVICE_UPDATED:
+        case DEVICE_SUSPENDED:
+        case PORT_STATS_UPDATED:
+        default:
+            return;
+    }
+}
+#method_after
+@Override
+public void event(DeviceEvent event) {
+    eventExecutor.execute(() -> {
+        DeviceId devId = event.subject().id();
+        Device dev = event.subject();
+        if (event.type() == DeviceEvent.Type.PORT_STATS_UPDATED) {
+            return;
+        }
+        if (getOltInfo(dev) == null) {
+            log.debug("No device info found, this is not an OLT");
+            return;
+        }
+        log.debug("OLT got {} event for {}", event.type(), event.subject());
+        switch(event.type()) {
+            // olt firmware handles correct behaviour.
+            case PORT_ADDED:
+                if (isUniPort(dev, event.port())) {
+                    post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_ADDED, devId, event.port()));
+                    if (event.port().isEnabled()) {
+                        processFilteringObjectives(devId, event.port().number(), true);
+                    }
+                } else {
+                    checkAndCreateDeviceFlows(dev);
+                }
+                break;
+            case PORT_REMOVED:
+                if (isUniPort(dev, event.port())) {
+                    if (event.port().isEnabled()) {
+                        processFilteringObjectives(devId, event.port().number(), false);
+                        removeSubscriber(new ConnectPoint(devId, event.port().number()));
+                    }
+                    post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_REMOVED, devId, event.port()));
+                }
+                break;
+            case PORT_UPDATED:
+                if (!isUniPort(dev, event.port())) {
+                    break;
+                }
+                if (event.port().isEnabled()) {
+                    processFilteringObjectives(devId, event.port().number(), true);
+                    post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_ADDED, devId, event.port()));
+                } else {
+                    processFilteringObjectives(devId, event.port().number(), false);
+                    post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_REMOVED, devId, event.port()));
+                }
+                break;
+            case DEVICE_ADDED:
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_CONNECTED, devId, null, null));
+                // Send UNI_ADDED events for all existing ports
+                deviceService.getPorts(devId).stream().filter(p -> isUniPort(dev, p)).filter(Port::isEnabled).forEach(p -> post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_ADDED, devId, p)));
+                checkAndCreateDeviceFlows(dev);
+                break;
+            case DEVICE_REMOVED:
+                deviceService.getPorts(devId).stream().filter(p -> isUniPort(dev, p)).forEach(p -> post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_REMOVED, devId, p)));
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_DISCONNECTED, devId, null, null));
+                break;
+            case DEVICE_AVAILABILITY_CHANGED:
+                if (deviceService.isAvailable(devId)) {
+                    post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_CONNECTED, devId, null, null));
+                    checkAndCreateDeviceFlows(dev);
+                } else {
+                    post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_DISCONNECTED, devId, null, null));
+                }
+                break;
+            case DEVICE_UPDATED:
+            case DEVICE_SUSPENDED:
+            case PORT_STATS_UPDATED:
+            default:
+                return;
+        }
+    });
+}
+#end_block
+
+#method_before
+@Override
+public void event(DeviceEvent event) {
+    DeviceId devId = event.subject().id();
+    Device dev = event.subject();
+    if (event.type() != DeviceEvent.Type.PORT_STATS_UPDATED) {
+        log.debug("Olt got {} event for {}", event.type(), event.subject());
+    }
+    switch(event.type()) {
+        // olt firmware handles correct behaviour.
+        case PORT_ADDED:
+            if (isUniPort(dev, event.port())) {
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_ADDED, devId, event.port()));
+                if (event.port().isEnabled()) {
+                    processFilteringObjectives(devId, event.port().number(), true);
+                }
+            }
+            break;
+        case PORT_REMOVED:
+            String portName = event.port().annotations().value(AnnotationKeys.PORT_NAME);
+            SubscriberAndDeviceInformation subscriber = subsService.get(portName);
+            if (subscriber == null) {
+                log.warn("Subscriber {} not found", portName);
+                break;
+            }
+            Port uplinkPort = getUplinkPort(dev);
+            if (uplinkPort == null) {
+                log.warn("No uplink port found for device {}", dev);
+                break;
+            }
+            removeSubscriber(new ConnectPoint(devId, event.port().number()));
+            if (isUniPort(dev, event.port())) {
+                if (event.port().isEnabled()) {
+                    processFilteringObjectives(devId, event.port().number(), false);
+                }
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_REMOVED, devId, event.port()));
+            }
+            break;
+        case PORT_UPDATED:
+            if (!isUniPort(dev, event.port())) {
+                break;
+            }
+            if (event.port().isEnabled()) {
+                processFilteringObjectives(devId, event.port().number(), true);
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_ADDED, devId, event.port()));
+            } else {
+                processFilteringObjectives(devId, event.port().number(), false);
+            }
+            break;
+        case DEVICE_ADDED:
+            post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_CONNECTED, devId, null, null));
+            // Send UNI_ADDED events for all existing ports
+            deviceService.getPorts(devId).stream().filter(p -> isUniPort(dev, p)).filter(Port::isEnabled).forEach(p -> post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_ADDED, devId, p)));
+            checkAndCreateEapolFlows(dev);
+            break;
+        case DEVICE_REMOVED:
+            deviceService.getPorts(devId).stream().filter(p -> isUniPort(dev, p)).forEach(p -> post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_REMOVED, devId, p)));
+            post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_DISCONNECTED, devId, null, null));
+            break;
+        case DEVICE_AVAILABILITY_CHANGED:
+            if (deviceService.isAvailable(devId)) {
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_CONNECTED, devId, null, null));
+            } else {
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_DISCONNECTED, devId, null, null));
+            }
+            break;
+        case DEVICE_UPDATED:
+        case DEVICE_SUSPENDED:
+        case PORT_STATS_UPDATED:
+        default:
+            return;
+    }
+}
+#method_after
+@Override
+public void event(DeviceEvent event) {
+    DeviceId devId = event.subject().id();
+    Device dev = event.subject();
+    if (event.type() != DeviceEvent.Type.PORT_STATS_UPDATED) {
+        log.debug("Olt got {} event for {}", event.type(), event.subject());
+    }
+    switch(event.type()) {
+        // olt firmware handles correct behaviour.
+        case PORT_ADDED:
+            if (isUniPort(dev, event.port())) {
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_ADDED, devId, event.port()));
+                if (event.port().isEnabled()) {
+                    processFilteringObjectives(devId, event.port().number(), true);
+                }
+            }
+            break;
+        case PORT_REMOVED:
+            if (isUniPort(dev, event.port())) {
+                if (event.port().isEnabled()) {
+                    processFilteringObjectives(devId, event.port().number(), false);
+                    removeSubscriber(new ConnectPoint(devId, event.port().number()));
+                }
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_REMOVED, devId, event.port()));
+            }
+            break;
+        case PORT_UPDATED:
+            if (!isUniPort(dev, event.port())) {
+                break;
+            }
+            if (event.port().isEnabled()) {
+                processFilteringObjectives(devId, event.port().number(), true);
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_ADDED, devId, event.port()));
+            } else {
+                processFilteringObjectives(devId, event.port().number(), false);
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_REMOVED, devId, event.port()));
+            }
+            break;
+        case DEVICE_ADDED:
+            post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_CONNECTED, devId, null, null));
+            // Send UNI_ADDED events for all existing ports
+            deviceService.getPorts(devId).stream().filter(p -> isUniPort(dev, p)).filter(Port::isEnabled).forEach(p -> post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_ADDED, devId, p)));
+            checkAndCreateEapolFlows(dev);
+            break;
+        case DEVICE_REMOVED:
+            deviceService.getPorts(devId).stream().filter(p -> isUniPort(dev, p)).forEach(p -> post(new AccessDeviceEvent(AccessDeviceEvent.Type.UNI_REMOVED, devId, p)));
+            post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_DISCONNECTED, devId, null, null));
+            break;
+        case DEVICE_AVAILABILITY_CHANGED:
+            if (deviceService.isAvailable(devId)) {
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_CONNECTED, devId, null, null));
+            } else {
+                post(new AccessDeviceEvent(AccessDeviceEvent.Type.DEVICE_DISCONNECTED, devId, null, null));
+            }
+            break;
+        case DEVICE_UPDATED:
+        case DEVICE_SUSPENDED:
+        case PORT_STATS_UPDATED:
+        default:
+            return;
+    }
+}
+#end_block
+
+#method_before
+@Deactivate
+public void deactivate() {
+    componentConfigService.unregisterProperties(getClass(), false);
+    deviceService.removeListener(deviceListener);
+    networkConfig.removeListener(configListener);
+    networkConfig.unregisterConfigFactory(configFactory);
+    log.info("Stopped");
+}
+#method_after
+@Deactivate
+public void deactivate() {
+    componentConfigService.unregisterProperties(getClass(), false);
+    deviceService.removeListener(deviceListener);
+    networkConfig.removeListener(configListener);
+    networkConfig.unregisterConfigFactory(configFactory);
+    eventDispatcher.removeSink(AccessDeviceEvent.class);
+    log.info("Stopped");
+}
+#end_block
+
+#method_before
+@Override
+public void provisionSubscriber(ConnectPoint port, VlanId vlan) {
+    checkNotNull(deviceService.getPort(port.deviceId(), port.port()), "Invalid connect point");
+    // Find the subscriber on this connect point
+    SubscriberAndDeviceInformation sub = getSubscriber(port);
+    if (sub == null) {
+        log.warn("No subscriber found for {}", port);
+        return;
+    }
+    // Get the uplink port
+    Port uplinkPort = getUplinkPort(deviceService.getDevice(port.deviceId()));
+    if (uplinkPort == null) {
+        log.warn("No uplink port found for OLT device {}", port.deviceId());
+        return;
+    }
+    if (enableDhcpOnProvisioning) {
+        processDhcpFilteringObjectives(port.deviceId(), port.port(), true);
+    }
+    Optional<VlanId> defaultVlan = Optional.empty();
+    provisionVlans(port.deviceId(), uplinkPort.number(), port.port(), vlan, sub.sTag(), defaultVlan);
+    if (enableIgmpOnProvisioning) {
+        processIgmpFilteringObjectives(port.deviceId(), port.port(), true);
+    }
+}
+#method_after
+@Override
+public void provisionSubscriber(ConnectPoint port) {
+    checkNotNull(deviceService.getPort(port.deviceId(), port.port()), "Invalid connect point");
+    // Find the subscriber on this connect point
+    SubscriberAndDeviceInformation sub = getSubscriber(port);
+    if (sub == null) {
+        log.warn("No subscriber found for {}", port);
+        return;
+    }
+    // Get the uplink port
+    Port uplinkPort = getUplinkPort(deviceService.getDevice(port.deviceId()));
+    if (uplinkPort == null) {
+        log.warn("No uplink port found for OLT device {}", port.deviceId());
+        return;
+    }
+    if (enableDhcpOnProvisioning) {
+        processDhcpFilteringObjectives(port.deviceId(), port.port(), true);
+    }
+    Optional<VlanId> defaultVlan = Optional.empty();
+    provisionVlans(port.deviceId(), uplinkPort.number(), port.port(), sub.cTag(), sub.sTag(), defaultVlan);
+    if (enableIgmpOnProvisioning) {
+        processIgmpFilteringObjectives(port.deviceId(), port.port(), true);
+    }
+}
+#end_block
+
+#method_before
+private SubscriberAndDeviceInformation getSubscriber(ConnectPoint port) {
+    String portName = deviceService.getPort(port).annotations().value(AnnotationKeys.PORT_NAME);
+    return (subsService.get(portName));
+}
+#method_after
+private SubscriberAndDeviceInformation getSubscriber(ConnectPoint port) {
+    String portName = deviceService.getPort(port).annotations().value(AnnotationKeys.PORT_NAME);
+    return subsService.get(portName);
+}
+#end_block
+
+#method_before
+public void handleRadiusPacket(RADIUS radiusPacket) throws StateMachineException, DeserializationException {
+    StateMachine stateMachine = StateMachine.lookupStateMachineById(radiusPacket.getIdentifier());
+    if (stateMachine == null) {
+        log.error("Invalid session identifier {}, exiting...", radiusPacket.getIdentifier());
+        return;
+    }
+    EAP eapPayload;
+    Ethernet eth;
+    switch(radiusPacket.getCode()) {
+        case RADIUS.RADIUS_CODE_ACCESS_CHALLENGE:
+            log.info("RADIUS packet: RADIUS_CODE_ACCESS_CHALLENGE");
+            RADIUSAttribute radiusAttrState = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_STATE);
+            byte[] challengeState = null;
+            if (radiusAttrState != null) {
+                challengeState = radiusAttrState.getValue();
+            }
+            eapPayload = radiusPacket.decapsulateMessage();
+            stateMachine.setChallengeInfo(eapPayload.getIdentifier(), challengeState);
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            log.info("Send eap challenge response: {}", eth.toString());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            break;
+        case RADIUS.RADIUS_CODE_ACCESS_ACCEPT:
+            log.info("RADIUS packet: RADIUS_CODE_ACCESS_ACCEPT");
+            // send an EAPOL - Success to the supplicant.
+            byte[] eapMessageSuccess = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_EAP_MESSAGE).getValue();
+            eapPayload = EAP.deserializer().deserialize(eapMessageSuccess, 0, eapMessageSuccess.length);
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            log.info("Send eap success message: {}", eth.toString());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            stateMachine.authorizeAccess();
+            break;
+        case RADIUS.RADIUS_CODE_ACCESS_REJECT:
+            log.info("RADIUS packet: RADIUS_CODE_ACCESS_REJECT");
+            // send an EAPOL - Failure to the supplicant.
+            byte[] eapMessageFailure;
+            eapPayload = new EAP();
+            RADIUSAttribute radiusAttrEap = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_EAP_MESSAGE);
+            if (radiusAttrEap == null) {
+                eapPayload.setCode(EAP.FAILURE);
+                eapPayload.setIdentifier(stateMachine.challengeIdentifier());
+                eapPayload.setLength(EAP.EAP_HDR_LEN_SUC_FAIL);
+            } else {
+                eapMessageFailure = radiusAttrEap.getValue();
+                eapPayload = EAP.deserializer().deserialize(eapMessageFailure, 0, eapMessageFailure.length);
+            }
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            log.info("Send eap failure message: {}", eth.toString());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            stateMachine.denyAccess();
+            break;
+        default:
+            log.warn("Unknown RADIUS message received with code: {}", radiusPacket.getCode());
+    }
+}
+#method_after
+public void handleRadiusPacket(RADIUS radiusPacket) throws StateMachineException, DeserializationException {
+    StateMachine stateMachine = StateMachine.lookupStateMachineById(radiusPacket.getIdentifier());
+    if (stateMachine == null) {
+        log.error("Invalid session identifier {}, exiting...", radiusPacket.getIdentifier());
+        return;
+    }
+    EAP eapPayload;
+    Ethernet eth;
+    switch(radiusPacket.getCode()) {
+        case RADIUS.RADIUS_CODE_ACCESS_CHALLENGE:
+            log.debug("RADIUS packet: RADIUS_CODE_ACCESS_CHALLENGE");
+            RADIUSAttribute radiusAttrState = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_STATE);
+            byte[] challengeState = null;
+            if (radiusAttrState != null) {
+                challengeState = radiusAttrState.getValue();
+            }
+            eapPayload = radiusPacket.decapsulateMessage();
+            stateMachine.setChallengeInfo(eapPayload.getIdentifier(), challengeState);
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            log.debug("Send EAP challenge response to supplicant {}", stateMachine.supplicantAddress().toString());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            break;
+        case RADIUS.RADIUS_CODE_ACCESS_ACCEPT:
+            log.debug("RADIUS packet: RADIUS_CODE_ACCESS_ACCEPT");
+            // send an EAPOL - Success to the supplicant.
+            byte[] eapMessageSuccess = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_EAP_MESSAGE).getValue();
+            eapPayload = EAP.deserializer().deserialize(eapMessageSuccess, 0, eapMessageSuccess.length);
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            log.info("Send EAP success message to supplicant {}", stateMachine.supplicantAddress().toString());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            stateMachine.authorizeAccess();
+            break;
+        case RADIUS.RADIUS_CODE_ACCESS_REJECT:
+            log.debug("RADIUS packet: RADIUS_CODE_ACCESS_REJECT");
+            // send an EAPOL - Failure to the supplicant.
+            byte[] eapMessageFailure;
+            eapPayload = new EAP();
+            RADIUSAttribute radiusAttrEap = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_EAP_MESSAGE);
+            if (radiusAttrEap == null) {
+                eapPayload.setCode(EAP.FAILURE);
+                eapPayload.setIdentifier(stateMachine.challengeIdentifier());
+                eapPayload.setLength(EAP.EAP_HDR_LEN_SUC_FAIL);
+            } else {
+                eapMessageFailure = radiusAttrEap.getValue();
+                eapPayload = EAP.deserializer().deserialize(eapMessageFailure, 0, eapMessageFailure.length);
+            }
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            log.warn("Send EAP failure message to supplicant {}", stateMachine.supplicantAddress().toString());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            stateMachine.denyAccess();
+            break;
+        default:
+            log.warn("Unknown RADIUS message received with code: {}", radiusPacket.getCode());
+    }
+}
+#end_block
+
+#method_before
+private void handleSupplicantPacket(InboundPacket inPacket) throws StateMachineException {
+    Ethernet ethPkt = inPacket.parsed();
+    // Where does it come from?
+    MacAddress srcMac = ethPkt.getSourceMAC();
+    DeviceId deviceId = inPacket.receivedFrom().deviceId();
+    PortNumber portNumber = inPacket.receivedFrom().port();
+    String sessionId = deviceId.toString() + portNumber.toString();
+    StateMachine stateMachine = StateMachine.lookupStateMachineBySessionId(sessionId);
+    if (stateMachine == null) {
+        if (deviceService != null) {
+            String nasPortId = deviceService.getPort(inPacket.receivedFrom()).annotations().value(AnnotationKeys.PORT_NAME);
+            SubscriberAndDeviceInformation subscriber = subsService.get(nasPortId);
+            if (subscriber != null) {
+                stateMachine = new StateMachine(sessionId, subscriber.cTag());
+            } else {
+                log.error("Could not create new state machine for {}", nasPortId);
+                return;
+            }
+        } else {
+            stateMachine = new StateMachine(sessionId, VlanId.vlanId((short) 0));
+        }
+    }
+    EAPOL eapol = (EAPOL) ethPkt.getPayload();
+    switch(eapol.getEapolType()) {
+        case EAPOL.EAPOL_START:
+            log.info("EAP packet: EAPOL_START");
+            stateMachine.start();
+            stateMachine.setSupplicantConnectpoint(inPacket.receivedFrom());
+            // send an EAP Request/Identify to the supplicant
+            EAP eapPayload = new EAP(EAP.REQUEST, stateMachine.identifier(), EAP.ATTR_IDENTITY, null);
+            if (ethPkt.getVlanID() != Ethernet.VLAN_UNTAGGED) {
+                stateMachine.setPriorityCode(ethPkt.getPriorityCode());
+            }
+            Ethernet eth = buildEapolResponse(srcMac, MacAddress.valueOf(nasMacAddress), ethPkt.getVlanID(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            stateMachine.setSupplicantAddress(srcMac);
+            stateMachine.setVlanId(ethPkt.getVlanID());
+            log.info("Getting eap identity: {}", eth.toString());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            break;
+        case EAPOL.EAPOL_LOGOFF:
+            log.info("EAP packet: EAPOL_LOGOFF");
+            if (stateMachine.state() == StateMachine.STATE_AUTHORIZED) {
+                stateMachine.logoff();
+            }
+            break;
+        case EAPOL.EAPOL_PACKET:
+            RADIUS radiusPayload;
+            // check if this is a Response/Identify or  a Response/TLS
+            EAP eapPacket = (EAP) eapol.getPayload();
+            byte dataType = eapPacket.getDataType();
+            switch(dataType) {
+                case EAP.ATTR_IDENTITY:
+                    log.info("EAP packet: EAPOL_PACKET ATTR_IDENTITY");
+                    // request id access to RADIUS
+                    stateMachine.setUsername(eapPacket.getData());
+                    radiusPayload = getRadiusPayload(stateMachine, stateMachine.identifier(), eapPacket);
+                    radiusPayload = pktCustomizer.customizePacket(radiusPayload, inPacket);
+                    radiusPayload.addMessageAuthenticator(AaaManager.this.radiusSecret);
+                    sendRadiusPacket(radiusPayload, inPacket);
+                    // change the state to "PENDING"
+                    stateMachine.requestAccess();
+                    break;
+                case EAP.ATTR_MD5:
+                    log.info("EAP packet: EAPOL_PACKET ATTR_MD5");
+                    // machine.
+                    if (eapPacket.getIdentifier() == stateMachine.challengeIdentifier()) {
+                        // send the RADIUS challenge response
+                        radiusPayload = getRadiusPayload(stateMachine, stateMachine.identifier(), eapPacket);
+                        radiusPayload = pktCustomizer.customizePacket(radiusPayload, inPacket);
+                        if (stateMachine.challengeState() != null) {
+                            radiusPayload.setAttribute(RADIUSAttribute.RADIUS_ATTR_STATE, stateMachine.challengeState());
+                        }
+                        radiusPayload.addMessageAuthenticator(AaaManager.this.radiusSecret);
+                        sendRadiusPacket(radiusPayload, inPacket);
+                    }
+                    break;
+                case EAP.ATTR_TLS:
+                    log.info("EAP packet: EAPOL_PACKET ATTR_TLS");
+                    // request id access to RADIUS
+                    radiusPayload = getRadiusPayload(stateMachine, stateMachine.identifier(), eapPacket);
+                    radiusPayload = pktCustomizer.customizePacket(radiusPayload, inPacket);
+                    if (stateMachine.challengeState() != null) {
+                        radiusPayload.setAttribute(RADIUSAttribute.RADIUS_ATTR_STATE, stateMachine.challengeState());
+                    }
+                    stateMachine.setRequestAuthenticator(radiusPayload.generateAuthCode());
+                    radiusPayload.addMessageAuthenticator(AaaManager.this.radiusSecret);
+                    sendRadiusPacket(radiusPayload, inPacket);
+                    if (stateMachine.state() != StateMachine.STATE_PENDING) {
+                        stateMachine.requestAccess();
+                    }
+                    break;
+                default:
+                    log.warn("Unknown EAP packet type");
+                    return;
+            }
+            break;
+        default:
+            log.info("Skipping EAPOL message {}", eapol.getEapolType());
+    }
+}
+#method_after
+private void handleSupplicantPacket(InboundPacket inPacket) throws StateMachineException {
+    Ethernet ethPkt = inPacket.parsed();
+    // Where does it come from?
+    MacAddress srcMac = ethPkt.getSourceMAC();
+    DeviceId deviceId = inPacket.receivedFrom().deviceId();
+    PortNumber portNumber = inPacket.receivedFrom().port();
+    String sessionId = deviceId.toString() + portNumber.toString();
+    StateMachine stateMachine = StateMachine.lookupStateMachineBySessionId(sessionId);
+    if (stateMachine == null) {
+        if (deviceService != null) {
+            String nasPortId = deviceService.getPort(inPacket.receivedFrom()).annotations().value(AnnotationKeys.PORT_NAME);
+            SubscriberAndDeviceInformation subscriber = subsService.get(nasPortId);
+            if (subscriber != null) {
+                stateMachine = new StateMachine(sessionId, subscriber.cTag());
+            } else {
+                log.error("Could not create new state machine for {}", nasPortId);
+                return;
+            }
+        } else {
+            stateMachine = new StateMachine(sessionId, VlanId.vlanId((short) 0));
+        }
+    }
+    EAPOL eapol = (EAPOL) ethPkt.getPayload();
+    switch(eapol.getEapolType()) {
+        case EAPOL.EAPOL_START:
+            log.debug("EAP packet: EAPOL_START");
+            stateMachine.start();
+            stateMachine.setSupplicantConnectpoint(inPacket.receivedFrom());
+            // send an EAP Request/Identify to the supplicant
+            EAP eapPayload = new EAP(EAP.REQUEST, stateMachine.identifier(), EAP.ATTR_IDENTITY, null);
+            if (ethPkt.getVlanID() != Ethernet.VLAN_UNTAGGED) {
+                stateMachine.setPriorityCode(ethPkt.getPriorityCode());
+            }
+            Ethernet eth = buildEapolResponse(srcMac, MacAddress.valueOf(nasMacAddress), ethPkt.getVlanID(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            stateMachine.setSupplicantAddress(srcMac);
+            stateMachine.setVlanId(ethPkt.getVlanID());
+            log.debug("Getting EAP identity from supplicant {}", stateMachine.supplicantAddress().toString());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            break;
+        case EAPOL.EAPOL_LOGOFF:
+            log.debug("EAP packet: EAPOL_LOGOFF");
+            if (stateMachine.state() == StateMachine.STATE_AUTHORIZED) {
+                stateMachine.logoff();
+            }
+            break;
+        case EAPOL.EAPOL_PACKET:
+            RADIUS radiusPayload;
+            // check if this is a Response/Identify or  a Response/TLS
+            EAP eapPacket = (EAP) eapol.getPayload();
+            byte dataType = eapPacket.getDataType();
+            switch(dataType) {
+                case EAP.ATTR_IDENTITY:
+                    log.debug("EAP packet: EAPOL_PACKET ATTR_IDENTITY");
+                    // request id access to RADIUS
+                    stateMachine.setUsername(eapPacket.getData());
+                    radiusPayload = getRadiusPayload(stateMachine, stateMachine.identifier(), eapPacket);
+                    radiusPayload = pktCustomizer.customizePacket(radiusPayload, inPacket);
+                    radiusPayload.addMessageAuthenticator(AaaManager.this.radiusSecret);
+                    sendRadiusPacket(radiusPayload, inPacket);
+                    // change the state to "PENDING"
+                    stateMachine.requestAccess();
+                    break;
+                case EAP.ATTR_MD5:
+                    log.debug("EAP packet: EAPOL_PACKET ATTR_MD5");
+                    // machine.
+                    if (eapPacket.getIdentifier() == stateMachine.challengeIdentifier()) {
+                        // send the RADIUS challenge response
+                        radiusPayload = getRadiusPayload(stateMachine, stateMachine.identifier(), eapPacket);
+                        radiusPayload = pktCustomizer.customizePacket(radiusPayload, inPacket);
+                        if (stateMachine.challengeState() != null) {
+                            radiusPayload.setAttribute(RADIUSAttribute.RADIUS_ATTR_STATE, stateMachine.challengeState());
+                        }
+                        radiusPayload.addMessageAuthenticator(AaaManager.this.radiusSecret);
+                        sendRadiusPacket(radiusPayload, inPacket);
+                    }
+                    break;
+                case EAP.ATTR_TLS:
+                    log.debug("EAP packet: EAPOL_PACKET ATTR_TLS");
+                    // request id access to RADIUS
+                    radiusPayload = getRadiusPayload(stateMachine, stateMachine.identifier(), eapPacket);
+                    radiusPayload = pktCustomizer.customizePacket(radiusPayload, inPacket);
+                    if (stateMachine.challengeState() != null) {
+                        radiusPayload.setAttribute(RADIUSAttribute.RADIUS_ATTR_STATE, stateMachine.challengeState());
+                    }
+                    stateMachine.setRequestAuthenticator(radiusPayload.generateAuthCode());
+                    radiusPayload.addMessageAuthenticator(AaaManager.this.radiusSecret);
+                    sendRadiusPacket(radiusPayload, inPacket);
+                    if (stateMachine.state() != StateMachine.STATE_PENDING) {
+                        stateMachine.requestAccess();
+                    }
+                    break;
+                default:
+                    log.warn("Unknown EAP packet type");
+                    return;
+            }
+            break;
+        default:
+            log.debug("Skipping EAPOL message {}", eapol.getEapolType());
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void event(NetworkConfigEvent event) {
+    if ((event.type() == NetworkConfigEvent.Type.CONFIG_ADDED || event.type() == NetworkConfigEvent.Type.CONFIG_UPDATED) && event.configClass().equals(AaaConfig.class)) {
+        AaaConfig cfg = netCfgService.getConfig(appId, AaaConfig.class);
+        reconfigureNetwork(cfg);
+        log.info("Reconfigured");
+    }
+}
+#method_after
+@Override
+public void event(NetworkConfigEvent event) {
+    if ((event.type() == NetworkConfigEvent.Type.CONFIG_ADDED || event.type() == NetworkConfigEvent.Type.CONFIG_UPDATED) && event.configClass().equals(AaaConfig.class)) {
+        AaaConfig cfg = netCfgService.getConfig(appId, AaaConfig.class);
+        reconfigureNetwork(cfg);
+        log.info("Reconfigured: {}", cfg.toString());
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void sendRadiusPacket(RADIUS radiusPacket, InboundPacket inPkt) {
+    try {
+        final byte[] data = radiusPacket.serialize();
+        final DatagramSocket socket = radiusSocket;
+        DatagramPacket packet = new DatagramPacket(data, data.length, radiusIpAddress, radiusServerPort);
+        socket.send(packet);
+        log.info("Packet sent to Radius Server {}:{} using socket packet = {}", radiusIpAddress, radiusServerPort, packet);
+    } catch (IOException e) {
+        log.info("Cannot send packet to RADIUS server", e);
+    }
+}
+#method_after
+@Override
+public void sendRadiusPacket(RADIUS radiusPacket, InboundPacket inPkt) {
+    try {
+        final byte[] data = radiusPacket.serialize();
+        final DatagramSocket socket = radiusSocket;
+        DatagramPacket packet = new DatagramPacket(data, data.length, radiusIpAddress, radiusServerPort);
+        socket.send(packet);
+        log.debug("Packet sent to Radius Server {}:{} using socket", radiusIpAddress, radiusServerPort);
+    } catch (IOException e) {
+        log.info("Cannot send packet to RADIUS server", e);
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void handlePacketFromServer(PacketContext context) {
+    InboundPacket pkt = context.inPacket();
+    Ethernet ethPkt = pkt.parsed();
+    log.trace("Skipping Ethernet packet type {}", EthType.EtherType.lookup(ethPkt.getEtherType()));
+}
+#method_after
+@Override
+public void handlePacketFromServer(PacketContext context) {
+    InboundPacket pkt = context.inPacket();
+    Ethernet ethPkt = pkt.parsed();
+    log.debug("Skipping Ethernet packet type {}", EthType.EtherType.lookup(ethPkt.getEtherType()));
+}
+#end_block
+
+#method_before
+@Override
+public void run() {
+    boolean done = false;
+    int packetNumber = 1;
+    log.info("UDP listener thread starting up");
+    RADIUS inboundRadiusPacket;
+    while (!done) {
+        try {
+            byte[] packetBuffer = new byte[RADIUS.RADIUS_MAX_LENGTH];
+            DatagramPacket inboundBasePacket = new DatagramPacket(packetBuffer, packetBuffer.length);
+            DatagramSocket socket = radiusSocket;
+            socket.receive(inboundBasePacket);
+            log.info("Packet #{} received", packetNumber++);
+            try {
+                inboundRadiusPacket = RADIUS.deserializer().deserialize(inboundBasePacket.getData(), 0, inboundBasePacket.getLength());
+                aaaManager.handleRadiusPacket(inboundRadiusPacket);
+            } catch (DeserializationException dex) {
+                log.error("Cannot deserialize packet", dex);
+            } catch (StateMachineException sme) {
+                log.error("Illegal state machine operation", sme);
+            }
+        } catch (IOException e) {
+            log.info("Socket was closed, exiting listener thread");
+            done = true;
+        }
+    }
+}
+#method_after
+@Override
+public void run() {
+    boolean done = false;
+    int packetNumber = 1;
+    log.info("UDP listener thread starting up");
+    RADIUS inboundRadiusPacket;
+    while (!done) {
+        try {
+            byte[] packetBuffer = new byte[RADIUS.RADIUS_MAX_LENGTH];
+            DatagramPacket inboundBasePacket = new DatagramPacket(packetBuffer, packetBuffer.length);
+            DatagramSocket socket = radiusSocket;
+            socket.receive(inboundBasePacket);
+            log.debug("Packet #{} received", packetNumber++);
+            try {
+                inboundRadiusPacket = RADIUS.deserializer().deserialize(inboundBasePacket.getData(), 0, inboundBasePacket.getLength());
+                aaaManager.handleRadiusPacket(inboundRadiusPacket);
+            } catch (DeserializationException dex) {
+                log.error("Cannot deserialize packet", dex);
+            } catch (StateMachineException sme) {
+                log.error("Illegal state machine operation", sme);
+            }
+        } catch (IOException e) {
+            log.info("Socket was closed, exiting listener thread");
+            done = true;
+        }
+    }
+}
+#end_block
+
+#method_before
+private Ethernet buildReply(Ethernet ethRequest, byte packetType, Instance reqInstance) {
+    ServiceNetwork snet = snetService.serviceNetwork(reqInstance.netId());
+    Ip4Address serverIp = snet.serviceIp().getIp4Address();
+    Ethernet ethReply = new Ethernet();
+    ethReply.setSourceMACAddress(dhcpServerMac);
+    ethReply.setDestinationMACAddress(ethRequest.getSourceMAC());
+    ethReply.setEtherType(Ethernet.TYPE_IPV4);
+    IPv4 ipv4Request = (IPv4) ethRequest.getPayload();
+    IPv4 ipv4Reply = new IPv4();
+    ipv4Reply.setSourceAddress(serverIp.toInt());
+    ipv4Reply.setDestinationAddress(reqInstance.ipAddress().toInt());
+    ipv4Reply.setTtl(DEFAULT_PACKET_TTL);
+    UDP udpRequest = (UDP) ipv4Request.getPayload();
+    UDP udpReply = new UDP();
+    udpReply.setSourcePort((byte) UDP.DHCP_SERVER_PORT);
+    udpReply.setDestinationPort((byte) UDP.DHCP_CLIENT_PORT);
+    DHCP dhcpRequest = (DHCP) udpRequest.getPayload();
+    DHCP dhcpReply = buildDhcpReply(dhcpRequest, packetType, reqInstance.ipAddress(), snet);
+    // under Grant Agreement No. 761 557 (http://ngpaas.eu).
+    if ((dhcpRequest.getFlags() & 0x8000) != 0) {
+        Ip4Address broadcastAddress = Ip4Address.valueOf("255.255.255.255");
+        ipv4Reply.setDestinationAddress(broadcastAddress.toInt());
+        ethReply.setDestinationMACAddress(MacAddress.BROADCAST);
+    }
+    // End of DHCP Fix.
+    udpReply.setPayload(dhcpReply);
+    ipv4Reply.setPayload(udpReply);
+    ethReply.setPayload(ipv4Reply);
+    return ethReply;
+}
+#method_after
+private Ethernet buildReply(Ethernet ethRequest, byte packetType, Instance reqInstance) {
+    ServiceNetwork snet = snetService.serviceNetwork(reqInstance.netId());
+    Ip4Address serverIp = snet.serviceIp().getIp4Address();
+    Ethernet ethReply = new Ethernet();
+    ethReply.setSourceMACAddress(dhcpServerMac);
+    ethReply.setDestinationMACAddress(ethRequest.getSourceMAC());
+    ethReply.setEtherType(Ethernet.TYPE_IPV4);
+    IPv4 ipv4Request = (IPv4) ethRequest.getPayload();
+    IPv4 ipv4Reply = new IPv4();
+    ipv4Reply.setSourceAddress(serverIp.toInt());
+    ipv4Reply.setDestinationAddress(reqInstance.ipAddress().toInt());
+    ipv4Reply.setTtl(DEFAULT_PACKET_TTL);
+    UDP udpRequest = (UDP) ipv4Request.getPayload();
+    UDP udpReply = new UDP();
+    udpReply.setSourcePort((byte) UDP.DHCP_SERVER_PORT);
+    udpReply.setDestinationPort((byte) UDP.DHCP_CLIENT_PORT);
+    DHCP dhcpRequest = (DHCP) udpRequest.getPayload();
+    DHCP dhcpReply = buildDhcpReply(dhcpRequest, packetType, reqInstance.ipAddress(), snet);
+    // This Fix alligns the ONOS-VTN app with the DHCP RFC
+    if ((dhcpRequest.getFlags() & 0x8000) != 0) {
+        ipv4Reply.setDestinationAddress(IP_BROADCAST.toInt());
+        ethReply.setDestinationMACAddress(MacAddress.BROADCAST);
+    }
+    // End of DHCP Fix.
+    udpReply.setPayload(dhcpReply);
+    ipv4Reply.setPayload(udpReply);
+    ethReply.setPayload(ipv4Reply);
+    return ethReply;
+}
+#end_block
+
+#method_before
+@Override
+protected void execute() {
+    MetroOrchestrationService ceManager = get(MetroOrchestrationService.class);
+    ceManager.removeAllEvcs();
+}
+#method_after
+@Override
+protected void execute() {
+    MetroOrchestrationService ceManager = get(MetroOrchestrationService.class);
+    final int size = ceManager.evcMap().size();
+    if (size == 0) {
+        print("No EVCs were found");
+    } else {
+        ceManager.removeAllEvcs();
+        print("Removed all %d EVCs", size);
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected void execute() {
+    MetroOrchestrationService ceManager = get(MetroOrchestrationService.class);
+    argEvcConnIdList.forEach(id -> {
+        EvcConnId evcId = EvcConnId.of(id);
+        ceManager.removeEvc(evcId);
+    });
+}
+#method_after
+@Override
+protected void execute() {
+    MetroOrchestrationService ceManager = get(MetroOrchestrationService.class);
+    argEvcConnIdList.forEach(id -> {
+        EvcConnId evcId = EvcConnId.of(id);
+        if (ceManager.evcMap().containsKey(evcId)) {
+            ceManager.removeEvc(evcId);
+            print("Removed EVC %s", evcId.toString());
+        } else {
+            print("EVC %s doesn't exist", evcId.toString());
+        }
+    });
+}
+#end_block
+
+#method_before
+@Override
+public String toString() {
+    StringBuilder sb = new StringBuilder(super.toString());
+    int len = sb.length();
+    sb.replace(len - 1, len, ", ");
+    sb.append("vlanId=").append(vlanId).append("}");
+    return sb.toString();
+}
+#method_after
+@Override
+public String toString() {
+    StringBuilder sb = new StringBuilder(super.toString());
+    int len = sb.length();
+    sb.replace(len - 1, len, ", ");
+    sb.append("vlanId=").append(vlanId).append(", mac=").append(macAddress).append("}");
+    return sb.toString();
+}
+#end_block
+
+#method_before
+@Test
+public void basic() {
+    event = new AaaEvent(AaaEvent.Type.ACCESS_DENIED, CP, TIME);
+    print(event);
+    assertEquals(AaaEvent.Type.ACCESS_DENIED, event.type());
+    assertEquals(TIME, event.time());
+    assertEquals(CP, event.subject());
+    assertEquals(null, event.vlanId());
+}
+#method_after
+@Test
+public void basic() {
+    event = new AaaEvent(Type.ACCESS_DENIED, CP1, TIME1);
+    print(event);
+    assertEquals(Type.ACCESS_DENIED, event.type());
+    assertEquals(TIME1, event.time());
+    assertEquals(CP1, event.subject());
+    assertEquals(null, event.vlanId());
+}
+#end_block
+
+#method_before
+@Test
+public void vlan32() {
+    event = new AaaEvent(AaaEvent.Type.ACCESS_AUTHORIZED, CP, VLAN_32);
+    print(event);
+    assertEquals(AaaEvent.Type.ACCESS_AUTHORIZED, event.type());
+    assertEquals(CP, event.subject());
+    assertEquals(VLAN_32, event.vlanId());
+}
+#method_after
+@Test
+public void vlan32() {
+    event = new AaaEvent(Type.ACCESS_AUTHORIZED, CP1, VLAN_32, MAC_A);
+    print(event);
+    assertEquals(Type.ACCESS_AUTHORIZED, event.type());
+    assertEquals(CP1, event.subject());
+    assertEquals(VLAN_32, event.vlanId());
+    assertEquals(MAC_A, event.macAddress());
+}
+#end_block
+
+#method_before
+public void handleRadiusPacket(RADIUS radiusPacket) throws StateMachineException, DeserializationException {
+    StateMachine stateMachine = StateMachine.lookupStateMachineById(radiusPacket.getIdentifier());
+    if (stateMachine == null) {
+        log.error("Invalid session identifier {}, exiting...", radiusPacket.getIdentifier());
+        return;
+    }
+    EAP eapPayload;
+    Ethernet eth;
+    switch(radiusPacket.getCode()) {
+        case RADIUS.RADIUS_CODE_ACCESS_CHALLENGE:
+            RADIUSAttribute radiusAttrState = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_STATE);
+            byte[] challengeState = null;
+            if (radiusAttrState != null) {
+                challengeState = radiusAttrState.getValue();
+            }
+            eapPayload = radiusPacket.decapsulateMessage();
+            stateMachine.setChallengeInfo(eapPayload.getIdentifier(), challengeState);
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            break;
+        case RADIUS.RADIUS_CODE_ACCESS_ACCEPT:
+            // send an EAPOL - Success to the supplicant.
+            byte[] eapMessageSuccess = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_EAP_MESSAGE).getValue();
+            eapPayload = deserializeEAP(eapMessageSuccess);
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            stateMachine.authorizeAccess();
+            break;
+        case RADIUS.RADIUS_CODE_ACCESS_REJECT:
+            // send an EAPOL - Failure to the supplicant.
+            byte[] eapMessageFailure;
+            eapPayload = new EAP();
+            RADIUSAttribute radiusAttrEap = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_EAP_MESSAGE);
+            if (radiusAttrEap == null) {
+                eapPayload.setCode(EAP.FAILURE);
+                eapPayload.setIdentifier(stateMachine.challengeIdentifier());
+                eapPayload.setLength(EAP.EAP_HDR_LEN_SUC_FAIL);
+            } else {
+                eapMessageFailure = radiusAttrEap.getValue();
+                eapPayload = deserializeEAP(eapMessageFailure);
+            }
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            stateMachine.denyAccess();
+            break;
+        default:
+            log.warn("Unknown RADIUS message received with code: {}", radiusPacket.getCode());
+    }
+}
+#method_after
+public void handleRadiusPacket(RADIUS radiusPacket) throws StateMachineException {
+    StateMachine stateMachine = StateMachine.lookupStateMachineById(radiusPacket.getIdentifier());
+    if (stateMachine == null) {
+        log.error("Invalid session identifier {}, exiting...", radiusPacket.getIdentifier());
+        return;
+    }
+    EAP eapPayload;
+    Ethernet eth;
+    switch(radiusPacket.getCode()) {
+        case RADIUS.RADIUS_CODE_ACCESS_CHALLENGE:
+            RADIUSAttribute radiusAttrState = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_STATE);
+            byte[] challengeState = null;
+            if (radiusAttrState != null) {
+                challengeState = radiusAttrState.getValue();
+            }
+            eapPayload = radiusPacket.decapsulateMessage();
+            stateMachine.setChallengeInfo(eapPayload.getIdentifier(), challengeState);
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            break;
+        case RADIUS.RADIUS_CODE_ACCESS_ACCEPT:
+            // send an EAPOL - Success to the supplicant.
+            byte[] eapMessageSuccess = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_EAP_MESSAGE).getValue();
+            eapPayload = deserializeEap(eapMessageSuccess);
+            if (eapPayload != null) {
+                eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+                sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+                stateMachine.authorizeAccess();
+            }
+            break;
+        case RADIUS.RADIUS_CODE_ACCESS_REJECT:
+            // send an EAPOL - Failure to the supplicant.
+            byte[] eapMessageFailure;
+            eapPayload = new EAP();
+            RADIUSAttribute radiusAttrEap = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_EAP_MESSAGE);
+            if (radiusAttrEap == null) {
+                eapPayload.setCode(EAP.FAILURE);
+                eapPayload.setIdentifier(stateMachine.challengeIdentifier());
+                eapPayload.setLength(EAP.EAP_HDR_LEN_SUC_FAIL);
+            } else {
+                eapMessageFailure = radiusAttrEap.getValue();
+                eapPayload = deserializeEap(eapMessageFailure);
+            }
+            if (eapPayload != null) {
+                eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+                sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+                stateMachine.denyAccess();
+            }
+            break;
+        default:
+            log.warn("Unknown RADIUS message received with code: {}", radiusPacket.getCode());
+            break;
+    }
+}
+#end_block
+
+#method_before
+@Activate
+public void activate() {
+    netCfgService.registerConfigFactory(factory);
+    appId = coreService.registerApplication(APP_NAME);
+    customInfo = new CustomizationInfo(subsService, deviceService);
+    cfgListener.reconfigureNetwork(netCfgService.getConfig(appId, AaaConfig.class));
+    configureRadiusCommunication();
+    // register our event handler
+    packetService.addProcessor(processor, PacketProcessor.director(2));
+    StateMachine.initializeMaps();
+    StateMachine.setAccessDeviceService(accessDeviceService);
+    impl.initializeLocalState(newCfg);
+    netCfgService.addListener(cfgListener);
+    impl.requestIntercepts();
+    log.info("Started");
+}
+#method_after
+@Activate
+public void activate() {
+    netCfgService.registerConfigFactory(factory);
+    appId = coreService.registerApplication(APP_NAME);
+    customInfo = new CustomizationInfo(subsService, deviceService);
+    cfgListener.reconfigureNetwork(netCfgService.getConfig(appId, AaaConfig.class));
+    configureRadiusCommunication();
+    // register our event handler
+    packetService.addProcessor(processor, PacketProcessor.director(2));
+    StateMachine.initializeMaps();
+    StateMachine.setAccessDeviceService(accessDeviceService);
+    impl.initializeLocalState(newCfg);
+    netCfgService.addListener(cfgListener);
+    impl.requestIntercepts();
+    deviceService.addListener(deviceListener);
+    log.info("Started");
+}
+#end_block
+
+#method_before
+@Deactivate
+public void deactivate() {
+    impl.withdrawIntercepts();
+    // de-register and null our handler
+    packetService.removeProcessor(processor);
+    processor = null;
+    netCfgService.removeListener(cfgListener);
+    StateMachine.destroyMaps();
+    netCfgService.removeListener(cfgListener);
+    impl.deactivate();
+    log.info("Stopped");
+}
+#method_after
+@Deactivate
+public void deactivate() {
+    impl.withdrawIntercepts();
+    // de-register and null our handler
+    packetService.removeProcessor(processor);
+    processor = null;
+    netCfgService.removeListener(cfgListener);
+    StateMachine.destroyMaps();
+    impl.deactivate();
+    deviceService.removeListener(deviceListener);
+    log.info("Stopped");
+}
+#end_block
+
+#method_before
+private void reconfigureNetwork(AaaConfig cfg) {
+    if (cfg == null) {
+        newCfg = new AaaConfig();
+    } else {
+        newCfg = cfg;
+    }
+    if (newCfg.nasIp() != null) {
+        nasIpAddress = newCfg.nasIp();
+    }
+    if (newCfg.radiusIp() != null) {
+        radiusIpAddress = newCfg.radiusIp();
+    }
+    if (newCfg.radiusMac() != null) {
+        radiusMacAddress = newCfg.radiusMac();
+    }
+    if (newCfg.nasMac() != null) {
+        nasMacAddress = newCfg.nasMac();
+    }
+    if (newCfg.radiusSecret() != null) {
+        radiusSecret = newCfg.radiusSecret();
+    }
+    if (customizer == null || !customizer.equals(newCfg.radiusPktCustomizer())) {
+        customizer = newCfg.radiusPktCustomizer();
+        configurePacketCustomizer();
+    }
+    radiusConnectionType = newCfg.radiusConnectionType();
+    if (impl != null) {
+        impl.clearLocalState();
+        impl.initializeLocalState(newCfg);
+    }
+}
+#method_after
+private void reconfigureNetwork(AaaConfig cfg) {
+    if (cfg == null) {
+        newCfg = new AaaConfig();
+    } else {
+        newCfg = cfg;
+    }
+    if (newCfg.nasIp() != null) {
+        nasIpAddress = newCfg.nasIp();
+    }
+    if (newCfg.radiusIp() != null) {
+        radiusIpAddress = newCfg.radiusIp();
+    }
+    if (newCfg.radiusMac() != null) {
+        radiusMacAddress = newCfg.radiusMac();
+    }
+    if (newCfg.nasMac() != null) {
+        nasMacAddress = newCfg.nasMac();
+    }
+    if (newCfg.radiusSecret() != null) {
+        radiusSecret = newCfg.radiusSecret();
+    }
+    boolean reconfigureCustomizer = false;
+    if (customizer == null || !customizer.equals(newCfg.radiusPktCustomizer())) {
+        customizer = newCfg.radiusPktCustomizer();
+        configurePacketCustomizer();
+        reconfigureCustomizer = true;
+    }
+    if (radiusConnectionType == null || reconfigureCustomizer || !radiusConnectionType.equals(newCfg.radiusConnectionType())) {
+        radiusConnectionType = newCfg.radiusConnectionType();
+        if (impl != null) {
+            impl.withdrawIntercepts();
+            impl.clearLocalState();
+        }
+        configureRadiusCommunication();
+        impl.initializeLocalState(newCfg);
+        impl.requestIntercepts();
+    } else if (impl != null) {
+        impl.clearLocalState();
+        impl.initializeLocalState(newCfg);
+    }
+}
+#end_block
+
+#method_before
+void sendPacket(Ethernet pkt, ConnectPoint cp) {
+    final ByteBuffer byteBuffer = ByteBuffer.wrap(pkt.serialize());
+    InboundPacket inPacket = new DefaultInboundPacket(cp, null, byteBuffer);
+    PacketContext context = new TestPacketContext(127L, inPacket, null, false);
+    packetProcessor.process(context);
+}
+#method_after
+void sendPacket(Ethernet pkt, ConnectPoint cp) {
+    final ByteBuffer byteBuffer = ByteBuffer.wrap(pkt.serialize());
+    InboundPacket inPacket = new DefaultInboundPacket(cp, pkt, byteBuffer);
+    PacketContext context = new TestPacketContext(127L, inPacket, null, false);
+    packetProcessor.process(context);
+}
+#end_block
+
+#method_before
+public void compareClientPackets(Ethernet sent, Ethernet relayed) {
+    sent.setSourceMACAddress(OLT_MAC_ADDRESS);
+    sent.setQinQVID(CLIENT_S_TAG.toShort());
+    sent.setVlanID(CLIENT_C_TAG.toShort());
+    IPv4 ipv4Packet = (IPv4) sent.getPayload();
+    UDP udpPacket = (UDP) ipv4Packet.getPayload();
+    DHCP dhcpPacket = (DHCP) udpPacket.getPayload();
+    List<DHCPOption> options = Lists.newArrayList(dhcpPacket.getOptions());
+    DhcpOption82 option82 = new DhcpOption82();
+    option82.setAgentCircuitId(CLIENT_CIRCUIT_ID);
+    DHCPOption option = new DHCPOption().setCode(DHCP.DHCPOptionCode.OptionCode_CircuitID.getValue()).setData(option82.toByteArray()).setLength(option82.length());
+    options.add(options.size() - 1, option);
+    dhcpPacket.setOptions(options);
+    final ByteBuffer byteBuffer = ByteBuffer.wrap(sent.serialize());
+    Ethernet expectedPacket = null;
+    try {
+        expectedPacket = Ethernet.deserializer().deserialize(byteBuffer.array(), 0, byteBuffer.array().length);
+    } catch (Exception e) {
+    }
+    assertEquals(expectedPacket, relayed);
+}
+#method_after
+public void compareClientPackets(Ethernet sent, Ethernet relayed) {
+    sent.setSourceMACAddress(OLT_MAC_ADDRESS);
+    sent.setQinQVID(CLIENT_S_TAG.toShort());
+    sent.setVlanID(CLIENT_C_TAG.toShort());
+    IPv4 ipv4Packet = (IPv4) sent.getPayload();
+    UDP udpPacket = (UDP) ipv4Packet.getPayload();
+    DHCP dhcpPacket = (DHCP) udpPacket.getPayload();
+    List<DHCPOption> options = Lists.newArrayList(dhcpPacket.getOptions());
+    DhcpOption82 option82 = new DhcpOption82();
+    option82.setAgentCircuitId(CLIENT_CIRCUIT_ID);
+    DHCPOption option = new DHCPOption().setCode(DHCP.DHCPOptionCode.OptionCode_CircuitID.getValue()).setData(option82.toByteArray()).setLength(option82.length());
+    options.add(options.size() - 1, option);
+    dhcpPacket.setOptions(options);
+    assertEquals(sent, relayed);
+}
+#end_block
+
+#method_before
+@Override
+public void process(PacketContext context) {
+    if (!configured()) {
+        log.warn("Missing DHCP relay config. Abort packet processing");
+        return;
+    }
+    // process the packet and get the payload
+    Ethernet packet = null;
+    ByteBuffer byteBuffer = context.inPacket().unparsed();
+    try {
+        packet = Ethernet.deserializer().deserialize(byteBuffer.array(), 0, byteBuffer.array().length);
+    } catch (DeserializationException e) {
+        log.warn("Unable to deserialize packet");
+    }
+    if (packet == null) {
+        log.warn("Packet is null");
+        return;
+    }
+    log.debug("Got a packet ", packet);
+    if (packet.getEtherType() == Ethernet.TYPE_IPV4) {
+        IPv4 ipv4Packet = (IPv4) packet.getPayload();
+        if (ipv4Packet.getProtocol() == IPv4.PROTOCOL_UDP) {
+            UDP udpPacket = (UDP) ipv4Packet.getPayload();
+            if (udpPacket.getSourcePort() == UDP.DHCP_CLIENT_PORT || udpPacket.getSourcePort() == UDP.DHCP_SERVER_PORT) {
+                DHCP dhcpPayload = (DHCP) udpPacket.getPayload();
+                // This packet is dhcp.
+                processDhcpPacket(context, packet, dhcpPayload);
+            }
+        }
+    }
+}
+#method_after
+@Override
+public void process(PacketContext context) {
+    if (!configured()) {
+        log.warn("Missing DHCP relay config. Abort packet processing");
+        return;
+    }
+    // process the packet and get the payload
+    Ethernet packet = context.inPacket().parsed();
+    if (packet == null) {
+        log.warn("Packet is null");
+        return;
+    }
+    log.debug("Got a packet ", packet);
+    if (packet.getEtherType() == Ethernet.TYPE_IPV4) {
+        IPv4 ipv4Packet = (IPv4) packet.getPayload();
+        if (ipv4Packet.getProtocol() == IPv4.PROTOCOL_UDP) {
+            UDP udpPacket = (UDP) ipv4Packet.getPayload();
+            if (udpPacket.getSourcePort() == UDP.DHCP_CLIENT_PORT || udpPacket.getSourcePort() == UDP.DHCP_SERVER_PORT) {
+                DHCP dhcpPayload = (DHCP) udpPacket.getPayload();
+                // This packet is dhcp.
+                processDhcpPacket(context, packet, dhcpPayload);
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+private boolean configured() {
+    return dhcpServerConnectPoint != null;
+}
+#method_after
+private boolean configured() {
+    return dhcpServerConnectPoint.get() != null;
+}
+#end_block
+
+#method_before
+private void selectServerConnectPoint() {
+    synchronized (this) {
+        dhcpServerConnectPoint = null;
+        if (dhcpConnectPoints != null) {
+            // find a connect point through a device for which we are master
+            for (ConnectPoint cp : dhcpConnectPoints) {
+                if (mastershipService.isLocalMaster(cp.deviceId())) {
+                    if (deviceService.isAvailable(cp.deviceId())) {
+                        dhcpServerConnectPoint = cp;
+                    }
+                    log.info("DHCP connectPoint selected is {}", cp);
+                    break;
+                }
+            }
+        }
+        log.info("DHCP Server connectPoint is {}", dhcpServerConnectPoint);
+        if (dhcpServerConnectPoint == null) {
+            log.error("Master of none, can't relay DHCP Message to server");
+        }
+    }
+}
+#method_after
+private void selectServerConnectPoint() {
+    synchronized (this) {
+        dhcpServerConnectPoint.set(null);
+        if (dhcpConnectPoints != null) {
+            // find a connect point through a device for which we are master
+            for (ConnectPoint cp : dhcpConnectPoints) {
+                if (mastershipService.isLocalMaster(cp.deviceId())) {
+                    if (deviceService.isAvailable(cp.deviceId())) {
+                        dhcpServerConnectPoint.set(cp);
+                    }
+                    log.info("DHCP connectPoint selected is {}", cp);
+                    break;
+                }
+            }
+        }
+        log.info("DHCP Server connectPoint is {}", dhcpServerConnectPoint.get());
+        if (dhcpServerConnectPoint.get() == null) {
+            log.error("Master of none, can't relay DHCP Message to server");
+        }
+    }
+}
+#end_block
+
+#method_before
+private void updateConfig() {
+    DhcpL2RelayConfig cfg = cfgService.getConfig(appId, DhcpL2RelayConfig.class);
+    if (cfg == null) {
+        log.warn("Dhcp Server info not available");
+        return;
+    }
+    dhcpConnectPoints = cfg.getDhcpServerConnectPoint();
+    selectServerConnectPoint();
+    log.info("dhcp server connect point: " + dhcpServerConnectPoint);
+}
+#method_after
+private void updateConfig() {
+    DhcpL2RelayConfig cfg = cfgService.getConfig(appId, DhcpL2RelayConfig.class);
+    if (cfg == null) {
+        log.warn("Dhcp Server info not available");
+        return;
+    }
+    dhcpConnectPoints = Sets.newConcurrentHashSet(cfg.getDhcpServerConnectPoint());
+    selectServerConnectPoint();
+    log.info("dhcp server connect point: " + dhcpServerConnectPoint);
+}
+#end_block
+
+#method_before
+private String nasPortId(PacketContext context) {
+    Port p = deviceService.getPort(context.inPacket().receivedFrom());
+    return p.annotations().value(AnnotationKeys.PORT_NAME);
+}
+#method_after
+private String nasPortId(PacketContext context) {
+    return nasPortId(context.inPacket().receivedFrom());
+}
+#end_block
+
+#method_before
+private String nasPortId(PacketContext context) {
+    Port p = deviceService.getPort(context.inPacket().receivedFrom());
+    return p.annotations().value(AnnotationKeys.PORT_NAME);
+}
+#method_after
+private String nasPortId(ConnectPoint cp) {
+    Port p = deviceService.getPort(cp);
+    return p.annotations().value(AnnotationKeys.PORT_NAME);
+}
+#end_block
+
+#method_before
+private VlanId cTag(PacketContext context) {
+    SubscriberAndDeviceInformation sub = getSubscriber(context);
+    if (sub == null) {
+        log.warn("Subscriber info not found for {}", context.inPacket().receivedFrom());
+        return VlanId.NONE;
+    }
+    return sub.cTag();
+}
+#method_after
+private VlanId cTag(ConnectPoint cp) {
+    String portId = nasPortId(cp);
+    SubscriberAndDeviceInformation sub = subsService.get(portId);
+    if (sub == null) {
+        log.warn("Subscriber info not found for {} looking for C-TAG", cp);
+        return VlanId.NONE;
+    }
+    return sub.cTag();
+}
+#end_block
+
+#method_before
+private VlanId sTag(PacketContext context) {
+    SubscriberAndDeviceInformation sub = getSubscriber(context);
+    if (sub == null) {
+        log.warn("Subscriber info not found for {}", context.inPacket().receivedFrom());
+        return VlanId.NONE;
+    }
+    return sub.sTag();
+}
+#method_after
+private VlanId sTag(ConnectPoint cp) {
+    String portId = nasPortId(cp);
+    SubscriberAndDeviceInformation sub = subsService.get(portId);
+    if (sub == null) {
+        log.warn("Subscriber info not found for {} looking for S-TAG", cp);
+        return VlanId.NONE;
+    }
+    return sub.sTag();
+}
+#end_block
+
+#method_before
+private void forwardPacket(DhcpEthernet packet) {
+    if (dhcpServerConnectPoint != null) {
+        TrafficTreatment t = DefaultTrafficTreatment.builder().setOutput(dhcpServerConnectPoint.port()).build();
+        OutboundPacket o = new DefaultOutboundPacket(dhcpServerConnectPoint.deviceId(), t, ByteBuffer.wrap(packet.serialize()));
+        if (log.isTraceEnabled()) {
+            log.trace("Relaying packet to dhcp server {} at {}", packet, dhcpServerConnectPoint);
+        }
+        packetService.emit(o);
+    } else {
+        log.warn("No dhcp server connect point");
+    }
+}
+#method_after
+private void forwardPacket(DhcpEthernet packet) {
+    if (dhcpServerConnectPoint.get() != null) {
+        TrafficTreatment t = DefaultTrafficTreatment.builder().setOutput(dhcpServerConnectPoint.get().port()).build();
+        OutboundPacket o = new DefaultOutboundPacket(dhcpServerConnectPoint.get().deviceId(), t, ByteBuffer.wrap(packet.serialize()));
+        if (log.isTraceEnabled()) {
+            log.trace("Relaying packet to dhcp server {} at {}", packet, dhcpServerConnectPoint.get());
+        }
+        packetService.emit(o);
+    } else {
+        log.warn("No dhcp server connect point");
+    }
+}
+#end_block
+
+#method_before
+private DhcpEthernet processDhcpPacketFromClient(PacketContext context, DhcpEthernet ethernetPacket) {
+    log.info("Processing packet from client");
+    MacAddress relayAgentMac = relayAgentMacAddress(context);
+    if (relayAgentMac == null) {
+        log.warn("RelayAgent MAC not found ");
+        return null;
+    }
+    DhcpEthernet etherReply = ethernetPacket;
+    IPv4 ipv4Packet = (IPv4) etherReply.getPayload();
+    UDP udpPacket = (UDP) ipv4Packet.getPayload();
+    DHCP dhcpPacket = (DHCP) udpPacket.getPayload();
+    if (option82) {
+        SubscriberAndDeviceInformation entry = getSubscriber(context);
+        if (entry == null) {
+            log.info("Dropping packet as subscriber entry is not available");
+            return null;
+        }
+        DHCP dhcpPacketWithOption82 = addOption82(dhcpPacket, entry);
+        udpPacket.setPayload(dhcpPacketWithOption82);
+    }
+    ipv4Packet.setPayload(udpPacket);
+    etherReply.setPayload(ipv4Packet);
+    etherReply.setSourceMacAddress(relayAgentMac);
+    etherReply.setDestinationMacAddress(dhcpConnectMac);
+    etherReply.setVlanID(cTag(context).toShort());
+    etherReply.setQinQtpid(DhcpEthernet.TYPE_QINQ);
+    etherReply.setQinQVid(sTag(context).toShort());
+    log.info("Finished processing packet");
+    return etherReply;
+}
+#method_after
+private DhcpEthernet processDhcpPacketFromClient(PacketContext context, DhcpEthernet ethernetPacket) {
+    log.info("Processing packet from client");
+    MacAddress relayAgentMac = relayAgentMacAddress(context);
+    if (relayAgentMac == null) {
+        log.warn("RelayAgent MAC not found ");
+        return null;
+    }
+    DhcpEthernet etherReply = ethernetPacket;
+    IPv4 ipv4Packet = (IPv4) etherReply.getPayload();
+    UDP udpPacket = (UDP) ipv4Packet.getPayload();
+    DHCP dhcpPacket = (DHCP) udpPacket.getPayload();
+    if (option82) {
+        SubscriberAndDeviceInformation entry = getSubscriber(context);
+        if (entry == null) {
+            log.info("Dropping packet as subscriber entry is not available");
+            return null;
+        }
+        DHCP dhcpPacketWithOption82 = addOption82(dhcpPacket, entry);
+        udpPacket.setPayload(dhcpPacketWithOption82);
+    }
+    ipv4Packet.setPayload(udpPacket);
+    etherReply.setPayload(ipv4Packet);
+    etherReply.setSourceMacAddress(relayAgentMac);
+    etherReply.setDestinationMacAddress(dhcpConnectMac);
+    etherReply.setPriorityCode(ethernetPacket.getPriorityCode());
+    etherReply.setVlanID(cTag(context).toShort());
+    etherReply.setQinQtpid(DhcpEthernet.TYPE_QINQ);
+    etherReply.setQinQVid(sTag(context).toShort());
+    log.info("Finished processing packet -- sending packet {}", etherReply);
+    return etherReply;
+}
+#end_block
+
+#method_before
+private DhcpEthernet processDhcpPacketFromServer(DhcpEthernet ethernetPacket) {
+    log.info("Processing DHCP packet from server");
+    // get dhcp header.
+    DhcpEthernet etherReply = (DhcpEthernet) ethernetPacket.clone();
+    IPv4 ipv4Packet = (IPv4) etherReply.getPayload();
+    UDP udpPacket = (UDP) ipv4Packet.getPayload();
+    DHCP dhcpPayload = (DHCP) udpPacket.getPayload();
+    MacAddress dstMac = valueOf(dhcpPayload.getClientHardwareAddress());
+    // we leave the srcMac from the original packet
+    etherReply.setDestinationMacAddress(dstMac);
+    etherReply.setQinQVid(Ethernet.VLAN_UNTAGGED);
+    etherReply.setPriorityCode(ethernetPacket.getPriorityCode());
+    etherReply.setVlanID((short) 0);
+    // udpPacket.setDestinationPort(UDP.DHCP_CLIENT_PORT);
+    if (option82) {
+        udpPacket.setPayload(removeOption82(dhcpPayload));
+    } else {
+        udpPacket.setPayload(dhcpPayload);
+    }
+    ipv4Packet.setPayload(udpPacket);
+    etherReply.setPayload(ipv4Packet);
+    log.info("Finished processing packet");
+    return etherReply;
+}
+#method_after
+private DhcpEthernet processDhcpPacketFromServer(DhcpEthernet ethernetPacket) {
+    log.info("Processing DHCP packet from server");
+    // get dhcp header.
+    DhcpEthernet etherReply = (DhcpEthernet) ethernetPacket.clone();
+    IPv4 ipv4Packet = (IPv4) etherReply.getPayload();
+    UDP udpPacket = (UDP) ipv4Packet.getPayload();
+    DHCP dhcpPayload = (DHCP) udpPacket.getPayload();
+    MacAddress dstMac = valueOf(dhcpPayload.getClientHardwareAddress());
+    Set<Host> hosts = hostService.getHostsByMac(dstMac);
+    if (hosts == null || hosts.isEmpty()) {
+        log.warn("Cannot determine host for DHCP client: {}. Aborting " + "relay for dhcp packet from server {}", dstMac, ethernetPacket);
+        return null;
+    } else if (hosts.size() > 1) {
+        // XXX  redo to send reply to all hosts found
+        log.warn("Multiple hosts found for mac:{}. Picking one " + "host out of {}", dstMac, hosts);
+    }
+    Host host = hosts.iterator().next();
+    ConnectPoint subsCp = new ConnectPoint(host.location().deviceId(), host.location().port());
+    // we leave the srcMac from the original packet
+    etherReply.setDestinationMacAddress(dstMac);
+    etherReply.setQinQVid(sTag(subsCp).toShort());
+    etherReply.setPriorityCode(ethernetPacket.getPriorityCode());
+    etherReply.setVlanID((cTag(subsCp).toShort()));
+    if (option82) {
+        udpPacket.setPayload(removeOption82(dhcpPayload));
+    } else {
+        udpPacket.setPayload(dhcpPayload);
+    }
+    ipv4Packet.setPayload(udpPacket);
+    etherReply.setPayload(ipv4Packet);
+    log.info("Finished processing packet");
+    return etherReply;
+}
+#end_block
+
+#method_before
+@Override
+public void event(MastershipEvent event) {
+    if (dhcpServerConnectPoint != null && dhcpServerConnectPoint.deviceId().equals(event.subject())) {
+        log.trace("Mastership Event recevived for {}", event.subject());
+        // mastership of the device for our connect point has changed
+        // reselect
+        selectServerConnectPoint();
+    }
+}
+#method_after
+@Override
+public void event(MastershipEvent event) {
+    if (dhcpServerConnectPoint.get() != null && dhcpServerConnectPoint.get().deviceId().equals(event.subject())) {
+        log.trace("Mastership Event recevived for {}", event.subject());
+        // mastership of the device for our connect point has changed
+        // reselect
+        selectServerConnectPoint();
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void event(DeviceEvent event) {
+    log.trace("Device Event recevived for {} event {}", event.subject(), event.type());
+    if (dhcpServerConnectPoint == null) {
+        switch(event.type()) {
+            case DEVICE_ADDED:
+            case DEVICE_AVAILABILITY_CHANGED:
+                // some device is available check if we can get one
+                selectServerConnectPoint();
+                break;
+            default:
+                break;
+        }
+        return;
+    }
+    if (dhcpServerConnectPoint.deviceId().equals(event.subject().id())) {
+        switch(event.type()) {
+            case DEVICE_AVAILABILITY_CHANGED:
+            case DEVICE_REMOVED:
+            case DEVICE_SUSPENDED:
+                // state of our device has changed, check if we need
+                // to re-select
+                selectServerConnectPoint();
+                break;
+            default:
+                break;
+        }
+    }
+}
+#method_after
+@Override
+public void event(DeviceEvent event) {
+    log.trace("Device Event recevived for {} event {}", event.subject(), event.type());
+    if (dhcpServerConnectPoint.get() == null) {
+        switch(event.type()) {
+            case DEVICE_ADDED:
+            case DEVICE_AVAILABILITY_CHANGED:
+                // some device is available check if we can get one
+                selectServerConnectPoint();
+                break;
+            default:
+                break;
+        }
+        return;
+    }
+    if (dhcpServerConnectPoint.get().deviceId().equals(event.subject().id())) {
+        switch(event.type()) {
+            case DEVICE_AVAILABILITY_CHANGED:
+            case DEVICE_REMOVED:
+            case DEVICE_SUSPENDED:
+                // state of our device has changed, check if we need
+                // to re-select
+                selectServerConnectPoint();
+                break;
+            default:
+                break;
+        }
+    }
+}
+#end_block
+
+#method_before
+private DhcpEthernet construcEthernetPacket(MacAddress srcMac, MacAddress dstMac, String dstIp, byte dhcpReqRsp, MacAddress clientHwAddress, Ip4Address dhcpClientIpAddress) {
+    // Ethernet Frame.
+    DhcpEthernet ethPkt = new DhcpEthernet();
+    ethPkt.setSourceMacAddress(srcMac);
+    ethPkt.setDestinationMacAddress(dstMac);
+    ethPkt.setEtherType(Ethernet.TYPE_IPV4);
+    ethPkt.setVlanID((short) 2);
+    // IP Packet
+    IPv4 ipv4Reply = new IPv4();
+    ipv4Reply.setSourceAddress(0);
+    ipv4Reply.setDestinationAddress(dstIp);
+    ipv4Reply.setTtl((byte) 127);
+    // UDP Datagram.
+    UDP udpReply = new UDP();
+    udpReply.setSourcePort((byte) UDP.DHCP_CLIENT_PORT);
+    udpReply.setDestinationPort((byte) UDP.DHCP_SERVER_PORT);
+    // DHCP Payload.
+    DHCP dhcpReply = new DHCP();
+    dhcpReply.setOpCode(dhcpReqRsp);
+    dhcpReply.setYourIPAddress(dhcpClientIpAddress.toInt());
+    dhcpReply.setServerIPAddress(0);
+    final byte[] serverNameBytes = new byte[64];
+    String result = new String(serverNameBytes, StandardCharsets.US_ASCII).trim();
+    dhcpReply.setServerName(result);
+    final byte[] bootFileBytes = new byte[128];
+    String result1 = new String(bootFileBytes, StandardCharsets.US_ASCII).trim();
+    dhcpReply.setBootFileName(result1);
+    dhcpReply.setTransactionId(TRANSACTION_ID);
+    dhcpReply.setClientHardwareAddress(clientHwAddress.toBytes());
+    dhcpReply.setHardwareType(DHCP.HWTYPE_ETHERNET);
+    dhcpReply.setHardwareAddressLength((byte) 6);
+    udpReply.setPayload(dhcpReply);
+    ipv4Reply.setPayload(udpReply);
+    ethPkt.setPayload(ipv4Reply);
+    return ethPkt;
+}
+#method_after
+private DhcpEthernet construcEthernetPacket(MacAddress srcMac, MacAddress dstMac, String dstIp, byte dhcpReqRsp, MacAddress clientHwAddress, Ip4Address dhcpClientIpAddress) {
+    // Ethernet Frame.
+    DhcpEthernet ethPkt = new DhcpEthernet();
+    ethPkt.setSourceMacAddress(srcMac);
+    ethPkt.setDestinationMacAddress(dstMac);
+    ethPkt.setEtherType(Ethernet.TYPE_IPV4);
+    ethPkt.setVlanID((short) 2);
+    ethPkt.setPriorityCode((byte) 6);
+    // IP Packet
+    IPv4 ipv4Reply = new IPv4();
+    ipv4Reply.setSourceAddress(0);
+    ipv4Reply.setDestinationAddress(dstIp);
+    ipv4Reply.setTtl((byte) 127);
+    // UDP Datagram.
+    UDP udpReply = new UDP();
+    udpReply.setSourcePort((byte) UDP.DHCP_CLIENT_PORT);
+    udpReply.setDestinationPort((byte) UDP.DHCP_SERVER_PORT);
+    // DHCP Payload.
+    DHCP dhcpReply = new DHCP();
+    dhcpReply.setOpCode(dhcpReqRsp);
+    dhcpReply.setYourIPAddress(dhcpClientIpAddress.toInt());
+    dhcpReply.setServerIPAddress(0);
+    final byte[] serverNameBytes = new byte[64];
+    String result = new String(serverNameBytes, StandardCharsets.US_ASCII).trim();
+    dhcpReply.setServerName(result);
+    final byte[] bootFileBytes = new byte[128];
+    String result1 = new String(bootFileBytes, StandardCharsets.US_ASCII).trim();
+    dhcpReply.setBootFileName(result1);
+    dhcpReply.setTransactionId(TRANSACTION_ID);
+    dhcpReply.setClientHardwareAddress(clientHwAddress.toBytes());
+    dhcpReply.setHardwareType(DHCP.HWTYPE_ETHERNET);
+    dhcpReply.setHardwareAddressLength((byte) 6);
+    udpReply.setPayload(dhcpReply);
+    ipv4Reply.setPayload(udpReply);
+    ethPkt.setPayload(ipv4Reply);
+    return ethPkt;
+}
+#end_block
+
+#method_before
+public void compareServerPackets(DhcpEthernet sent, DhcpEthernet relayed) {
+    sent.setDestinationMacAddress(CLIENT_MAC);
+    sent.setQinQVid(Ethernet.VLAN_UNTAGGED);
+    sent.setVlanID((short) 0);
+    /*IPv4 ipv4Packet = (IPv4) sent.getPayload();
+        UDP udpPacket = (UDP) ipv4Packet.getPayload();
+        DHCP dhcpPacket = (DHCP) udpPacket.getPayload();
+
+        List<DHCPOption> options = Lists.newArrayList(dhcpPacket.getOptions());
+        DhcpOption82 option82 = new DhcpOption82();
+        option82.setAgentCircuitId(CLIENT_CIRCUIT_ID);
+
+        DHCPOption option = new DHCPOption()
+                .setCode(DHCP.DHCPOptionCode.OptionCode_CircuitID.getValue())
+                .setData(option82.toByteArray())
+                .setLength(option82.length());
+
+        options.add(options.size() - 1, option);
+        dhcpPacket.setOptions(options);  */
+    final ByteBuffer byteBuffer = ByteBuffer.wrap(sent.serialize());
+    DhcpEthernet expectedPacket = null;
+    try {
+        expectedPacket = DhcpEthernet.deserializer().deserialize(byteBuffer.array(), 0, byteBuffer.array().length);
+    } catch (Exception e) {
+    }
+    assertEquals(expectedPacket, relayed);
+}
+#method_after
+public void compareServerPackets(DhcpEthernet sent, DhcpEthernet relayed) {
+    sent.setDestinationMacAddress(CLIENT_MAC);
+    sent.setQinQVid(CLIENT_S_TAG.toShort());
+    sent.setVlanID(CLIENT_C_TAG.toShort());
+    final ByteBuffer byteBuffer = ByteBuffer.wrap(sent.serialize());
+    DhcpEthernet expectedPacket = null;
+    try {
+        expectedPacket = DhcpEthernet.deserializer().deserialize(byteBuffer.array(), 0, byteBuffer.array().length);
+    } catch (Exception e) {
+    }
+    assertEquals(expectedPacket, relayed);
+}
+#end_block
+
+#method_before
+private void requestDhcpPackets() {
+    if (dhcpServerConnectPoint != null) {
+        TrafficSelector.Builder selectorServer = DefaultTrafficSelector.builder().matchEthType(Ethernet.TYPE_IPV4).matchIPProtocol(IPv4.PROTOCOL_UDP).matchUdpSrc(TpPort.tpPort(UDP.DHCP_SERVER_PORT));
+        packetService.requestPackets(selectorServer.build(), PacketPriority.CONTROL, appId, Optional.ofNullable(dhcpServerConnectPoint.deviceId()));
+        TrafficSelector.Builder selectorClient = DefaultTrafficSelector.builder().matchEthType(Ethernet.TYPE_IPV4).matchIPProtocol(IPv4.PROTOCOL_UDP).matchUdpSrc(TpPort.tpPort(UDP.DHCP_CLIENT_PORT));
+        packetService.requestPackets(selectorClient.build(), PacketPriority.CONTROL, appId, Optional.of(dhcpServerConnectPoint.deviceId()));
+    }
+}
+#method_after
+private void requestDhcpPackets() {
+    if (dhcpServerConnectPoint != null) {
+        TrafficSelector.Builder selectorServer = DefaultTrafficSelector.builder().matchEthType(Ethernet.TYPE_IPV4).matchIPProtocol(IPv4.PROTOCOL_UDP).matchUdpSrc(TpPort.tpPort(UDP.DHCP_SERVER_PORT));
+        packetService.requestPackets(selectorServer.build(), PacketPriority.CONTROL, appId, Optional.of(dhcpServerConnectPoint.deviceId()));
+        TrafficSelector.Builder selectorClient = DefaultTrafficSelector.builder().matchEthType(Ethernet.TYPE_IPV4).matchIPProtocol(IPv4.PROTOCOL_UDP).matchUdpSrc(TpPort.tpPort(UDP.DHCP_CLIENT_PORT));
+        packetService.requestPackets(selectorClient.build(), PacketPriority.CONTROL, appId, Optional.of(dhcpServerConnectPoint.deviceId()));
+    }
+}
+#end_block
+
+#method_before
+private DhcpEthernet processDhcpPacketFromClient(PacketContext context, DhcpEthernet ethernetPacket) {
+    log.info("Processing packet from client");
+    MacAddress relayAgentMac = relayAgentMacAddress(context);
+    if (relayAgentMac == null) {
+        log.warn("RelayAgent MAC not found ");
+        return null;
+    }
+    DhcpEthernet etherReply = ethernetPacket;
+    IPv4 ipv4Packet = (IPv4) etherReply.getPayload();
+    UDP udpPacket = (UDP) ipv4Packet.getPayload();
+    DHCP dhcpPacket = (DHCP) udpPacket.getPayload();
+    if (option82) {
+        SubscriberAndDeviceInformation entry = getSubscriber(context);
+        if (entry == null) {
+            log.info("Dropping packet as subscriber entry is not available");
+            return null;
+        }
+        String option82data = entry.nasId() + " " + entry.nasPortId();
+        DHCP dhcpPacketWithOption82 = addOption82(dhcpPacket, option82data);
+        udpPacket.setPayload(dhcpPacketWithOption82);
+    }
+    ipv4Packet.setPayload(udpPacket);
+    etherReply.setPayload(ipv4Packet);
+    etherReply.setSourceMacAddress(relayAgentMac);
+    etherReply.setDestinationMacAddress(dhcpConnectMac);
+    etherReply.setVlanID(cTag(context).toShort());
+    etherReply.setQinQtpid(DhcpEthernet.TYPE_QINQ);
+    etherReply.setQinQVid(sTag(context).toShort());
+    log.info("Finished processing packet");
+    return etherReply;
+}
+#method_after
+private DhcpEthernet processDhcpPacketFromClient(PacketContext context, DhcpEthernet ethernetPacket) {
+    log.info("Processing packet from client");
+    MacAddress relayAgentMac = relayAgentMacAddress(context);
+    if (relayAgentMac == null) {
+        log.warn("RelayAgent MAC not found ");
+        return null;
+    }
+    DhcpEthernet etherReply = ethernetPacket;
+    IPv4 ipv4Packet = (IPv4) etherReply.getPayload();
+    UDP udpPacket = (UDP) ipv4Packet.getPayload();
+    DHCP dhcpPacket = (DHCP) udpPacket.getPayload();
+    if (option82) {
+        SubscriberAndDeviceInformation entry = getSubscriber(context);
+        if (entry == null) {
+            log.info("Dropping packet as subscriber entry is not available");
+            return null;
+        }
+        DHCP dhcpPacketWithOption82 = addOption82(dhcpPacket, entry);
+        udpPacket.setPayload(dhcpPacketWithOption82);
+    }
+    ipv4Packet.setPayload(udpPacket);
+    etherReply.setPayload(ipv4Packet);
+    etherReply.setSourceMacAddress(relayAgentMac);
+    etherReply.setDestinationMacAddress(dhcpConnectMac);
+    etherReply.setVlanID(cTag(context).toShort());
+    etherReply.setQinQtpid(DhcpEthernet.TYPE_QINQ);
+    etherReply.setQinQVid(sTag(context).toShort());
+    log.info("Finished processing packet");
+    return etherReply;
+}
+#end_block
+
+#method_before
+private DHCP addOption82(DHCP dhcpPacket, String option82data) {
+    log.debug("option82data {} ", option82data);
+    List<DHCPOption> options = Lists.newArrayList(dhcpPacket.getOptions());
+    DhcpOption82 option82 = new DhcpOption82();
+    option82.setAgentCircuitId(option82data);
+    DHCPOption option = new DHCPOption().setCode(DHCP.DHCPOptionCode.OptionCode_CircuitID.getValue()).setData(option82.toByteArray()).setLength(option82.length());
+    options.add(options.size() - 1, option);
+    dhcpPacket.setOptions(options);
+    return dhcpPacket;
+}
+#method_after
+private DHCP addOption82(DHCP dhcpPacket, SubscriberAndDeviceInformation entry) {
+    log.debug("option82data {} ", entry);
+    List<DHCPOption> options = Lists.newArrayList(dhcpPacket.getOptions());
+    DhcpOption82 option82 = new DhcpOption82();
+    option82.setAgentCircuitId(entry.circuitId());
+    option82.setAgentRemoteId(entry.remoteId());
+    DHCPOption option = new DHCPOption().setCode(DHCP.DHCPOptionCode.OptionCode_CircuitID.getValue()).setData(option82.toByteArray()).setLength(option82.length());
+    options.add(options.size() - 1, option);
+    dhcpPacket.setOptions(options);
+    return dhcpPacket;
+}
+#end_block
+
+#method_before
+@Activate
+public void activate() {
+    netCfgService.registerConfigFactory(factory);
+    appId = coreService.registerApplication(APP_NAME);
+    cfgListener.reconfigureNetwork(netCfgService.getConfig(appId, AaaConfig.class));
+    // register our event handler
+    packetService.addProcessor(processor, PacketProcessor.director(2));
+    if (useSocket) {
+        impl = new SocketBasedRadiusCommunication();
+    } else {
+        impl = new PortBasedRadiusCommunication();
+    }
+    requestIntercepts();
+    StateMachine.initializeMaps();
+    StateMachine.setAccessDeviceService(accessDeviceService);
+    customInfo = new CustomizationInfo(subsService, deviceService);
+    if (pktCustomizerClassName == null) {
+        pktCustomizer = new PacketCustomizer(customInfo);
+    } else {
+        try {
+            Class c = Class.forName(APP_NAME + "." + pktCustomizerClassName);
+            Constructor constructor = c.getConstructor(new Class[] { CustomizationInfo.class });
+            pktCustomizer = (PacketCustomizer) constructor.newInstance(new Object[] { customInfo });
+            log.info("Set Packet customizer {}", APP_NAME + "." + pktCustomizerClassName);
+        } catch (Exception e) {
+            log.error("AaaManager: {}.{} not found. Using Default", APP_NAME, pktCustomizerClassName);
+            log.error("AaaManager: {}", e);
+            pktCustomizer = new PacketCustomizer(customInfo);
+        }
+    }
+    initializeLocalState();
+    netCfgService.addListener(cfgListener);
+    log.info("Started");
+}
+#method_after
+@Activate
+public void activate() {
+    netCfgService.registerConfigFactory(factory);
+    appId = coreService.registerApplication(APP_NAME);
+    cfgListener.reconfigureNetwork(netCfgService.getConfig(appId, AaaConfig.class));
+    // register our event handler
+    packetService.addProcessor(processor, PacketProcessor.director(2));
+    customInfo = new CustomizationInfo(subsService, deviceService);
+    switch(customizer.toLowerCase()) {
+        case "sample":
+            pktCustomizer = new SamplePacketCustomizer(customInfo);
+            log.info("Created SamplePacketCustomizer");
+            break;
+        default:
+            pktCustomizer = new PacketCustomizer(customInfo);
+            log.info("Created default PacketCustomizer");
+            break;
+    }
+    if (radiusConnectionType.toLowerCase().equals("socket")) {
+        impl = new SocketBasedRadiusCommunicator(appId, packetService, this);
+    } else {
+        impl = new PortBasedRadiusCommunicator(appId, packetService, mastershipService, deviceService, subsService, pktCustomizer, this);
+    }
+    StateMachine.initializeMaps();
+    StateMachine.setAccessDeviceService(accessDeviceService);
+    impl.initializeLocalState(newCfg);
+    netCfgService.addListener(cfgListener);
+    impl.requestIntercepts();
+    log.info("Started");
+}
+#end_block
+
+#method_before
+@Deactivate
+public void deactivate() {
+    withdrawIntercepts();
+    // de-register and null our handler
+    packetService.removeProcessor(processor);
+    processor = null;
+    StateMachine.destroyMaps();
+    impl.deactivate();
+    log.info("Stopped");
+}
+#method_after
+@Deactivate
+public void deactivate() {
+    impl.withdrawIntercepts();
+    // de-register and null our handler
+    packetService.removeProcessor(processor);
+    processor = null;
+    StateMachine.destroyMaps();
+    impl.deactivate();
+    log.info("Stopped");
+}
+#end_block
+
+#method_before
+protected void handleRadiusPacket(RADIUS radiusPacket) throws StateMachineException {
+    StateMachine stateMachine = StateMachine.lookupStateMachineById(radiusPacket.getIdentifier());
+    if (stateMachine == null) {
+        log.error("Invalid session identifier {}, exiting...", radiusPacket.getIdentifier());
+        return;
+    }
+    EAP eapPayload;
+    Ethernet eth;
+    switch(radiusPacket.getCode()) {
+        case RADIUS.RADIUS_CODE_ACCESS_CHALLENGE:
+            RADIUSAttribute radiusAttrState = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_STATE);
+            byte[] challengeState = null;
+            if (radiusAttrState != null) {
+                challengeState = radiusAttrState.getValue();
+            }
+            eapPayload = radiusPacket.decapsulateMessage();
+            stateMachine.setChallengeInfo(eapPayload.getIdentifier(), challengeState);
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            break;
+        case RADIUS.RADIUS_CODE_ACCESS_ACCEPT:
+            // send an EAPOL - Success to the supplicant.
+            byte[] eapMessageSuccess = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_EAP_MESSAGE).getValue();
+            eapPayload = new EAP();
+            eapPayload = (EAP) eapPayload.deserialize(eapMessageSuccess, 0, eapMessageSuccess.length);
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            stateMachine.authorizeAccess();
+            break;
+        case RADIUS.RADIUS_CODE_ACCESS_REJECT:
+            // send an EAPOL - Failure to the supplicant.
+            byte[] eapMessageFailure;
+            eapPayload = new EAP();
+            RADIUSAttribute radiusAttrEap = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_EAP_MESSAGE);
+            if (radiusAttrEap == null) {
+                eapPayload.setCode(EAP.FAILURE);
+                eapPayload.setIdentifier(stateMachine.challengeIdentifier());
+                eapPayload.setLength(EAP.EAP_HDR_LEN_SUC_FAIL);
+            } else {
+                eapMessageFailure = radiusAttrEap.getValue();
+                eapPayload = (EAP) eapPayload.deserialize(eapMessageFailure, 0, eapMessageFailure.length);
+            }
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            stateMachine.denyAccess();
+            break;
+        default:
+            log.warn("Unknown RADIUS message received with code: {}", radiusPacket.getCode());
+    }
+}
+#method_after
+public void handleRadiusPacket(RADIUS radiusPacket) throws StateMachineException {
+    StateMachine stateMachine = StateMachine.lookupStateMachineById(radiusPacket.getIdentifier());
+    if (stateMachine == null) {
+        log.error("Invalid session identifier {}, exiting...", radiusPacket.getIdentifier());
+        return;
+    }
+    EAP eapPayload;
+    Ethernet eth;
+    switch(radiusPacket.getCode()) {
+        case RADIUS.RADIUS_CODE_ACCESS_CHALLENGE:
+            RADIUSAttribute radiusAttrState = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_STATE);
+            byte[] challengeState = null;
+            if (radiusAttrState != null) {
+                challengeState = radiusAttrState.getValue();
+            }
+            eapPayload = radiusPacket.decapsulateMessage();
+            stateMachine.setChallengeInfo(eapPayload.getIdentifier(), challengeState);
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            break;
+        case RADIUS.RADIUS_CODE_ACCESS_ACCEPT:
+            // send an EAPOL - Success to the supplicant.
+            byte[] eapMessageSuccess = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_EAP_MESSAGE).getValue();
+            eapPayload = new EAP();
+            eapPayload = (EAP) eapPayload.deserialize(eapMessageSuccess, 0, eapMessageSuccess.length);
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            stateMachine.authorizeAccess();
+            break;
+        case RADIUS.RADIUS_CODE_ACCESS_REJECT:
+            // send an EAPOL - Failure to the supplicant.
+            byte[] eapMessageFailure;
+            eapPayload = new EAP();
+            RADIUSAttribute radiusAttrEap = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_EAP_MESSAGE);
+            if (radiusAttrEap == null) {
+                eapPayload.setCode(EAP.FAILURE);
+                eapPayload.setIdentifier(stateMachine.challengeIdentifier());
+                eapPayload.setLength(EAP.EAP_HDR_LEN_SUC_FAIL);
+            } else {
+                eapMessageFailure = radiusAttrEap.getValue();
+                eapPayload = (EAP) eapPayload.deserialize(eapMessageFailure, 0, eapMessageFailure.length);
+            }
+            eth = buildEapolResponse(stateMachine.supplicantAddress(), MacAddress.valueOf(nasMacAddress), stateMachine.vlanId(), EAPOL.EAPOL_PACKET, eapPayload, stateMachine.priorityCode());
+            sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
+            stateMachine.denyAccess();
+            break;
+        default:
+            log.warn("Unknown RADIUS message received with code: {}", radiusPacket.getCode());
+    }
+}
+#end_block
+
+#method_before
+private void reconfigureNetwork(AaaConfig cfg) {
+    AaaConfig newCfg;
+    if (cfg == null) {
+        newCfg = new AaaConfig();
+    } else {
+        newCfg = cfg;
+    }
+    if (newCfg.nasIp() != null) {
+        nasIpAddress = newCfg.nasIp();
+    }
+    if (newCfg.radiusIp() != null) {
+        radiusIpAddress = newCfg.radiusIp();
+    }
+    if (newCfg.radiusMac() != null) {
+        radiusMacAddress = newCfg.radiusMac();
+    }
+    if (newCfg.nasMac() != null) {
+        nasMacAddress = newCfg.nasMac();
+    }
+    if (newCfg.radiusSecret() != null) {
+        radiusSecret = newCfg.radiusSecret();
+    }
+    radiusServerPort = newCfg.radiusServerUdpPort();
+    radiusVlanID = newCfg.radiusServerVlanId();
+    radiusPBit = newCfg.radiusServerPBit();
+    useSocket = newCfg.radiusUseSocket();
+    radiusConnectPoints = newCfg.radiusServerConnectPoints();
+    pktCustomizerClassName = newCfg.radiusPktCustomizerClassName();
+    if (impl != null) {
+        impl.clearLocalState();
+        initializeLocalState();
+    }
+}
+#method_after
+private void reconfigureNetwork(AaaConfig cfg) {
+    if (cfg == null) {
+        newCfg = new AaaConfig();
+    } else {
+        newCfg = cfg;
+    }
+    if (newCfg.nasIp() != null) {
+        nasIpAddress = newCfg.nasIp();
+    }
+    if (newCfg.radiusIp() != null) {
+        radiusIpAddress = newCfg.radiusIp();
+    }
+    if (newCfg.radiusMac() != null) {
+        radiusMacAddress = newCfg.radiusMac();
+    }
+    if (newCfg.nasMac() != null) {
+        nasMacAddress = newCfg.nasMac();
+    }
+    if (newCfg.radiusSecret() != null) {
+        radiusSecret = newCfg.radiusSecret();
+    }
+    radiusConnectionType = newCfg.radiusConnectionType();
+    customizer = newCfg.radiusPktCustomizer();
+    if (impl != null) {
+        impl.clearLocalState();
+        impl.initializeLocalState(newCfg);
+    }
+}
+#end_block
+
+#method_before
+@DELETE
+@Path("/subscriber/{id}")
+public Response deleteSubscriber(@PathParam("id") String id) {
+    service.invalidateId(id);
+    return Response.noContent().build();
+}
+#method_after
+@DELETE
+@Path("/cache/subscriber/{id}")
+public Response deleteSubscriber(@PathParam("id") String id) {
+    service.invalidateId(id);
+    return Response.noContent().build();
+}
+#end_block
+
+#method_before
+@DELETE
+@Path("/subscriber/")
+public Response deleteAllSubscribers() {
+    service.invalidateAll();
+    return Response.noContent().build();
+}
+#method_after
+@DELETE
+@Path("/cache/subscriber/")
+public Response deleteAllSubscribers() {
+    service.invalidateAll();
+    return Response.noContent().build();
+}
+#end_block
+
+#method_before
+@Override
+public SubscriberAndDeviceInformation get(String id) {
+    Cache<String, SubscriberAndDeviceInformation> local;
+    synchronized (this) {
+        local = cache;
+    }
+    SubscriberAndDeviceInformation info = local.getIfPresent(id);
+    if (info != null) {
+        return info;
+    }
+    /*
+         * Not in cache, if we have a URL configured we can attempt to get it
+         * from there, else check for it in the locally configured data
+         */
+    if (this.url == null) {
+        info = localCfgData.get(id);
+        if (info != null) {
+            local.put(id, info);
+            return info;
+        }
+    } else {
+        // Augment URL with query parameters
+        StringBuilder buf = new StringBuilder(this.url);
+        if (buf.charAt(buf.length() - 1) != '/') {
+            buf.append('/');
+        }
+        buf.append(id);
+        try (InputStream io = new URL(buf.toString()).openStream()) {
+            info = mapper.readValue(io, SubscriberAndDeviceInformation.class);
+            local.put(id, info);
+            return info;
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            log.warn("Exception while reading remote data " + e.getMessage());
+        }
+    }
+    log.error("Data not found for id {}", id);
+    return null;
+}
+#method_after
+@Override
+public SubscriberAndDeviceInformation get(String id) {
+    Cache<String, SubscriberAndDeviceInformation> local;
+    synchronized (this) {
+        local = cache;
+    }
+    SubscriberAndDeviceInformation info = local.getIfPresent(id);
+    if (info != null) {
+        return info;
+    }
+    /*
+         * Not in cache, if we have a URL configured we can attempt to get it
+         * from there, else check for it in the locally configured data
+         */
+    if (this.url == null) {
+        info = (localCfgData == null) ? null : localCfgData.get(id);
+        if (info != null) {
+            local.put(id, info);
+            return info;
+        }
+    } else {
+        // Augment URL with query parameters
+        StringBuilder buf = new StringBuilder(this.url);
+        if (buf.charAt(buf.length() - 1) != '/') {
+            buf.append('/');
+        }
+        buf.append(id);
+        try (InputStream io = new URL(buf.toString()).openStream()) {
+            info = mapper.readValue(io, SubscriberAndDeviceInformation.class);
+            local.put(id, info);
+            return info;
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            log.warn("Exception while reading remote data " + e.getMessage());
+        }
+    }
+    log.error("Data not found for id {}", id);
+    return null;
+}
+#end_block
+
+#method_before
+private void requestDhcpPackets() {
+    TrafficSelector.Builder selectorServer = DefaultTrafficSelector.builder().matchEthType(Ethernet.TYPE_IPV4).matchIPProtocol(IPv4.PROTOCOL_UDP).matchUdpSrc(TpPort.tpPort(UDP.DHCP_SERVER_PORT));
+    packetService.requestPackets(selectorServer.build(), PacketPriority.CONTROL, appId, Optional.of(dhcpServerConnectPoint.deviceId()));
+    TrafficSelector.Builder selectorClient = DefaultTrafficSelector.builder().matchEthType(Ethernet.TYPE_IPV4).matchIPProtocol(IPv4.PROTOCOL_UDP).matchUdpSrc(TpPort.tpPort(UDP.DHCP_CLIENT_PORT));
+    packetService.requestPackets(selectorClient.build(), PacketPriority.CONTROL, appId, Optional.of(dhcpServerConnectPoint.deviceId()));
+}
+#method_after
+private void requestDhcpPackets() {
+    if (dhcpServerConnectPoint != null) {
+        TrafficSelector.Builder selectorServer = DefaultTrafficSelector.builder().matchEthType(Ethernet.TYPE_IPV4).matchIPProtocol(IPv4.PROTOCOL_UDP).matchUdpSrc(TpPort.tpPort(UDP.DHCP_SERVER_PORT));
+        packetService.requestPackets(selectorServer.build(), PacketPriority.CONTROL, appId, Optional.of(dhcpServerConnectPoint.deviceId()));
+        TrafficSelector.Builder selectorClient = DefaultTrafficSelector.builder().matchEthType(Ethernet.TYPE_IPV4).matchIPProtocol(IPv4.PROTOCOL_UDP).matchUdpSrc(TpPort.tpPort(UDP.DHCP_CLIENT_PORT));
+        packetService.requestPackets(selectorClient.build(), PacketPriority.CONTROL, appId, Optional.of(dhcpServerConnectPoint.deviceId()));
+    }
+}
+#end_block
+
+#method_before
+private void cancelDhcpPackets() {
+    TrafficSelector.Builder selectorServer = DefaultTrafficSelector.builder().matchEthType(Ethernet.TYPE_IPV4).matchIPProtocol(IPv4.PROTOCOL_UDP).matchUdpSrc(TpPort.tpPort(UDP.DHCP_SERVER_PORT));
+    packetService.cancelPackets(selectorServer.build(), PacketPriority.CONTROL, appId, Optional.of(dhcpServerConnectPoint.deviceId()));
+    TrafficSelector.Builder selectorClient = DefaultTrafficSelector.builder().matchEthType(Ethernet.TYPE_IPV4).matchIPProtocol(IPv4.PROTOCOL_UDP).matchUdpSrc(TpPort.tpPort(UDP.DHCP_CLIENT_PORT));
+    packetService.cancelPackets(selectorClient.build(), PacketPriority.CONTROL, appId, Optional.of(dhcpServerConnectPoint.deviceId()));
+}
+#method_after
+private void cancelDhcpPackets() {
+    if (dhcpServerConnectPoint != null) {
+        TrafficSelector.Builder selectorServer = DefaultTrafficSelector.builder().matchEthType(Ethernet.TYPE_IPV4).matchIPProtocol(IPv4.PROTOCOL_UDP).matchUdpSrc(TpPort.tpPort(UDP.DHCP_SERVER_PORT));
+        packetService.cancelPackets(selectorServer.build(), PacketPriority.CONTROL, appId, Optional.of(dhcpServerConnectPoint.deviceId()));
+        TrafficSelector.Builder selectorClient = DefaultTrafficSelector.builder().matchEthType(Ethernet.TYPE_IPV4).matchIPProtocol(IPv4.PROTOCOL_UDP).matchUdpSrc(TpPort.tpPort(UDP.DHCP_CLIENT_PORT));
+        packetService.cancelPackets(selectorClient.build(), PacketPriority.CONTROL, appId, Optional.of(dhcpServerConnectPoint.deviceId()));
+    }
+}
+#end_block
+
+#method_before
+private void processDhcpPacket(PacketContext context, Ethernet packet, DHCP dhcpPayload) {
+    if (dhcpPayload == null) {
+        log.warn("DHCP payload is null");
+        return;
+    }
+    DHCPPacketType incomingPacketType = null;
+    for (DHCPOption option : dhcpPayload.getOptions()) {
+        if (option.getCode() == OptionCode_MessageType.getValue()) {
+            byte[] data = option.getData();
+            incomingPacketType = DHCPPacketType.getType(data[0]);
+        }
+    }
+    log.info("Received DHCP Packet of type {}", incomingPacketType);
+    switch(incomingPacketType) {
+        case DHCPDISCOVER:
+            Ethernet ethernetPacketDiscover = processDhcpPacketFromClient(context, packet);
+            if (ethernetPacketDiscover != null) {
+                forwardPacket(ethernetPacketDiscover);
+            }
+            break;
+        case DHCPOFFER:
+            // reply to dhcp client.
+            Ethernet ethernetPacketOffer = processDhcpPacketFromServer(packet);
+            if (ethernetPacketOffer != null) {
+                sendReply(ethernetPacketOffer, dhcpPayload);
+            }
+            break;
+        case DHCPREQUEST:
+            Ethernet ethernetPacketRequest = processDhcpPacketFromClient(context, packet);
+            if (ethernetPacketRequest != null) {
+                forwardPacket(ethernetPacketRequest);
+            }
+            break;
+        case DHCPACK:
+            // reply to dhcp client.
+            Ethernet ethernetPacketAck = processDhcpPacketFromServer(packet);
+            if (ethernetPacketAck != null) {
+                sendReply(ethernetPacketAck, dhcpPayload);
+            }
+            break;
+        default:
+            break;
+    }
+}
+#method_after
+private void processDhcpPacket(PacketContext context, Ethernet packet, DHCP dhcpPayload) {
+    if (dhcpPayload == null) {
+        log.warn("DHCP payload is null");
+        return;
+    }
+    DHCPPacketType incomingPacketType = null;
+    for (DHCPOption option : dhcpPayload.getOptions()) {
+        if (option.getCode() == OptionCode_MessageType.getValue()) {
+            byte[] data = option.getData();
+            incomingPacketType = DHCPPacketType.getType(data[0]);
+        }
+    }
+    log.info("Received DHCP Packet of type {}", incomingPacketType);
+    log.trace("Processing Packet {}", packet);
+    switch(incomingPacketType) {
+        case DHCPDISCOVER:
+            Ethernet ethernetPacketDiscover = processDhcpPacketFromClient(context, packet);
+            if (ethernetPacketDiscover != null) {
+                forwardPacket(ethernetPacketDiscover);
+            }
+            break;
+        case DHCPOFFER:
+            // reply to dhcp client.
+            Ethernet ethernetPacketOffer = processDhcpPacketFromServer(packet);
+            if (ethernetPacketOffer != null) {
+                sendReply(ethernetPacketOffer, dhcpPayload);
+            }
+            break;
+        case DHCPREQUEST:
+            Ethernet ethernetPacketRequest = processDhcpPacketFromClient(context, packet);
+            if (ethernetPacketRequest != null) {
+                forwardPacket(ethernetPacketRequest);
+            }
+            break;
+        case DHCPACK:
+            // reply to dhcp client.
+            Ethernet ethernetPacketAck = processDhcpPacketFromServer(packet);
+            if (ethernetPacketAck != null) {
+                sendReply(ethernetPacketAck, dhcpPayload);
+            }
+            break;
+        default:
+            break;
+    }
+}
+#end_block
+
+#method_before
+private void updateConfig() {
+    final SadisConfig cfg = this.cfgService.getConfig(this.appId, SadisConfig.class);
+    if (cfg == null) {
+        this.log.warn("Subscriber And Device Information Service (SADIS) configuration not available");
+        return;
+    }
+    this.log.info("Cache Enabled:  {}", cfg.getCacheEnabled());
+    this.log.info("Cache Mac Size: {}", cfg.getCacheMaxSize());
+    this.log.info("Cache TTL:      {}", cfg.getCacheTtl().getSeconds());
+    this.log.info("Entries:        {}", cfg.getEntries());
+    // if the url is not present then assume data is in netcfg
+    try {
+        if (cfg.getUrl() == null) {
+            configure(cfg);
+        } else {
+            configure(cfg.getUrl().toString(), cfg.getCacheMaxSize(), cfg.getCacheTtl().getSeconds());
+        }
+    } catch (MalformedURLException mUrlEx) {
+        this.log.error("Invalid URL specified: {}", mUrlEx);
+    }
+}
+#method_after
+private void updateConfig() {
+    final SadisConfig cfg = this.cfgService.getConfig(this.appId, SadisConfig.class);
+    if (cfg == null) {
+        this.log.warn("Subscriber And Device Information Service (SADIS) configuration not available");
+        return;
+    }
+    this.log.info("Cache Enabled:  {}", cfg.getCacheEnabled());
+    this.log.info("Cache Mac Size: {}", cfg.getCacheMaxSize());
+    this.log.info("Cache TTL:      {}", cfg.getCacheTtl().getSeconds());
+    this.log.info("Entries:        {}", cfg.getEntries());
+    configure(cfg);
+}
+#end_block
+
+#method_before
+public void configure(SadisConfig cfg) {
+    if (data == null) {
+        data = new LocallyConfiguredData();
+    }
+    if (data instanceof LocallyConfiguredData) {
+        data.configure(cfg);
+    }
+}
+#method_after
+public void configure(SadisConfig cfg) {
+    String url = null;
+    try {
+        // if the url is not present then assume data is in netcfg
+        if (cfg.getUrl() != null) {
+            url = cfg.getUrl().toString();
+        } else {
+            localCfgData = Maps.newConcurrentMap();
+            cfg.getEntries().forEach(entry -> {
+                localCfgData.put(entry.id(), entry);
+            });
+            log.info("url is null, data source is local netcfg data");
+        }
+    } catch (MalformedURLException mUrlEx) {
+        log.error("Invalid URL specified: {}", mUrlEx);
+    }
+    int maximumCacheSeize = cfg.getCacheMaxSize();
+    long cacheEntryTtl = cfg.getCacheTtl().getSeconds();
+    // Rebuild cache if needed
+    if ((url != null && url != this.url) || maximumCacheSeize != this.maxiumCacheSize || cacheEntryTtl != this.cacheEntryTtl) {
+        this.maxiumCacheSize = maximumCacheSeize;
+        this.cacheEntryTtl = cacheEntryTtl;
+        this.url = url;
+        Cache<String, SubscriberAndDeviceInformation> newCache = CacheBuilder.newBuilder().maximumSize(maxiumCacheSize).expireAfterAccess(cacheEntryTtl, TimeUnit.SECONDS).build();
+        Cache<String, SubscriberAndDeviceInformation> oldCache = cache;
+        synchronized (this) {
+            cache = newCache;
+        }
+        oldCache.invalidateAll();
+        oldCache.cleanUp();
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void invalidateAll() {
+    if (data != null && data instanceof RemoteCachedData) {
+        data.invalidateAll();
+    }
+}
+#method_after
+@Override
+public void invalidateAll() {
+    cache.invalidateAll();
+}
+#end_block
+
+#method_before
+@Override
+public SubscriberAndDeviceInformation get(String id) {
+    return data.get(id);
+}
+#method_after
+@Override
+public SubscriberAndDeviceInformation get(String id) {
+    Cache<String, SubscriberAndDeviceInformation> local;
+    synchronized (this) {
+        local = cache;
+    }
+    SubscriberAndDeviceInformation info = local.getIfPresent(id);
+    if (info != null) {
+        return info;
+    }
+    /*
+         * Not in cache, if we have a URL configured we can attempt to get it
+         * from there, else check for it in the locally configured data
+         */
+    if (this.url == null) {
+        info = localCfgData.get(id);
+        if (info != null) {
+            local.put(id, info);
+            return info;
+        }
+    } else {
+        // Augment URL with query parameters
+        StringBuilder buf = new StringBuilder(this.url);
+        if (buf.charAt(buf.length() - 1) != '/') {
+            buf.append('/');
+        }
+        buf.append(id);
+        try (InputStream io = new URL(buf.toString()).openStream()) {
+            ObjectMapper mapper = new ObjectMapper();
+            info = mapper.readValue(io, SubscriberAndDeviceInformation.class);
+            local.put(id, info);
+            return info;
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+    log.error("Data not found for id {}", id);
+    return null;
+}
+#end_block
+
+#method_before
+public short getvlan() {
+    return vlan;
+}
+#method_after
+public VlanId getvlan() {
+    return vlan;
+}
+#end_block
+
+#method_before
+public void updateList(byte recordType, ArrayList<Ip4Address> newSourceList) {
+    this.recordType = recordType;
+    this.sourceList.addAll(newSourceList);
+    /*TODO : support SSM
+        if (this.recordType == IGMPMembership.MODE_IS_INCLUDE) {
+            switch (recordType) {
+                case IGMPMembership.MODE_IS_INCLUDE:
+                case IGMPMembership.CHANGE_TO_INCLUDE_MODE:
+                    //however , set to include<B> anyway
+                    this.sourceList = sourceList;
+                    this.recordType = IGMPMembership.MODE_IS_INCLUDE;
+                    break;
+                case IGMPMembership.MODE_IS_EXCLUDE:
+                case IGMPMembership.CHANGE_TO_EXCLUDE_MODE:
+                    //set to exclude<B>
+                    this.sourceList = sourceList;
+                    this.recordType = IGMPMembership.MODE_IS_EXCLUDE;
+                    break;
+                case IGMPMembership.ALLOW_NEW_SOURCES:
+                    //set to include <A+B>
+                    join(this.sourceList, sourceList);
+                    break;
+                case IGMPMembership.BLOCK_OLD_SOURCES:
+                    //set to include <A-B>
+                    exclude(this.sourceList, sourceList);
+                    break;
+                default:
+                    break;
+            }
+        } else if (this.recordType == IGMPMembership.MODE_IS_EXCLUDE) {
+            switch (recordType) {
+                case IGMPMembership.MODE_IS_INCLUDE:
+                case IGMPMembership.CHANGE_TO_INCLUDE_MODE:
+                    //set to include<B>
+                    this.recordType = IGMPMembership.MODE_IS_INCLUDE;
+                    this.sourceList = sourceList;
+                    break;
+                case IGMPMembership.MODE_IS_EXCLUDE:
+                case IGMPMembership.CHANGE_TO_EXCLUDE_MODE:
+                    this.sourceList = sourceList;
+                    this.recordType = IGMPMembership.MODE_IS_EXCLUDE;
+                    break;
+                case IGMPMembership.ALLOW_NEW_SOURCES:
+                    //set to exclude <A-B>
+                    exclude(this.sourceList, sourceList);
+                    break;
+                case IGMPMembership.BLOCK_OLD_SOURCES:
+                    //set to exclude <A+B>
+                    join(this.sourceList, sourceList);
+                    break;
+                default:
+                    break;
+            }
+        }
+        */
+    return;
+}
+#method_after
+public void updateList(byte recordType, ArrayList<Ip4Address> newSourceList) {
+    this.recordType = recordType;
+    this.sourceList.clear();
+    this.sourceList.addAll(newSourceList);
+    return;
+}
+#end_block
+
+#method_before
+public Ethernet buildIgmpV3Join(Ip4Address groupIp, Ip4Address sourceIp) {
+    IGMPMembership igmpMembership = new IGMPMembership(groupIp);
+    igmpMembership.setRecordType(IGMPMembership.CHANGE_TO_EXCLUDE_MODE);
+    return buildIgmpPacket(IGMP.TYPE_IGMPV3_MEMBERSHIP_REPORT, groupIp, igmpMembership, sourceIp, true);
+}
+#method_after
+public Ethernet buildIgmpV3Join(Ip4Address groupIp, Ip4Address sourceIp) {
+    IGMPMembership igmpMembership = new IGMPMembership(groupIp);
+    igmpMembership.setRecordType(IGMPMembership.CHANGE_TO_EXCLUDE_MODE);
+    return buildIgmpPacket(IGMP.TYPE_IGMPV3_MEMBERSHIP_REPORT, groupIp, igmpMembership, sourceIp, false);
+}
+#end_block
+
+#method_before
+public Ethernet buildIgmpV3ResponseQuery(Ip4Address groupIp, Ip4Address sourceIp) {
+    IGMPMembership igmpMembership = new IGMPMembership(groupIp);
+    igmpMembership.setRecordType(IGMPMembership.MODE_IS_EXCLUDE);
+    return buildIgmpPacket(IGMP.TYPE_IGMPV3_MEMBERSHIP_REPORT, groupIp, igmpMembership, sourceIp, true);
+}
+#method_after
+public Ethernet buildIgmpV3ResponseQuery(Ip4Address groupIp, Ip4Address sourceIp) {
+    IGMPMembership igmpMembership = new IGMPMembership(groupIp);
+    igmpMembership.setRecordType(IGMPMembership.MODE_IS_EXCLUDE);
+    return buildIgmpPacket(IGMP.TYPE_IGMPV3_MEMBERSHIP_REPORT, groupIp, igmpMembership, sourceIp, false);
+}
+#end_block
+
+#method_before
+public Ethernet buildIgmpV3Leave(Ip4Address groupIp, Ip4Address sourceIp) {
+    IGMPMembership igmpMembership = new IGMPMembership(groupIp);
+    igmpMembership.setRecordType(IGMPMembership.CHANGE_TO_INCLUDE_MODE);
+    return buildIgmpPacket(IGMP.TYPE_IGMPV3_MEMBERSHIP_REPORT, groupIp, igmpMembership, sourceIp, true);
+}
+#method_after
+public Ethernet buildIgmpV3Leave(Ip4Address groupIp, Ip4Address sourceIp) {
+    IGMPMembership igmpMembership = new IGMPMembership(groupIp);
+    igmpMembership.setRecordType(IGMPMembership.CHANGE_TO_INCLUDE_MODE);
+    return buildIgmpPacket(IGMP.TYPE_IGMPV3_MEMBERSHIP_REPORT, groupIp, igmpMembership, sourceIp, false);
+}
+#end_block
+
+#method_before
+public void sendIgmpPacketUplink(Ethernet ethPkt, DeviceId deviceId) {
+    if (!mastershipService.isLocalMaster(deviceId)) {
+        return;
+    }
+    PortNumber upLink = IgmpManager.getDeviceUplink(deviceId);
+    TrafficTreatment treatment = DefaultTrafficTreatment.builder().setOutput(upLink).build();
+    OutboundPacket packet = new DefaultOutboundPacket(deviceId, treatment, ByteBuffer.wrap(ethPkt.serialize()));
+    packetService.emit(packet);
+}
+#method_after
+public void sendIgmpPacketUplink(Ethernet ethPkt, DeviceId deviceId) {
+    if (!mastershipService.isLocalMaster(deviceId)) {
+        return;
+    }
+    if (IgmpManager.connectPointMode) {
+        sendIgmpPacket(ethPkt, IgmpManager.connectPoint.deviceId(), IgmpManager.connectPoint.port());
+    } else {
+        PortNumber upLink = IgmpManager.getDeviceUplink(deviceId);
+        sendIgmpPacket(ethPkt, deviceId, upLink);
+    }
+}
+#end_block
+
+#method_before
+@Activate
+protected void activate() {
+    appId = coreService.registerApplication("org.opencord.igmpproxy");
+    coreAppId = coreService.registerApplication(CoreService.CORE_APP_NAME);
+    packetService.addProcessor(processor, PacketProcessor.director(4));
+    IgmpSender.init(packetService, mastershipService);
+    if (networkConfig.getConfigFactory(CONFIG_CLASS) == null) {
+        configFactory = new ConfigFactory<DeviceId, AccessDeviceConfig>(SubjectFactories.DEVICE_SUBJECT_FACTORY, CONFIG_CLASS, "accessDevice") {
+
+            @Override
+            public AccessDeviceConfig createConfig() {
+                return new AccessDeviceConfig();
+            }
+        };
+        networkConfig.registerConfigFactory(configFactory);
+    }
+    networkConfig.registerConfigFactory(igmpproxySsmConfigFactory);
+    networkConfig.registerConfigFactory(igmpproxyConfigFactory);
+    networkConfig.addListener(configListener);
+    configListener.reconfigureNetwork(networkConfig.getConfig(appId, IGMPPROXY_CONFIG_CLASS));
+    configListener.reconfigureSsmTable(networkConfig.getConfig(appId, IGMPPROXY_SSM_CONFIG_CLASS));
+    networkConfig.getSubjects(DeviceId.class, AccessDeviceConfig.class).forEach(subject -> {
+        AccessDeviceConfig config = networkConfig.getConfig(subject, AccessDeviceConfig.class);
+        if (config != null) {
+            AccessDeviceData data = config.getAccessDevice();
+            oltData.put(data.deviceId(), data);
+        }
+    });
+    oltData.keySet().stream().flatMap(did -> deviceService.getPorts(did).stream()).filter(p -> p.isEnabled()).forEach(p -> processFilterObjective((DeviceId) p.element().id(), p, false));
+    McastConfig config = networkConfig.getConfig(coreAppId, MCAST_CONFIG_CLASS);
+    if (config != null) {
+        mvlan = config.egressVlan().toShort();
+    }
+    deviceService.addListener(deviceListener);
+    timer.schedule(new IgmpProxyTimerTask(), 0, 1000);
+    log.info("Started");
+}
+#method_after
+@Activate
+protected void activate() {
+    appId = coreService.registerApplication("org.opencord.igmpproxy");
+    coreAppId = coreService.registerApplication(CoreService.CORE_APP_NAME);
+    packetService.addProcessor(processor, PacketProcessor.director(4));
+    IgmpSender.init(packetService, mastershipService);
+    if (networkConfig.getConfigFactory(CONFIG_CLASS) == null) {
+        configFactory = new ConfigFactory<DeviceId, AccessDeviceConfig>(SubjectFactories.DEVICE_SUBJECT_FACTORY, CONFIG_CLASS, "accessDevice") {
+
+            @Override
+            public AccessDeviceConfig createConfig() {
+                return new AccessDeviceConfig();
+            }
+        };
+        networkConfig.registerConfigFactory(configFactory);
+    }
+    networkConfig.registerConfigFactory(igmpproxySsmConfigFactory);
+    networkConfig.registerConfigFactory(igmpproxyConfigFactory);
+    networkConfig.addListener(configListener);
+    configListener.reconfigureNetwork(networkConfig.getConfig(appId, IGMPPROXY_CONFIG_CLASS));
+    configListener.reconfigureSsmTable(networkConfig.getConfig(appId, IGMPPROXY_SSM_CONFIG_CLASS));
+    networkConfig.getSubjects(DeviceId.class, AccessDeviceConfig.class).forEach(subject -> {
+        AccessDeviceConfig config = networkConfig.getConfig(subject, AccessDeviceConfig.class);
+        if (config != null) {
+            AccessDeviceData data = config.getAccessDevice();
+            oltData.put(data.deviceId(), data);
+        }
+    });
+    oltData.keySet().forEach(d -> provisionDefaultFlows(d));
+    if (connectPointMode) {
+        provisionConnectPointFlows();
+    } else {
+        provisionUplinkFlows();
+    }
+    McastConfig config = networkConfig.getConfig(coreAppId, MCAST_CONFIG_CLASS);
+    if (config != null) {
+        mvlan = config.egressVlan().toShort();
+    }
+    deviceService.addListener(deviceListener);
+    scheduledExecutorService.scheduleAtFixedRate(new IgmpProxyTimerTask(), 0, 1000, TimeUnit.MILLISECONDS);
+    log.info("Started");
+}
+#end_block
+
+#method_before
+@Deactivate
+protected void deactivate() {
+    timer.cancel();
+    // de-register and null our handler
+    networkConfig.removeListener(configListener);
+    if (configFactory != null) {
+        networkConfig.unregisterConfigFactory(configFactory);
+    }
+    networkConfig.unregisterConfigFactory(igmpproxyConfigFactory);
+    networkConfig.unregisterConfigFactory(igmpproxySsmConfigFactory);
+    deviceService.removeListener(deviceListener);
+    packetService.removeProcessor(processor);
+    flowRuleService.removeFlowRulesById(appId);
+    log.info("Stopped");
+}
+#method_after
+@Deactivate
+protected void deactivate() {
+    scheduledExecutorService.shutdown();
+    // de-register and null our handler
+    networkConfig.removeListener(configListener);
+    if (configFactory != null) {
+        networkConfig.unregisterConfigFactory(configFactory);
+    }
+    networkConfig.unregisterConfigFactory(igmpproxyConfigFactory);
+    networkConfig.unregisterConfigFactory(igmpproxySsmConfigFactory);
+    deviceService.removeListener(deviceListener);
+    packetService.removeProcessor(processor);
+    flowRuleService.removeFlowRulesById(appId);
+    log.info("Stopped");
+}
+#end_block
+
+#method_before
+private void processIgmpQuery(IGMPQuery igmpQuery, ConnectPoint cp, int maxResp) {
+    DeviceId deviceId = cp.deviceId();
+    Ip4Address gAddr = igmpQuery.getGaddr().getIp4Address();
+    if (maxResp >= 128) {
+        int mant = maxResp & 0xf;
+        int exp = (maxResp >> 4) & 0x7;
+        maxResp = (mant | 0x10) << (exp + 3);
+    }
+    maxResp = (maxResp + 5) / 10;
+    if (gAddr != null) {
+        StateMachine.specialQuery(deviceId, gAddr, maxResp);
+    } else {
+        StateMachine.generalQuery(deviceId, maxResp);
+    }
+}
+#method_after
+private void processIgmpQuery(IGMPQuery igmpQuery, ConnectPoint cp, int maxResp) {
+    DeviceId deviceId = cp.deviceId();
+    Ip4Address gAddr = igmpQuery.getGaddr().getIp4Address();
+    if (maxResp >= 128) {
+        int mant = maxResp & 0xf;
+        int exp = (maxResp >> 4) & 0x7;
+        maxResp = (mant | 0x10) << (exp + 3);
+    }
+    maxResp = (maxResp + 5) / 10;
+    if (gAddr != null && !gAddr.isZero()) {
+        StateMachine.specialQuery(deviceId, gAddr, maxResp);
+    } else {
+        StateMachine.generalQuery(deviceId, maxResp);
+    }
+}
+#end_block
+
+#method_before
+private void processIgmpReport(IGMPMembership igmpGroup, short vlan, ConnectPoint cp, byte igmpType) {
+    DeviceId deviceId = cp.deviceId();
+    PortNumber portNumber = cp.port();
+    Ip4Address groupIp = igmpGroup.getGaddr().getIp4Address();
+    if (!groupIp.isMulticast()) {
+        log.info(groupIp.toString() + " is not a valid group address");
+        return;
+    }
+    Ip4Address srcIp = getDeviceIp(deviceId);
+    byte recordType = igmpGroup.getRecordType();
+    boolean join = false;
+    ArrayList<Ip4Address> sourceList = new ArrayList<>();
+    if (igmpGroup.getSources().size() > 0) {
+        igmpGroup.getSources().forEach(source -> sourceList.add(source.getIp4Address()));
+        if (recordType == IGMPMembership.CHANGE_TO_EXCLUDE_MODE || recordType == IGMPMembership.MODE_IS_EXCLUDE) {
+            join = false;
+        } else if (recordType == IGMPMembership.CHANGE_TO_INCLUDE_MODE || recordType == IGMPMembership.MODE_IS_INCLUDE) {
+            join = true;
+        }
+    } else {
+        IpAddress src = ssmTranslateRoute(groupIp);
+        if (src == null) {
+            log.info("no ssm translate for group " + groupIp.toString());
+            return;
+        }
+        sourceList.add(src.getIp4Address());
+        if (recordType == IGMPMembership.CHANGE_TO_EXCLUDE_MODE || recordType == IGMPMembership.MODE_IS_EXCLUDE) {
+            join = true;
+        } else if (recordType == IGMPMembership.CHANGE_TO_INCLUDE_MODE || recordType == IGMPMembership.MODE_IS_INCLUDE) {
+            join = false;
+        }
+    }
+    String groupMemberKey = GroupMember.getkey(groupIp, deviceId, portNumber);
+    GroupMember groupMember = groupMemberMap.get(groupMemberKey);
+    if (groupMember == null) {
+        if (join) {
+            if (igmpType == IGMP.TYPE_IGMPV2_MEMBERSHIP_REPORT) {
+                groupMember = new GroupMember(groupIp, vlan, deviceId, portNumber, true);
+            } else {
+                groupMember = new GroupMember(groupIp, vlan, deviceId, portNumber, false);
+            }
+        } else {
+            log.warn("receive leave but no instance, group " + groupIp.toString());
+            return;
+        }
+    }
+    groupMember.resetAllTimers();
+    groupMember.updateList(recordType, sourceList);
+    if (join) {
+        groupMember.getSourceList().forEach(source -> multicastService.addSink(new McastRoute(source, groupIp, McastRoute.Type.IGMP), cp));
+        StateMachine.join(deviceId, groupIp, srcIp);
+        groupMemberMap.put(groupMemberKey, groupMember);
+    } else {
+        if (fastLeave) {
+            leaveAction(groupMember);
+        } else {
+            sendQuery(groupMember);
+        }
+    }
+}
+#method_after
+private void processIgmpReport(IGMPMembership igmpGroup, VlanId vlan, ConnectPoint cp, byte igmpType) {
+    DeviceId deviceId = cp.deviceId();
+    PortNumber portNumber = cp.port();
+    Ip4Address groupIp = igmpGroup.getGaddr().getIp4Address();
+    if (!groupIp.isMulticast()) {
+        log.info(groupIp.toString() + " is not a valid group address");
+        return;
+    }
+    Ip4Address srcIp = getDeviceIp(deviceId);
+    byte recordType = igmpGroup.getRecordType();
+    boolean join = false;
+    ArrayList<Ip4Address> sourceList = new ArrayList<>();
+    if (igmpGroup.getSources().size() > 0) {
+        igmpGroup.getSources().forEach(source -> sourceList.add(source.getIp4Address()));
+        if (recordType == IGMPMembership.CHANGE_TO_EXCLUDE_MODE || recordType == IGMPMembership.MODE_IS_EXCLUDE || recordType == IGMPMembership.BLOCK_OLD_SOURCES) {
+            join = false;
+        } else if (recordType == IGMPMembership.CHANGE_TO_INCLUDE_MODE || recordType == IGMPMembership.MODE_IS_INCLUDE || recordType == IGMPMembership.ALLOW_NEW_SOURCES) {
+            join = true;
+        }
+    } else {
+        IpAddress src = ssmTranslateRoute(groupIp);
+        if (src == null) {
+            log.info("no ssm translate for group " + groupIp.toString());
+            return;
+        }
+        sourceList.add(src.getIp4Address());
+        if (recordType == IGMPMembership.CHANGE_TO_EXCLUDE_MODE || recordType == IGMPMembership.MODE_IS_EXCLUDE || recordType == IGMPMembership.BLOCK_OLD_SOURCES) {
+            join = true;
+        } else if (recordType == IGMPMembership.CHANGE_TO_INCLUDE_MODE || recordType == IGMPMembership.MODE_IS_INCLUDE || recordType == IGMPMembership.ALLOW_NEW_SOURCES) {
+            join = false;
+        }
+    }
+    String groupMemberKey = GroupMember.getkey(groupIp, deviceId, portNumber);
+    GroupMember groupMember = groupMemberMap.get(groupMemberKey);
+    if (join) {
+        if (groupMember == null) {
+            if (igmpType == IGMP.TYPE_IGMPV2_MEMBERSHIP_REPORT) {
+                groupMember = new GroupMember(groupIp, vlan, deviceId, portNumber, true);
+            } else {
+                groupMember = new GroupMember(groupIp, vlan, deviceId, portNumber, false);
+            }
+            StateMachine.join(deviceId, groupIp, srcIp);
+            groupMemberMap.put(groupMemberKey, groupMember);
+            groupMember.updateList(recordType, sourceList);
+            groupMember.getSourceList().forEach(source -> multicastService.addSink(new McastRoute(source, groupIp, McastRoute.Type.IGMP), cp));
+        }
+        groupMember.resetAllTimers();
+        groupMember.updateList(recordType, sourceList);
+        groupMember.setLeave(false);
+    } else {
+        if (groupMember == null) {
+            log.info("receive leave but no instance, group " + groupIp.toString() + " device:" + deviceId.toString() + " port:" + portNumber.toString());
+            return;
+        } else {
+            groupMember.setLeave(true);
+            if (fastLeave) {
+                leaveAction(groupMember);
+            } else {
+                sendQuery(groupMember);
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void process(PacketContext context) {
+    try {
+        InboundPacket pkt = context.inPacket();
+        Ethernet ethPkt = pkt.parsed();
+        if (ethPkt == null) {
+            return;
+        }
+        if (ethPkt.getEtherType() != Ethernet.TYPE_IPV4) {
+            return;
+        }
+        IPv4 ipv4Pkt = (IPv4) ethPkt.getPayload();
+        if (ipv4Pkt.getProtocol() != IPv4.PROTOCOL_IGMP) {
+            return;
+        }
+        IGMP igmpPkt = (IGMP) ipv4Pkt.getPayload();
+        short vlan = ethPkt.getVlanID();
+        DeviceId deviceId = pkt.receivedFrom().deviceId();
+        if (oltData.get(deviceId) == null) {
+            log.error("Device not registered in netcfg :" + deviceId.toString());
+            return;
+        }
+        switch(igmpPkt.getIgmpType()) {
+            case IGMP.TYPE_IGMPV3_MEMBERSHIP_QUERY:
+                // Discard Query from OLT’s non-uplink port’s
+                if (!pkt.receivedFrom().port().equals(getDeviceUplink(deviceId))) {
+                    log.info("IGMP Picked up query from non-uplink port");
+                    return;
+                }
+                processIgmpQuery((IGMPQuery) igmpPkt.getGroups().get(0), pkt.receivedFrom(), 0xff & igmpPkt.getMaxRespField());
+                break;
+            case IGMP.TYPE_IGMPV1_MEMBERSHIP_REPORT:
+                log.debug("IGMP version 1  message types are not currently supported.");
+                break;
+            case IGMP.TYPE_IGMPV3_MEMBERSHIP_REPORT:
+            case IGMP.TYPE_IGMPV2_MEMBERSHIP_REPORT:
+            case IGMP.TYPE_IGMPV2_LEAVE_GROUP:
+                // Discard join/leave from OLT’s uplink port’s
+                if (pkt.receivedFrom().port().equals(getDeviceUplink(deviceId))) {
+                    log.info("IGMP Picked up join/leave from the olt uplink port");
+                    return;
+                }
+                Iterator<IGMPGroup> itr = igmpPkt.getGroups().iterator();
+                while (itr.hasNext()) {
+                    processIgmpReport((IGMPMembership) itr.next(), vlan, pkt.receivedFrom(), igmpPkt.getIgmpType());
+                }
+                break;
+            default:
+        }
+    } catch (Exception ex) {
+        log.error("igmp process error : " + ex.toString());
+        ex.printStackTrace();
+    }
+}
+#method_after
+@Override
+public void process(PacketContext context) {
+    try {
+        InboundPacket pkt = context.inPacket();
+        Ethernet ethPkt = pkt.parsed();
+        if (ethPkt == null) {
+            return;
+        }
+        if (ethPkt.getEtherType() != Ethernet.TYPE_IPV4) {
+            return;
+        }
+        IPv4 ipv4Pkt = (IPv4) ethPkt.getPayload();
+        if (ipv4Pkt.getProtocol() != IPv4.PROTOCOL_IGMP) {
+            return;
+        }
+        short vlan = ethPkt.getVlanID();
+        DeviceId deviceId = pkt.receivedFrom().deviceId();
+        if (oltData.get(deviceId) == null) {
+            log.error("Device not registered in netcfg :" + deviceId.toString());
+            return;
+        }
+        IGMP igmp = (IGMP) ipv4Pkt.getPayload();
+        switch(igmp.getIgmpType()) {
+            case IGMP.TYPE_IGMPV3_MEMBERSHIP_QUERY:
+                // Discard Query from OLT’s non-uplink port’s
+                if (!pkt.receivedFrom().port().equals(getDeviceUplink(deviceId))) {
+                    log.info("IGMP Picked up query from non-uplink port");
+                    return;
+                }
+                processIgmpQuery((IGMPQuery) igmp.getGroups().get(0), pkt.receivedFrom(), 0xff & igmp.getMaxRespField());
+                break;
+            case IGMP.TYPE_IGMPV1_MEMBERSHIP_REPORT:
+                log.debug("IGMP version 1  message types are not currently supported.");
+                break;
+            case IGMP.TYPE_IGMPV3_MEMBERSHIP_REPORT:
+            case IGMP.TYPE_IGMPV2_MEMBERSHIP_REPORT:
+            case IGMP.TYPE_IGMPV2_LEAVE_GROUP:
+                // Discard join/leave from OLT’s uplink port’s
+                if (pkt.receivedFrom().port().equals(getDeviceUplink(deviceId))) {
+                    log.info("IGMP Picked up join/leave from the olt uplink port");
+                    return;
+                }
+                Iterator<IGMPGroup> itr = igmp.getGroups().iterator();
+                while (itr.hasNext()) {
+                    IGMPGroup group = itr.next();
+                    if (group instanceof IGMPMembership) {
+                        processIgmpReport((IGMPMembership) group, VlanId.vlanId(vlan), pkt.receivedFrom(), igmp.getIgmpType());
+                    } else if (group instanceof IGMPQuery) {
+                        IGMPMembership mgroup;
+                        mgroup = new IGMPMembership(group.getGaddr().getIp4Address());
+                        mgroup.setRecordType(igmp.getIgmpType() == IGMP.TYPE_IGMPV2_MEMBERSHIP_REPORT ? IGMPMembership.MODE_IS_EXCLUDE : IGMPMembership.MODE_IS_INCLUDE);
+                        processIgmpReport(mgroup, VlanId.vlanId(vlan), pkt.receivedFrom(), igmp.getIgmpType());
+                    }
+                }
+                break;
+            default:
+                log.info("wrong IGMP v3 type:" + igmp.getIgmpType());
+                break;
+        }
+    } catch (Exception ex) {
+        log.error("igmp process error : " + ex.toString());
+        ex.printStackTrace();
+    }
+}
+#end_block
+
+#method_before
+private void queryMembers() {
+    GroupMember groupMember;
+    Set groupMemberSet = groupMemberMap.entrySet();
+    Iterator itr = groupMemberSet.iterator();
+    while (itr.hasNext()) {
+        Map.Entry entry = (Map.Entry) itr.next();
+        groupMember = (GroupMember) entry.getValue();
+        DeviceId did = groupMember.getDeviceId();
+        if (mastershipService.isLocalMaster(did)) {
+            if (groupMember.isNullSrc()) {
+                lastQuery(groupMember);
+            } else if (periodicQuery) {
+                periodicQuery(groupMember);
+            }
+        }
+    }
+}
+#method_after
+private void queryMembers() {
+    GroupMember groupMember;
+    Set groupMemberSet = groupMemberMap.entrySet();
+    Iterator itr = groupMemberSet.iterator();
+    while (itr.hasNext()) {
+        Map.Entry entry = (Map.Entry) itr.next();
+        groupMember = (GroupMember) entry.getValue();
+        DeviceId did = groupMember.getDeviceId();
+        if (mastershipService.isLocalMaster(did)) {
+            if (groupMember.isLeave()) {
+                lastQuery(groupMember);
+            } else if (periodicQuery) {
+                periodicQuery(groupMember);
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+private void processFilterObjective(DeviceId devId, Port port, boolean remove) {
+    // TODO migrate to packet requests when packet service uses filtering objectives
+    DefaultFilteringObjective.Builder builder = DefaultFilteringObjective.builder();
+    builder = remove ? builder.deny() : builder.permit();
+    FilteringObjective igmp = builder.withKey(Criteria.matchInPort(port.number())).addCondition(Criteria.matchEthType(EthType.EtherType.IPV4.ethType())).addCondition(Criteria.matchIPProtocol(IPv4.PROTOCOL_IGMP)).withMeta(DefaultTrafficTreatment.builder().setOutput(PortNumber.CONTROLLER).build()).fromApp(appId).withPriority(10000).add(new ObjectiveContext() {
+
+        @Override
+        public void onSuccess(Objective objective) {
+            log.info("IgmpProxy filter for {} on {} installed.", devId, port);
+        }
+
+        @Override
+        public void onError(Objective objective, ObjectiveError error) {
+            log.info("IgmpProxy filter for {} on {} failed because {}.", devId, port, error);
+        }
+    });
+    flowObjectiveService.filter(devId, igmp);
+}
+#method_after
+private void processFilterObjective(DeviceId devId, PortNumber port, boolean remove) {
+    // TODO migrate to packet requests when packet service uses filtering objectives
+    DefaultFilteringObjective.Builder builder = DefaultFilteringObjective.builder();
+    builder = remove ? builder.deny() : builder.permit();
+    FilteringObjective igmp = builder.withKey(Criteria.matchInPort(port)).addCondition(Criteria.matchEthType(EthType.EtherType.IPV4.ethType())).addCondition(Criteria.matchIPProtocol(IPv4.PROTOCOL_IGMP)).withMeta(DefaultTrafficTreatment.builder().setOutput(PortNumber.CONTROLLER).build()).fromApp(appId).withPriority(10000).add(new ObjectiveContext() {
+
+        @Override
+        public void onSuccess(Objective objective) {
+            log.info("IgmpProxy filter for {} on {} installed.", devId, port);
+        }
+
+        @Override
+        public void onError(Objective objective, ObjectiveError error) {
+            log.info("IgmpProxy filter for {} on {} failed because {}.", devId, port, error);
+        }
+    });
+    flowObjectiveService.filter(devId, igmp);
+}
+#end_block
+
+#method_before
+@Override
+public void event(DeviceEvent event) {
+    DeviceId devId = event.subject().id();
+    if (oltData.get(devId) == null) {
+        return;
+    }
+    switch(event.type()) {
+        case DEVICE_ADDED:
+        case DEVICE_UPDATED:
+        case DEVICE_REMOVED:
+        case DEVICE_SUSPENDED:
+        case DEVICE_AVAILABILITY_CHANGED:
+        case PORT_STATS_UPDATED:
+            break;
+        case PORT_ADDED:
+            if (oltData.get(devId).uplink().equals(event.port().number()) || event.port().isEnabled()) {
+                processFilterObjective(event.subject().id(), event.port(), false);
+            }
+            break;
+        case PORT_UPDATED:
+            if (oltData.get(devId).uplink().equals(event.port().number()) || event.port().isEnabled()) {
+                processFilterObjective(event.subject().id(), event.port(), false);
+            } else {
+                processFilterObjective(event.subject().id(), event.port(), true);
+            }
+            break;
+        case PORT_REMOVED:
+            processFilterObjective(event.subject().id(), event.port(), true);
+            break;
+        default:
+            log.warn("Unknown device event {}", event.type());
+            break;
+    }
+}
+#method_after
+@Override
+public void event(DeviceEvent event) {
+    DeviceId devId = event.subject().id();
+    PortNumber port;
+    if (oltData.get(devId) == null) {
+        return;
+    }
+    switch(event.type()) {
+        case DEVICE_ADDED:
+        case DEVICE_UPDATED:
+        case DEVICE_REMOVED:
+        case DEVICE_SUSPENDED:
+        case DEVICE_AVAILABILITY_CHANGED:
+        case PORT_STATS_UPDATED:
+            break;
+        case PORT_ADDED:
+            port = event.port().number();
+            if (oltData.containsKey(devId) && !isUplink(devId, port) && !isConnectPoint(devId, port)) {
+                processFilterObjective(devId, port, false);
+            } else if (isUplink(devId, port)) {
+                provisionUplinkFlows();
+            } else if (isConnectPoint(devId, port)) {
+                provisionConnectPointFlows();
+            }
+            break;
+        case PORT_UPDATED:
+            port = event.port().number();
+            if (oltData.containsKey(devId) && !isUplink(devId, port) && !isConnectPoint(devId, port)) {
+                if (event.port().isEnabled()) {
+                    processFilterObjective(devId, port, false);
+                } else {
+                    processFilterObjective(devId, port, true);
+                }
+            } else if (isUplink(devId, port)) {
+                if (event.port().isEnabled()) {
+                    provisionUplinkFlows(devId);
+                } else {
+                    processFilterObjective(devId, port, true);
+                }
+            } else if (isConnectPoint(devId, port)) {
+                if (event.port().isEnabled()) {
+                    provisionConnectPointFlows();
+                } else {
+                    unprovisionConnectPointFlows();
+                }
+            }
+            break;
+        case PORT_REMOVED:
+            port = event.port().number();
+            processFilterObjective(devId, port, true);
+            break;
+        default:
+            log.info("Unknown device event {}", event.type());
+            break;
+    }
+}
+#end_block
+
+#method_before
+private void reconfigureNetwork(IgmpproxyConfig cfg) {
+    IgmpproxyConfig newCfg;
+    if (cfg == null) {
+        newCfg = new IgmpproxyConfig();
+    } else {
+        newCfg = cfg;
+    }
+    unSolicitedTimeout = newCfg.unsolicitedTimeOut();
+    maxResp = newCfg.maxResp();
+    keepAliveInterval = newCfg.keepAliveInterval();
+    keepAliveCount = newCfg.keepAliveCount();
+    lastQueryInterval = newCfg.lastQueryInterval();
+    lastQueryCount = newCfg.lastQueryCount();
+    withRAUplink = newCfg.withRAUplink();
+    withRADownlink = newCfg.withRADownlink();
+    igmpCos = newCfg.igmpCos();
+    periodicQuery = newCfg.periodicQuery();
+    fastLeave = newCfg.fastLeave();
+    IgmpSender.getInstance().setIgmpCos(igmpCos);
+    IgmpSender.getInstance().setMaxResp(maxResp);
+    IgmpSender.getInstance().setMvlan(mvlan);
+    IgmpSender.getInstance().setWithRADownlink(withRADownlink);
+    IgmpSender.getInstance().setWithRAUplink(withRAUplink);
+}
+#method_after
+private void reconfigureNetwork(IgmpproxyConfig cfg) {
+    IgmpproxyConfig newCfg;
+    if (cfg == null) {
+        newCfg = new IgmpproxyConfig();
+    } else {
+        newCfg = cfg;
+    }
+    unSolicitedTimeout = newCfg.unsolicitedTimeOut();
+    maxResp = newCfg.maxResp();
+    keepAliveInterval = newCfg.keepAliveInterval();
+    keepAliveCount = newCfg.keepAliveCount();
+    lastQueryInterval = newCfg.lastQueryInterval();
+    lastQueryCount = newCfg.lastQueryCount();
+    withRAUplink = newCfg.withRAUplink();
+    withRADownlink = newCfg.withRADownlink();
+    igmpCos = newCfg.igmpCos();
+    periodicQuery = newCfg.periodicQuery();
+    fastLeave = newCfg.fastLeave();
+    connectPoint = newCfg.connectPoint();
+    if (connectPointMode != newCfg.connectPointMode()) {
+        connectPointMode = newCfg.connectPointMode();
+        if (connectPointMode) {
+            unprovisionUplinkFlows();
+            provisionConnectPointFlows();
+        } else {
+            unprovisionConnectPointFlows();
+            provisionUplinkFlows();
+        }
+    }
+    if (connectPoint != null) {
+        log.info("connect point :" + connectPoint.toString());
+    }
+    log.info(" mode: " + connectPointMode);
+    IgmpSender.getInstance().setIgmpCos(igmpCos);
+    IgmpSender.getInstance().setMaxResp(maxResp);
+    IgmpSender.getInstance().setMvlan(mvlan);
+    IgmpSender.getInstance().setWithRADownlink(withRADownlink);
+    IgmpSender.getInstance().setWithRAUplink(withRAUplink);
+}
+#end_block
+
+#method_before
+@Override
+public void event(NetworkConfigEvent event) {
+    switch(event.type()) {
+        case CONFIG_ADDED:
+        case CONFIG_UPDATED:
+            if (event.configClass().equals(CONFIG_CLASS)) {
+                AccessDeviceConfig config = networkConfig.getConfig((DeviceId) event.subject(), CONFIG_CLASS);
+                if (config != null) {
+                    oltData.put(config.getAccessDevice().deviceId(), config.getAccessDevice());
+                    provisionDefaultFlows((DeviceId) event.subject());
+                }
+            }
+            if (event.configClass().equals(IGMPPROXY_CONFIG_CLASS)) {
+                IgmpproxyConfig config = networkConfig.getConfig(appId, IGMPPROXY_CONFIG_CLASS);
+                if (config != null) {
+                    reconfigureNetwork(config);
+                }
+            }
+            if (event.configClass().equals(IGMPPROXY_SSM_CONFIG_CLASS)) {
+                IgmpproxySsmTranslateConfig config = networkConfig.getConfig(appId, IGMPPROXY_SSM_CONFIG_CLASS);
+                if (config != null) {
+                    reconfigureSsmTable(config);
+                }
+            }
+            if (event.configClass().equals(MCAST_CONFIG_CLASS)) {
+                McastConfig config = networkConfig.getConfig(coreAppId, MCAST_CONFIG_CLASS);
+                if (config != null && mvlan != config.egressVlan().toShort()) {
+                    mvlan = config.egressVlan().toShort();
+                    groupMemberMap.values().forEach(m -> leaveAction(m));
+                }
+            }
+            log.info("Reconfigured");
+            break;
+        case CONFIG_REGISTERED:
+        case CONFIG_UNREGISTERED:
+            break;
+        case CONFIG_REMOVED:
+            if (event.configClass().equals(CONFIG_CLASS)) {
+                oltData.remove(event.subject());
+            }
+        default:
+            break;
+    }
+}
+#method_after
+@Override
+public void event(NetworkConfigEvent event) {
+    switch(event.type()) {
+        case CONFIG_ADDED:
+        case CONFIG_UPDATED:
+            if (event.configClass().equals(CONFIG_CLASS)) {
+                AccessDeviceConfig config = networkConfig.getConfig((DeviceId) event.subject(), CONFIG_CLASS);
+                if (config != null) {
+                    oltData.put(config.getAccessDevice().deviceId(), config.getAccessDevice());
+                    provisionDefaultFlows((DeviceId) event.subject());
+                    provisionUplinkFlows((DeviceId) event.subject());
+                }
+            }
+            if (event.configClass().equals(IGMPPROXY_CONFIG_CLASS)) {
+                IgmpproxyConfig config = networkConfig.getConfig(appId, IGMPPROXY_CONFIG_CLASS);
+                if (config != null) {
+                    reconfigureNetwork(config);
+                }
+            }
+            if (event.configClass().equals(IGMPPROXY_SSM_CONFIG_CLASS)) {
+                IgmpproxySsmTranslateConfig config = networkConfig.getConfig(appId, IGMPPROXY_SSM_CONFIG_CLASS);
+                if (config != null) {
+                    reconfigureSsmTable(config);
+                }
+            }
+            if (event.configClass().equals(MCAST_CONFIG_CLASS)) {
+                McastConfig config = networkConfig.getConfig(coreAppId, MCAST_CONFIG_CLASS);
+                if (config != null && mvlan != config.egressVlan().toShort()) {
+                    mvlan = config.egressVlan().toShort();
+                    groupMemberMap.values().forEach(m -> leaveAction(m));
+                }
+            }
+            log.info("Reconfigured");
+            break;
+        case CONFIG_REGISTERED:
+        case CONFIG_UNREGISTERED:
+            break;
+        case CONFIG_REMOVED:
+            if (event.configClass().equals(CONFIG_CLASS)) {
+                oltData.remove(event.subject());
+            }
+        default:
+            break;
+    }
+}
+#end_block
+
+#method_before
+private void provisionDefaultFlows(DeviceId deviceId) {
+    List<Port> ports = deviceService.getPorts(deviceId);
+    ports.stream().filter(p -> (oltData.get(p.element().id()).uplink().equals(p.number()) || p.isEnabled())).forEach(p -> processFilterObjective((DeviceId) p.element().id(), p, false));
+}
+#method_after
+private void provisionDefaultFlows(DeviceId deviceId) {
+    List<Port> ports = deviceService.getPorts(deviceId);
+    ports.stream().filter(p -> (!oltData.get(p.element().id()).uplink().equals(p.number()) && p.isEnabled())).forEach(p -> processFilterObjective((DeviceId) p.element().id(), p.number(), false));
+}
+#end_block
+
+#method_before
+@Deactivate
+public void deactivate() {
+    componentConfigService.unregisterProperties(getClass(), false);
+    mcastService.removeListener(listener);
+    networkConfig.removeListener(configListener);
+    mcastService.removeListener(listener);
+    networkConfig.unregisterConfigFactory(cordMcastConfigFactory);
+    clearGroups();
+    log.info("Stopped");
+}
+#method_after
+@Deactivate
+public void deactivate() {
+    componentConfigService.unregisterProperties(getClass(), false);
+    mcastService.removeListener(listener);
+    networkConfig.removeListener(configListener);
+    networkConfig.unregisterConfigFactory(cordMcastConfigFactory);
+    clearGroups();
+    log.info("Stopped");
+}
+#end_block
+
+#method_before
+public void clearGroups() {
+    groups.keySet().forEach(d -> {
+        log.error("igmp clear device {}" + d.toString());
+        clearGroups(d);
+    });
+    flowRuleService.removeFlowRulesById(appId);
+    groups.clear();
+}
+#method_after
+public void clearGroups() {
+    groups.keySet().forEach(d -> {
+        flowObjectiveService.next(d.getDevice(), nextObject(groups.get(d), PortNumber.ANY, NextType.Remove));
+    });
+    flowRuleService.removeFlowRulesById(appId);
+    groups.clear();
+}
+#end_block
+
+#method_before
+@Modified
+public void modified(ComponentContext context) {
+    Dictionary<?, ?> properties = context != null ? context.getProperties() : new Properties();
+    try {
+        String s = get(properties, "username");
+        user = isNullOrEmpty(s) ? DEFAULT_USER : s.trim();
+        s = get(properties, "password");
+        password = isNullOrEmpty(s) ? DEFAULT_PASSWORD : s.trim();
+        s = get(properties, "vlanEnabled");
+        vlanEnabled = isNullOrEmpty(s) ? DEFAULT_VLAN_ENABLED : Boolean.parseBoolean(s.trim());
+        s = get(properties, "priority");
+        priority = isNullOrEmpty(s) ? DEFAULT_PRIORITY : Integer.parseInt(s.trim());
+        s = get(properties, "syncHost");
+        syncHost = isNullOrEmpty(s) ? DEFAULT_SYNC_HOST : s.trim();
+    } catch (Exception e) {
+        user = DEFAULT_USER;
+        password = DEFAULT_PASSWORD;
+        syncHost = DEFAULT_SYNC_HOST;
+        mcastVlan = DEFAULT_MCAST_VLAN;
+        vlanEnabled = false;
+        priority = DEFAULT_PRIORITY;
+    }
+    fabricOnosUrl = createRemoteUrl(syncHost);
+}
+#method_after
+@Modified
+public void modified(ComponentContext context) {
+    Dictionary<?, ?> properties = context != null ? context.getProperties() : new Properties();
+    try {
+        String s = get(properties, "username");
+        user = isNullOrEmpty(s) ? DEFAULT_USER : s.trim();
+        s = get(properties, "password");
+        password = isNullOrEmpty(s) ? DEFAULT_PASSWORD : s.trim();
+        s = get(properties, "vlanEnabled");
+        vlanEnabled = isNullOrEmpty(s) ? DEFAULT_VLAN_ENABLED : Boolean.parseBoolean(s.trim());
+        s = get(properties, "priority");
+        priority = isNullOrEmpty(s) ? DEFAULT_PRIORITY : Integer.parseInt(s.trim());
+        s = get(properties, "syncHost");
+        syncHost = isNullOrEmpty(s) ? null : s.trim();
+    } catch (Exception e) {
+        user = DEFAULT_USER;
+        password = DEFAULT_PASSWORD;
+        syncHost = null;
+        mcastVlan = DEFAULT_MCAST_VLAN;
+        vlanEnabled = false;
+        priority = DEFAULT_PRIORITY;
+    }
+    fabricOnosUrl = createRemoteUrl(syncHost);
+}
+#end_block
+
+#method_before
+private void unprovisionGroup(McastRouteInfo info) {
+    if (info.sinks().isEmpty()) {
+        removeRemoteRoute(info.route());
+    }
+    if (!info.sink().isPresent()) {
+        log.warn("No sink given after sink removed event: {}", info);
+        return;
+    }
+    ConnectPoint loc = info.sink().get();
+    if (groups.get(loc.deviceId()) == null) {
+        log.warn("No groups on device: {}", loc.deviceId());
+        return;
+    }
+    Integer id = groups.get(loc.deviceId()).get(info.route().group());
+    NextObjective next = DefaultNextObjective.builder().fromApp(appId).addTreatment(DefaultTrafficTreatment.builder().setOutput(loc.port()).build()).withType(NextObjective.Type.BROADCAST).withId(id).removeFromExisting(new ObjectiveContext() {
+
+        @Override
+        public void onSuccess(Objective objective) {
+            // TODO: change to debug
+            log.info("Next Objective {} installed", objective.id());
+        }
+
+        @Override
+        public void onError(Objective objective, ObjectiveError error) {
+            // TODO: change to debug
+            log.info("Next Objective {} failed, because {}", objective.id(), error);
+        }
+    });
+    flowObjectiveService.next(loc.deviceId(), next);
+}
+#method_after
+private void unprovisionGroup(McastRouteInfo info) {
+    if (info.sinks().isEmpty()) {
+        removeRemoteRoute(info.route());
+    }
+    if (!info.sink().isPresent()) {
+        log.warn("No sink given after sink removed event: {}", info);
+        return;
+    }
+    ConnectPoint loc = info.sink().get();
+    NextKey key = new NextKey(loc.deviceId(), info.route().group());
+    if (groups.get(key) == null) {
+        log.warn("No groups on device: {}", loc.deviceId());
+        return;
+    }
+    flowObjectiveService.next(loc.deviceId(), nextObject(groups.get(key), loc.port(), NextType.RemoveFromExisting));
+}
+#end_block
+
+#method_before
+private void provisionGroup(McastRoute route, ConnectPoint sink) {
+    checkNotNull(route, "Route cannot be null");
+    checkNotNull(sink, "Sink cannot be null");
+    Optional<AccessDeviceData> oltInfo = cordConfigService.getAccessDevice(sink.deviceId());
+    if (!oltInfo.isPresent()) {
+        log.warn("Unknown OLT device : {}", sink.deviceId());
+        return;
+    }
+    final AtomicBoolean sync = new AtomicBoolean(false);
+    Map<IpAddress, Integer> map;
+    if (!groups.containsKey(sink.deviceId())) {
+        map = new HashMap();
+        groups.put(sink.deviceId(), map);
+    } else {
+        map = groups.get(sink.deviceId());
+    }
+    Integer nextId = map.computeIfAbsent(route.group(), (g) -> {
+        Integer id = flowObjectiveService.allocateNextId();
+        NextObjective next = DefaultNextObjective.builder().fromApp(appId).addTreatment(DefaultTrafficTreatment.builder().setOutput(sink.port()).build()).withType(NextObjective.Type.BROADCAST).withId(id).add(new ObjectiveContext() {
+
+            @Override
+            public void onSuccess(Objective objective) {
+                // TODO: change to debug
+                log.info("Next Objective {} installed", objective.id());
+            }
+
+            @Override
+            public void onError(Objective objective, ObjectiveError error) {
+                // TODO: change to debug
+                log.info("Next Objective {} failed, because {}", objective.id(), error);
+            }
+        });
+        flowObjectiveService.next(sink.deviceId(), next);
+        TrafficSelector.Builder mcast = DefaultTrafficSelector.builder().matchInPort(oltInfo.get().uplink()).matchEthType(Ethernet.TYPE_IPV4).matchIPDst(g.toIpPrefix());
+        if (vlanEnabled) {
+            mcast.matchVlanId(VlanId.vlanId((short) mcastVlan));
+        }
+        ForwardingObjective fwd = DefaultForwardingObjective.builder().fromApp(appId).nextStep(id).makePermanent().withFlag(ForwardingObjective.Flag.VERSATILE).withPriority(priority).withSelector(mcast.build()).add(new ObjectiveContext() {
+
+            @Override
+            public void onSuccess(Objective objective) {
+                // TODO: change to debug
+                log.info("Forwarding objective installed {}", objective);
+            }
+
+            @Override
+            public void onError(Objective objective, ObjectiveError error) {
+                // TODO: change to debug
+                log.info("Forwarding objective failed {}", objective);
+            }
+        });
+        flowObjectiveService.forward(sink.deviceId(), fwd);
+        sync.set(true);
+        return id;
+    });
+    if (!sync.get()) {
+        NextObjective next = DefaultNextObjective.builder().fromApp(appId).addTreatment(DefaultTrafficTreatment.builder().setOutput(sink.port()).build()).withType(NextObjective.Type.BROADCAST).withId(nextId).addToExisting(new ObjectiveContext() {
+
+            @Override
+            public void onSuccess(Objective objective) {
+                // TODO: change to debug
+                log.info("Next Objective {} installed", objective.id());
+            }
+
+            @Override
+            public void onError(Objective objective, ObjectiveError error) {
+                // TODO: change to debug
+                log.info("Next Objective {} failed, because {}", objective.id(), error);
+            }
+        });
+        flowObjectiveService.next(sink.deviceId(), next);
+    }
+    addRemoteRoute(route, sink);
+}
+#method_after
+private void provisionGroup(McastRoute route, ConnectPoint sink) {
+    checkNotNull(route, "Route cannot be null");
+    checkNotNull(sink, "Sink cannot be null");
+    Optional<AccessDeviceData> oltInfo = cordConfigService.getAccessDevice(sink.deviceId());
+    if (!oltInfo.isPresent()) {
+        log.warn("Unknown OLT device : {}", sink.deviceId());
+        return;
+    }
+    final AtomicBoolean sync = new AtomicBoolean(false);
+    NextKey key = new NextKey(sink.deviceId(), route.group());
+    Integer nextId = groups.computeIfAbsent(key, (g) -> {
+        Integer id = flowObjectiveService.allocateNextId();
+        flowObjectiveService.next(sink.deviceId(), nextObject(id, sink.port(), NextType.AddNew));
+        TrafficSelector.Builder mcast = DefaultTrafficSelector.builder().matchInPort(oltInfo.get().uplink()).matchEthType(Ethernet.TYPE_IPV4).matchIPDst(route.group().toIpPrefix());
+        if (vlanEnabled) {
+            mcast.matchVlanId(VlanId.vlanId((short) mcastVlan));
+        }
+        ForwardingObjective fwd = DefaultForwardingObjective.builder().fromApp(appId).nextStep(id).makePermanent().withFlag(ForwardingObjective.Flag.VERSATILE).withPriority(priority).withSelector(mcast.build()).add(new ObjectiveContext() {
+
+            @Override
+            public void onSuccess(Objective objective) {
+                // TODO: change to debug
+                log.info("Forwarding objective installed {}", objective);
+            }
+
+            @Override
+            public void onError(Objective objective, ObjectiveError error) {
+                // TODO: change to debug
+                log.info("Forwarding objective failed {}", objective);
+            }
+        });
+        flowObjectiveService.forward(sink.deviceId(), fwd);
+        sync.set(true);
+        return id;
+    });
+    if (!sync.get()) {
+        flowObjectiveService.next(sink.deviceId(), nextObject(nextId, sink.port(), NextType.AddToExisting));
+    }
+    addRemoteRoute(route, sink);
+}
+#end_block
+
+#method_before
+@Override
+public void event(NetworkConfigEvent event) {
+    switch(event.type()) {
+        case CONFIG_ADDED:
+        case CONFIG_UPDATED:
+            if (event.configClass().equals(CORD_MCAST_CONFIG_CLASS)) {
+                McastConfig config = networkConfig.getConfig(coreAppId, CORD_MCAST_CONFIG_CLASS);
+                if (config != null) {
+                    mcastVlan = config.egressVlan().toShort();
+                }
+            }
+            break;
+        case CONFIG_REGISTERED:
+        case CONFIG_UNREGISTERED:
+        case CONFIG_REMOVED:
+            break;
+        default:
+            break;
+    }
+}
+#method_after
+@Override
+public void event(NetworkConfigEvent event) {
+    switch(event.type()) {
+        case CONFIG_ADDED:
+        case CONFIG_UPDATED:
+            if (event.configClass().equals(CORD_MCAST_CONFIG_CLASS)) {
+                McastConfig config = networkConfig.getConfig(coreAppId, CORD_MCAST_CONFIG_CLASS);
+                if (config != null) {
+                    // However, better to remove and re-add mcast flow rules here
+                    if (mcastVlan != config.egressVlan().toShort() && vlanEnabled) {
+                        clearGroups();
+                    }
+                    mcastVlan = config.egressVlan().toShort();
+                }
+            }
+            break;
+        case CONFIG_REGISTERED:
+        case CONFIG_UNREGISTERED:
+        case CONFIG_REMOVED:
+            break;
+        default:
+            break;
+    }
+}
+#end_block
+
+#method_before
+private ByteBuffer buildQueryPacket() {
+    IGMP igmp = new IGMP.IGMPv3();
+    igmp.setIgmpType(IGMP.TYPE_IGMPV3_MEMBERSHIP_QUERY);
+    igmp.setMaxRespCode(maxRespCode);
+    IGMPQuery query = new IGMPQuery(IpAddress.valueOf("0.0.0.0"), 0);
+    igmp.addGroup(query);
+    IPv4 ip = new IPv4();
+    ip.setDestinationAddress(DEST_IP);
+    ip.setProtocol(IPv4.PROTOCOL_IGMP);
+    ip.setSourceAddress("192.168.1.1");
+    ip.setTtl((byte) 1);
+    ip.setPayload(igmp);
+    if (routerAlert) {
+        byte[] options = { (byte) 0x94, (byte) 0x04, (byte) 0x00, (byte) 0x00 };
+        ip.setOptions(options);
+    }
+    Ethernet eth = new Ethernet();
+    eth.setDestinationMACAddress(DEST_MAC);
+    eth.setSourceMACAddress("DE:AD:BE:EF:BA:11");
+    eth.setEtherType(Ethernet.TYPE_IPV4);
+    eth.setPayload(ip);
+    eth.setPad(true);
+    return ByteBuffer.wrap(eth.serialize());
+}
+#method_after
+private ByteBuffer buildQueryPacket() {
+    IGMP igmp = new IGMP.IGMPv3();
+    igmp.setIgmpType(IGMP.TYPE_IGMPV3_MEMBERSHIP_QUERY);
+    igmp.setMaxRespCode(maxRespCode);
+    IGMPQuery query = new IGMPQuery(IpAddress.valueOf("0.0.0.0"), 0);
+    igmp.addGroup(query);
+    IPv4 ip = new IPv4();
+    ip.setDestinationAddress(DEST_IP);
+    ip.setProtocol(IPv4.PROTOCOL_IGMP);
+    ip.setSourceAddress("192.168.1.1");
+    ip.setTtl((byte) 1);
+    ip.setPayload(igmp);
+    if (routerAlert) {
+        ip.setOptions(ROUTE_ALERT_BYTES);
+    }
+    Ethernet eth = new Ethernet();
+    eth.setDestinationMACAddress(DEST_MAC);
+    eth.setSourceMACAddress("DE:AD:BE:EF:BA:11");
+    eth.setEtherType(Ethernet.TYPE_IPV4);
+    eth.setPayload(ip);
+    eth.setPad(true);
+    return ByteBuffer.wrap(eth.serialize());
+}
+#end_block
+

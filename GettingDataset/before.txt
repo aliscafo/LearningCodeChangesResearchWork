@@ -1,0 +1,14 @@
+
+private StringListPanel renderStringListPanel(LabeledWidgetsGrid g, ConfigParameterInfo param) {
+    StringListPanel p = new StringListPanel(null, Arrays.asList(getDisplayName(param)), saveProject, true);
+    List<List<String>> values = new ArrayList<>();
+    for (String v : Natives.asList(param.values())) {
+        values.add(Arrays.asList(v));
+    }
+    p.display(values);
+    if (!param.editable()) {
+        p.setEnabled(false);
+    }
+    addWidget(g, p, param);
+    return p;
+}

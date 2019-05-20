@@ -1,0 +1,3641 @@
+82
+#method_before
+private List<EngineMessage> validateLunDisk(LunDisk lunDisk) {
+    DiskValidator diskValidator = getDiskValidator(lunDisk);
+    LUNs lun = lunDisk.getLun();
+    StorageType storageType = StorageType.FCP;
+    if (lun.getLunConnections() != null && !lun.getLunConnections().isEmpty()) {
+        // We set the storage type based on the first connection since connections should be with the same
+        // storage type
+        storageType = lun.getLunConnections().get(0).getStorageType();
+    }
+    if (storageType == StorageType.ISCSI) {
+        ValidationResult connectionsInLunResult = diskValidator.validateConnectionsInLun(storageType);
+        if (!connectionsInLunResult.isValid()) {
+            return connectionsInLunResult.getMessages();
+        }
+    }
+    ValidationResult lunAlreadyInUseResult = diskValidator.validateLunAlreadyInUse();
+    if (!lunAlreadyInUseResult.isValid()) {
+        return lunAlreadyInUseResult.getMessages();
+    }
+    DiskVmElementValidator diskVmElementValidator = new DiskVmElementValidator(lunDisk, lunDisk.getDiskVmElementForVm(getVmId()));
+    ValidationResult virtIoScsiResult = isVirtIoScsiValid(getVm(), diskVmElementValidator);
+    if (!virtIoScsiResult.isValid()) {
+        return virtIoScsiResult.getMessages();
+    }
+    ValidationResult diskInterfaceResult = diskVmElementValidator.isDiskInterfaceSupported(getVm());
+    if (!diskInterfaceResult.isValid()) {
+        return diskInterfaceResult.getMessages();
+    }
+    Guid vdsId = vdsCommandsHelper.getHostForExecution(getStoragePoolId());
+    GetDeviceListVDSCommandParameters parameters = new GetDeviceListVDSCommandParameters(vdsId, storageType, false, Collections.singleton(lun.getLUNId()));
+    if (validateLunExistsAndInitDeviceData(lun, parameters)) {
+        return Arrays.asList(EngineMessage.ACTION_TYPE_FAILED_DISK_LUN_INVALID);
+    }
+    ValidationResult usingScsiReservationResult = diskValidator.isUsingScsiReservationValid(getVm(), lunDisk.getDiskVmElementForVm(getVmId()), lunDisk);
+    if (!usingScsiReservationResult.isValid()) {
+        return usingScsiReservationResult.getMessages();
+    }
+    return Collections.emptyList();
+}
+#method_after
+private List<EngineMessage> validateLunDisk(LunDisk lunDisk) {
+    DiskValidator diskValidator = getDiskValidator(lunDisk);
+    LUNs lun = lunDisk.getLun();
+    StorageType storageType;
+    if (lun.getLunConnections() != null && !lun.getLunConnections().isEmpty()) {
+        // We set the storage type based on the first connection since connections should be with the same
+        // storage type
+        storageType = lun.getLunConnections().get(0).getStorageType();
+    } else {
+        storageType = StorageType.FCP;
+    }
+    if (storageType == StorageType.ISCSI) {
+        ValidationResult connectionsInLunResult = diskValidator.validateConnectionsInLun(storageType);
+        if (!connectionsInLunResult.isValid()) {
+            return connectionsInLunResult.getMessages();
+        }
+    }
+    ValidationResult lunAlreadyInUseResult = diskValidator.validateLunAlreadyInUse();
+    if (!lunAlreadyInUseResult.isValid()) {
+        return lunAlreadyInUseResult.getMessages();
+    }
+    DiskVmElementValidator diskVmElementValidator = new DiskVmElementValidator(lunDisk, lunDisk.getDiskVmElementForVm(getVmId()));
+    ValidationResult virtIoScsiResult = isVirtIoScsiValid(getVm(), diskVmElementValidator);
+    if (!virtIoScsiResult.isValid()) {
+        return virtIoScsiResult.getMessages();
+    }
+    ValidationResult diskInterfaceResult = diskVmElementValidator.isDiskInterfaceSupported(getVm());
+    if (!diskInterfaceResult.isValid()) {
+        return diskInterfaceResult.getMessages();
+    }
+    Guid vdsId = vdsCommandsHelper.getHostForExecution(getStoragePoolId());
+    GetDeviceListVDSCommandParameters parameters = new GetDeviceListVDSCommandParameters(vdsId, storageType, false, Collections.singleton(lun.getLUNId()));
+    if (validateLunExistsAndInitDeviceData(lun, parameters)) {
+        return Arrays.asList(EngineMessage.ACTION_TYPE_FAILED_DISK_LUN_INVALID);
+    }
+    ValidationResult usingScsiReservationResult = diskValidator.isUsingScsiReservationValid(getVm(), lunDisk.getDiskVmElementForVm(getVmId()), lunDisk);
+    if (!usingScsiReservationResult.isValid()) {
+        return usingScsiReservationResult.getMessages();
+    }
+    return Collections.emptyList();
+}
+#end_block
+
+#method_before
+private boolean validateLunExistsAndInitDeviceData(LUNs lun, GetDeviceListVDSCommandParameters parameters) {
+    List<LUNs> lunFromStorage = (List<LUNs>) runVdsCommand(VDSCommandType.GetDeviceList, parameters).getReturnValue();
+    if (lunFromStorage == null || lunFromStorage.isEmpty()) {
+        return true;
+    } else {
+        LUNs luns = lunFromStorage.get(0);
+        lun.setSerial(luns.getSerial());
+        lun.setLunMapping(luns.getLunMapping());
+        lun.setVendorId(luns.getVendorId());
+        lun.setProductId(luns.getProductId());
+        lun.setProductId(luns.getProductId());
+        lun.setDiscardMaxSize(luns.getDiscardMaxSize());
+        lun.setDiscardZeroesData(luns.getDiscardZeroesData());
+        lun.setPvSize(luns.getPvSize());
+    }
+    return false;
+}
+#method_after
+private boolean validateLunExistsAndInitDeviceData(LUNs lun, GetDeviceListVDSCommandParameters parameters) {
+    List<LUNs> lunFromStorage = (List<LUNs>) runVdsCommand(VDSCommandType.GetDeviceList, parameters).getReturnValue();
+    if (lunFromStorage == null || lunFromStorage.isEmpty()) {
+        return true;
+    } else {
+        LUNs luns = lunFromStorage.get(0);
+        lun.setSerial(luns.getSerial());
+        lun.setLunMapping(luns.getLunMapping());
+        lun.setVendorId(luns.getVendorId());
+        lun.setProductId(luns.getProductId());
+        lun.setProductId(luns.getProductId());
+        lun.setDiscardMaxSize(luns.getDiscardMaxSize());
+        lun.setPvSize(luns.getPvSize());
+    }
+    return false;
+}
+#end_block
+
+#method_before
+@Override
+public boolean handlesEvent(CellPreviewEvent<EntityModel> event) {
+    return true;
+}
+#method_after
+@Override
+public boolean handlesEvent(CellPreviewEvent<EntityModel> event) {
+    return EventHandlingCellMixin.inputHandlesClick(event) || ElementTooltipUtils.HANDLED_CELL_EVENTS.contains(event.getNativeEvent().getType());
+}
+#end_block
+
+#method_before
+@Override
+protected void executeVdsBrokerCommand() {
+    status = getBroker().glusterWebhookAdd(getParameters().getWebhookUrl(), null);
+    proceedProxyReturnValue();
+}
+#method_after
+@Override
+protected void executeVdsBrokerCommand() {
+    status = getBroker().glusterWebhookAdd(getParameters().getWebhookUrl(), getParameters().getBearerToken());
+    proceedProxyReturnValue();
+}
+#end_block
+
+#method_before
+@Override
+public StatusOnlyReturn mergeSubchain(String jobId, Map<String, String> subchainInfo) {
+    JsonRpcRequest request = new RequestBuilder("SDM.merge").withParameter("job_id", jobId).withParameter("subchain_info", subchainInfo).build();
+    Map<String, Object> response = new FutureMap(this.client, request);
+    return new StatusOnlyReturn(response);
+}
+#method_after
+@Override
+public StatusOnlyReturn mergeSubchain(String jobId, Map<String, Object> subchainInfo) {
+    JsonRpcRequest request = new RequestBuilder("SDM.merge").withParameter("job_id", jobId).withParameter("subchain_info", subchainInfo).build();
+    Map<String, Object> response = new FutureMap(this.client, request);
+    return new StatusOnlyReturn(response);
+}
+#end_block
+
+#method_before
+@SuppressWarnings("rawtypes")
+@Override
+public StatusOnlyReturn hotPlugNic(Map info) {
+    JsonRpcRequest request = new RequestBuilder("VM.hotplugNic").withParameter("vmID", getVmId(info)).withParameter("params", info).build();
+    Map<String, Object> response = new FutureMap(this.client, request);
+    return new StatusOnlyReturn(response);
+}
+#method_after
+@SuppressWarnings("rawtypes")
+@Override
+public VmInfoReturn hotPlugNic(Map info) {
+    JsonRpcRequest request = new RequestBuilder("VM.hotplugNic").withParameter("vmID", getVmId(info)).withParameter("params", info).build();
+    Map<String, Object> response = new FutureMap(this.client, request);
+    return new VmInfoReturn(response);
+}
+#end_block
+
+#method_before
+@Override
+public StatusOnlyReturn add_image_ticket(String ticketId, String[] ops, long timeout, long size, String url) {
+    HashMap<String, Object> ticketDict = new HashMap<>();
+    ticketDict.put("uuid", ticketId);
+    ticketDict.put("timeout", timeout);
+    ticketDict.put("ops", ops);
+    ticketDict.put("size", size);
+    ticketDict.put("url", url);
+    JsonRpcRequest request = new RequestBuilder("Host.add_image_ticket").withParameter("ticket", ticketDict).build();
+    Map<String, Object> response = new FutureMap(this.client, request);
+    return new StatusOnlyReturn(response);
+}
+#method_after
+@Override
+public StatusOnlyReturn add_image_ticket(String ticketId, String[] ops, long timeout, long size, String url, String filename) {
+    HashMap<String, Object> ticketDict = new HashMap<>();
+    ticketDict.put("uuid", ticketId);
+    ticketDict.put("timeout", timeout);
+    ticketDict.put("ops", ops);
+    ticketDict.put("size", size);
+    ticketDict.put("url", url);
+    // filename is null by default, and only specified by the UI
+    if (filename != null) {
+        ticketDict.put("filename", filename);
+    }
+    JsonRpcRequest request = new RequestBuilder("Host.add_image_ticket").withParameter("ticket", ticketDict).build();
+    Map<String, Object> response = new FutureMap(this.client, request);
+    return new StatusOnlyReturn(response);
+}
+#end_block
+
+#method_before
+@Override
+public StatusOnlyReturn amendVolume(String jobId, Map<String, Object> volInfo, Map<String, Object> volAttr) {
+    JsonRpcRequest request = new RequestBuilder("SDM.amend_volume").withParameter("job_id", jobId).withParameter("vol_info", volInfo).withParameter("vol_attr", volAttr).build();
+    Map<String, Object> response = new FutureMap(this.client, request);
+    return new StatusOnlyReturn(response);
+}
+#method_after
+@Override
+public StatusOnlyReturn amendVolume(String jobId, Map<String, Object> volInfo, Map<String, Object> qcow2_attr) {
+    JsonRpcRequest request = new RequestBuilder("SDM.amend_volume").withParameter("job_id", jobId).withParameter("vol_info", volInfo).withParameter("qcow2_attr", qcow2_attr).build();
+    Map<String, Object> response = new FutureMap(this.client, request);
+    return new StatusOnlyReturn(response);
+}
+#end_block
+
+#method_before
+@Override
+public StatusOnlyReturn glusterWebhookSync() {
+    JsonRpcRequest request = new RequestBuilder("GlusterEvent.webhookSync").build();
+    Map<String, Object> response = new FutureMap(this.client, request);
+    return new StatusOnlyReturn(response);
+}
+#method_after
+public StatusOnlyReturn glusterWebhookSync() {
+    JsonRpcRequest request = new RequestBuilder("GlusterEvent.webhookSync").build();
+    Map<String, Object> response = new FutureMap(this.client, request);
+    return new StatusOnlyReturn(response);
+}
+#end_block
+
+#method_before
+@Override
+protected void proceedProxyReturnValue() {
+    EngineError returnStatus = getReturnValueFromStatus(getReturnStatus());
+    switch(returnStatus) {
+        case GlusterGeneralException:
+        case GlusterPermissionDeniedException:
+        case GlusterSyntaxErrorException:
+        case GlusterMissingArgumentException:
+        case GlusterCmdExecFailedException:
+        case GlusterXmlErrorException:
+        case GlusterVolumeCreateFailed:
+        case GlusterVolumeStartFailed:
+        case GlusterVolumeStopFailed:
+        case AddBricksToGlusterVolumeFailed:
+        case GlusterVolumeSetOptionFailed:
+        case GlusterVolumeRebalanceStartFailed:
+        case GlusterVolumeGeoRepSessionStartFailed:
+        case GlusterVolumeDeleteFailed:
+        case GlusterVolumeReplaceBrickStartFailed:
+        case GlusterVolumeReplaceBrickFailed:
+        case GlusterVolumeListFailed:
+        case GlusterVolumeOptionInfoFailed:
+        case GlusterVolumeResetOptionsFailed:
+        case GlusterVolumeRemoveBricksFailed:
+        case GlusterVolumeProfileStartFailed:
+        case GlusterVolumeGeoRepSessionPauseFailed:
+        case GlusterVolumeProfileStopFailed:
+        case GlusterAddHostFailed:
+        case GlusterHostRemoveFailedException:
+        case GlusterHostIsNotPartOfCluster:
+        case GlusterPeerListFailed:
+        case GlusterVolumeStatusFailed:
+        case GlusterVolumeProfileInfoFailed:
+        case GlusterHookFailed:
+        case GlusterHookEnableFailed:
+        case GlusterHookDisableFailed:
+        case GlusterHookNotFound:
+        case GlusterHookListException:
+        case GlusterHostUUIDNotFound:
+        case GlusterHookConflict:
+        case GlusterHookUpdateFailed:
+        case GlusterHookAlreadyExists:
+        case GlusterHookChecksumMismatch:
+        case GlusterHookAddFailed:
+        case GlusterHookRemoveFailed:
+        case GlusterServicesActionFailed:
+        case GlusterServiceActionNotSupported:
+        case GlusterVolumeRebalanceStopFailed:
+        case GlusterVolumeStatusAllFailedException:
+        case GlusterVolumeRebalanceStatusFailedException:
+        case GlusterVolumeEmptyCheckFailed:
+        case GlusterGeoRepPublicKeyFileCreateFailed:
+        case GlusterGeoRepPublicKeyFileReadError:
+        case GlusterGeoRepUserNotFound:
+        case GlusterGeoRepPublicKeyWriteFailed:
+        case GlusterGeoRepExecuteMountBrokerOptFailed:
+        case GlusterGeoRepExecuteMountBrokerUserAddFailed:
+        case GlusterMountBrokerRootCreateFailed:
+        case GlusterGeoRepSessionCreateFailed:
+        case GlusterVolumeGeoRepSessionResumeFailed:
+        case GlusterGeoRepException:
+        case GlusterVolumeRemoveBricksStartFailed:
+        case GlusterVolumeRemoveBricksStopFailed:
+        case GlusterVolumeRemoveBrickStatusFailed:
+        case GlusterVolumeRemoveBricksCommitFailed:
+        case GlusterVolumeGeoRepStatusFailed:
+        case GlusterGeoRepConfigFailed:
+        case GlusterLibgfapiException:
+        case GlfsStatvfsException:
+        case GlfsInitException:
+        case GlfsFiniException:
+        case GlusterGeoRepSessionDeleteFailedException:
+        case GlusterVolumeGeoRepSessionStopFailed:
+        case GlusterSnapshotException:
+        case GlusterSnapshotInfoFailedException:
+        case GlusterSnapshotDeleteFailedException:
+        case GlusterSnapshotActivateFailedException:
+        case GlusterSnapshotDeactivateFailedException:
+        case GlusterSnapshotRestoreFailedException:
+        case GlusterSnapshotCreateFailedException:
+        case GlusterSnapshotConfigFailedException:
+        case GlusterSnapshotConfigSetFailedException:
+        case GlusterSnapshotConfigGetFailedException:
+        case GlusterHostStorageDeviceNotFoundException:
+        case GlusterHostStorageDeviceInUseException:
+        case GlusterHostStorageDeviceMountFailedException:
+        case GlusterHostStorageDeviceFsTabFoundException:
+        case GlusterHostStorageDevicePVCreateFailedException:
+        case GlusterHostStorageDeviceLVConvertFailedException:
+        case GlusterHostStorageDeviceLVChangeFailedException:
+        case GlusterHostStorageDeviceMakeDirsFailedException:
+        case GlusterHostStorageMountPointInUseException:
+        case GlusterHostStorageDeviceVGCreateFailedException:
+        case GlusterHostStorageDeviceVGScanFailedException:
+        case GlusterHostFailedToSetSelinuxContext:
+        case GlusterHostFailedToRunRestorecon:
+        case GlusterSnapshotScheduleFlagUpdateFailedException:
+        case GlusterDisableSnapshotScheduleFailedException:
+        case GlusterMetaVolumeMountFailedException:
+        case GlusterMetaVolumeFstabUpdateFailedException:
+        case GlusterProcessesStopFailedException:
+        case GlusterVolumeHealInfoFailedException:
+        case GlusterEventException:
+        case GlusterAddWebhookException:
+        case GlusterSyncWebhookException:
+        case GlusterUpdateWebhookException:
+            // Capture error from gluster command and record failure
+            getVDSReturnValue().setVdsError(new VDSError(returnStatus, getReturnStatus().message));
+            getVDSReturnValue().setSucceeded(false);
+            break;
+        default:
+            super.proceedProxyReturnValue();
+            break;
+    }
+}
+#method_after
+@Override
+protected void proceedProxyReturnValue() {
+    EngineError returnStatus = getReturnValueFromStatus(getReturnStatus());
+    switch(returnStatus) {
+        case GlusterGeneralException:
+        case GlusterPermissionDeniedException:
+        case GlusterSyntaxErrorException:
+        case GlusterMissingArgumentException:
+        case GlusterCmdExecFailedException:
+        case GlusterXmlErrorException:
+        case GlusterVolumeCreateFailed:
+        case GlusterVolumeStartFailed:
+        case GlusterVolumeStopFailed:
+        case AddBricksToGlusterVolumeFailed:
+        case GlusterVolumeSetOptionFailed:
+        case GlusterVolumeRebalanceStartFailed:
+        case GlusterVolumeGeoRepSessionStartFailed:
+        case GlusterVolumeDeleteFailed:
+        case GlusterVolumeReplaceBrickStartFailed:
+        case GlusterVolumeReplaceBrickFailed:
+        case GlusterVolumeListFailed:
+        case GlusterVolumeOptionInfoFailed:
+        case GlusterVolumeResetOptionsFailed:
+        case GlusterVolumeRemoveBricksFailed:
+        case GlusterVolumeProfileStartFailed:
+        case GlusterVolumeGeoRepSessionPauseFailed:
+        case GlusterVolumeProfileStopFailed:
+        case GlusterAddHostFailed:
+        case GlusterHostRemoveFailedException:
+        case GlusterHostIsNotPartOfCluster:
+        case GlusterPeerListFailed:
+        case GlusterVolumeStatusFailed:
+        case GlusterVolumeProfileInfoFailed:
+        case GlusterHookFailed:
+        case GlusterHookEnableFailed:
+        case GlusterHookDisableFailed:
+        case GlusterHookNotFound:
+        case GlusterHookListException:
+        case GlusterHostUUIDNotFound:
+        case GlusterHookConflict:
+        case GlusterHookUpdateFailed:
+        case GlusterHookAlreadyExists:
+        case GlusterHookChecksumMismatch:
+        case GlusterHookAddFailed:
+        case GlusterHookRemoveFailed:
+        case GlusterServicesActionFailed:
+        case GlusterServiceActionNotSupported:
+        case GlusterVolumeRebalanceStopFailed:
+        case GlusterVolumeStatusAllFailedException:
+        case GlusterVolumeRebalanceStatusFailedException:
+        case GlusterVolumeEmptyCheckFailed:
+        case GlusterGeoRepPublicKeyFileCreateFailed:
+        case GlusterGeoRepPublicKeyFileReadError:
+        case GlusterGeoRepUserNotFound:
+        case GlusterGeoRepPublicKeyWriteFailed:
+        case GlusterGeoRepExecuteMountBrokerOptFailed:
+        case GlusterGeoRepExecuteMountBrokerUserAddFailed:
+        case GlusterMountBrokerRootCreateFailed:
+        case GlusterGeoRepSessionCreateFailed:
+        case GlusterVolumeGeoRepSessionResumeFailed:
+        case GlusterGeoRepException:
+        case GlusterVolumeRemoveBricksStartFailed:
+        case GlusterVolumeRemoveBricksStopFailed:
+        case GlusterVolumeRemoveBrickStatusFailed:
+        case GlusterVolumeRemoveBricksCommitFailed:
+        case GlusterVolumeGeoRepStatusFailed:
+        case GlusterGeoRepConfigFailed:
+        case GlusterLibgfapiException:
+        case GlfsStatvfsException:
+        case GlfsInitException:
+        case GlfsFiniException:
+        case GlusterGeoRepSessionDeleteFailedException:
+        case GlusterVolumeGeoRepSessionStopFailed:
+        case GlusterSnapshotException:
+        case GlusterSnapshotInfoFailedException:
+        case GlusterSnapshotDeleteFailedException:
+        case GlusterSnapshotActivateFailedException:
+        case GlusterSnapshotDeactivateFailedException:
+        case GlusterSnapshotRestoreFailedException:
+        case GlusterSnapshotCreateFailedException:
+        case GlusterSnapshotConfigFailedException:
+        case GlusterSnapshotConfigSetFailedException:
+        case GlusterSnapshotConfigGetFailedException:
+        case GlusterHostStorageDeviceNotFoundException:
+        case GlusterHostStorageDeviceInUseException:
+        case GlusterHostStorageDeviceMountFailedException:
+        case GlusterHostStorageDeviceFsTabFoundException:
+        case GlusterHostStorageDevicePVCreateFailedException:
+        case GlusterHostStorageDeviceLVConvertFailedException:
+        case GlusterHostStorageDeviceLVChangeFailedException:
+        case GlusterHostStorageDeviceMakeDirsFailedException:
+        case GlusterHostStorageMountPointInUseException:
+        case GlusterHostStorageDeviceVGCreateFailedException:
+        case GlusterHostStorageDeviceVGScanFailedException:
+        case GlusterHostFailedToSetSelinuxContext:
+        case GlusterHostFailedToRunRestorecon:
+        case GlusterSnapshotScheduleFlagUpdateFailedException:
+        case GlusterDisableSnapshotScheduleFailedException:
+        case GlusterMetaVolumeMountFailedException:
+        case GlusterMetaVolumeFstabUpdateFailedException:
+        case GlusterProcessesStopFailedException:
+        case GlusterVolumeHealInfoFailedException:
+        case GlusterEventException:
+        case GlusterWebhookAddException:
+        case GlusterWebhookSyncException:
+        case GlusterWebhookUpdateException:
+        case GlusterWebhookDeleteException:
+            // Capture error from gluster command and record failure
+            getVDSReturnValue().setVdsError(new VDSError(returnStatus, getReturnStatus().message));
+            getVDSReturnValue().setSucceeded(false);
+            break;
+        default:
+            super.proceedProxyReturnValue();
+            break;
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected void endSuccessfully() {
+    if (getParameters().getVm().getOrigin() != OriginType.OVIRT) {
+        super.endSuccessfully();
+    }
+    endActionOnDisks();
+    extractOva();
+    addImportedDevices();
+    unlockVm();
+    setSucceeded(true);
+}
+#method_after
+@Override
+protected void endSuccessfully() {
+    if (getParameters().getVm().getOrigin() != OriginType.OVIRT) {
+        super.endSuccessfully();
+        return;
+    }
+    // This command uses compensation so if we won't execute the following block in a new
+    // transaction then the images might be updated within this transaction scope and block
+    // RemoveVm that also tries to update the images later on
+    TransactionSupport.executeInNewTransaction(() -> {
+        endActionOnDisks();
+        return null;
+    });
+    if (!extractOva()) {
+        log.error("Failed to extract OVA file");
+        removeVm();
+        getReturnValue().setEndActionTryAgain(false);
+        return;
+    }
+    addImportedDevices();
+    unlockVm();
+    setSucceeded(true);
+}
+#end_block
+
+#method_before
+private void extractOva() {
+    ActionReturnValue returnValue = runInternalAction(ActionType.ExtractOva, buildExtractOvaParameters(), ExecutionHandler.createDefaultContextForTasks(getContext()));
+    if (!returnValue.getSucceeded()) {
+        log.error("Failed to extract OVA file");
+        removeVm();
+        getReturnValue().setEndActionTryAgain(false);
+        throw new EngineException(returnValue.getFault().getError(), returnValue.getFault().getMessage());
+    }
+}
+#method_after
+private boolean extractOva() {
+    return runInternalAction(ActionType.ExtractOva, buildExtractOvaParameters(), ExecutionHandler.createDefaultContextForTasks(getContext())).getSucceeded();
+}
+#end_block
+
+#method_before
+@Override
+protected AddDiskParameters buildAddDiskParameters(DiskImage image, boolean isBoot) {
+    if (getParameters().getVm().getOrigin() != OriginType.OVIRT) {
+        return super.buildAddDiskParameters(image, isBoot);
+    }
+    AddDiskParameters parameters = super.buildAddDiskParameters(image, isBoot);
+    parameters.setUsePassedDiskId(true);
+    parameters.setUsePassedImageId(true);
+    return parameters;
+}
+#method_after
+@Override
+protected AddDiskParameters buildAddDiskParameters(DiskImage image, boolean isBoot) {
+    if (getParameters().getVm().getOrigin() != OriginType.OVIRT) {
+        return super.buildAddDiskParameters(image, isBoot);
+    }
+    // The volume format and type is fixed for disks within oVirt's OVA files:
+    image.setVolumeFormat(VolumeFormat.COW);
+    image.setVolumeType(VolumeType.Sparse);
+    AddDiskParameters parameters = super.buildAddDiskParameters(image, isBoot);
+    parameters.setUsePassedDiskId(true);
+    parameters.setUsePassedImageId(true);
+    return parameters;
+}
+#end_block
+
+#method_before
+protected void removeVm() {
+    runInternalActionWithTasksContext(ActionType.RemoveVm, new RemoveVmParameters(getVmId(), true));
+}
+#method_after
+protected void removeVm() {
+    runInternalActionWithTasksContext(ActionType.RemoveVm, new RemoveVmParameters(getVmId(), true), getLock());
+}
+#end_block
+
+#method_before
+@Override
+protected void executeVmCommand() {
+    vmHandler.updateDisksFromDb(getVm());
+    List<String> diskIdToPath = prepareImages();
+    // && updateVm();
+    boolean succeeded = runAnsibleImportOvaPlaybook(diskIdToPath);
+    if (!succeeded) {
+        removeVm();
+    }
+    setSucceeded(succeeded);
+}
+#method_after
+@Override
+protected void executeVmCommand() {
+    vmHandler.updateDisksFromDb(getVm());
+    List<String> diskPaths = prepareImages();
+    boolean succeeded = runAnsibleImportOvaPlaybook(diskPaths);
+    teardownImages();
+    setSucceeded(succeeded);
+}
+#end_block
+
+#method_before
+private List<String> prepareImages() {
+    List<String> diskIdToPath = new LinkedList<>();
+    for (DiskImage disk : getVm().getDiskList()) {
+        VDSReturnValue vdsRetVal = imagesHandler.prepareImage(disk.getStoragePoolId(), disk.getStorageIds().get(0), disk.getId(), disk.getImageId(), getParameters().getProxyHostId());
+        String path = ((PrepareImageReturn) vdsRetVal.getReturnValue()).getImagePath();
+        diskIdToPath.add(path);
+    }
+    return diskIdToPath;
+}
+#method_after
+private List<String> prepareImages() {
+    return getVm().getDiskList().stream().map(this::prepareImage).map(PrepareImageReturn::getImagePath).collect(Collectors.toList());
+}
+#end_block
+
+#method_before
+@Override
+protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    log.debug("Entered InteractiveAuthServlet");
+    try {
+        String redirectUrl;
+        SsoSession ssoSession = SsoUtils.getSsoSession(request);
+        // clean up the sso session id token
+        ssoContext.removeSsoSessionById(ssoSession);
+        if (StringUtils.isEmpty(ssoSession.getClientId())) {
+            redirectUrl = ssoContext.getEngineUrl();
+        } else {
+            Credentials userCredentials = getUserCredentials(request);
+            try {
+                if (SsoUtils.isUserAuthenticated(request)) {
+                    log.debug("User is authenticated redirecting to {}", SsoConstants.INTERACTIVE_REDIRECT_TO_MODULE_URI);
+                    redirectUrl = request.getContextPath() + SsoConstants.INTERACTIVE_REDIRECT_TO_MODULE_URI;
+                } else {
+                    redirectUrl = authenticateUser(request, response, userCredentials);
+                }
+            } catch (AuthenticationException ex) {
+                if (userCredentials != null) {
+                    String profile = userCredentials.getProfile() == null ? "N/A" : userCredentials.getProfile();
+                    log.error("Cannot authenticate user '{}@{}' connecting from '{}': {}", userCredentials.getUsername(), profile, ssoSession.getSourceAddr(), ex.getMessage());
+                    log.debug("Exception", ex);
+                    SsoUtils.getSsoSession(request).setLoginMessage(ex.getMessage());
+                }
+                log.debug("Redirecting to LoginPage");
+                ssoSession.setReauthenticate(false);
+                ssoContext.registerSsoSessionById(SsoUtils.generateIdToken(), ssoSession);
+                if (StringUtils.isNotEmpty(ssoContext.getSsoDefaultProfile()) && Arrays.stream(request.getCookies()).noneMatch(c -> c.getName().equals("profile"))) {
+                    Cookie cookie = new Cookie("profile", ssoContext.getSsoDefaultProfile());
+                    cookie.setSecure("https".equals(request.getScheme()));
+                    response.addCookie(cookie);
+                }
+                redirectUrl = request.getContextPath() + SsoConstants.INTERACTIVE_LOGIN_FORM_URI;
+            }
+        }
+        if (redirectUrl != null) {
+            response.sendRedirect(redirectUrl);
+        }
+    } catch (Exception ex) {
+        SsoUtils.redirectToErrorPage(request, response, ex);
+    }
+}
+#method_after
+@Override
+protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    log.debug("Entered InteractiveAuthServlet");
+    try {
+        String redirectUrl;
+        SsoSession ssoSession = SsoUtils.getSsoSession(request);
+        // clean up the sso session id token
+        ssoContext.removeSsoSessionById(ssoSession);
+        if (StringUtils.isEmpty(ssoSession.getClientId())) {
+            redirectUrl = ssoContext.getEngineUrl();
+        } else {
+            Credentials userCredentials = getUserCredentials(request);
+            try {
+                if (SsoUtils.isUserAuthenticated(request)) {
+                    log.debug("User is authenticated redirecting to {}", SsoConstants.INTERACTIVE_REDIRECT_TO_MODULE_URI);
+                    redirectUrl = request.getContextPath() + SsoConstants.INTERACTIVE_REDIRECT_TO_MODULE_URI;
+                } else {
+                    redirectUrl = authenticateUser(request, response, userCredentials);
+                }
+            } catch (AuthenticationException ex) {
+                if (userCredentials != null) {
+                    String profile = userCredentials.getProfile() == null ? "N/A" : userCredentials.getProfile();
+                    log.error("Cannot authenticate user '{}@{}' connecting from '{}': {}", userCredentials.getUsername(), profile, ssoSession.getSourceAddr(), ex.getMessage());
+                    log.debug("Exception", ex);
+                    SsoUtils.getSsoSession(request).setLoginMessage(ex.getMessage());
+                }
+                log.debug("Redirecting to LoginPage");
+                ssoSession.setReauthenticate(false);
+                ssoContext.registerSsoSessionById(SsoUtils.generateIdToken(), ssoSession);
+                if (StringUtils.isNotEmpty(ssoContext.getSsoDefaultProfile()) && Arrays.stream(request.getCookies()).noneMatch(c -> c.getName().equals("profile"))) {
+                    Cookie cookie = new Cookie("profile", ssoContext.getSsoDefaultProfile());
+                    cookie.setSecure("https".equalsIgnoreCase(request.getScheme()));
+                    response.addCookie(cookie);
+                }
+                redirectUrl = request.getContextPath() + SsoConstants.INTERACTIVE_LOGIN_FORM_URI;
+            }
+        }
+        if (redirectUrl != null) {
+            response.sendRedirect(redirectUrl);
+        }
+    } catch (Exception ex) {
+        SsoUtils.redirectToErrorPage(request, response, ex);
+    }
+}
+#end_block
+
+#method_before
+private String authenticateUser(HttpServletRequest request, HttpServletResponse response, Credentials userCredentials) throws ServletException, IOException, AuthenticationException {
+    if (userCredentials == null || !SsoUtils.areCredentialsValid(request, userCredentials, true)) {
+        throw new AuthenticationException(ssoContext.getLocalizationUtils().localize(SsoConstants.APP_ERROR_INVALID_CREDENTIALS, (Locale) request.getAttribute(SsoConstants.LOCALE)));
+    }
+    try {
+        log.debug("Authenticating user using credentials");
+        Cookie cookie = new Cookie("profile", userCredentials.getProfile());
+        cookie.setSecure("https".equals(request.getScheme()));
+        response.addCookie(cookie);
+        AuthenticationUtils.handleCredentials(ssoContext, request, userCredentials);
+        return request.getContextPath() + SsoConstants.INTERACTIVE_REDIRECT_TO_MODULE_URI;
+    } catch (AuthenticationException ex) {
+        throw ex;
+    } catch (Exception ex) {
+        log.error("Internal Server Error: {}", ex.getMessage());
+        log.debug("Exception", ex);
+        throw new RuntimeException(ex.getMessage(), ex);
+    }
+}
+#method_after
+private String authenticateUser(HttpServletRequest request, HttpServletResponse response, Credentials userCredentials) throws ServletException, IOException, AuthenticationException {
+    if (userCredentials == null || !SsoUtils.areCredentialsValid(request, userCredentials, true)) {
+        throw new AuthenticationException(ssoContext.getLocalizationUtils().localize(SsoConstants.APP_ERROR_INVALID_CREDENTIALS, (Locale) request.getAttribute(SsoConstants.LOCALE)));
+    }
+    try {
+        log.debug("Authenticating user using credentials");
+        Cookie cookie = new Cookie("profile", userCredentials.getProfile());
+        cookie.setSecure("https".equalsIgnoreCase(request.getScheme()));
+        response.addCookie(cookie);
+        AuthenticationUtils.handleCredentials(ssoContext, request, userCredentials);
+        return request.getContextPath() + SsoConstants.INTERACTIVE_REDIRECT_TO_MODULE_URI;
+    } catch (AuthenticationException ex) {
+        throw ex;
+    } catch (Exception ex) {
+        log.error("Internal Server Error: {}", ex.getMessage());
+        log.debug("Exception", ex);
+        throw new RuntimeException(ex.getMessage(), ex);
+    }
+}
+#end_block
+
+#method_before
+private void setCookie(final HttpServletRequest request, final HttpServletResponse response, final Locale userLocale) {
+    // Detected locale doesn't match the default locale, set a cookie.
+    Cookie cookie = new Cookie(LocaleFilter.LOCALE, userLocale.toString());
+    cookie.setSecure("https".equals(request.getScheme()));
+    cookie.setPath(ROOT_PATH);
+    // Doesn't expire.
+    cookie.setMaxAge(Integer.MAX_VALUE);
+    cookie.setHttpOnly(true);
+    response.addCookie(cookie);
+}
+#method_after
+private void setCookie(final HttpServletRequest request, final HttpServletResponse response, final Locale userLocale) {
+    // Detected locale doesn't match the default locale, set a cookie.
+    Cookie cookie = new Cookie(LocaleFilter.LOCALE, userLocale.toString());
+    cookie.setSecure("https".equalsIgnoreCase(request.getScheme()));
+    cookie.setPath(ROOT_PATH);
+    // Doesn't expire.
+    cookie.setMaxAge(Integer.MAX_VALUE);
+    cookie.setHttpOnly(true);
+    response.addCookie(cookie);
+}
+#end_block
+
+#method_before
+private void setLangPageShown(HttpServletRequest request, HttpServletResponse response, boolean value) {
+    Cookie cookie = new Cookie(LANG_PAGE_SHOWN, Boolean.toString(value));
+    cookie.setSecure("https".equals(request.getScheme()));
+    // Scope this cookie to the (root) application context URL
+    cookie.setPath(getServletContext().getContextPath());
+    cookie.setHttpOnly(true);
+    // Don't set max age, i.e. let this be a session cookie
+    response.addCookie(cookie);
+}
+#method_after
+private void setLangPageShown(HttpServletRequest request, HttpServletResponse response, boolean value) {
+    Cookie cookie = new Cookie(LANG_PAGE_SHOWN, Boolean.toString(value));
+    cookie.setSecure("https".equalsIgnoreCase(request.getScheme()));
+    // Scope this cookie to the (root) application context URL
+    cookie.setPath(getServletContext().getContextPath());
+    cookie.setHttpOnly(true);
+    // Don't set max age, i.e. let this be a session cookie
+    response.addCookie(cookie);
+}
+#end_block
+
+#method_before
+private void fixDiskDevices(VM vm, Map<DiskImage, DiskImage> diskMappings) {
+    Map<Guid, Guid> diskIdMappings = new HashMap<>();
+    diskMappings.forEach((source, destination) -> diskIdMappings.put(source.getId(), destination.getId()));
+    List<VmDevice> diskDevices = vm.getStaticData().getManagedDeviceMap().values().stream().filter(dev -> dev.getType() == VmDeviceGeneralType.DISK && VmDeviceType.DISK.getName().equals(dev.getDevice())).collect(Collectors.toList());
+    diskDevices.forEach(diskDevice -> {
+        Guid sourceDiskId = diskDevice.getDeviceId();
+        Guid destinationDiskId = diskIdMappings.get(sourceDiskId);
+        if (destinationDiskId != null) {
+            vm.getStaticData().getManagedDeviceMap().remove(sourceDiskId);
+            diskDevice.setDeviceId(destinationDiskId);
+            vm.getStaticData().getManagedDeviceMap().put(destinationDiskId, diskDevice);
+        }
+    });
+}
+#method_after
+private void fixDiskDevices(VM vm, Map<DiskImage, DiskImage> diskMappings) {
+    Map<Guid, Guid> diskIdMappings = new HashMap<>();
+    diskMappings.forEach((source, destination) -> diskIdMappings.put(source.getId(), destination.getId()));
+    List<VmDevice> diskDevices = vm.getStaticData().getManagedDeviceMap().values().stream().filter(VmDeviceCommonUtils::isDisk).collect(Collectors.toList());
+    diskDevices.forEach(diskDevice -> {
+        Guid sourceDiskId = diskDevice.getDeviceId();
+        Guid destinationDiskId = diskIdMappings.get(sourceDiskId);
+        if (destinationDiskId != null) {
+            vm.getStaticData().getManagedDeviceMap().remove(sourceDiskId);
+            diskDevice.setDeviceId(destinationDiskId);
+            vm.getStaticData().getManagedDeviceMap().put(destinationDiskId, diskDevice);
+        }
+    });
+}
+#end_block
+
+#method_before
+private void processHeartbeat() {
+    if (!this.isInInit() && this.policy.isIncomingHeartbeat() && this.isIncomingHeartbeatExeeded()) {
+        log.info("Heartbeat exceeded for " + getHostname() + " last response was " + getHeartbeatTime() + " milliseconds ago.");
+        this.disconnect("Heartbeat exceeded");
+    }
+}
+#method_after
+private void processHeartbeat() {
+    if (!this.isInInit() && this.policy.isIncomingHeartbeat() && this.isIncomingHeartbeatExeeded()) {
+        log.error("Heartbeat exceeded for host '{}', last response arrived {} ms ago.", getHostname(), getHeartbeatTime());
+        this.disconnect("Heartbeat exceeded");
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected TreeItem createRootNode(LunModel rootModel) {
+    final EntityModelCellTable<ListModel<LunModel>> table = new EntityModelCellTable<>(multiSelection, (Resources) GWT.create(SanStorageListLunRootResources.class));
+    // Create table
+    initRootNodeTable(table);
+    // Set custom selection column
+    AbstractLunSelectionColumn lunSelectionColumn = new AbstractLunSelectionColumn() {
+
+        @Override
+        public LunModel getValue(LunModel object) {
+            return object;
+        }
+    };
+    // $NON-NLS-1$
+    table.setCustomSelectionColumn(lunSelectionColumn, "20px");
+    // Add items
+    List<LunModel> items = new ArrayList<>();
+    items.add(rootModel);
+    ListModel<LunModel> listModel = new ListModel<>();
+    listModel.setItems(items);
+    // Update table
+    table.setRowData(items);
+    table.asEditor().edit(listModel);
+    // $NON-NLS-1$
+    table.setWidth("100%");
+    // This was the height of the header
+    // $NON-NLS-1$
+    table.setHeight("46px");
+    rootModel.getPropertyChangedEvent().removeListener(lunModelSelectedItemListener);
+    rootModel.getPropertyChangedEvent().addListener(lunModelSelectedItemListener, table);
+    if (!multiSelection) {
+        table.getSelectionModel().addSelectionChangeHandler(event -> {
+            SingleSelectionModel SingleSelectionModel = (SingleSelectionModel) event.getSource();
+            LunModel selectedLunModel = (LunModel) SingleSelectionModel.getSelectedObject();
+            if (selectedLunModel != null) {
+                updateSelectedLunWarning(selectedLunModel);
+            }
+        });
+    } else {
+        table.getSelectionModel().setSelected(rootModel, rootModel.getIsSelected());
+        table.getSelectionModel().addSelectionChangeHandler(event -> model.updateLunWarningForDiscardAfterDelete());
+    }
+    // Create tree item
+    HorizontalPanel panel = new HorizontalPanel();
+    panel.add(table);
+    // $NON-NLS-1$
+    panel.setWidth("100%");
+    panel.getElement().getStyle().setTableLayout(TableLayout.FIXED);
+    TreeItem item = new TreeItem(table);
+    // Display LUNs as grayed-out if needed
+    if (rootModel.getIsGrayedOut()) {
+        grayOutItem(rootModel.getGrayedOutReasons(), rootModel, table);
+    }
+    return item;
+}
+#method_after
+@Override
+protected TreeItem createRootNode(LunModel rootModel) {
+    final EntityModelCellTable<ListModel<LunModel>> table = new EntityModelCellTable<>(multiSelection, (Resources) GWT.create(SanStorageListLunRootResources.class));
+    // Create table
+    initRootNodeTable(table);
+    // Set custom selection column
+    AbstractLunSelectionColumn lunSelectionColumn = new AbstractLunSelectionColumn(multiSelection) {
+
+        @Override
+        public LunModel getValue(LunModel object) {
+            return object;
+        }
+    };
+    // $NON-NLS-1$
+    table.setCustomSelectionColumn(lunSelectionColumn, "20px");
+    // Add items
+    List<LunModel> items = new ArrayList<>();
+    items.add(rootModel);
+    ListModel<LunModel> listModel = new ListModel<>();
+    listModel.setItems(items);
+    // Update table
+    table.setRowData(items);
+    table.asEditor().edit(listModel);
+    // $NON-NLS-1$
+    table.setWidth("100%");
+    // This was the height of the header
+    // $NON-NLS-1$
+    table.setHeight("26px");
+    rootModel.getPropertyChangedEvent().removeListener(lunModelSelectedItemListener);
+    rootModel.getPropertyChangedEvent().addListener(lunModelSelectedItemListener, table);
+    if (!multiSelection) {
+        table.getSelectionModel().addSelectionChangeHandler(event -> {
+            SingleSelectionModel SingleSelectionModel = (SingleSelectionModel) event.getSource();
+            LunModel selectedLunModel = (LunModel) SingleSelectionModel.getSelectedObject();
+            if (selectedLunModel != null) {
+                updateSelectedLunWarning(selectedLunModel);
+            }
+        });
+    } else {
+        table.getSelectionModel().setSelected(rootModel, rootModel.getIsSelected());
+        table.getSelectionModel().addSelectionChangeHandler(event -> model.updateLunWarningForDiscardAfterDelete());
+    }
+    // Create tree item
+    HorizontalPanel panel = new HorizontalPanel();
+    panel.add(table);
+    // $NON-NLS-1$
+    panel.setWidth("100%");
+    panel.getElement().getStyle().setTableLayout(TableLayout.FIXED);
+    TreeItem item = new TreeItem(table);
+    // Display LUNs as grayed-out if needed
+    if (rootModel.getIsGrayedOut()) {
+        grayOutItem(rootModel.getGrayedOutReasons(), rootModel, table);
+    }
+    return item;
+}
+#end_block
+
+#method_before
+private void initRootNodeTable(EntityModelCellTable<ListModel<LunModel>> table) {
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getLunId();
+        }
+    }, constants.lunIdSanStorage(), // $NON-NLS-1$
+    "250px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return messages.gigabytes(String.valueOf(model.getSize()));
+        }
+    }, constants.devSizeSanStorage(), // $NON-NLS-1$
+    "60px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return String.valueOf(model.getMultipathing());
+        }
+    }, constants.pathSanStorage(), // $NON-NLS-1$
+    "45px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getVendorId();
+        }
+    }, constants.vendorIdSanStorage(), // $NON-NLS-1$
+    "70px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getProductId();
+        }
+    }, constants.productIdSanStorage(), // $NON-NLS-1$
+    "70px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getSerial();
+        }
+    }, constants.serialSanStorage(), // $NON-NLS-1$
+    "210px");
+    if (!model.getContainer().isNewStorage()) {
+        StorageDomainStatus status = model.getContainer().getStorage().getStatus();
+        if (status == StorageDomainStatus.Maintenance) {
+            boolean reduceDeviceFromStorageDomainSupported = (Boolean) AsyncDataProvider.getInstance().getConfigValuePreConverted(ConfigValues.ReduceDeviceFromStorageDomain, model.getContainer().getDataCenter().getSelectedItem().getCompatibilityVersion().toString());
+            if (reduceDeviceFromStorageDomainSupported) {
+                table.addColumn(new AbstractLunRemoveColumn(model) {
+
+                    @Override
+                    public LunModel getValue(LunModel object) {
+                        return object;
+                    }
+                }, constants.removeSanStorage(), // $NON-NLS-1$
+                "85px");
+                model.getRequireTableRefresh().getEntityChangedEvent().addListener((ev, sender, args) -> {
+                    table.redraw();
+                });
+            }
+        } else {
+            addAbstractLunAddOrExtendColumn(table, constants.actionsSanStorage());
+        }
+    } else {
+        addAbstractLunAddOrExtendColumn(table, constants.addSanStorage());
+    }
+}
+#method_after
+private void initRootNodeTable(EntityModelCellTable<ListModel<LunModel>> table) {
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getLunId();
+        }
+    }, constants.lunIdSanStorage(), // $NON-NLS-1$
+    "250px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return messages.gigabytes(String.valueOf(model.getSize()));
+        }
+    }, constants.devSizeSanStorage(), // $NON-NLS-1$
+    "60px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return String.valueOf(model.getMultipathing());
+        }
+    }, constants.pathSanStorage(), // $NON-NLS-1$
+    "45px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getVendorId();
+        }
+    }, constants.vendorIdSanStorage(), // $NON-NLS-1$
+    "70px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getProductId();
+        }
+    }, constants.productIdSanStorage(), // $NON-NLS-1$
+    "70px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getSerial();
+        }
+    }, constants.serialSanStorage(), // $NON-NLS-1$
+    "210px");
+    if (model.getContainer().isNewStorage() || model.getContainer().getStorage().getStatus() != StorageDomainStatus.Maintenance) {
+        if (multiSelection) {
+            addAbstractLunAddOrExtendColumn(table, model.getContainer().isNewStorage() ? constants.addSanStorage() : constants.actionsSanStorage());
+        }
+    } else {
+        boolean reduceDeviceFromStorageDomainSupported = (Boolean) AsyncDataProvider.getInstance().getConfigValuePreConverted(ConfigValues.ReduceDeviceFromStorageDomain, model.getContainer().getDataCenter().getSelectedItem().getCompatibilityVersion().toString());
+        if (reduceDeviceFromStorageDomainSupported) {
+            AbstractLunRemoveColumn removeColumn = new AbstractLunRemoveColumn(model) {
+
+                @Override
+                public LunModel getValue(LunModel object) {
+                    return object;
+                }
+            };
+            // $NON-NLS-1$
+            table.addColumn(removeColumn, constants.removeSanStorage(), "95px");
+            model.getRequireTableRefresh().getEntityChangedEvent().addListener((ev, sender, args) -> {
+                table.redraw();
+            });
+        }
+    }
+}
+#end_block
+
+#method_before
+@SuppressWarnings("unchecked")
+@Override
+protected TreeItem createLeafNode(ListModel leafModel) {
+    final TreeItem item = new TreeItem();
+    List<LunModel> items = (List<LunModel>) leafModel.getItems();
+    if (hideLeaf || items.isEmpty()) {
+        item.setUserObject(Boolean.TRUE);
+        return item;
+    }
+    final SortedListModel sortedLeafModel = new SortedListModel();
+    sortedLeafModel.setItems(items);
+    final EntityModelCellTable<ListModel<LunModel>> table = new EntityModelCellTable<>(multiSelection, (Resources) GWT.create(SanStorageListLunTableResources.class));
+    table.enableColumnResizing();
+    table.initModelSortHandler(sortedLeafModel);
+    AbstractLunSelectionColumn lunSelectionColumn = new AbstractLunSelectionColumn() {
+
+        @Override
+        public LunModel getValue(LunModel object) {
+            return object;
+        }
+    };
+    // $NON-NLS-1$
+    table.setCustomSelectionColumn(lunSelectionColumn, "20px");
+    AbstractLunTextColumn lunIdColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getLunId();
+        }
+    };
+    lunIdColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(lunIdColumn, constants.lunIdSanStorage(), "250px");
+    AbstractLunTextColumn devSizeColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return messages.gigabytes(String.valueOf(model.getSize()));
+        }
+    };
+    devSizeColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(devSizeColumn, constants.devSizeSanStorage(), "60px");
+    AbstractLunTextColumn path = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return String.valueOf(model.getMultipathing());
+        }
+    };
+    path.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(path, constants.pathSanStorage(), "45px");
+    AbstractLunTextColumn vendorIdColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getVendorId();
+        }
+    };
+    vendorIdColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(vendorIdColumn, constants.vendorIdSanStorage(), "69px");
+    AbstractLunTextColumn productIdColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getProductId();
+        }
+    };
+    productIdColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(productIdColumn, constants.productIdSanStorage(), "69px");
+    AbstractLunTextColumn serialNumColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getSerial();
+        }
+    };
+    serialNumColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(serialNumColumn, constants.serialSanStorage(), "210px");
+    if (model.getContainer().isNewStorage() || model.getContainer().getStorage().getStatus() != StorageDomainStatus.Maintenance) {
+        addAbstractLunAddOrExtendColumn(table, model.getContainer().isNewStorage() ? constants.addSanStorage() : constants.actionsSanStorage());
+    } else {
+        boolean reduceDeviceFromStorageDomainSupported = (Boolean) AsyncDataProvider.getInstance().getConfigValuePreConverted(ConfigValues.ReduceDeviceFromStorageDomain, model.getContainer().getDataCenter().getSelectedItem().getCompatibilityVersion().toString());
+        if (reduceDeviceFromStorageDomainSupported) {
+            AbstractLunRemoveColumn removeColumn = new AbstractLunRemoveColumn(model) {
+
+                @Override
+                public LunModel getValue(LunModel object) {
+                    return object;
+                }
+            };
+            // $NON-NLS-1$
+            table.addColumn(removeColumn, constants.removeSanStorage(), "95px");
+            model.getRequireTableRefresh().getEntityChangedEvent().addListener((ev, sender, args) -> {
+                table.redraw();
+            });
+        }
+    }
+    table.setRowData(items);
+    final Object selectedItem = sortedLeafModel.getSelectedItem();
+    sortedLeafModel.setSelectedItem(null);
+    table.asEditor().edit(sortedLeafModel);
+    sortedLeafModel.setSelectedItem(selectedItem);
+    // $NON-NLS-1$
+    table.setWidth("100%");
+    if (!multiSelection) {
+        for (LunModel lunModel : items) {
+            if (lunModel.getIsSelected()) {
+                table.getSelectionModel().setSelected(lunModel, true);
+            }
+        }
+        table.getSelectionModel().addSelectionChangeHandler(event -> {
+            SingleSelectionModel SingleSelectionModel = (SingleSelectionModel) event.getSource();
+            selectedLunModel = SingleSelectionModel.getSelectedObject() == null ? selectedLunModel : (LunModel) SingleSelectionModel.getSelectedObject();
+            if (selectedLunModel != null) {
+                updateSelectedLunWarning(selectedLunModel);
+                sortedLeafModel.setSelectedItem(selectedLunModel);
+            }
+        });
+    } else {
+        for (LunModel lunModel : items) {
+            table.getSelectionModel().setSelected(lunModel, lunModel.getIsSelected());
+        }
+        table.getSelectionModel().addSelectionChangeHandler(event -> model.updateLunWarningForDiscardAfterDelete());
+    }
+    item.setWidget(table);
+    // Display LUNs as grayed-out if needed
+    for (LunModel lunModel : items) {
+        if (lunModel.getIsGrayedOut()) {
+            grayOutItem(lunModel.getGrayedOutReasons(), lunModel, table);
+        }
+    }
+    addOpenHandlerToTree(tree, item, table);
+    return item;
+}
+#method_after
+@SuppressWarnings("unchecked")
+@Override
+protected TreeItem createLeafNode(ListModel leafModel) {
+    final TreeItem item = new TreeItem();
+    List<LunModel> items = (List<LunModel>) leafModel.getItems();
+    if (hideLeaf || items.isEmpty()) {
+        item.setUserObject(Boolean.TRUE);
+        return item;
+    }
+    final SortedListModel sortedLeafModel = new SortedListModel();
+    sortedLeafModel.setItems(items);
+    final EntityModelCellTable<ListModel<LunModel>> table = new EntityModelCellTable<>(multiSelection, (Resources) GWT.create(SanStorageListLunTableResources.class));
+    table.enableColumnResizing();
+    table.initModelSortHandler(sortedLeafModel);
+    AbstractLunSelectionColumn lunSelectionColumn = new AbstractLunSelectionColumn(multiSelection) {
+
+        @Override
+        public LunModel getValue(LunModel object) {
+            return object;
+        }
+    };
+    // $NON-NLS-1$
+    table.setCustomSelectionColumn(lunSelectionColumn, "20px");
+    AbstractLunTextColumn lunIdColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getLunId();
+        }
+    };
+    lunIdColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(lunIdColumn, constants.lunIdSanStorage(), "250px");
+    AbstractLunTextColumn devSizeColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return messages.gigabytes(String.valueOf(model.getSize()));
+        }
+    };
+    devSizeColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(devSizeColumn, constants.devSizeSanStorage(), "60px");
+    AbstractLunTextColumn path = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return String.valueOf(model.getMultipathing());
+        }
+    };
+    path.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(path, constants.pathSanStorage(), "45px");
+    AbstractLunTextColumn vendorIdColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getVendorId();
+        }
+    };
+    vendorIdColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(vendorIdColumn, constants.vendorIdSanStorage(), "69px");
+    AbstractLunTextColumn productIdColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getProductId();
+        }
+    };
+    productIdColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(productIdColumn, constants.productIdSanStorage(), "69px");
+    AbstractLunTextColumn serialNumColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getSerial();
+        }
+    };
+    serialNumColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(serialNumColumn, constants.serialSanStorage(), "210px");
+    if (model.getContainer().isNewStorage() || model.getContainer().getStorage().getStatus() != StorageDomainStatus.Maintenance) {
+        if (multiSelection) {
+            addAbstractLunAddOrExtendColumn(table, model.getContainer().isNewStorage() ? constants.addSanStorage() : constants.actionsSanStorage());
+        }
+    } else {
+        boolean reduceDeviceFromStorageDomainSupported = (Boolean) AsyncDataProvider.getInstance().getConfigValuePreConverted(ConfigValues.ReduceDeviceFromStorageDomain, model.getContainer().getDataCenter().getSelectedItem().getCompatibilityVersion().toString());
+        if (reduceDeviceFromStorageDomainSupported) {
+            AbstractLunRemoveColumn removeColumn = new AbstractLunRemoveColumn(model) {
+
+                @Override
+                public LunModel getValue(LunModel object) {
+                    return object;
+                }
+            };
+            // $NON-NLS-1$
+            table.addColumn(removeColumn, constants.removeSanStorage(), "95px");
+            model.getRequireTableRefresh().getEntityChangedEvent().addListener((ev, sender, args) -> {
+                table.redraw();
+            });
+        }
+    }
+    table.setRowData(items);
+    final Object selectedItem = sortedLeafModel.getSelectedItem();
+    sortedLeafModel.setSelectedItem(null);
+    table.asEditor().edit(sortedLeafModel);
+    sortedLeafModel.setSelectedItem(selectedItem);
+    // $NON-NLS-1$
+    table.setWidth("100%");
+    if (!multiSelection) {
+        for (LunModel lunModel : items) {
+            if (lunModel.getIsSelected()) {
+                table.getSelectionModel().setSelected(lunModel, true);
+            }
+        }
+        table.getSelectionModel().addSelectionChangeHandler(event -> {
+            SingleSelectionModel SingleSelectionModel = (SingleSelectionModel) event.getSource();
+            selectedLunModel = SingleSelectionModel.getSelectedObject() == null ? selectedLunModel : (LunModel) SingleSelectionModel.getSelectedObject();
+            if (selectedLunModel != null) {
+                updateSelectedLunWarning(selectedLunModel);
+                sortedLeafModel.setSelectedItem(selectedLunModel);
+            }
+        });
+    } else {
+        for (LunModel lunModel : items) {
+            table.getSelectionModel().setSelected(lunModel, lunModel.getIsSelected());
+        }
+        table.getSelectionModel().addSelectionChangeHandler(event -> model.updateLunWarningForDiscardAfterDelete());
+    }
+    item.setWidget(table);
+    // Display LUNs as grayed-out if needed
+    for (LunModel lunModel : items) {
+        if (lunModel.getIsGrayedOut()) {
+            grayOutItem(lunModel.getGrayedOutReasons(), lunModel, table);
+        }
+    }
+    addOpenHandlerToTree(tree, item, table);
+    return item;
+}
+#end_block
+
+#method_before
+public boolean createOvfStoreDisks(int missingDiskCount) {
+    boolean AllOvfStoreDisksCreated = true;
+    for (int i = 0; i < missingDiskCount; i++) {
+        CreateOvfVolumeForStorageDomainCommandParameters parameters = createCreateOvfVolumeForStorageDomainParams();
+        ActionReturnValue returnValue = runInternalAction(ActionType.CreateOvfVolumeForStorageDomain, parameters, getContext().clone().withoutLock());
+        if (!returnValue.getSucceeded()) {
+            AllOvfStoreDisksCreated = false;
+        }
+    }
+    return AllOvfStoreDisksCreated;
+}
+#method_after
+public boolean createOvfStoreDisks(int missingDiskCount) {
+    boolean allOvfStoreDisksCreated = true;
+    for (int i = 0; i < missingDiskCount; i++) {
+        CreateOvfVolumeForStorageDomainCommandParameters parameters = createCreateOvfVolumeForStorageDomainParams();
+        ActionReturnValue returnValue = runInternalAction(ActionType.CreateOvfVolumeForStorageDomain, parameters, getContext().clone().withoutLock());
+        if (!returnValue.getSucceeded()) {
+            allOvfStoreDisksCreated = false;
+        }
+    }
+    return allOvfStoreDisksCreated;
+}
+#end_block
+
+#method_before
+@Override
+public void render(Context context, VDS vds, SafeHtmlBuilder sb, String id) {
+    // Nothing to render if no host is provided:
+    if (vds == null) {
+        return;
+    }
+    // Find the image corresponding to the status of the host:
+    VDSStatus status = vds.getStatus();
+    ImageResource statusImage = null;
+    switch(status) {
+        case Unassigned:
+            statusImage = resources.hostActivating();
+            break;
+        case NonResponsive:
+        case InstallFailed:
+        case Connecting:
+        case Down:
+            statusImage = resources.downImage();
+            break;
+        case PreparingForMaintenance:
+            statusImage = resources.prepareToMaintenance();
+            break;
+        case Maintenance:
+            statusImage = resources.maintenanceImage();
+            break;
+        case Up:
+            statusImage = resources.upImage();
+            break;
+        case Error:
+            statusImage = resources.errorImage();
+            break;
+        case Installing:
+            statusImage = resources.hostInstallingImage();
+            break;
+        case Reboot:
+            statusImage = resources.waitImage();
+            break;
+        case NonOperational:
+            statusImage = resources.nonOperationalImage();
+            break;
+        case PendingApproval:
+        case InstallingOS:
+            statusImage = resources.unconfiguredImage();
+            break;
+        case Initializing:
+            statusImage = resources.waitImage();
+            break;
+        case Kdumping:
+            statusImage = resources.waitImage();
+            break;
+        default:
+            statusImage = resources.downImage();
+    }
+    // Find the image corresponding to the alert:
+    ImageResource alertImage = resources.alertImage();
+    // Generate the HTML for the images:
+    SafeHtml statusImageHtml = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(statusImage).getHTML());
+    SafeHtml alertImageHtml = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(alertImage).getHTML());
+    // Generate the HTML for the cell including the exclamation mark only if
+    // power management is not enabled or there are network configuration
+    // changes that haven't been saved yet:
+    // $NON-NLS-1$ //$NON-NLS-2$
+    sb.appendHtmlConstant("<div id=\"" + id + "\" style=\"text-align: center;\">");
+    sb.append(statusImageHtml);
+    boolean getnet_config_dirty = vds.getNetConfigDirty() == null ? false : vds.getNetConfigDirty().booleanValue();
+    boolean showPMAlert = vds.getClusterSupportsVirtService() && !vds.isPmEnabled() && vds.isFencingEnabled();
+    boolean showGlusterAlert = vds.getClusterSupportsGlusterService() && vds.getGlusterPeerStatus() != PeerStatus.CONNECTED;
+    if (showPMAlert || getnet_config_dirty || showGlusterAlert || vds.getStaticData().isReinstallRequired()) {
+        sb.append(alertImageHtml);
+    }
+    // $NON-NLS-1$
+    sb.appendHtmlConstant("</div>");
+}
+#method_after
+@Override
+public void render(Context context, VDS vds, SafeHtmlBuilder sb, String id) {
+    // Nothing to render if no host is provided:
+    if (vds == null) {
+        return;
+    }
+    // Find the image corresponding to the status of the host:
+    VDSStatus status = vds.getStatus();
+    ImageResource statusImage = null;
+    switch(status) {
+        case Unassigned:
+            statusImage = resources.hostActivating();
+            break;
+        case NonResponsive:
+        case InstallFailed:
+        case Connecting:
+        case Down:
+            statusImage = resources.downImage();
+            break;
+        case PreparingForMaintenance:
+            statusImage = resources.prepareForMaintenance();
+            break;
+        case Maintenance:
+            statusImage = resources.maintenanceImage();
+            break;
+        case Up:
+            statusImage = resources.upImage();
+            break;
+        case Error:
+            statusImage = resources.errorImage();
+            break;
+        case Installing:
+            statusImage = resources.hostInstallingImage();
+            break;
+        case Reboot:
+            statusImage = resources.waitImage();
+            break;
+        case NonOperational:
+            statusImage = resources.nonOperationalImage();
+            break;
+        case PendingApproval:
+        case InstallingOS:
+            statusImage = resources.unconfiguredImage();
+            break;
+        case Initializing:
+            statusImage = resources.waitImage();
+            break;
+        case Kdumping:
+            statusImage = resources.waitImage();
+            break;
+        default:
+            statusImage = resources.downImage();
+    }
+    // Find the image corresponding to the alert:
+    ImageResource alertImage = resources.alertImage();
+    // Generate the HTML for the images:
+    SafeHtml statusImageHtml = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(statusImage).getHTML());
+    SafeHtml alertImageHtml = SafeHtmlUtils.fromTrustedString(AbstractImagePrototype.create(alertImage).getHTML());
+    // Generate the HTML for the cell including the exclamation mark only if
+    // power management is not enabled or there are network configuration
+    // changes that haven't been saved yet:
+    // $NON-NLS-1$ //$NON-NLS-2$
+    sb.appendHtmlConstant("<div id=\"" + id + "\" style=\"text-align: center;\">");
+    sb.append(statusImageHtml);
+    boolean getnet_config_dirty = vds.getNetConfigDirty() == null ? false : vds.getNetConfigDirty().booleanValue();
+    boolean showPMAlert = vds.getClusterSupportsVirtService() && !vds.isPmEnabled() && vds.isFencingEnabled();
+    boolean showGlusterAlert = vds.getClusterSupportsGlusterService() && vds.getGlusterPeerStatus() != PeerStatus.CONNECTED;
+    if (showPMAlert || getnet_config_dirty || showGlusterAlert || vds.getStaticData().isReinstallRequired()) {
+        sb.append(alertImageHtml);
+    }
+    // $NON-NLS-1$
+    sb.appendHtmlConstant("</div>");
+}
+#end_block
+
+#method_before
+public boolean isUsingDistinct(String obj) {
+    if (getEntitySearchInfo(obj) != null) {
+        return getEntitySearchInfo(obj).distinct;
+    }
+    return false;
+}
+#method_after
+public boolean isUsingDistinct(String obj) {
+    if (getEntitySearchInfo(obj) != null) {
+        return getEntitySearchInfo(obj).usingDistinct;
+    }
+    return false;
+}
+#end_block
+
+#method_before
+protected boolean canAddVm(List<String> reasons, String name, Guid storagePoolId, int vmPriority) {
+    // Checking if a desktop with same name already exists
+    if (isVmWithSameNameExists(name, storagePoolId)) {
+        reasons.add(EngineMessage.ACTION_TYPE_FAILED_NAME_ALREADY_USED.name());
+        return false;
+    }
+    if (!validate(vmHandler.verifyMacPool(getVmInterfaces().size(), getMacPool()))) {
+        return false;
+    }
+    if (!validate(vmHandler.isVmPriorityValueLegal(vmPriority))) {
+        return false;
+    }
+    if (!checkTemplateImages(reasons)) {
+        return false;
+    }
+    return true;
+}
+#method_after
+protected boolean canAddVm(Collection<StorageDomain> destStorages) {
+    VmStatic vmStaticFromParams = getParameters().getVmStaticData();
+    if (!canAddVm(vmStaticFromParams.getName(), getStoragePoolId(), vmStaticFromParams.getPriority())) {
+        return false;
+    }
+    if (!validateCustomProperties(vmStaticFromParams)) {
+        return false;
+    }
+    // check that template image and vm are on the same storage pool
+    if (shouldCheckSpaceInStorageDomains()) {
+        if (!getStoragePoolId().equals(getStoragePoolIdFromSourceImageContainer())) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_STORAGE_POOL_NOT_MATCH);
+        }
+        for (StorageDomain domain : destStorages) {
+            StorageDomainValidator storageDomainValidator = new StorageDomainValidator(domain);
+            if (!validate(storageDomainValidator.isDomainExistAndActive())) {
+                return false;
+            }
+        }
+        if (!validateSpaceRequirements()) {
+            return false;
+        }
+    }
+    return validate(vmHandler.validateDedicatedVdsExistOnSameCluster(vmStaticFromParams));
+}
+#end_block
+
+#method_before
+protected boolean validateAddVmCommand() {
+    return areParametersLegal(getReturnValue().getValidationMessages()) && checkNumberOfMonitors() && checkSingleQxlDisplay() && validate(VmValidator.checkPciAndIdeLimit(getParameters().getVm().getOs(), getEffectiveCompatibilityVersion(), getParameters().getVmStaticData().getNumOfMonitors(), getVmInterfaces(), getDiskVmElements(), isVirtioScsiEnabled(), hasWatchdog(), isBalloonEnabled(), isSoundDeviceEnabled())) && canAddVm(getReturnValue().getValidationMessages(), destStorages.values()) && hostToRunExist();
+}
+#method_after
+protected boolean validateAddVmCommand() {
+    return areParametersLegal() && checkNumberOfMonitors() && checkSingleQxlDisplay() && validate(VmValidator.checkPciAndIdeLimit(getParameters().getVm().getOs(), getEffectiveCompatibilityVersion(), getParameters().getVmStaticData().getNumOfMonitors(), getVmInterfaces(), getDiskVmElements(), isVirtioScsiEnabled(), hasWatchdog(), isBalloonEnabled(), isSoundDeviceEnabled())) && canAddVm(destStorages.values()) && hostToRunExist();
+}
+#end_block
+
+#method_before
+protected boolean hostToRunExist() {
+    List<Guid> dedicatedHostsList = getParameters().getVmStaticData().getDedicatedVmForVdsList();
+    if (dedicatedHostsList.isEmpty()) {
+        return true;
+    }
+    for (Guid candidateHostGuid : dedicatedHostsList) {
+        if (vdsDao.get(candidateHostGuid) == null) {
+            addValidationMessage(EngineMessage.ACTION_TYPE_FAILED_HOST_NOT_EXIST);
+            return false;
+        }
+    }
+    return true;
+}
+#method_after
+protected boolean hostToRunExist() {
+    List<Guid> dedicatedHostsList = getParameters().getVmStaticData().getDedicatedVmForVdsList();
+    if (dedicatedHostsList.isEmpty()) {
+        return true;
+    }
+    for (Guid candidateHostGuid : dedicatedHostsList) {
+        if (vdsDao.get(candidateHostGuid) == null) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_HOST_NOT_EXIST);
+        }
+    }
+    return true;
+}
+#end_block
+
+#method_before
+protected boolean checkTemplateImages(List<String> reasons) {
+    if (getParameters().getParentCommand() == ActionType.AddVmPool) {
+        return true;
+    }
+    for (StorageDomain storage : destStorages.values()) {
+        if (!validate(vmTemplateHandler.isVmTemplateImagesReady(vmDisksSource, storage.getId(), false, false, true, true, storageToDisksMap.get(storage.getId())))) {
+            return false;
+        }
+    }
+    return true;
+}
+#method_after
+protected boolean checkTemplateImages() {
+    if (getParameters().getParentCommand() == ActionType.AddVmPool) {
+        return true;
+    }
+    for (StorageDomain storage : destStorages.values()) {
+        if (!validate(vmTemplateHandler.isVmTemplateImagesReady(vmDisksSource, storage.getId(), false, false, true, true, storageToDisksMap.get(storage.getId())))) {
+            return false;
+        }
+    }
+    return true;
+}
+#end_block
+
+#method_before
+protected boolean buildAndCheckDestStorageDomains() {
+    boolean retValue;
+    if (diskInfoDestinationMap.isEmpty()) {
+        retValue = fillDestMap();
+    } else {
+        retValue = validateProvidedDestinations();
+    }
+    if (retValue && getImagesToCheckDestinationStorageDomains().size() != diskInfoDestinationMap.size()) {
+        log.error("Can not find any default active domain for one of the disks of template with id '{}'", vmDisksSource.getId());
+        addValidationMessage(EngineMessage.ACTION_TYPE_FAILED_MISSED_STORAGES_FOR_SOME_DISKS);
+        retValue = false;
+    }
+    return retValue && validateIsImagesOnDomains();
+}
+#method_after
+protected boolean buildAndCheckDestStorageDomains() {
+    if (diskInfoDestinationMap.isEmpty()) {
+        if (!fillDestMap()) {
+            return false;
+        }
+    } else if (!validateProvidedDestinations()) {
+        return false;
+    }
+    if (getImagesToCheckDestinationStorageDomains().size() != diskInfoDestinationMap.size()) {
+        log.error("Can not find any default active domain for one of the disks of template with id '{}'", vmDisksSource.getId());
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_MISSED_STORAGES_FOR_SOME_DISKS);
+    }
+    return validateIsImagesOnDomains();
+}
+#end_block
+
+#method_before
+protected boolean validateIsImagesOnDomains() {
+    for (DiskImage image : getImagesToCheckDestinationStorageDomains()) {
+        if (!image.getStorageIds().containsAll(diskInfoDestinationMap.get(image.getId()).getStorageIds())) {
+            addValidationMessage(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_NOT_FOUND_ON_DESTINATION_DOMAIN);
+            return false;
+        }
+    }
+    return true;
+}
+#method_after
+protected boolean validateIsImagesOnDomains() {
+    for (DiskImage image : getImagesToCheckDestinationStorageDomains()) {
+        if (!image.getStorageIds().containsAll(diskInfoDestinationMap.get(image.getId()).getStorageIds())) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_TEMPLATE_NOT_FOUND_ON_DESTINATION_DOMAIN);
+        }
+    }
+    return true;
+}
+#end_block
+
+#method_before
+@Override
+protected void executeVmCommand() {
+    vmHandler.warnMemorySizeLegal(getParameters().getVm().getStaticData(), getEffectiveCompatibilityVersion());
+    List<String> errorMessages = getReturnValue().getValidationMessages();
+    if (!canAddVm(errorMessages, destStorages.values())) {
+        log.error("Failed to add VM. The reasons are: {}", String.join(",", errorMessages));
+        return;
+    }
+    if (!addVmLease(getParameters().getVm().getLeaseStorageDomainId(), getVmId())) {
+        return;
+    }
+    TransactionSupport.executeInNewTransaction(() -> {
+        addVmStatic();
+        addVmDynamic();
+        addVmNetwork();
+        addVmNumaNodes();
+        addVmStatistics();
+        addActiveSnapshot();
+        addVmPermission();
+        addVmInit();
+        addVmRngDevice();
+        addAffinityLabels();
+        getCompensationContext().stateChanged();
+        return null;
+    });
+    if (addVmImages()) {
+        TransactionSupport.executeInNewTransaction(() -> {
+            copyDiskVmElements();
+            copyVmDevices();
+            addDiskPermissions();
+            addVmPayload();
+            updateSmartCardDevices();
+            addVmWatchdog();
+            addGraphicsDevice();
+            getVmDeviceUtils().updateVirtioScsiController(getVm().getStaticData(), getParameters().isVirtioScsiEnabled());
+            setActionReturnValue(getVm().getId());
+            setSucceeded(true);
+            return null;
+        });
+    }
+    if (getParameters().getPoolId() != null) {
+        addVmToPool();
+    }
+    discardHelper.logIfDisksWithIllegalPassDiscardExist(getVmId());
+}
+#method_after
+@Override
+protected void executeVmCommand() {
+    vmHandler.warnMemorySizeLegal(getParameters().getVm().getStaticData(), getEffectiveCompatibilityVersion());
+    if (!canAddVm(destStorages.values())) {
+        log.error("Failed to add VM. The reasons are: {}", String.join(",", getReturnValue().getValidationMessages()));
+        return;
+    }
+    if (!addVmLease(getParameters().getVm().getLeaseStorageDomainId(), getVmId())) {
+        return;
+    }
+    TransactionSupport.executeInNewTransaction(() -> {
+        addVmStatic();
+        addVmDynamic();
+        addVmNetwork();
+        addVmNumaNodes();
+        addVmStatistics();
+        addActiveSnapshot();
+        addVmPermission();
+        addVmInit();
+        addVmRngDevice();
+        addAffinityLabels();
+        getCompensationContext().stateChanged();
+        return null;
+    });
+    if (addVmImages()) {
+        TransactionSupport.executeInNewTransaction(() -> {
+            copyDiskVmElements();
+            copyVmDevices();
+            addDiskPermissions();
+            addVmPayload();
+            updateSmartCardDevices();
+            addVmWatchdog();
+            addGraphicsDevice();
+            getVmDeviceUtils().updateVirtioScsiController(getVm().getStaticData(), getParameters().isVirtioScsiEnabled());
+            setActionReturnValue(getVm().getId());
+            setSucceeded(true);
+            return null;
+        });
+    }
+    if (getParameters().getPoolId() != null) {
+        addVmToPool();
+    }
+    discardHelper.logIfDisksWithIllegalPassDiscardExist(getVmId());
+}
+#end_block
+
+#method_before
+private boolean isLegalClusterId(Guid clusterId, List<String> reasons) {
+    // check given cluster id
+    Cluster cluster = clusterDao.get(clusterId);
+    boolean legalClusterId = cluster != null;
+    if (!legalClusterId) {
+        reasons.add(EngineError.VM_INVALID_SERVER_CLUSTER_ID.toString());
+    }
+    return legalClusterId;
+}
+#method_after
+private boolean isLegalClusterId(Guid clusterId) {
+    // check given cluster id
+    Cluster cluster = clusterDao.get(clusterId);
+    if (cluster == null) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_CLUSTER_IS_NOT_VALID);
+    }
+    return true;
+}
+#end_block
+
+#method_before
+protected boolean areParametersLegal(List<String> reasons) {
+    boolean returnValue = false;
+    final VmStatic vmStaticData = getParameters().getVmStaticData();
+    if (vmStaticData != null) {
+        returnValue = isLegalClusterId(vmStaticData.getClusterId(), reasons);
+        if (!validatePinningAndMigration(reasons, vmStaticData, getParameters().getVm().getCpuPinning())) {
+            returnValue = false;
+        }
+    }
+    return returnValue;
+}
+#method_after
+protected boolean areParametersLegal() {
+    final VmStatic vmStaticData = getParameters().getVmStaticData();
+    if (vmStaticData != null) {
+        if (!isLegalClusterId(vmStaticData.getClusterId())) {
+            return false;
+        }
+        if (!validatePinningAndMigration()) {
+            return false;
+        }
+    }
+    return true;
+}
+#end_block
+
+#method_before
+private void addVmInit() {
+    final VmInit vmInit = getParameters().getVmStaticData().getVmInit();
+    if (vmInit == null) {
+        return;
+    }
+    if (vmInit.isPasswordAlreadyStored()) {
+        final VmInit templateVmInit = vmInitDao.get(getVmTemplateId());
+        if (templateVmInit != null) {
+            vmInit.setPasswordAlreadyStored(false);
+            vmInit.setRootPassword(templateVmInit.getRootPassword());
+        }
+    }
+    vmHandler.addVmInitToDB(vmInit);
+}
+#method_after
+private void addVmInit() {
+    final VmInit vmInit = getParameters().getVmStaticData().getVmInit();
+    if (vmInit == null) {
+        return;
+    }
+    if (vmInit.isPasswordAlreadyStored()) {
+        final VmInit originalVmInit = loadOriginalVmInitWithRootPassword();
+        if (originalVmInit != null) {
+            vmInit.setPasswordAlreadyStored(false);
+            vmInit.setRootPassword(originalVmInit.getRootPassword());
+        }
+    }
+    vmHandler.addVmInitToDB(vmInit);
+}
+#end_block
+
+#method_before
+@Override
+public Response exportToExportDomain(Action action) {
+    validateParameters(action, "storageDomain.id|name");
+    MoveOrCopyParameters params = new MoveOrCopyParameters(guid, getStorageDomainId(action));
+    if (action.isSetExclusive() && action.isExclusive()) {
+        params.setForceOverride(true);
+    }
+    if (action.isSetDiscardSnapshots() && action.isDiscardSnapshots()) {
+        params.setCopyCollapse(true);
+    }
+    return doAction(ActionType.ExportVm, params, action);
+}
+#method_after
+@Override
+public Response exportToExportDomain(Action action) {
+    MoveOrCopyParameters params = new MoveOrCopyParameters(guid, getStorageDomainId(action));
+    if (action.isSetExclusive() && action.isExclusive()) {
+        params.setForceOverride(true);
+    }
+    if (action.isSetDiscardSnapshots() && action.isDiscardSnapshots()) {
+        params.setCopyCollapse(true);
+    }
+    return doAction(ActionType.ExportVm, params, action);
+}
+#end_block
+
+#method_before
+@Override
+public Response exportToPathOnHost(Action action) {
+    validateParameters(action, "host.id|name", "directory");
+    ExportOvaParameters params = new ExportOvaParameters();
+    params.setEntityType(VmEntityType.VM);
+    params.setEntityId(guid);
+    params.setProxyHostId(getHostId(action));
+    params.setDirectory(action.getDirectory());
+    params.setName(action.getFilename());
+    return doAction(ActionType.ExportOva, params, action);
+}
+#method_after
+@Override
+public Response exportToPathOnHost(Action action) {
+    ExportOvaParameters params = new ExportOvaParameters();
+    params.setEntityType(VmEntityType.VM);
+    params.setEntityId(guid);
+    params.setProxyHostId(getHostId(action));
+    params.setDirectory(action.getDirectory());
+    params.setName(action.getFilename());
+    return doAction(ActionType.ExportOva, params, action);
+}
+#end_block
+
+#method_before
+private MemoryImageBuilder createMemoryImageBuilder() {
+    if (!isMemorySnapshotSupported()) {
+        return new NullableMemoryImageBuilder();
+    }
+    if (getParameters().getSnapshotType() == SnapshotType.STATELESS) {
+        return new StatelessSnapshotMemoryImageBuilder(getVm());
+    }
+    if (getParameters().isSaveMemory() && isLiveSnapshotApplicable()) {
+        return new LiveSnapshotMemoryImageBuilder(getVm(), cachedStorageDomainId, getStoragePool(), this, vmOverheadCalculator, getParameters().getDescription());
+    }
+    return new NullableMemoryImageBuilder();
+}
+#method_after
+private MemoryImageBuilder createMemoryImageBuilder() {
+    if (!isMemorySnapshotSupported()) {
+        return new NullableMemoryImageBuilder();
+    }
+    if (getParameters().getSnapshotType() == SnapshotType.STATELESS) {
+        return new StatelessSnapshotMemoryImageBuilder(getVm());
+    }
+    if (getParameters().isSaveMemory() && isLiveSnapshotApplicable()) {
+        boolean wipeAfterDelete = getDisksList().stream().anyMatch(DiskImage::isWipeAfterDelete);
+        return new LiveSnapshotMemoryImageBuilder(getVm(), cachedStorageDomainId, getStoragePool(), this, vmOverheadCalculator, getParameters().getDescription(), wipeAfterDelete);
+    }
+    return new NullableMemoryImageBuilder();
+}
+#end_block
+
+#method_before
+private boolean shouldFreezeOrThawVm() {
+    return isLiveSnapshotApplicable() && isCinderDisksExist();
+}
+#method_after
+private boolean shouldFreezeOrThawVm() {
+    return isLiveSnapshotApplicable() && isCinderDisksExist() && getParameters().getParentCommand() != ActionType.LiveMigrateDisk;
+}
+#end_block
+
+#method_before
+private void updateNetworkProviderModel() {
+    if (vds != null && networkProviderModel != null) {
+        networkProviderModel.selectProviderById(vds.getOpenstackNetworkProviderId());
+        AsyncDataProvider.getInstance().getClusterById(new AsyncQuery<>(cluster -> {
+            networkProviderModel.setDefaultProviderId(cluster.getDefaultNetworkProviderId());
+        }), vds.getClusterId());
+    }
+}
+#method_after
+private void updateNetworkProviderModel() {
+    if (vds != null && networkProviderModel != null) {
+        networkProviderModel.selectProviderById(vds.getOpenstackNetworkProviderId());
+        startProgress();
+        AsyncDataProvider.getInstance().getClusterById(new AsyncQuery<>(cluster -> {
+            stopProgress();
+            networkProviderModel.setDefaultProviderId(cluster.getDefaultNetworkProviderId());
+        }), vds.getClusterId());
+    }
+}
+#end_block
+
+#method_before
+protected boolean buildAndCheckDestStorageDomains() {
+    if (diskInfoDestinationMap.isEmpty() && !fillDestMap()) {
+        return false;
+    } else if (!validateProvidedDestinations()) {
+        return false;
+    }
+    if (getImagesToCheckDestinationStorageDomains().size() != diskInfoDestinationMap.size()) {
+        log.error("Can not find any default active domain for one of the disks of template with id '{}'", vmDisksSource.getId());
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_MISSED_STORAGES_FOR_SOME_DISKS);
+    }
+    return validateIsImagesOnDomains();
+}
+#method_after
+protected boolean buildAndCheckDestStorageDomains() {
+    if (diskInfoDestinationMap.isEmpty()) {
+        if (!fillDestMap()) {
+            return false;
+        }
+    } else if (!validateProvidedDestinations()) {
+        return false;
+    }
+    if (getImagesToCheckDestinationStorageDomains().size() != diskInfoDestinationMap.size()) {
+        log.error("Can not find any default active domain for one of the disks of template with id '{}'", vmDisksSource.getId());
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_MISSED_STORAGES_FOR_SOME_DISKS);
+    }
+    return validateIsImagesOnDomains();
+}
+#end_block
+
+#method_before
+@Mapping(from = org.ovirt.engine.core.common.businessentities.storage.ImageTransfer.class, to = ImageTransfer.class)
+public static ImageTransfer map(org.ovirt.engine.core.common.businessentities.storage.ImageTransfer entity, ImageTransfer template) {
+    ImageTransfer model = template != null ? template : new ImageTransfer();
+    if (entity.getId() != null) {
+        model.setId(entity.getId().toString());
+    }
+    if (entity.getVdsId() != null) {
+        model.setHost(new Host());
+        model.getHost().setId(entity.getVdsId().toString());
+    }
+    if (entity.getDiskId() != null) {
+        model.setImage(new Image());
+        model.getImage().setId(entity.getDiskId().toString());
+    }
+    if (entity.getProxyUri() != null && entity.getImagedTicketId() != null) {
+        model.setProxyUrl(entity.getProxyUri() + "/" + entity.getImagedTicketId());
+    }
+    if (entity.getDaemonUri() != null && entity.getImagedTicketId() != null) {
+        model.setTransferUrl(entity.getDaemonUri() + "/" + entity.getImagedTicketId());
+    }
+    if (entity.getSignedTicket() != null) {
+        model.setSignedTicket(entity.getSignedTicket());
+    }
+    if (entity.getPhase() != null) {
+        model.setPhase(mapPhase(entity.getPhase()));
+    }
+    return model;
+}
+#method_after
+@Mapping(from = org.ovirt.engine.core.common.businessentities.storage.ImageTransfer.class, to = ImageTransfer.class)
+public static ImageTransfer map(org.ovirt.engine.core.common.businessentities.storage.ImageTransfer entity, ImageTransfer template) {
+    ImageTransfer model = template != null ? template : new ImageTransfer();
+    if (entity.getId() != null) {
+        model.setId(entity.getId().toString());
+    }
+    if (entity.getVdsId() != null) {
+        model.setHost(new Host());
+        model.getHost().setId(entity.getVdsId().toString());
+    }
+    if (entity.getDiskId() != null) {
+        model.setImage(new Image());
+        model.getImage().setId(entity.getDiskId().toString());
+    }
+    if (entity.getProxyUri() != null && entity.getImagedTicketId() != null) {
+        model.setProxyUrl(entity.getProxyURLForTransfer());
+    }
+    if (entity.getDaemonUri() != null && entity.getImagedTicketId() != null) {
+        model.setTransferUrl(entity.getDaemonURLForTransfer());
+    }
+    if (entity.getSignedTicket() != null) {
+        model.setSignedTicket(entity.getSignedTicket());
+    }
+    if (entity.getPhase() != null) {
+        model.setPhase(mapPhase(entity.getPhase()));
+    }
+    if (entity.getActive() != null) {
+        model.setActive(entity.getActive());
+    }
+    if (entity.getType() != null) {
+        model.setDirection(mapDirection(entity.getType()));
+    }
+    if (entity.getBytesSent() != null) {
+        model.setTransferred(entity.getBytesSent());
+    }
+    return model;
+}
+#end_block
+
+#method_before
+@Override
+public void edit(HostNetworkProviderModel model) {
+    driver.edit(model);
+    final NeutronAgentModel neutronAgentModel = model.getNeutronAgentModel();
+    neutronAgentWidget.edit(neutronAgentModel);
+    neutronAgentPanel.setVisible(neutronAgentModel.isPluginConfigurationAvailable().getEntity());
+    model.getNetworkProviderType().getSelectedItemChangedEvent().addListener((ev, sender, args) -> neutronAgentPanel.setVisible(model.getNetworkProviderType().getSelectedItem() == OPENSTACK_NETWORK));
+}
+#method_after
+@Override
+public void edit(HostNetworkProviderModel model) {
+    driver.edit(model);
+    final NeutronAgentModel neutronAgentModel = model.getNeutronAgentModel();
+    neutronAgentWidget.edit(neutronAgentModel);
+    neutronAgentPanel.setVisible(neutronAgentModel.isPluginConfigurationAvailable().getEntity());
+    IEventListener<EventArgs> providerPluginTypeListener = (ev, sender, args) -> neutronAgentPanel.setVisible(model.getNetworkProviderType().getSelectedItem() == OPENSTACK_NETWORK && model.providerPluginTypeIsOpenstack());
+    model.getNetworkProviderType().getSelectedItemChangedEvent().addListener(providerPluginTypeListener);
+    model.getProviderPluginType().getSelectedItemChangedEvent().addListener(providerPluginTypeListener);
+}
+#end_block
+
+#method_before
+private MemoryImageBuilder createMemoryImageBuilder() {
+    if (!isMemorySnapshotSupported()) {
+        return new NullableMemoryImageBuilder();
+    }
+    if (getParameters().getSnapshotType() == SnapshotType.STATELESS) {
+        return new StatelessSnapshotMemoryImageBuilder(getVm());
+    }
+    if (getParameters().isSaveMemory() && isLiveSnapshotApplicable()) {
+        boolean wipeAfterDelete = getDisksList().stream().anyMatch(d -> d.isWipeAfterDelete());
+        return new LiveSnapshotMemoryImageBuilder(getVm(), cachedStorageDomainId, getStoragePool(), this, vmOverheadCalculator, getParameters().getDescription(), wipeAfterDelete);
+    }
+    return new NullableMemoryImageBuilder();
+}
+#method_after
+private MemoryImageBuilder createMemoryImageBuilder() {
+    if (!isMemorySnapshotSupported()) {
+        return new NullableMemoryImageBuilder();
+    }
+    if (getParameters().getSnapshotType() == SnapshotType.STATELESS) {
+        return new StatelessSnapshotMemoryImageBuilder(getVm());
+    }
+    if (getParameters().isSaveMemory() && isLiveSnapshotApplicable()) {
+        boolean wipeAfterDelete = getDisksList().stream().anyMatch(DiskImage::isWipeAfterDelete);
+        return new LiveSnapshotMemoryImageBuilder(getVm(), cachedStorageDomainId, getStoragePool(), this, vmOverheadCalculator, getParameters().getDescription(), wipeAfterDelete);
+    }
+    return new NullableMemoryImageBuilder();
+}
+#end_block
+
+#method_before
+private DiskImage createMemoryDisk(Snapshot snapshot) {
+    List<Guid> guids = Guid.createGuidListFromString(snapshot.getMemoryVolume());
+    StorageDomainStatic sd = validateStorageDomainExistsInDb(snapshot, guids.get(0), guids.get(2), guids.get(3));
+    DiskImage disk = isMemoryDiskAlreadyExistsInDb(snapshot, guids.get(2), guids.get(3));
+    if (sd == null || disk != null) {
+        return null;
+    }
+    VM vm = snapshotVmConfigurationHelper.getVmFromConfiguration(snapshot.getVmConfiguration(), snapshot.getVmId(), snapshot.getId());
+    DiskImage memoryDisk = MemoryUtils.createSnapshotMemoryDisk(vm, sd.getStorageType(), vmOverheadCalculator, MemoryUtils.generateMemoryDiskDescription(vm, snapshot.getDescription()));
+    memoryDisk.setId(guids.get(2));
+    memoryDisk.setImageId(guids.get(3));
+    memoryDisk.setStorageIds(new ArrayList<>(Collections.singletonList(guids.get(0))));
+    memoryDisk.setStoragePoolId(guids.get(1));
+    memoryDisk.setCreationDate(snapshot.getCreationDate());
+    memoryDisk.setActive(true);
+    memoryDisk.setWipeAfterDelete(vm.getDiskList().stream().anyMatch(d -> d.isWipeAfterDelete()));
+    return memoryDisk;
+}
+#method_after
+private DiskImage createMemoryDisk(Snapshot snapshot) {
+    List<Guid> guids = Guid.createGuidListFromString(snapshot.getMemoryVolume());
+    StorageDomainStatic sd = validateStorageDomainExistsInDb(snapshot, guids.get(0), guids.get(2), guids.get(3));
+    DiskImage disk = isMemoryDiskAlreadyExistsInDb(snapshot, guids.get(2), guids.get(3));
+    if (sd == null || disk != null) {
+        return null;
+    }
+    VM vm = snapshotVmConfigurationHelper.getVmFromConfiguration(snapshot.getVmConfiguration(), snapshot.getVmId(), snapshot.getId());
+    DiskImage memoryDisk = MemoryUtils.createSnapshotMemoryDisk(vm, sd.getStorageType(), vmOverheadCalculator, MemoryUtils.generateMemoryDiskDescription(vm, snapshot.getDescription()));
+    memoryDisk.setId(guids.get(2));
+    memoryDisk.setImageId(guids.get(3));
+    memoryDisk.setStorageIds(new ArrayList<>(Collections.singletonList(guids.get(0))));
+    memoryDisk.setStoragePoolId(guids.get(1));
+    memoryDisk.setCreationDate(snapshot.getCreationDate());
+    memoryDisk.setActive(true);
+    memoryDisk.setWipeAfterDelete(vm.getDiskList().stream().anyMatch(DiskImage::isWipeAfterDelete));
+    return memoryDisk;
+}
+#end_block
+
+#method_before
+private DiskImage createMetadataDisk(VM vm, Snapshot snapshot) {
+    List<Guid> guids = Guid.createGuidListFromString(snapshot.getMemoryVolume());
+    StorageDomainStatic sd = validateStorageDomainExistsInDb(snapshot, guids.get(0), guids.get(4), guids.get(5));
+    DiskImage disk = isMemoryDiskAlreadyExistsInDb(snapshot, guids.get(4), guids.get(5));
+    if (sd == null || disk != null) {
+        return null;
+    }
+    DiskImage memoryDisk = MemoryUtils.createSnapshotMetadataDisk(MemoryUtils.generateMemoryDiskDescription(vm, snapshot.getDescription()));
+    memoryDisk.setId(guids.get(4));
+    memoryDisk.setImageId(guids.get(5));
+    memoryDisk.setStorageIds(new ArrayList<>(Collections.singletonList(guids.get(0))));
+    memoryDisk.setStoragePoolId(guids.get(1));
+    memoryDisk.setCreationDate(snapshot.getCreationDate());
+    memoryDisk.setActive(true);
+    memoryDisk.setWipeAfterDelete(vm.getDiskList().stream().anyMatch(d -> d.isWipeAfterDelete()));
+    return memoryDisk;
+}
+#method_after
+private DiskImage createMetadataDisk(VM vm, Snapshot snapshot) {
+    List<Guid> guids = Guid.createGuidListFromString(snapshot.getMemoryVolume());
+    StorageDomainStatic sd = validateStorageDomainExistsInDb(snapshot, guids.get(0), guids.get(4), guids.get(5));
+    DiskImage disk = isMemoryDiskAlreadyExistsInDb(snapshot, guids.get(4), guids.get(5));
+    if (sd == null || disk != null) {
+        return null;
+    }
+    DiskImage memoryDisk = MemoryUtils.createSnapshotMetadataDisk(MemoryUtils.generateMemoryDiskDescription(vm, snapshot.getDescription()));
+    memoryDisk.setId(guids.get(4));
+    memoryDisk.setImageId(guids.get(5));
+    memoryDisk.setStorageIds(new ArrayList<>(Collections.singletonList(guids.get(0))));
+    memoryDisk.setStoragePoolId(guids.get(1));
+    memoryDisk.setCreationDate(snapshot.getCreationDate());
+    memoryDisk.setActive(true);
+    memoryDisk.setWipeAfterDelete(vm.getDiskList().stream().anyMatch(DiskImage::isWipeAfterDelete));
+    return memoryDisk;
+}
+#end_block
+
+#method_before
+private HashMap<String, String> getPmOptionsMapInternal(EntityModel<Integer> port, EntityModel<String> slot, EntityModel<Boolean> secure, EntityModel<String> options) {
+    HashMap<String, String> dict = new HashMap<>();
+    if (port.getIsAvailable() && port.getEntity() != null) {
+        dict.put(PM_PORT_KEY, String.valueOf(port.getEntity()));
+    }
+    // Add well known pm options.
+    if (slot.getIsAvailable() && slot.getEntity() != null) {
+        dict.put(PM_SLOT_KEY, slot.getEntity());
+    }
+    if (secure.getIsAvailable() && secure.getEntity() != null) {
+        dict.put(PM_SECURE_KEY, secure.getEntity().toString());
+    }
+    // Add unknown pm options.
+    // Assume Validate method was called before this getter.
+    String pmOptions = options.getEntity();
+    if (!StringUtils.isEmpty(pmOptions)) {
+        for (String pair : pmOptions.split("[,]", -1)) {
+            // $NON-NLS-1$
+            // $NON-NLS-1$
+            String[] array = pair.split("[=]", -1);
+            if (array.length == 3) {
+                // key=key=value
+                // $NON-NLS-1$
+                dict.put(array[0], array[1] + "=" + array[2]);
+            } else if (array.length == 2) {
+                dict.put(array[0], array[1]);
+            } else if (array.length == 1) {
+                // $NON-NLS-1$
+                dict.put(array[0], "");
+            }
+        }
+    }
+    return dict;
+}
+#method_after
+private HashMap<String, String> getPmOptionsMapInternal(EntityModel<Integer> port, EntityModel<String> slot, EntityModel<Boolean> secure, EntityModel<String> options) {
+    HashMap<String, String> dict = new HashMap<>();
+    if (port.getIsAvailable() && port.getEntity() != null) {
+        dict.put(PM_PORT_KEY, String.valueOf(port.getEntity()));
+    }
+    // Add well known pm options.
+    if (slot.getIsAvailable() && slot.getEntity() != null) {
+        dict.put(PM_SLOT_KEY, slot.getEntity());
+    }
+    if (secure.getIsAvailable() && secure.getEntity() != null) {
+        dict.put(PM_SECURE_KEY, secure.getEntity().toString());
+    }
+    // Add unknown pm options.
+    // Assume Validate method was called before this getter.
+    String pmOptions = options.getEntity();
+    if (!StringUtils.isEmpty(pmOptions)) {
+        for (String pair : pmOptions.split("[,]", -1)) {
+            // $NON-NLS-1$
+            // $NON-NLS-1$
+            String[] array = pair.split("[=]", -1);
+            if (array.length == 3) {
+                // key=key=value
+                // $NON-NLS-1$
+                dict.put(array[0], array[1] + "=" + array[2]);
+            } else if (array.length == 2) {
+                // key=value
+                dict.put(array[0], array[1]);
+            } else if (array.length == 1) {
+                // $NON-NLS-1$
+                dict.put(array[0], "");
+            }
+        }
+    }
+    return dict;
+}
+#end_block
+
+#method_before
+public void registerTrackingRequest(JsonRpcRequest req, ResponseTracking tracking) {
+    JsonNode id = req.getId();
+    List<JsonNode> nodes = new CopyOnWriteArrayList<>();
+    try (LockWrapper wrapper = new LockWrapper(this.lock)) {
+        if (!tracking.getClient().isOpen()) {
+            return;
+        }
+        this.map.put(id, tracking);
+        this.queue.add(id);
+        nodes.add(id);
+        nodes = this.hostToId.putIfAbsent(tracking.getClient().getClientId(), nodes);
+        if (nodes != null && !nodes.contains(id)) {
+            nodes.add(id);
+        }
+    }
+}
+#method_after
+public void registerTrackingRequest(JsonRpcRequest req, ResponseTracking tracking) {
+    JsonNode id = req.getId();
+    List<JsonNode> nodes = new CopyOnWriteArrayList<>();
+    try (LockWrapper wrapper = new LockWrapper(this.lock)) {
+        this.map.put(id, tracking);
+        this.queue.add(id);
+        nodes.add(id);
+        nodes = this.hostToId.putIfAbsent(tracking.getClient().getClientId(), nodes);
+        if (nodes != null && !nodes.contains(id)) {
+            nodes.add(id);
+        }
+    }
+}
+#end_block
+
+#method_before
+@Mapping(from = org.ovirt.engine.core.common.businessentities.storage.ImageTransfer.class, to = ImageTransfer.class)
+public static ImageTransfer map(org.ovirt.engine.core.common.businessentities.storage.ImageTransfer entity, ImageTransfer template) {
+    ImageTransfer model = template != null ? template : new ImageTransfer();
+    if (entity.getId() != null) {
+        model.setId(entity.getId().toString());
+    }
+    if (entity.getVdsId() != null) {
+        model.setHost(new Host());
+        model.getHost().setId(entity.getVdsId().toString());
+    }
+    if (entity.getDiskId() != null) {
+        model.setImage(new Image());
+        model.getImage().setId(entity.getDiskId().toString());
+    }
+    if (entity.getProxyUri() != null && entity.getImagedTicketId() != null) {
+        model.setProxyUrl(entity.getClientURLForTransfer());
+    }
+    if (entity.getSignedTicket() != null) {
+        model.setSignedTicket(entity.getSignedTicket());
+    }
+    if (entity.getPhase() != null) {
+        model.setPhase(mapPhase(entity.getPhase()));
+    }
+    if (entity.getActive() != null) {
+        model.setActive(entity.getActive());
+    }
+    if (entity.getType() != null) {
+        model.setDirection(mapType(entity.getType()));
+    }
+    return model;
+}
+#method_after
+@Mapping(from = org.ovirt.engine.core.common.businessentities.storage.ImageTransfer.class, to = ImageTransfer.class)
+public static ImageTransfer map(org.ovirt.engine.core.common.businessentities.storage.ImageTransfer entity, ImageTransfer template) {
+    ImageTransfer model = template != null ? template : new ImageTransfer();
+    if (entity.getId() != null) {
+        model.setId(entity.getId().toString());
+    }
+    if (entity.getVdsId() != null) {
+        model.setHost(new Host());
+        model.getHost().setId(entity.getVdsId().toString());
+    }
+    if (entity.getDiskId() != null) {
+        model.setImage(new Image());
+        model.getImage().setId(entity.getDiskId().toString());
+    }
+    if (entity.getProxyUri() != null && entity.getImagedTicketId() != null) {
+        model.setProxyUrl(entity.getClientURLForTransfer());
+    }
+    if (entity.getSignedTicket() != null) {
+        model.setSignedTicket(entity.getSignedTicket());
+    }
+    if (entity.getPhase() != null) {
+        model.setPhase(mapPhase(entity.getPhase()));
+    }
+    if (entity.getActive() != null) {
+        model.setActive(entity.getActive());
+    }
+    if (entity.getType() != null) {
+        model.setDirection(mapDirection(entity.getType()));
+    }
+    return model;
+}
+#end_block
+
+#method_before
+private void writeCpuTune() {
+    writer.writeStartElement("cputune");
+    @SuppressWarnings("unchecked")
+    Map<String, Object> cpuPinning = (Map<String, Object>) createInfo.get(VdsProperties.cpuPinning);
+    if (cpuPinning != null) {
+        cpuPinning.forEach((vcpu, cpuset) -> {
+            writer.writeStartElement("vcpupin");
+            writer.writeAttributeString("vcpu", vcpu);
+            writer.writeAttributeString("cpuset", (String) cpuset);
+            writer.writeEndElement();
+        });
+    }
+    if (vm.getCpuShares() > 0) {
+        writer.writeElement("shares", String.valueOf(vm.getCpuShares()));
+    }
+    // iothreadpin + emulatorpin
+    String ioEmulatorCpus = vmInfoBuildUtils.getIoThreadsAndEmulatorPinningCpus(vm, hostNumaNodesSupplier, vdsCpuThreads);
+    if (ioEmulatorCpus != null) {
+        for (int i = 0; i < vm.getNumOfIoThreads(); i++) {
+            writer.writeStartElement("iothreadpin");
+            writer.writeAttributeString("iothread", String.valueOf(i + 1));
+            writer.writeAttributeString("cpuset", ioEmulatorCpus);
+            writer.writeEndElement();
+        }
+        writer.writeStartElement("emulatorpin");
+        writer.writeAttributeString("cpuset", ioEmulatorCpus);
+        writer.writeEndElement();
+    }
+    writer.writeEndElement();
+}
+#method_after
+private void writeCpuTune() {
+    writer.writeStartElement("cputune");
+    @SuppressWarnings("unchecked")
+    Map<String, Object> cpuPinning = (Map<String, Object>) createInfo.get(VdsProperties.cpuPinning);
+    if (cpuPinning != null) {
+        cpuPinning.forEach((vcpu, cpuset) -> {
+            writer.writeStartElement("vcpupin");
+            writer.writeAttributeString("vcpu", vcpu);
+            writer.writeAttributeString("cpuset", (String) cpuset);
+            writer.writeEndElement();
+        });
+    }
+    if (vm.getCpuShares() > 0) {
+        writer.writeElement("shares", String.valueOf(vm.getCpuShares()));
+    }
+    // iothreadpin + emulatorpin
+    String ioEmulatorCpus = vmInfoBuildUtils.getIoThreadsAndEmulatorPinningCpus(vm, cpuPinning, hostNumaNodesSupplier, vdsCpuThreads);
+    if (ioEmulatorCpus != null) {
+        for (int i = 0; i < vm.getNumOfIoThreads(); i++) {
+            writer.writeStartElement("iothreadpin");
+            writer.writeAttributeString("iothread", String.valueOf(i + 1));
+            writer.writeAttributeString("cpuset", ioEmulatorCpus);
+            writer.writeEndElement();
+        }
+        writer.writeStartElement("emulatorpin");
+        writer.writeAttributeString("cpuset", ioEmulatorCpus);
+        writer.writeEndElement();
+    }
+    writer.writeEndElement();
+}
+#end_block
+
+#method_before
+private List<AffinityGroup> mapAffinityGroups(Map<String, String> affinityGroupMap, List<AffinityGroup> affinityGroupsFromParam, Guid vmId) {
+    List<AffinityGroup> affinityGroups = new ArrayList<>();
+    if (affinityGroupsFromParam == null) {
+        return Collections.emptyList();
+    }
+    affinityGroupsFromParam.forEach(affinityGroup -> {
+        log.info("Mapping affinity group '{}/{} for vm '{}'.", affinityGroup.getId(), affinityGroup.getName(), vmId);
+        AffinityGroup affGroup = getRelatedEntity(affinityGroupMap, affinityGroup.getName(), val -> affinityGroupDao.getByName((String) val));
+        if (affGroup != null) {
+            affinityGroups.add(affGroup);
+        }
+    });
+    return affinityGroups;
+}
+#method_after
+private List<AffinityGroup> mapAffinityGroups(Map<String, String> affinityGroupMap, List<AffinityGroup> affinityGroupsFromParam, Guid vmId) {
+    if (affinityGroupsFromParam == null) {
+        return Collections.emptyList();
+    }
+    List<AffinityGroup> affinityGroups = new ArrayList<>();
+    affinityGroupsFromParam.forEach(affinityGroup -> {
+        log.info("Mapping affinity group '{}/{} for vm '{}'.", affinityGroup.getId(), affinityGroup.getName(), vmId);
+        AffinityGroup affGroup = getRelatedEntity(affinityGroupMap, affinityGroup.getName(), val -> affinityGroupDao.getByName((String) val));
+        if (affGroup != null) {
+            affinityGroups.add(affGroup);
+        }
+    });
+    return affinityGroups;
+}
+#end_block
+
+#method_before
+private List<Label> mapAffinityLabels(Map<String, String> affinityLabelMap, Guid vmId, List<String> affinityLabelsFromParam) {
+    List<Label> affinityLabels = new ArrayList<>();
+    if (affinityLabelsFromParam == null) {
+        return Collections.emptyList();
+    }
+    affinityLabelsFromParam.forEach(affinityLabel -> {
+        log.info("Mapping affinity label '{}' for vm '{}'.", affinityLabel, vmId);
+        Label affLabel = getRelatedEntity(affinityLabelMap, affinityLabel, val -> labelDao.getByName((String) val));
+        if (affLabel != null) {
+            affinityLabels.add(affLabel);
+        }
+    });
+    return affinityLabels;
+}
+#method_after
+private List<Label> mapAffinityLabels(Map<String, String> affinityLabelMap, Guid vmId, List<String> affinityLabelsFromParam) {
+    if (affinityLabelsFromParam == null) {
+        return Collections.emptyList();
+    }
+    List<Label> affinityLabels = new ArrayList<>();
+    affinityLabelsFromParam.forEach(affinityLabel -> {
+        log.info("Mapping affinity label '{}' for vm '{}'.", affinityLabel, vmId);
+        Label affLabel = getRelatedEntity(affinityLabelMap, affinityLabel, val -> labelDao.getByName((String) val));
+        if (affLabel != null) {
+            affinityLabels.add(affLabel);
+        }
+    });
+    return affinityLabels;
+}
+#end_block
+
+#method_before
+private void initVmTemplate() {
+    List<OvfEntityData> ovfEntityList = unregisteredOVFDataDao.getByEntityIdAndStorageDomain(getParameters().getContainerId(), getParameters().getStorageDomainId());
+    if (!ovfEntityList.isEmpty()) {
+        try {
+            // We should get only one entity, since we fetched the entity with a specific Storage Domain
+            ovfEntityData = ovfEntityList.get(0);
+            FullEntityOvfData fullEntityOvfData = ovfHelper.readVmTemplateFromOvf(ovfEntityData.getOvfData());
+            mapCluster(fullEntityOvfData);
+            vmTemplateFromConfiguration.setClusterId(getParameters().getClusterId());
+            setVmTemplate(vmTemplateFromConfiguration);
+            setEffectiveCompatibilityVersion(CompatibilityVersionUtils.getEffective(getVmTemplate(), this::getCluster));
+            vmHandler.updateMaxMemorySize(getVmTemplate(), getEffectiveCompatibilityVersion());
+            getParameters().setVmTemplate(vmTemplateFromConfiguration);
+            getParameters().setDestDomainId(ovfEntityData.getStorageDomainId());
+            getParameters().setSourceDomainId(ovfEntityData.getStorageDomainId());
+            // For quota, update disks when required
+            if (getParameters().getDiskTemplateMap() != null) {
+                ArrayList imageList = new ArrayList<>(getParameters().getDiskTemplateMap().values());
+                vmTemplateFromConfiguration.setDiskList(imageList);
+                ensureDomainMap(imageList, getParameters().getDestDomainId());
+            }
+        } catch (OvfReaderException e) {
+            log.error("Failed to parse a given ovf configuration: {}:\n{}", e.getMessage(), ovfEntityData.getOvfData());
+            log.debug("Exception", e);
+        }
+    }
+    setClusterId(getParameters().getClusterId());
+    setStoragePoolId(getCluster().getStoragePoolId());
+}
+#method_after
+private void initVmTemplate() {
+    List<OvfEntityData> ovfEntityList = unregisteredOVFDataDao.getByEntityIdAndStorageDomain(getParameters().getContainerId(), getParameters().getStorageDomainId());
+    if (!ovfEntityList.isEmpty()) {
+        try {
+            // We should get only one entity, since we fetched the entity with a specific Storage Domain
+            ovfEntityData = ovfEntityList.get(0);
+            FullEntityOvfData fullEntityOvfData = ovfHelper.readVmTemplateFromOvf(ovfEntityData.getOvfData());
+            mapCluster(fullEntityOvfData);
+            vmTemplateFromConfiguration.setClusterId(getParameters().getClusterId());
+            setVmTemplate(vmTemplateFromConfiguration);
+            setEffectiveCompatibilityVersion(CompatibilityVersionUtils.getEffective(getVmTemplate(), this::getCluster));
+            vmHandler.updateMaxMemorySize(getVmTemplate(), getEffectiveCompatibilityVersion());
+            getParameters().setVmTemplate(vmTemplateFromConfiguration);
+            getParameters().setDestDomainId(ovfEntityData.getStorageDomainId());
+            getParameters().setSourceDomainId(ovfEntityData.getStorageDomainId());
+            getParameters().setDbUsers(fullEntityOvfData.getDbUsers());
+            getParameters().setUserToRoles(fullEntityOvfData.getUserToRoles());
+            // For quota, update disks when required
+            if (getParameters().getDiskTemplateMap() != null) {
+                ArrayList imageList = new ArrayList<>(getParameters().getDiskTemplateMap().values());
+                vmTemplateFromConfiguration.setDiskList(imageList);
+                ensureDomainMap(imageList, getParameters().getDestDomainId());
+            }
+        } catch (OvfReaderException e) {
+            log.error("Failed to parse a given ovf configuration: {}:\n{}", e.getMessage(), ovfEntityData.getOvfData());
+            log.debug("Exception", e);
+        }
+    }
+    setClusterId(getParameters().getClusterId());
+    setStoragePoolId(getCluster().getStoragePoolId());
+}
+#end_block
+
+#method_before
+@Override
+protected void executeCommand() {
+    // Get the parameters:
+    T parameters = getParameters();
+    // The user or group given in the parameters may haven't been added to the database yet, if this is the case
+    // then they need to be added to the database now, before the permission:
+    DbUser user = parameters.getUser();
+    if (user != null) {
+        Guid id = user.getId();
+        String directory = user.getDomain();
+        String externalId = user.getExternalId();
+        DbUser existing = dbUserDao.getByIdOrExternalId(id, directory, externalId);
+        if (existing != null) {
+            user = existing;
+        } else {
+            user = addUser(user);
+            if (user == null) {
+                setSucceeded(false);
+                return;
+            }
+        }
+    }
+    DbGroup group = parameters.getGroup();
+    if (group != null) {
+        Guid id = group.getId();
+        String directory = group.getDomain();
+        String externalId = group.getExternalId();
+        DbGroup existing = dbGroupDao.getByIdOrExternalId(id, directory, externalId);
+        if (existing != null) {
+            group = existing;
+        } else {
+            group = addGroup(group);
+            if (group == null) {
+                setSucceeded(false);
+                return;
+            }
+        }
+    }
+    // The identifier of the principal of the permission can come from the parameters directly or from the
+    // user/group objects:
+    Guid principalId;
+    if (user != null) {
+        principalId = user.getId();
+    } else if (group != null) {
+        principalId = group.getId();
+    } else {
+        principalId = parameters.getPermission().getAdElementId();
+    }
+    final Permission paramPermission = parameters.getPermission();
+    Permission permission = permissionDao.getForRoleAndAdElementAndObject(paramPermission.getRoleId(), principalId, paramPermission.getObjectId());
+    if (permission == null) {
+        paramPermission.setAdElementId(principalId);
+        TransactionSupport.executeInNewTransaction(() -> {
+            permissionDao.save(paramPermission);
+            getCompensationContext().snapshotNewEntity(paramPermission);
+            getCompensationContext().stateChanged();
+            return null;
+        });
+        permission = paramPermission;
+    }
+    getReturnValue().setActionReturnValue(permission.getId());
+    if (user != null) {
+        updateAdminStatus(permission);
+    }
+    vmStaticDao.incrementDbGeneration(principalId);
+    setSucceeded(true);
+}
+#method_after
+@Override
+protected void executeCommand() {
+    // Get the parameters:
+    T parameters = getParameters();
+    // The user or group given in the parameters may haven't been added to the database yet, if this is the case
+    // then they need to be added to the database now, before the permission:
+    DbUser user = parameters.getUser();
+    if (user != null) {
+        Guid id = user.getId();
+        String directory = user.getDomain();
+        String externalId = user.getExternalId();
+        DbUser existing = dbUserDao.getByIdOrExternalId(id, directory, externalId);
+        if (existing != null) {
+            user = existing;
+        } else {
+            user = addUser(user);
+            if (user == null) {
+                setSucceeded(false);
+                return;
+            }
+        }
+    }
+    DbGroup group = parameters.getGroup();
+    if (group != null) {
+        Guid id = group.getId();
+        String directory = group.getDomain();
+        String externalId = group.getExternalId();
+        DbGroup existing = dbGroupDao.getByIdOrExternalId(id, directory, externalId);
+        if (existing != null) {
+            group = existing;
+        } else {
+            group = addGroup(group);
+            if (group == null) {
+                setSucceeded(false);
+                return;
+            }
+        }
+    }
+    // The identifier of the principal of the permission can come from the parameters directly or from the
+    // user/group objects:
+    Guid principalId;
+    if (user != null) {
+        principalId = user.getId();
+    } else if (group != null) {
+        principalId = group.getId();
+    } else {
+        principalId = parameters.getPermission().getAdElementId();
+    }
+    final Permission paramPermission = parameters.getPermission();
+    Permission permission = permissionDao.getForRoleAndAdElementAndObject(paramPermission.getRoleId(), principalId, paramPermission.getObjectId());
+    if (permission == null) {
+        paramPermission.setAdElementId(principalId);
+        TransactionSupport.executeInNewTransaction(() -> {
+            permissionDao.save(paramPermission);
+            getCompensationContext().snapshotNewEntity(paramPermission);
+            getCompensationContext().stateChanged();
+            return null;
+        });
+        permission = paramPermission;
+    }
+    getReturnValue().setActionReturnValue(permission.getId());
+    if (user != null) {
+        updateAdminStatus(permission);
+    }
+    vmStaticDao.incrementDbGeneration(paramPermission.getObjectId());
+    setSucceeded(true);
+}
+#end_block
+
+#method_before
+public void mapDbUsers(Map<String, String> userDomainsMap, Set<DbUser> dbUsersFromParams, Map<String, Set<String>> userToRolesFromParams, Guid entityId, VdcObjectType objectType, Map<String, Object> roleMap) {
+    dbUsersFromParams.forEach(dbUser -> {
+        DbUser originalDbUser = dbUserDao.getByUsernameAndDomain(dbUser.getLoginName(), dbUser.getDomain());
+        if (userDomainsMap != null) {
+            String destDomain = userDomainsMap.get(dbUser.getDomain());
+            if (destDomain != null) {
+                DbUser destDbUser = dbUserDao.getByUsernameAndDomain(dbUser.getLoginName(), destDomain);
+                if (destDbUser != null) {
+                    addPermissionsForUser(destDbUser, userToRolesFromParams, entityId, objectType, roleMap);
+                }
+            } else if (originalDbUser != null) {
+                addPermissionsForUser(originalDbUser, userToRolesFromParams, entityId, objectType, roleMap);
+            }
+        } else if (originalDbUser != null) {
+            addPermissionsForUser(originalDbUser, userToRolesFromParams, entityId, objectType, roleMap);
+        } else // The user does not exist at all, creating it
+        {
+            DbUser newDbUser = new DbUser();
+            newDbUser.setLoginName(dbUser.getLoginName());
+            newDbUser.setDomain(dbUser.getDomain());
+            dbUserDao.save(newDbUser);
+            log.debug("User {}@{} does not exist, creating it...", newDbUser.getLoginName(), newDbUser.getDomain());
+        }
+    });
+}
+#method_after
+public void mapDbUsers(Map<String, String> userDomainsMap, Set<DbUser> dbUsersFromParams, Map<String, Set<String>> userToRolesFromParams, Guid entityId, VdcObjectType objectType, Map<String, Object> roleMap) {
+    dbUsersFromParams.forEach(dbUser -> {
+        DbUser originalDbUser = dbUserDao.getByUsernameAndDomain(dbUser.getLoginName(), dbUser.getDomain());
+        if (userDomainsMap != null) {
+            String destDomain = userDomainsMap.get(dbUser.getDomain());
+            if (destDomain != null) {
+                DbUser destDbUser = dbUserDao.getByUsernameAndDomain(dbUser.getLoginName(), destDomain);
+                if (destDbUser != null) {
+                    addPermissionsForUser(destDbUser, userToRolesFromParams, entityId, objectType, roleMap);
+                }
+            } else if (originalDbUser != null) {
+                addPermissionsForUser(originalDbUser, userToRolesFromParams, entityId, objectType, roleMap);
+            }
+        } else if (originalDbUser != null) {
+            addPermissionsForUser(originalDbUser, userToRolesFromParams, entityId, objectType, roleMap);
+        }
+    });
+}
+#end_block
+
+#method_before
+@Override
+protected void mapDbUsers() {
+    drMappingHelper.mapDbUsers(getParameters().getDomainMap(), getParameters().getDbUsers(), getParameters().getUserToRoles(), getVmId(), VdcObjectType.VM, getParameters().getRoleMap());
+}
+#method_after
+protected void mapDbUsers() {
+    drMappingHelper.mapDbUsers(getParameters().getDomainMap(), getParameters().getDbUsers(), getParameters().getUserToRoles(), getVmId(), VdcObjectType.VM, getParameters().getRoleMap());
+}
+#end_block
+
+#method_before
+public static <T, Q extends Nameable> Supplier<Q> getEntityByVal(Function<T, Q> fn, T val) {
+    return () -> fn.apply(val);
+}
+#method_after
+private static <T, Q extends Nameable> Supplier<Q> getEntityByVal(Function<T, Q> fn, T val) {
+    return () -> fn.apply(val);
+}
+#end_block
+
+#method_before
+protected <R extends String, Q extends String, S extends Nameable> S getRelatedEntity(Map<Q, Q> entityMap, R originalEntityName, Function getterFunction) {
+    // Try to fetch the entity from the DAO (usually by name).
+    // The entity which is being used is usually indicated in the entity's OVF.
+    Supplier<S> sup = getEntityByVal(getterFunction, originalEntityName);
+    S original = sup.get();
+    // Check if a map was sent by the user for DR purposes to cast the original BE with the alternative BE.
+    if (entityMap != null) {
+        Q destName = entityMap.get(originalEntityName);
+        // from the DAO to check if it exists.
+        if (destName != null) {
+            // Try to fetch the entity from the DAO (usually by name).
+            // The entity which is being used is the mapped entity.
+            Supplier<S> supplier = getEntityByVal(getterFunction, destName);
+            S dest = supplier.get();
+            // are null, do not add anything.
+            return addBusinessEntityToList(dest, original);
+        } else if (original != null) {
+            // If the mapping destination was not found in the DB, try to add the original entity
+            return addBusinessEntityToList(original, null);
+        }
+    } else if (original != null) {
+        // If there is no mapping, only add the original entity
+        return addBusinessEntityToList(original, null);
+    }
+    return null;
+}
+#method_after
+protected <R extends String, S extends Nameable> S getRelatedEntity(Map<R, R> entityMap, R originalEntityName, Function<R, S> getterFunction) {
+    // Try to fetch the entity from the DAO (usually by name).
+    // The entity which is being used is usually indicated in the entity's OVF.
+    Supplier<S> sup = getEntityByVal(getterFunction, originalEntityName);
+    S original = sup.get();
+    // Check if a map was sent by the user for DR purposes to cast the original BE with the alternative BE.
+    if (entityMap != null) {
+        R destName = entityMap.get(originalEntityName);
+        // from the DAO to check if it exists.
+        if (destName != null) {
+            // Try to fetch the entity from the DAO (usually by name).
+            // The entity which is being used is the mapped entity.
+            Supplier<S> supplier = getEntityByVal(getterFunction, destName);
+            S dest = supplier.get();
+            // are null, do not add anything.
+            return addBusinessEntityToList(dest, original);
+        } else if (original != null) {
+            // If the mapping destination was not found in the DB, try to add the original entity
+            return addBusinessEntityToList(original, null);
+        }
+    } else if (original != null) {
+        // If there is no mapping, only add the original entity
+        return addBusinessEntityToList(original, null);
+    }
+    return null;
+}
+#end_block
+
+#method_before
+private <S extends Nameable> S addBusinessEntityToList(S primaryEntity, S alternativeEntity) {
+    if (primaryEntity != null) {
+        return primaryEntity;
+    } else if (alternativeEntity != null) {
+        return alternativeEntity;
+    } else {
+        log.warn("Nor primary entity of alternative entity were found. Not adding anything to the return list");
+        return null;
+    }
+}
+#method_after
+private static <S extends Nameable> S addBusinessEntityToList(S primaryEntity, S alternativeEntity) {
+    if (primaryEntity != null) {
+        return primaryEntity;
+    } else if (alternativeEntity != null) {
+        return alternativeEntity;
+    } else {
+        log.warn("Nor primary entity of alternative entity were found. Not adding anything to the return list");
+        return null;
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected void mapDbUsers() {
+    Map<String, String> userDomainsMap = getParameters().getDomainMap();
+    getParameters().getDbUsers().forEach(dbUser -> {
+        DbUser originalDbUser = dbUserDao.getByUsernameAndDomain(dbUser.getLoginName(), dbUser.getDomain());
+        if (userDomainsMap != null) {
+            String destDomain = userDomainsMap.get(dbUser.getDomain());
+            if (destDomain != null) {
+                DbUser destDbUser = dbUserDao.getByUsernameAndDomain(dbUser.getLoginName(), destDomain);
+                if (destDbUser != null) {
+                    addPermissionsForUser(destDbUser, getParameters().getUserToRoles());
+                }
+            } else if (originalDbUser != null) {
+                addPermissionsForUser(originalDbUser, getParameters().getUserToRoles());
+            }
+        } else if (originalDbUser != null) {
+            addPermissionsForUser(originalDbUser, getParameters().getUserToRoles());
+        } else // The user does not exist at all, creating it
+        {
+            DbUser newDbUser = new DbUser();
+            newDbUser.setLoginName(dbUser.getLoginName());
+            newDbUser.setDomain(dbUser.getDomain());
+            dbUserDao.save(newDbUser);
+            log.debug("User {}@{} does not exist, creating it...", newDbUser.getLoginName(), newDbUser.getDomain());
+        }
+    });
+}
+#method_after
+@Override
+protected void mapDbUsers() {
+    Map<String, String> userDomainsMap = getParameters().getDomainMap();
+    getParameters().getDbUsers().forEach(dbUser -> {
+        DbUser originalDbUser = dbUserDao.getByUsernameAndDomain(dbUser.getLoginName(), dbUser.getDomain());
+        if (userDomainsMap != null) {
+            String destDomain = userDomainsMap.get(dbUser.getDomain());
+            if (destDomain != null) {
+                DbUser destDbUser = dbUserDao.getByUsernameAndDomain(dbUser.getLoginName(), destDomain);
+                if (destDbUser != null) {
+                    addPermissionsForUser(destDbUser, getParameters().getUserToRoles());
+                }
+            } else if (originalDbUser != null) {
+                addPermissionsForUser(originalDbUser, getParameters().getUserToRoles());
+            }
+        } else if (originalDbUser != null) {
+            addPermissionsForUser(originalDbUser, getParameters().getUserToRoles());
+        }
+    });
+}
+#end_block
+
+#method_before
+private void handleFinalizingFailure(final StateContext context) {
+    log.error("Finalizing failed transfer. {}", getTransferDescription());
+    stopImageTransferSession(context.entity);
+    // (only if not disk snapshot)
+    if (Guid.isNullOrEmpty(getParameters().getImageGroupID())) {
+        setImageStatus(getParameters().getTransferType() == TransferType.Upload ? ImageStatus.ILLEGAL : ImageStatus.OK);
+    }
+    updateEntityPhase(ImageTransferPhase.FINISHED_FAILURE);
+    setAuditLogTypeFromPhase(ImageTransferPhase.FINISHED_FAILURE);
+}
+#method_after
+private void handleFinalizingFailure(final StateContext context) {
+    log.error("Finalizing failed transfer. {}", getTransferDescription());
+    stopImageTransferSession(context.entity);
+    // (only if not disk snapshot)
+    if (!Guid.isNullOrEmpty(getParameters().getImageGroupID())) {
+        setImageStatus(getParameters().getTransferType() == TransferType.Upload ? ImageStatus.ILLEGAL : ImageStatus.OK);
+    }
+    updateEntityPhase(ImageTransferPhase.FINISHED_FAILURE);
+    setAuditLogTypeFromPhase(ImageTransferPhase.FINISHED_FAILURE);
+}
+#end_block
+
+#method_before
+@Override
+public boolean equals(Object obj) {
+    if (this == obj) {
+        return true;
+    }
+    if (obj == null) {
+        return false;
+    }
+    if (getClass() != obj.getClass()) {
+        return false;
+    }
+    ImageTransfer other = (ImageTransfer) obj;
+    return Objects.equals(commandId, other.commandId) && Objects.equals(phase, other.phase) && type == other.type && Objects.equals(lastUpdated, other.lastUpdated) && Objects.equals(message, other.message) && Objects.equals(vdsId, other.vdsId) && Objects.equals(diskId, other.diskId) && Objects.equals(imagedTicketId, other.imagedTicketId) && Objects.equals(proxyUri, other.proxyUri) && Objects.equals(signedTicket, other.signedTicket) && Objects.equals(bytesSent, other.bytesSent) && Objects.equals(bytesTotal, other.bytesTotal);
+}
+#method_after
+@Override
+public boolean equals(Object obj) {
+    if (this == obj) {
+        return true;
+    }
+    if (obj == null) {
+        return false;
+    }
+    if (getClass() != obj.getClass()) {
+        return false;
+    }
+    ImageTransfer other = (ImageTransfer) obj;
+    return Objects.equals(commandId, other.commandId) && Objects.equals(phase, other.phase) && Objects.equals(lastUpdated, other.lastUpdated) && Objects.equals(message, other.message) && Objects.equals(vdsId, other.vdsId) && Objects.equals(diskId, other.diskId) && Objects.equals(imagedTicketId, other.imagedTicketId) && Objects.equals(proxyUri, other.proxyUri) && Objects.equals(signedTicket, other.signedTicket) && Objects.equals(bytesSent, other.bytesSent) && Objects.equals(bytesTotal, other.bytesTotal) && type == other.type;
+}
+#end_block
+
+#method_before
+@Override
+public void initTable() {
+    getTable().enableColumnResizing();
+    addColumn(constants.deviceName(), "200px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return object.getDeviceName();
+        }
+    });
+    addColumn(constants.capability(), "130px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return object.getCapability();
+        }
+    });
+    addColumn(constants.vendor(), "200px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return HostDeviceColumnHelper.renderNameId(object.getVendorName(), object.getVendorId());
+        }
+    });
+    addColumn(constants.product(), "350px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return HostDeviceColumnHelper.renderNameId(object.getProductName(), object.getProductId());
+        }
+    });
+    addColumn(constants.driver(), "100px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView hostDeviceView) {
+            return Objects.toString(hostDeviceView.getDriver(), "");
+        }
+    });
+    addColumn(constants.currentlyUsedByVm(), "120px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return object.getRunningVmName();
+        }
+    });
+    addColumn(constants.attachedToVms(), "120px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return HostDeviceColumnHelper.renderVmNamesList(object.getAttachedVmNames());
+        }
+    });
+    addColumn(constants.iommuGroup(), "120px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return HostDeviceColumnHelper.renderIommuGroup(object.getIommuGroup());
+        }
+    });
+    addColumn(constants.mdevTypes(), "120px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return object.getMdevTypes() == null ? "" : String.join(", ", // $NON-NLS-1$
+            object.getMdevTypes().stream().sorted().collect(Collectors.toList()));
+        }
+    });
+}
+#method_after
+@Override
+public void initTable() {
+    getTable().enableColumnResizing();
+    addColumn(constants.deviceName(), "200px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return object.getDeviceName();
+        }
+    });
+    addColumn(constants.capability(), "130px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return object.getCapability();
+        }
+    });
+    addColumn(constants.vendor(), "200px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return HostDeviceColumnHelper.renderNameId(object.getVendorName(), object.getVendorId());
+        }
+    });
+    addColumn(constants.product(), "350px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return HostDeviceColumnHelper.renderNameId(object.getProductName(), object.getProductId());
+        }
+    });
+    addColumn(constants.driver(), "100px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView hostDeviceView) {
+            return Objects.toString(hostDeviceView.getDriver(), "");
+        }
+    });
+    addColumn(constants.currentlyUsedByVm(), "120px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return object.getRunningVmName();
+        }
+    });
+    addColumn(constants.attachedToVms(), "120px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return HostDeviceColumnHelper.renderVmNamesList(object.getAttachedVmNames());
+        }
+    });
+    addColumn(constants.iommuGroup(), "120px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return HostDeviceColumnHelper.renderIommuGroup(object.getIommuGroup());
+        }
+    });
+    addColumn(constants.mdevTypes(), "120px", new // $NON-NLS-1$
+    AbstractTextColumn<HostDeviceView>() {
+
+        @Override
+        public String getValue(HostDeviceView object) {
+            return object.getMdevTypes() == null ? "" : // $NON-NLS-1$
+            object.getMdevTypes().stream().sorted().collect(Collectors.joining(", "));
+        }
+    });
+}
+#end_block
+
+#method_before
+protected void performOvfUpdateForDomain(Guid storagePoolId, Guid domainId) {
+    backend.runInternalAction(ActionType.ProcessOvfUpdateForStorageDomain, new ProcessOvfUpdateCommandParameters(storagePoolId, domainId));
+}
+#method_after
+protected void performOvfUpdateForDomain(Guid storagePoolId, Guid domainId) {
+    backend.runInternalAction(ActionType.ProcessOvfUpdateForStorageDomain, new ProcessOvfUpdateParameters(storagePoolId, domainId));
+}
+#end_block
+
+#method_before
+protected ActionReturnValue performOvfUpdateForStoragePool(Guid storagePoolId) {
+    ProcessOvfUpdateCommandParameters parameters = new ProcessOvfUpdateCommandParameters(storagePoolId, null);
+    return backend.runInternalAction(ActionType.ProcessOvfUpdateForStoragePool, parameters);
+}
+#method_after
+protected ActionReturnValue performOvfUpdateForStoragePool(Guid storagePoolId) {
+    ProcessOvfUpdateParameters parameters = new ProcessOvfUpdateParameters(storagePoolId, null);
+    return backend.runInternalAction(ActionType.ProcessOvfUpdateForStoragePool, parameters);
+}
+#end_block
+
+#method_before
+@Override
+protected void executeCommand() {
+    Guid storageDomainId = getStorageDomainId();
+    ProcessOvfUpdateCommandParameters parameters = new ProcessOvfUpdateCommandParameters(getStoragePoolId(), getStorageDomainId());
+    ActionReturnValue actionReturnValue = runInternalAction(ActionType.ProcessOvfUpdateForStoragePool, parameters, getContext());
+    Set<Guid> proccessedDomains = actionReturnValue.getActionReturnValue();
+    if (actionReturnValue.getSucceeded() && proccessedDomains != null && proccessedDomains.contains(storageDomainId)) {
+        runInternalActionWithTasksContext(ActionType.ProcessOvfUpdateForStorageDomain, createProcessOvfUpdateForDomainParams());
+    } else {
+        log.info("OVFs update was ignored - nothing to update for storage domain '{}'", storageDomainId);
+    }
+    setSucceeded(true);
+}
+#method_after
+@Override
+protected void executeCommand() {
+    Guid storageDomainId = getStorageDomainId();
+    ProcessOvfUpdateParameters parameters = new ProcessOvfUpdateParameters(getStoragePoolId(), getStorageDomainId());
+    ActionReturnValue actionReturnValue = runInternalAction(ActionType.ProcessOvfUpdateForStoragePool, parameters, getContext());
+    Set<Guid> proccessedDomains = actionReturnValue.getActionReturnValue();
+    if (actionReturnValue.getSucceeded() && proccessedDomains != null && proccessedDomains.contains(storageDomainId)) {
+        runInternalActionWithTasksContext(ActionType.ProcessOvfUpdateForStorageDomain, createProcessOvfUpdateForDomainParams());
+    } else {
+        log.info("OVFs update was ignored - nothing to update for storage domain '{}'", storageDomainId);
+    }
+    setSucceeded(true);
+}
+#end_block
+
+#method_before
+private ProcessOvfUpdateCommandParameters createProcessOvfUpdateForDomainParams() {
+    ProcessOvfUpdateCommandParameters params = new ProcessOvfUpdateCommandParameters(getStoragePoolId(), getStorageDomainId());
+    params.setSkipDomainChecks(true);
+    if (isExecutedAsChildCommand()) {
+        params.setParentCommand(getParameters().getParentCommand());
+        params.setEntityInfo(getParameters().getParentParameters().getEntityInfo());
+        params.setParentParameters(getParameters().getParentParameters());
+    }
+    return params;
+}
+#method_after
+private ProcessOvfUpdateParameters createProcessOvfUpdateForDomainParams() {
+    ProcessOvfUpdateParameters params = new ProcessOvfUpdateParameters(getStoragePoolId(), getStorageDomainId());
+    params.setSkipDomainChecks(true);
+    if (isExecutedAsChildCommand()) {
+        params.setParentCommand(getParameters().getParentCommand());
+        params.setEntityInfo(getParameters().getParentParameters().getEntityInfo());
+        params.setParentParameters(getParameters().getParentParameters());
+    }
+    return params;
+}
+#end_block
+
+#method_before
+public static final AbstractColumn<Disk, Disk> getStatusColumn(String sortBy) {
+    TransferDiskImageProgressColumn uploadImageProgressColumn = new TransferDiskImageProgressColumn();
+    DiskProgressColumn diskProgressColumn = new DiskProgressColumn();
+    List<HasCell<Disk, ?>> list = new ArrayList<>();
+    list.add(getStatusOnlyColumn(null));
+    list.add(uploadImageProgressColumn);
+    list.add(diskProgressColumn);
+    Cell<Disk> compositeCell = new StatusCompositeCell<>(list);
+    AbstractColumn<Disk, Disk> column = new AbstractColumn<Disk, Disk>(compositeCell) {
+
+        @Override
+        public Disk getValue(Disk object) {
+            return object;
+        }
+    };
+    if (sortBy != null) {
+        column.makeSortable(sortBy);
+    }
+    return column;
+}
+#method_after
+public static final AbstractColumn<Disk, Disk> getStatusColumn(String sortBy) {
+    DiskTransferProgressColumn uploadImageProgressColumn = new DiskTransferProgressColumn();
+    DiskProgressColumn diskProgressColumn = new DiskProgressColumn();
+    List<HasCell<Disk, ?>> list = new ArrayList<>();
+    list.add(getStatusOnlyColumn(null));
+    list.add(uploadImageProgressColumn);
+    list.add(diskProgressColumn);
+    Cell<Disk> compositeCell = new StatusCompositeCell<>(list);
+    AbstractColumn<Disk, Disk> column = new AbstractColumn<Disk, Disk>(compositeCell) {
+
+        @Override
+        public Disk getValue(Disk object) {
+            return object;
+        }
+    };
+    if (sortBy != null) {
+        column.makeSortable(sortBy);
+    }
+    return column;
+}
+#end_block
+
+#method_before
+public ValidationResult networkNameNotUsedAsVdsmName() {
+    List<String> conflictingNetworks = getDbFacade().getNetworkDao().getAllForDataCenter(network.getDataCenterId()).stream().filter(net -> !net.getId().equals(network.getId())).filter(net -> net.getVdsmName().equals(network.getName())).map(net -> net.getName()).collect(toList());
+    if (conflictingNetworks.isEmpty()) {
+        return ValidationResult.VALID;
+    }
+    Collection<String> nameReplacements = ReplacementUtils.replaceWith("ConflictingNetworks", conflictingNetworks);
+    nameReplacements.add(getNetworkNameReplacement());
+    return new ValidationResult(EngineMessage.NETWORK_NAME_USED_AS_INTERFACE_NAME, nameReplacements);
+}
+#method_after
+public ValidationResult networkNameNotUsedAsVdsmName() {
+    String conflictingNetwork = getNetworkDao().getAllForDataCenter(network.getDataCenterId()).stream().filter(net -> !net.getId().equals(network.getId())).filter(net -> net.getVdsmName().equals(network.getName())).map(net -> net.getName()).findFirst().orElse(null);
+    if (conflictingNetwork == null) {
+        return ValidationResult.VALID;
+    }
+    Collection<String> nameReplacements = ReplacementUtils.replaceWith("ConflictingNetwork", singletonList(conflictingNetwork));
+    nameReplacements.add(getNetworkNameReplacement());
+    return new ValidationResult(EngineMessage.NETWORK_NAME_USED_AS_VDSM_NETWORK_NAME, nameReplacements);
+}
+#end_block
+
+#method_before
+@Before
+public void setup() {
+    // spy on attempts to access the database
+    validator = spy(new NetworkValidator(vmDao, network));
+    doReturn(dbFacade).when(validator).getDbFacade();
+    doReturn(managementNetworkUtil).when(validator).getManagementNetworkUtil();
+    // mock some commonly used Daos
+    when(dbFacade.getStoragePoolDao()).thenReturn(dataCenterDao);
+    when(dbFacade.getNetworkDao()).thenReturn(networkDao);
+    // mock their getters
+    when(dataCenterDao.get(any())).thenReturn(dataCenter);
+    when(networkDao.getAllForDataCenter(any())).thenReturn(networks);
+}
+#method_after
+@Before
+public void setup() {
+    // spy on attempts to access the database
+    validator = spy(new NetworkValidator(vmDao, network));
+    doReturn(dbFacade).when(validator).getDbFacade();
+    doReturn(managementNetworkUtil).when(validator).getManagementNetworkUtil();
+    doReturn(networkDao).when(validator).getNetworkDao();
+    // mock some commonly used Daos
+    when(dbFacade.getStoragePoolDao()).thenReturn(dataCenterDao);
+    when(dbFacade.getNetworkDao()).thenReturn(networkDao);
+    // mock their getters
+    when(dataCenterDao.get(any())).thenReturn(dataCenter);
+    when(networkDao.getAllForDataCenter(any())).thenReturn(networks);
+}
+#end_block
+
+#method_before
+@Test
+public void networkNameTakenByVdsmName() {
+    when(network.getName()).thenReturn("vdsm-name");
+    when(network.getId()).thenReturn(DEFAULT_GUID);
+    Network network2 = new Network();
+    network2.setVdsmName("vdsm-name");
+    network2.setId(OTHER_GUID);
+    when(networkDao.getAllForDataCenter(any())).thenReturn(Arrays.asList(network, network2));
+    assertThat(validator.networkNameNotUsedAsVdsmName(), failsWith(EngineMessage.NETWORK_NAME_USED_AS_INTERFACE_NAME));
+}
+#method_after
+@Test
+public void networkNameTakenByVdsmName() {
+    when(network.getName()).thenReturn("vdsm-name");
+    when(network.getId()).thenReturn(DEFAULT_GUID);
+    Network network2 = new Network();
+    network2.setVdsmName("vdsm-name");
+    network2.setName("vdsm-name");
+    network2.setId(OTHER_GUID);
+    when(networkDao.getAllForDataCenter(any())).thenReturn(Arrays.asList(network, network2));
+    assertThat(validator.networkNameNotUsedAsVdsmName(), failsWith(EngineMessage.NETWORK_NAME_USED_AS_VDSM_NETWORK_NAME));
+}
+#end_block
+
+#method_before
+@Override
+public void addVmToAffinityGroups() {
+    mapAffinityGroups().forEach(affinityGroup -> {
+        affinityGroup.setClusterId(getParameters().getClusterId());
+        Set<Guid> vmIds = new HashSet<>(affinityGroup.getVmIds());
+        vmIds.add(getParameters().getVm().getId());
+        affinityGroup.setVmIds(vmIds.stream().collect(Collectors.toList()));
+        affinityGroupDao.update(affinityGroup);
+    });
+}
+#method_after
+@Override
+public void addVmToAffinityGroups() {
+    mapAffinityGroups().forEach(affinityGroup -> {
+        affinityGroup.setClusterId(getParameters().getClusterId());
+        Set<Guid> vmIds = new HashSet<>(affinityGroup.getVmIds());
+        vmIds.add(getParameters().getVm().getId());
+        affinityGroup.setVmIds(new ArrayList<>(vmIds));
+        affinityGroupDao.update(affinityGroup);
+    });
+}
+#end_block
+
+#method_before
+protected List<VmTemplate> filterTemplatesInClusterNeedUpdate() {
+    if (!VmRngDevice.Source.urandomRandomUpdateRequired(oldCluster.getCompatibilityVersion(), getCluster().getCompatibilityVersion())) {
+        return Collections.emptyList();
+    }
+    return vmTemplateDao.getAllForCluster(getCluster().getId()).stream().filter(template -> template.getCustomCompatibilityVersion() == null).sorted().collect(Collectors.toList());
+}
+#method_after
+protected List<VmTemplate> filterTemplatesInClusterNeedUpdate() {
+    return vmTemplateDao.getAllForCluster(getCluster().getId()).stream().filter(template -> template.getCustomCompatibilityVersion() == null).sorted().collect(Collectors.toList());
+}
+#end_block
+
+#method_before
+private boolean updateVms() {
+    for (VmStatic vm : vmsLockedForUpdate) {
+        VmManagementParametersBase updateParams = new VmManagementParametersBase(vm);
+        /*
+            Locking by UpdateVmCommand is disabled since VMs are already locked in #getExclusiveLocks method.
+            This logic relies on assumption that UpdateVmCommand locks exactly only updated VM.
+             */
+        updateParams.setLockProperties(LockProperties.create(LockProperties.Scope.None));
+        updateParams.setClusterLevelChangeFromVersion(oldCluster.getCompatibilityVersion());
+        upgradeGraphicsDevices(vm, updateParams);
+        updateRngDeviceIfNecessary(vm.getId(), vm.getCustomCompatibilityVersion(), updateParams);
+        ActionReturnValue result = runInternalAction(ActionType.UpdateVm, updateParams, cloneContextAndDetachFromParent());
+        if (!result.getSucceeded()) {
+            List<String> params = new ArrayList<>();
+            params.add("$action Update");
+            params.add("$type VM");
+            params.add(parseErrorMessage(result.getValidationMessages()));
+            List<String> messages = Backend.getInstance().getErrorsTranslator().translateErrorText(params);
+            failedUpgradeEntities.put(vm.getName(), getFailedMessage(messages));
+        }
+    }
+    return true;
+}
+#method_after
+private boolean updateVms() {
+    for (VmStatic vm : vmsLockedForUpdate) {
+        VmManagementParametersBase updateParams = new VmManagementParametersBase(vm);
+        /*
+            Locking by UpdateVmCommand is disabled since VMs are already locked in #getExclusiveLocks method.
+            This logic relies on assumption that UpdateVmCommand locks exactly only updated VM.
+             */
+        updateParams.setLockProperties(LockProperties.create(LockProperties.Scope.None));
+        updateParams.setClusterLevelChangeFromVersion(oldCluster.getCompatibilityVersion());
+        upgradeGraphicsDevices(vm, updateParams);
+        updateResumeBehavior(vm);
+        updateRngDeviceIfNecessary(vm.getId(), vm.getCustomCompatibilityVersion(), updateParams);
+        ActionReturnValue result = runInternalAction(ActionType.UpdateVm, updateParams, cloneContextAndDetachFromParent());
+        if (!result.getSucceeded()) {
+            List<String> params = new ArrayList<>();
+            params.add("$action Update");
+            params.add("$type VM");
+            params.add(parseErrorMessage(result.getValidationMessages()));
+            List<String> messages = Backend.getInstance().getErrorsTranslator().translateErrorText(params);
+            failedUpgradeEntities.put(vm.getName(), getFailedMessage(messages));
+        }
+    }
+    return true;
+}
+#end_block
+
+#method_before
+private boolean updateTemplates() {
+    for (VmTemplate template : templatesLockedForUpdate) {
+        // the object was loaded in before command execution started and thus the value may be outdated
+        template.setClusterCompatibilityVersion(getCluster().getCompatibilityVersion());
+        UpdateVmTemplateParameters parameters = new UpdateVmTemplateParameters(template);
+        // Locking by UpdateVmTemplate is disabled since templates are already locked in #getExclusiveLocks method.
+        parameters.setLockProperties(LockProperties.create(LockProperties.Scope.None));
+        parameters.setClusterLevelChangeFromVersion(oldCluster.getCompatibilityVersion());
+        updateRngDeviceIfNecessary(template.getId(), template.getCustomCompatibilityVersion(), parameters);
+        if (!parameters.isUpdateRngDevice()) {
+            continue;
+        }
+        final ActionReturnValue result = runInternalAction(ActionType.UpdateVmTemplate, parameters, cloneContextAndDetachFromParent());
+        if (!result.getSucceeded()) {
+            List<String> params = new ArrayList<>();
+            params.add("$action Update");
+            params.add("$type Template");
+            params.add(parseErrorMessage(result.getValidationMessages()));
+            List<String> messages = Backend.getInstance().getErrorsTranslator().translateErrorText(params);
+            failedUpgradeEntities.put(template.getName(), getFailedMessage(messages));
+        }
+    }
+    return true;
+}
+#method_after
+private boolean updateTemplates() {
+    for (VmTemplate template : templatesLockedForUpdate) {
+        // the object was loaded in before command execution started and thus the value may be outdated
+        template.setClusterCompatibilityVersion(getCluster().getCompatibilityVersion());
+        UpdateVmTemplateParameters parameters = new UpdateVmTemplateParameters(template);
+        // Locking by UpdateVmTemplate is disabled since templates are already locked in #getExclusiveLocks method.
+        parameters.setLockProperties(LockProperties.create(LockProperties.Scope.None));
+        parameters.setClusterLevelChangeFromVersion(oldCluster.getCompatibilityVersion());
+        updateRngDeviceIfNecessary(template.getId(), template.getCustomCompatibilityVersion(), parameters);
+        updateResumeBehavior(template);
+        final ActionReturnValue result = runInternalAction(ActionType.UpdateVmTemplate, parameters, cloneContextAndDetachFromParent());
+        if (!result.getSucceeded()) {
+            List<String> params = new ArrayList<>();
+            params.add("$action Update");
+            params.add("$type Template");
+            params.add(parseErrorMessage(result.getValidationMessages()));
+            List<String> messages = Backend.getInstance().getErrorsTranslator().translateErrorText(params);
+            failedUpgradeEntities.put(template.getName(), getFailedMessage(messages));
+        }
+    }
+    return true;
+}
+#end_block
+
+#method_before
+private Integer getQosBandwidth(Guid clusterId) {
+    final HostNetworkQos migrationHostNetworkQos = dbFacade.getHostNetworkQosDao().getHostNetworkQosOfMigrationNetworkByClusterId(clusterId);
+    if (migrationHostNetworkQos == null) {
+        return null;
+    }
+    if (migrationHostNetworkQos.getOutAverageRealtime() != null) {
+        return migrationHostNetworkQos.getOutAverageRealtime();
+    }
+    return migrationHostNetworkQos.getOutAverageUpperlimit();
+}
+#method_after
+private Integer getQosBandwidth(Guid clusterId) {
+    final HostNetworkQos migrationHostNetworkQos = hostNetworkQosDao.getHostNetworkQosOfMigrationNetworkByClusterId(clusterId);
+    if (migrationHostNetworkQos == null) {
+        return null;
+    }
+    if (migrationHostNetworkQos.getOutAverageRealtime() != null) {
+        return migrationHostNetworkQos.getOutAverageRealtime();
+    }
+    return migrationHostNetworkQos.getOutAverageUpperlimit();
+}
+#end_block
+
+#method_before
+private void showNic(NetworkInterfaceModel nic) {
+    contents.removeAllRows();
+    VdsNetworkInterface entity = nic.getOriginalIface();
+    addRow(templates.titleSetupNetworkTooltip(nic.getName(), BACKGROUND_COLOR));
+    if (nic.getItems().isEmpty() && !nic.isBonded()) {
+        addBootProtoAndIpInfo(entity);
+    }
+    if (nic instanceof BondNetworkInterfaceModel) {
+        addRow(constants.bondOptionsItemInfo(), entity.getBondOptions().replace(BOND_OPTIONS_IP_SEPARATOR, // $NON-NLS-1$
+        BOND_OPTIONS_IP_SEPARATOR + " "));
+    } else {
+        addLldpInfo(nic);
+    }
+    if (nic.isVf()) {
+        addRow(constants.physicalFunction(), nic.getPhysicalFunction());
+    }
+}
+#method_after
+private void showNic(NetworkInterfaceModel nic) {
+    contents.removeAllRows();
+    VdsNetworkInterface entity = nic.getOriginalIface();
+    addRow(templates.titleSetupNetworkTooltip(nic.getName(), BACKGROUND_COLOR));
+    if (nic.getItems().isEmpty() && !nic.isBonded()) {
+        addBootProtoAndIpInfo(entity);
+    }
+    if (nic instanceof BondNetworkInterfaceModel) {
+        CreateOrUpdateBond createOrUpdateBond = ((BondNetworkInterfaceModel) nic).getCreateOrUpdateBond();
+        String bondOptions = entity.getBondOptions();
+        if (createOrUpdateBond != null) {
+            bondOptions = createOrUpdateBond.getBondOptions();
+        }
+        addRow(constants.bondOptionsItemInfo(), // $NON-NLS-1$
+        bondOptions.replace(BOND_OPTIONS_IP_SEPARATOR, BOND_OPTIONS_IP_SEPARATOR + " "));
+    } else {
+        addLldpInfo(nic);
+    }
+    if (nic.isVf()) {
+        addRow(constants.physicalFunction(), nic.getPhysicalFunction());
+    }
+}
+#end_block
+
+#method_before
+private void addLldpInfo(NetworkInterfaceModel nic) {
+    HostSetupNetworksModel model = nic.getSetupModel();
+    String name = nic.getOriginalIface().getName();
+    LldpInfo lldpInfo = model.getNetworkLldpByGuid(name);
+    insertHorizontalLine();
+    addRow(templates.strongTextWithColor(constants.linkLayerInfo(), WHITE_TEXT_COLOR));
+    if (lldpInfo != null) {
+        if (lldpInfo.isEnabled()) {
+            List<Tlv> filteredTlvs = lldpInfo.getTlvs().stream().filter(this::isTlvImportant).collect(Collectors.toList());
+            if (!filteredTlvs.isEmpty()) {
+                filteredTlvs.stream().forEach(tlv -> tlv.getProperties().entrySet().stream().forEach(entry -> addRow(entry.getKey(), entry.getValue())));
+            } else {
+                addRow(SafeHtmlUtils.fromSafeConstant(constants.noImportantLLDP()));
+            }
+        } else {
+            addRow(SafeHtmlUtils.fromSafeConstant(constants.lldpInfoDisabled()));
+        }
+    } else {
+        if (model.isNetworkTlvsPresent(name)) {
+            addRow(SafeHtmlUtils.fromSafeConstant(constants.noLldpInfoAvailable()));
+        } else {
+            addRow(SafeHtmlUtils.fromSafeConstant(constants.fetchingLldpInfo()));
+        }
+    }
+}
+#method_after
+private void addLldpInfo(NetworkInterfaceModel nic) {
+    HostSetupNetworksModel model = nic.getSetupModel();
+    String name = nic.getOriginalIface().getName();
+    LldpInfo lldpInfo = model.getNetworkLldpByName(name);
+    insertHorizontalLine();
+    addRow(templates.strongTextWithColor(constants.linkLayerInfo(), WHITE_TEXT_COLOR));
+    if (lldpInfo != null) {
+        if (lldpInfo.isEnabled()) {
+            List<Tlv> filteredTlvs = lldpInfo.getTlvs().stream().filter(this::isTlvImportant).collect(Collectors.toList());
+            if (!filteredTlvs.isEmpty()) {
+                filteredTlvs.stream().forEach(tlv -> tlv.getProperties().entrySet().stream().forEach(entry -> addRow(entry.getKey(), entry.getValue())));
+            } else {
+                addRow(SafeHtmlUtils.fromSafeConstant(constants.noImportantLLDP()));
+            }
+        } else {
+            addRow(SafeHtmlUtils.fromSafeConstant(constants.lldpInfoDisabled()));
+        }
+    } else {
+        if (model.isNetworkTlvsPresent(name)) {
+            addRow(SafeHtmlUtils.fromSafeConstant(constants.noLldpInfoAvailable()));
+        } else {
+            addRow(SafeHtmlUtils.fromSafeConstant(constants.fetchingLldpInfo()));
+        }
+    }
+}
+#end_block
+
+#method_before
+private boolean isColdReboot() {
+    boolean coldReboot = (getVm().isRunOnce() && !getVm().isVolatileRun()) || getVm().isNextRunConfigurationExists();
+    log.info("VM '{}' is performing {} reboot; run once: '{}', running as volatile: '{}', has next run configuration: '{}'", getVm().getName(), coldReboot ? "cold" : "warm", getVm().isRunOnce(), getVm().isVolatileRun(), getVm().isNextRunConfigurationExists());
+    return coldReboot;
+}
+#method_after
+private boolean isColdReboot() {
+    boolean coldReboot = (getVm().isRunOnce() && getVm().isVolatileRun()) || getVm().isNextRunConfigurationExists();
+    log.info("VM '{}' is performing {} reboot; run once: '{}', running as volatile: '{}', has next run configuration: '{}'", getVm().getName(), coldReboot ? "cold" : "warm", getVm().isRunOnce(), getVm().isVolatileRun(), getVm().isNextRunConfigurationExists());
+    return coldReboot;
+}
+#end_block
+

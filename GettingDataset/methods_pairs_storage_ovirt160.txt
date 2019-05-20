@@ -1,0 +1,166 @@
+4
+#method_before
+private void spySdValidator() {
+    Set<Guid> sdIds = new HashSet<>(Arrays.asList(STORAGE_DOMAIN_ID, STORAGE_DOMAIN_ID2));
+    storageDomainsValidator = spy(new MultipleStorageDomainsValidator(STORAGE_POOL_ID, sdIds));
+    doReturn(storageDomainsValidator).when(cmd).getStorageDomainsValidator(any(Guid.class), anySet());
+    doReturn(ValidationResult.VALID).when(storageDomainsValidator).allDomainsExistAndActive();
+    doReturn(sdDAO).when(storageDomainsValidator).getStorageDomainDAO();
+    doReturn(sdIds).when(cmd).getStorageDomainsIds();
+    doReturn(ValidationResult.VALID).when(storageDomainsValidator).allDomainsExistAndActive();
+    doReturn(ValidationResult.VALID).when(storageDomainsValidator).allDomainsWithinThresholds();
+    doReturn(ValidationResult.VALID).when(storageDomainsValidator).allDomainsHaveSpaceForClonedDisks(anyList());
+}
+#method_after
+private void spySdValidator() {
+    Set<Guid> sdIds = new HashSet<>(Arrays.asList(STORAGE_DOMAIN_ID));
+    storageDomainsValidator = spy(new MultipleStorageDomainsValidator(STORAGE_POOL_ID, sdIds));
+    doReturn(storageDomainsValidator).when(cmd).getStorageDomainsValidator(any(Guid.class), anySet());
+    doReturn(sdDAO).when(storageDomainsValidator).getStorageDomainDAO();
+    doReturn(sdIds).when(cmd).getStorageDomainsIds();
+    doReturn(ValidationResult.VALID).when(storageDomainsValidator).allDomainsExistAndActive();
+    doReturn(ValidationResult.VALID).when(storageDomainsValidator).allDomainsWithinThresholds();
+    doReturn(ValidationResult.VALID).when(storageDomainsValidator).allDomainsHaveSpaceForClonedDisks(anyList());
+}
+#end_block
+
+#method_before
+@Test
+public void testCanDoActionEnoughSpace() {
+    prepareForVmValidatorTests();
+    spySdValidator();
+    cmd.getVm().setStatus(VMStatus.Up);
+    doReturn(ValidationResult.VALID).when(vmValidator).vmHostCanLiveMerge();
+    mockMultipleSourceImagesForDomain(4, STORAGE_DOMAIN_ID);
+    CanDoActionTestUtils.runAndAssertCanDoActionSuccess(cmd);
+}
+#method_after
+@Test
+public void testCanDoActionEnoughSpace() {
+    prepareForVmValidatorTests();
+    spySdValidator();
+    cmd.getVm().setStatus(VMStatus.Up);
+    doReturn(ValidationResult.VALID).when(vmValidator).vmHostCanLiveMerge();
+    mockDisksList(4);
+    CanDoActionTestUtils.runAndAssertCanDoActionSuccess(cmd);
+}
+#end_block
+
+#method_before
+@Test
+public void testCanDoActionNotEnoughSpace() {
+    prepareForVmValidatorTests();
+    spySdValidator();
+    cmd.getVm().setStatus(VMStatus.Up);
+    doReturn(ValidationResult.VALID).when(vmValidator).vmHostCanLiveMerge();
+    List<DiskImage> imagesDisks = mockMultipleSourceImagesForDomain(4, STORAGE_DOMAIN_ID);
+    when(storageDomainsValidator.allDomainsHaveSpaceForClonedDisks(imagesDisks)).thenReturn(new ValidationResult(VdcBllMessages.ACTION_TYPE_FAILED_DISK_SPACE_LOW_ON_STORAGE_DOMAIN));
+    CanDoActionTestUtils.runAndAssertCanDoActionFailure(cmd, VdcBllMessages.ACTION_TYPE_FAILED_DISK_SPACE_LOW_ON_STORAGE_DOMAIN);
+}
+#method_after
+@Test
+public void testCanDoActionNotEnoughSpace() {
+    prepareForVmValidatorTests();
+    spySdValidator();
+    cmd.getVm().setStatus(VMStatus.Up);
+    doReturn(ValidationResult.VALID).when(vmValidator).vmHostCanLiveMerge();
+    List<DiskImage> imagesDisks = mockDisksList(4);
+    when(storageDomainsValidator.allDomainsHaveSpaceForClonedDisks(imagesDisks)).thenReturn(new ValidationResult(VdcBllMessages.ACTION_TYPE_FAILED_DISK_SPACE_LOW_ON_STORAGE_DOMAIN));
+    CanDoActionTestUtils.runAndAssertCanDoActionFailure(cmd, VdcBllMessages.ACTION_TYPE_FAILED_DISK_SPACE_LOW_ON_STORAGE_DOMAIN);
+}
+#end_block
+
+#method_before
+private Map<String, Object> initDriveData() {
+    Map<String, Object> drive = new HashMap<String, Object>();
+    Disk disk = getParameters().getDisk();
+    VmDevice vmDevice = getParameters().getVmDevice();
+    drive.put(VdsProperties.Type, VmDeviceType.DISK.getName());
+    addAddress(drive, getParameters().getVmDevice().getAddress());
+    drive.put(VdsProperties.INTERFACE, disk.getDiskInterface().getName());
+    drive.put(VdsProperties.Shareable, (vmDevice.getSnapshotId() != null && FeatureSupported.hotPlugDiskSnapshot(getParameters().getVm().getVdsGroupCompatibilityVersion())) ? VdsProperties.Transient : String.valueOf(disk.isShareable()));
+    drive.put(VdsProperties.Optional, Boolean.FALSE.toString());
+    drive.put(VdsProperties.ReadOnly, String.valueOf(vmDevice.getIsReadOnly()));
+    drive.put(VdsProperties.DeviceId, vmDevice.getId().getDeviceId().toString());
+    if (disk.getDiskStorageType() == DiskStorageType.IMAGE) {
+        DiskImage diskImage = (DiskImage) disk;
+        drive.put(VdsProperties.Device, VmDeviceType.DISK.getName());
+        drive.put(VdsProperties.Format, diskImage.getVolumeFormat().toString().toLowerCase());
+        drive.put(VdsProperties.DomainId, diskImage.getStorageIds().get(0).toString());
+        drive.put(VdsProperties.PoolId, diskImage.getStoragePoolId().toString());
+        drive.put(VdsProperties.VolumeId, diskImage.getImageId().toString());
+        drive.put(VdsProperties.ImageId, diskImage.getId().toString());
+        drive.put(VdsProperties.PropagateErrors, disk.getPropagateErrors().toString().toLowerCase());
+        VmInfoBuilder.handleIoTune(getParameters().getVm(), vmDevice, diskImage, new HashMap<Guid, Guid>(), new HashMap<Guid, Map<String, Long>>());
+        drive.put(VdsProperties.SpecParams, vmDevice.getSpecParams());
+    } else {
+        LunDisk lunDisk = (LunDisk) disk;
+        // If SCSI pass-through is enabled (VirtIO-SCSI/DirectLUN disk and SGIO is defined),
+        // set device type as 'lun' (instead of 'disk') and set the specified SGIO
+        boolean isVirtioScsi = getParameters().getDisk().getDiskInterface() == DiskInterface.VirtIO_SCSI;
+        boolean isScsiPassthrough = getParameters().getDisk().isScsiPassthrough();
+        if (isVirtioScsi) {
+            if (isScsiPassthrough) {
+                drive.put(VdsProperties.Device, VmDeviceType.LUN.getName());
+                drive.put(VdsProperties.Sgio, getParameters().getDisk().getSgio().toString().toLowerCase());
+            } else {
+                drive.put(VdsProperties.Device, VmDeviceType.DISK.getName());
+            }
+        } else {
+            drive.put(VdsProperties.Device, VmDeviceType.LUN.getName());
+        }
+        drive.put(VdsProperties.Guid, lunDisk.getLun().getLUN_id());
+        drive.put(VdsProperties.Format, VolumeFormat.RAW.toString().toLowerCase());
+        drive.put(VdsProperties.PropagateErrors, PropagateErrors.Off.toString().toLowerCase());
+    }
+    return drive;
+}
+#method_after
+private Map<String, Object> initDriveData() {
+    Map<String, Object> drive = new HashMap<String, Object>();
+    Disk disk = getParameters().getDisk();
+    VmDevice vmDevice = getParameters().getVmDevice();
+    drive.put(VdsProperties.Type, VmDeviceType.DISK.getName());
+    addAddress(drive, getParameters().getVmDevice().getAddress());
+    drive.put(VdsProperties.INTERFACE, disk.getDiskInterface().getName());
+    drive.put(VdsProperties.Shareable, (vmDevice.getSnapshotId() != null && FeatureSupported.hotPlugDiskSnapshot(getParameters().getVm().getVdsGroupCompatibilityVersion())) ? VdsProperties.Transient : String.valueOf(disk.isShareable()));
+    drive.put(VdsProperties.Optional, Boolean.FALSE.toString());
+    drive.put(VdsProperties.ReadOnly, String.valueOf(vmDevice.getIsReadOnly()));
+    drive.put(VdsProperties.DeviceId, vmDevice.getId().getDeviceId().toString());
+    if (disk.getDiskStorageType() == DiskStorageType.IMAGE) {
+        DiskImage diskImage = (DiskImage) disk;
+        drive.put(VdsProperties.Device, VmDeviceType.DISK.getName());
+        drive.put(VdsProperties.Format, diskImage.getVolumeFormat().toString().toLowerCase());
+        drive.put(VdsProperties.DomainId, diskImage.getStorageIds().get(0).toString());
+        drive.put(VdsProperties.PoolId, diskImage.getStoragePoolId().toString());
+        drive.put(VdsProperties.VolumeId, diskImage.getImageId().toString());
+        drive.put(VdsProperties.ImageId, diskImage.getId().toString());
+        drive.put(VdsProperties.PropagateErrors, disk.getPropagateErrors().toString().toLowerCase());
+        VmInfoBuilder.handleIoTune(getParameters().getVm(), vmDevice, diskImage, new HashMap<Guid, Guid>(), new HashMap<Guid, Map<String, Long>>());
+        if (vmDevice.getSpecParams() != null) {
+            drive.put(VdsProperties.SpecParams, vmDevice.getSpecParams());
+        }
+    } else {
+        LunDisk lunDisk = (LunDisk) disk;
+        // If SCSI pass-through is enabled (VirtIO-SCSI/DirectLUN disk and SGIO is defined),
+        // set device type as 'lun' (instead of 'disk') and set the specified SGIO
+        boolean isVirtioScsi = getParameters().getDisk().getDiskInterface() == DiskInterface.VirtIO_SCSI;
+        boolean isScsiPassthrough = getParameters().getDisk().isScsiPassthrough();
+        if (isVirtioScsi) {
+            if (isScsiPassthrough) {
+                drive.put(VdsProperties.Device, VmDeviceType.LUN.getName());
+                drive.put(VdsProperties.Sgio, getParameters().getDisk().getSgio().toString().toLowerCase());
+            } else {
+                drive.put(VdsProperties.Device, VmDeviceType.DISK.getName());
+            }
+        } else {
+            drive.put(VdsProperties.Device, VmDeviceType.LUN.getName());
+        }
+        drive.put(VdsProperties.Guid, lunDisk.getLun().getLUN_id());
+        drive.put(VdsProperties.Format, VolumeFormat.RAW.toString().toLowerCase());
+        drive.put(VdsProperties.PropagateErrors, PropagateErrors.Off.toString().toLowerCase());
+    }
+    return drive;
+}
+#end_block
+

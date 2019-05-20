@@ -1,0 +1,2441 @@
+41
+#method_before
+private GearmanJobResult safeExecuteFunction() throws Exception {
+    // decode the uniqueId from the client
+    String decodedUniqueId = null;
+    if (this.uniqueId != null) {
+        decodedUniqueId = new String(this.uniqueId, "UTF-8");
+    }
+    // create new parameter objects to pass to jenkins build
+    List<ParameterValue> buildParams = new ArrayList<ParameterValue>();
+    String decodedData = null;
+    boolean offlineWhenComplete = false;
+    if (this.data != null) {
+        // decode the data from the client
+        decodedData = new String((byte[]) this.data, "UTF-8");
+        // convert parameters passed in from client to hash map
+        Gson gson = new Gson();
+        Map<String, String> inParams = gson.fromJson(decodedData, new TypeToken<Map<String, String>>() {
+        }.getType());
+        // set build parameters that were passed in from client
+        for (Map.Entry<String, String> entry : inParams.entrySet()) {
+            buildParams.add(new StringParameterValue(entry.getKey(), entry.getValue()));
+        }
+        String offline = inParams.get("OFFLINE_NODE_WHEN_COMPLETE");
+        if (offline != null) {
+            if (offline.equals("1") || offline.equals("true") || offline.equals("True") || offline.equals("TRUE")) {
+                offlineWhenComplete = true;
+            }
+        }
+    }
+    /*
+         * make this node build this project with unique id and build params from the client
+         */
+    String runNodeName = GearmanPluginUtil.getRealName(computer);
+    // create action to run on a specified computer
+    Action runNode = new NodeAssignmentAction(runNodeName);
+    // create action for parameters
+    Action params = new NodeParametersAction(buildParams, decodedUniqueId);
+    Action[] actions = { runNode, params };
+    AvailabilityMonitor availability = GearmanProxy.getInstance().getAvailabilityMonitor(computer);
+    availability.expectUUID(decodedUniqueId);
+    availability.unlock(worker);
+    // schedule jenkins to build project
+    logger.info("---- Worker " + this.worker + " scheduling " + project.getName() + " build #" + project.getNextBuildNumber() + " on " + runNodeName + " with UUID " + decodedUniqueId + " and build params " + buildParams);
+    QueueTaskFuture<?> future = project.scheduleBuild2(0, new Cause.UserIdCause(), actions);
+    // check build and pass results back to client
+    boolean jobResult = true;
+    String jobFailureMsg = "";
+    String jobData;
+    // This is a hack that relies on implementation knowledge.  In
+    // order to actually send a WORK_STATUS packet before the
+    // completion of work, we need to directly drive the session
+    // IO, which requires a session object.  We happen to know
+    // that's what our event listener is.
+    GearmanJobServerSession sess = null;
+    for (GearmanIOEventListener listener : listeners) {
+        if (listener instanceof GearmanJobServerSession) {
+            sess = (GearmanJobServerSession) listener;
+        }
+    }
+    // wait for start of build
+    Queue.Executable exec = future.getStartCondition().get();
+    AbstractBuild<?, ?> currBuild = (AbstractBuild<?, ?>) exec;
+    long now = new Date().getTime();
+    int duration = (int) (now - currBuild.getStartTimeInMillis());
+    int estimatedDuration = (int) currBuild.getEstimatedDuration();
+    jobData = buildStatusData(currBuild);
+    sendData(jobData.getBytes());
+    sess.driveSessionIO();
+    sendStatus(estimatedDuration, duration);
+    sess.driveSessionIO();
+    while (!future.isDone()) {
+        // wait for jenkins build to complete
+        try {
+            future.get(10, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            now = new Date().getTime();
+            duration = (int) (now - currBuild.getStartTimeInMillis());
+            estimatedDuration = (int) currBuild.getEstimatedDuration();
+            if (sess != null) {
+                sendStatus(estimatedDuration, duration);
+                sess.driveSessionIO();
+            }
+        }
+    }
+    exec = future.get();
+    jobData = buildStatusData(currBuild);
+    if (sess != null) {
+        sendData(jobData.getBytes());
+        sess.driveSessionIO();
+    }
+    if (offlineWhenComplete) {
+        if (computer == null) {
+            logger.error("---- Worker " + this.worker + " has no " + "computer while trying to take node offline.");
+        } else {
+            logger.info("---- Worker " + this.worker + " setting " + "node offline.");
+            computer.setTemporarilyOffline(true, new OfflineCause.ByCLI("Offline due to Gearman request"));
+        }
+    }
+    // check Jenkins build results
+    Result result = currBuild.getResult();
+    if (result == Result.SUCCESS) {
+        jobResult = true;
+    } else {
+        jobResult = false;
+    }
+    // return result to client
+    GearmanJobResult gjr = new GearmanJobResultImpl(this.jobHandle, jobResult, "".getBytes(), "".getBytes(), jobFailureMsg.getBytes(), 0, 0);
+    return gjr;
+}
+#method_after
+private GearmanJobResult safeExecuteFunction() throws Exception {
+    // decode the uniqueId from the client
+    String decodedUniqueId = null;
+    if (this.uniqueId != null) {
+        decodedUniqueId = new String(this.uniqueId, "UTF-8");
+    }
+    // create new parameter objects to pass to jenkins build
+    List<ParameterValue> buildParams = new ArrayList<ParameterValue>();
+    String decodedData = null;
+    boolean offlineWhenComplete = false;
+    if (this.data != null) {
+        // decode the data from the client
+        decodedData = new String((byte[]) this.data, "UTF-8");
+        // convert parameters passed in from client to hash map
+        Gson gson = new Gson();
+        Map<String, String> inParams = gson.fromJson(decodedData, new TypeToken<Map<String, String>>() {
+        }.getType());
+        // set build parameters that were passed in from client
+        for (Map.Entry<String, String> entry : inParams.entrySet()) {
+            buildParams.add(new StringParameterValue(entry.getKey(), entry.getValue()));
+        }
+        String offline = inParams.get("OFFLINE_NODE_WHEN_COMPLETE");
+        if (offline != null) {
+            if (offline.equals("1") || offline.equals("true") || offline.equals("True") || offline.equals("TRUE")) {
+                offlineWhenComplete = true;
+            }
+        }
+    }
+    /*
+         * make this node build this project with unique id and build params from the client
+         */
+    String runNodeName = GearmanPluginUtil.getRealName(computer);
+    // create action to run on a specified computer
+    Action runNode = new NodeAssignmentAction(runNodeName);
+    // create action for parameters
+    Action params = new NodeParametersAction(buildParams, decodedUniqueId);
+    Action[] actions = { runNode, params };
+    AvailabilityMonitor availability = GearmanProxy.getInstance().getAvailabilityMonitor(computer);
+    availability.expectUUID(decodedUniqueId);
+    // schedule jenkins to build project
+    logger.info("---- Worker " + this.worker + " scheduling " + project.getName() + " build #" + project.getNextBuildNumber() + " on " + runNodeName + " with UUID " + decodedUniqueId + " and build params " + buildParams);
+    QueueTaskFuture<?> future = project.scheduleBuild2(0, new Cause.UserIdCause(), actions);
+    // check build and pass results back to client
+    boolean jobResult = true;
+    String jobFailureMsg = "";
+    String jobData;
+    // This is a hack that relies on implementation knowledge.  In
+    // order to actually send a WORK_STATUS packet before the
+    // completion of work, we need to directly drive the session
+    // IO, which requires a session object.  We happen to know
+    // that's what our event listener is.
+    GearmanJobServerSession sess = null;
+    for (GearmanIOEventListener listener : listeners) {
+        if (listener instanceof GearmanJobServerSession) {
+            sess = (GearmanJobServerSession) listener;
+        }
+    }
+    // wait for start of build
+    Queue.Executable exec = future.getStartCondition().get();
+    AbstractBuild<?, ?> currBuild = (AbstractBuild<?, ?>) exec;
+    if (!offlineWhenComplete) {
+        // Unlock the monitor for this worker
+        availability.unlock(worker);
+    }
+    long now = new Date().getTime();
+    int duration = (int) (now - currBuild.getStartTimeInMillis());
+    int estimatedDuration = (int) currBuild.getEstimatedDuration();
+    jobData = buildStatusData(currBuild);
+    sendData(jobData.getBytes());
+    sess.driveSessionIO();
+    sendStatus(estimatedDuration, duration);
+    sess.driveSessionIO();
+    while (!future.isDone()) {
+        // wait for jenkins build to complete
+        try {
+            future.get(10, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            now = new Date().getTime();
+            duration = (int) (now - currBuild.getStartTimeInMillis());
+            estimatedDuration = (int) currBuild.getEstimatedDuration();
+            if (sess != null) {
+                sendStatus(estimatedDuration, duration);
+                sess.driveSessionIO();
+            }
+        }
+    }
+    exec = future.get();
+    jobData = buildStatusData(currBuild);
+    if (sess != null) {
+        sendData(jobData.getBytes());
+        sess.driveSessionIO();
+    }
+    if (offlineWhenComplete) {
+        if (computer == null) {
+            logger.error("---- Worker " + this.worker + " has no " + "computer while trying to take node offline.");
+        } else {
+            logger.info("---- Worker " + this.worker + " setting " + "node offline.");
+            computer.setTemporarilyOffline(true, new OfflineCause.ByCLI("Offline due to Gearman request"));
+        }
+    }
+    // check Jenkins build results
+    Result result = currBuild.getResult();
+    if (result == Result.SUCCESS) {
+        jobResult = true;
+    } else {
+        jobResult = false;
+    }
+    // return result to client
+    GearmanJobResult gjr = new GearmanJobResultImpl(this.jobHandle, jobResult, "".getBytes(), "".getBytes(), jobFailureMsg.getBytes(), 0, 0);
+    return gjr;
+}
+#end_block
+
+#method_before
+public void createManagementWorker() {
+    ManagementWorkerThread gwt;
+    synchronized (gmwtHandles) {
+        if (!gmwtHandles.isEmpty()) {
+            return;
+        }
+        gwt = new ManagementWorkerThread(GearmanPluginConfig.get().getHost(), GearmanPluginConfig.get().getPort(), masterName + "_manager", masterName, new NoopAvailabilityMonitor());
+        gmwtHandles.add(gwt);
+    }
+    gwt.start();
+    logger.info("---- Num of executors running = " + getNumExecutors());
+}
+#method_after
+public void createManagementWorker() {
+    ManagementWorkerThread gwt;
+    synchronized (gmwtHandles) {
+        if (!gmwtHandles.isEmpty()) {
+            return;
+        }
+        gwt = new ManagementWorkerThread(GearmanPluginConfig.get().getHost(), GearmanPluginConfig.get().getPort(), masterName + "_manager", masterName, new NoopAvailabilityMonitor());
+        gmwtHandles.add(gwt);
+        gwt.start();
+    }
+    logger.info("---- Num of executors running = " + getNumExecutors());
+}
+#end_block
+
+#method_before
+public void createExecutorWorkersOnNode(Computer computer) {
+    List<ExecutorWorkerThread> workers = new ArrayList<ExecutorWorkerThread>();
+    // find the computer in the executor workers list
+    synchronized (gewtHandles) {
+        for (ExecutorWorkerThread t : gewtHandles) {
+            if (t.getComputer() == computer) {
+                logger.info("---- Executor thread already running for " + computer.getName());
+                return;
+            }
+        }
+        AvailabilityMonitor availability = new NodeAvailabilityMonitor(computer);
+        int executors = computer.getExecutors().size();
+        for (int i = 0; i < executors; i++) {
+            String nodeName = null;
+            nodeName = GearmanPluginUtil.getRealName(computer);
+            if (nodeName == "master") {
+                nodeName = masterName;
+            }
+            ExecutorWorkerThread ewt = new ExecutorWorkerThread(GearmanPluginConfig.get().getHost(), GearmanPluginConfig.get().getPort(), nodeName + "_exec-" + Integer.toString(i), computer, masterName, availability);
+            workers.add(ewt);
+            gewtHandles.add(ewt);
+        }
+    }
+    for (ExecutorWorkerThread ewt : workers) {
+        ewt.start();
+    }
+    logger.info("---- Num of executors running = " + getNumExecutors());
+}
+#method_after
+public void createExecutorWorkersOnNode(Computer computer) {
+    // find the computer in the executor workers list
+    synchronized (gewtHandles) {
+        for (ExecutorWorkerThread t : gewtHandles) {
+            if (t.getComputer() == computer) {
+                logger.info("---- Executor thread already running for " + computer.getName());
+                return;
+            }
+        }
+        AvailabilityMonitor availability = new NodeAvailabilityMonitor(computer);
+        int executors = computer.getExecutors().size();
+        for (int i = 0; i < executors; i++) {
+            String nodeName = null;
+            nodeName = GearmanPluginUtil.getRealName(computer);
+            if (nodeName == "master") {
+                nodeName = masterName;
+            }
+            ExecutorWorkerThread ewt = new ExecutorWorkerThread(GearmanPluginConfig.get().getHost(), GearmanPluginConfig.get().getPort(), nodeName + "_exec-" + Integer.toString(i), computer, masterName, availability);
+            ewt.start();
+            gewtHandles.add(ewt);
+        }
+    }
+    logger.info("---- Num of executors running = " + getNumExecutors());
+}
+#end_block
+
+#method_before
+public void stopAll() {
+    // stop gearman executors
+    List<AbstractWorkerThread> stopHandles;
+    synchronized (gewtHandles) {
+        stopHandles = new ArrayList<AbstractWorkerThread>(gewtHandles);
+        gewtHandles.clear();
+    }
+    for (AbstractWorkerThread wt : stopHandles) {
+        // stop executors
+        wt.stop();
+    }
+    stopHandles = new ArrayList<AbstractWorkerThread>();
+    synchronized (gmwtHandles) {
+        stopHandles = new ArrayList<AbstractWorkerThread>(gmwtHandles);
+        gmwtHandles.clear();
+    }
+    for (AbstractWorkerThread wt : stopHandles) {
+        // stop executors
+        wt.stop();
+    }
+    logger.info("---- Num of executors running = " + getNumExecutors());
+}
+#method_after
+public void stopAll() {
+    // stop gearman executors
+    List<AbstractWorkerThread> stopHandles;
+    synchronized (gewtHandles) {
+        stopHandles = new ArrayList<AbstractWorkerThread>(gewtHandles);
+        gewtHandles.clear();
+    }
+    for (AbstractWorkerThread wt : stopHandles) {
+        // stop executors
+        wt.stop();
+    }
+    synchronized (gmwtHandles) {
+        stopHandles = new ArrayList<AbstractWorkerThread>(gmwtHandles);
+        gmwtHandles.clear();
+    }
+    for (AbstractWorkerThread wt : stopHandles) {
+        // stop executors
+        wt.stop();
+    }
+    logger.info("---- Num of executors running = " + getNumExecutors());
+}
+#end_block
+
+#method_before
+@Override
+public void registerJobs() {
+    HashMap<String, GearmanFunctionFactory> newFunctionMap = new HashMap<String, GearmanFunctionFactory>();
+    try {
+        if (!this.node.toComputer().isOffline()) {
+            List<AbstractProject> allProjects = Jenkins.getInstance().getAllItems(AbstractProject.class);
+            for (AbstractProject<?, ?> project : allProjects) {
+                if (project.isDisabled()) {
+                    // ignore all disabled projects
+                    continue;
+                }
+                String projectName = project.getName();
+                Label label = project.getAssignedLabel();
+                if (label == null) {
+                    // project has no label -> so register
+                    // "build:projectName" on all nodes
+                    String jobFunctionName = "build:" + projectName;
+                    newFunctionMap.put(jobFunctionName, new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, this.node, this.masterName, worker));
+                } else {
+                    // register "build:$projectName:$projectLabel" if this
+                    // node matches a node from the project label
+                    Set<Node> projectLabelNodes = label.getNodes();
+                    String projectLabelString = label.getExpression();
+                    Set<String> projectLabels = tokenizeLabelString(projectLabelString, "\\|\\|");
+                    // iterate thru all project labels and find matching nodes
+                    for (String projectLabel : projectLabels) {
+                        if (projectLabelNodes.contains(this.node)) {
+                            String jobFunctionName = "build:" + projectName + ":" + projectLabel;
+                            // register with label (i.e. "build:$projectName:$projectLabel")
+                            newFunctionMap.put(jobFunctionName, new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, this.node, this.masterName, worker));
+                            jobFunctionName = "build:" + projectName;
+                            // also register without label (i.e. "build:$projectName")
+                            newFunctionMap.put(jobFunctionName, new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, this.node, this.masterName, worker));
+                        }
+                    }
+                }
+            }
+        }
+        if (!newFunctionMap.keySet().equals(functionMap.keySet())) {
+            functionMap = newFunctionMap;
+            Set<GearmanFunctionFactory> functionSet = new HashSet<GearmanFunctionFactory>(functionMap.values());
+            updateJobs(functionSet);
+        }
+    } catch (NullPointerException npe) {
+        logger.warn("Failed to register jobs", npe);
+    }
+}
+#method_after
+@Override
+public void registerJobs() {
+    HashMap<String, GearmanFunctionFactory> newFunctionMap = new HashMap<String, GearmanFunctionFactory>();
+    try {
+        Node n = getNode();
+        Computer c = n.toComputer();
+        if (!c.isOffline()) {
+            List<AbstractProject> allProjects = Jenkins.getInstance().getAllItems(AbstractProject.class);
+            for (AbstractProject<?, ?> project : allProjects) {
+                if (project.isDisabled()) {
+                    // ignore all disabled projects
+                    continue;
+                }
+                String projectName = project.getName();
+                Label label = project.getAssignedLabel();
+                if (label == null) {
+                    // project has no label -> so register
+                    // "build:projectName" on all nodes
+                    String jobFunctionName = "build:" + projectName;
+                    newFunctionMap.put(jobFunctionName, new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, n, this.masterName, worker));
+                } else {
+                    // register "build:$projectName:$projectLabel" if this
+                    // node matches a node from the project label
+                    Set<Node> projectLabelNodes = label.getNodes();
+                    String projectLabelString = label.getExpression();
+                    Set<String> projectLabels = tokenizeLabelString(projectLabelString, "\\|\\|");
+                    // iterate thru all project labels and find matching nodes
+                    for (String projectLabel : projectLabels) {
+                        if (projectLabelNodes.contains(n)) {
+                            String jobFunctionName = "build:" + projectName + ":" + projectLabel;
+                            // register with label (i.e. "build:$projectName:$projectLabel")
+                            newFunctionMap.put(jobFunctionName, new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, n, this.masterName, worker));
+                            jobFunctionName = "build:" + projectName;
+                            // also register without label (i.e. "build:$projectName")
+                            newFunctionMap.put(jobFunctionName, new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, n, this.masterName, worker));
+                        }
+                    }
+                }
+            }
+        }
+        if (!newFunctionMap.keySet().equals(functionMap.keySet())) {
+            functionMap = newFunctionMap;
+            Set<GearmanFunctionFactory> functionSet = new HashSet<GearmanFunctionFactory>(functionMap.values());
+            updateJobs(functionSet);
+        }
+    } catch (NullPointerException npe) {
+        logger.warn("Failed to register jobs on worker thread: " + getName() + " with worker: " + worker.getWorkerID(), npe);
+    }
+}
+#end_block
+
+#method_before
+public boolean canTake(Queue.BuildableItem item) {
+    // Jenkins calls this from within the scheduler maintenance
+    // function (while owning the queue monitor).  If we are
+    // locked, only allow the build we are expecting to run.
+    logger.debug("AvailabilityMonitor canTake request: " + item + " for " + workerHoldingLock);
+    NodeParametersAction param = item.getAction(NodeParametersAction.class);
+    if (param != null) {
+        logger.debug("AvailabilityMonitor canTak request for UUID " + param.getUuid() + " expecting " + expectedUUID);
+        if (expectedUUID == param.getUuid()) {
+            return true;
+        }
+    }
+    return (workerHoldingLock == null);
+}
+#method_after
+public boolean canTake(Queue.BuildableItem item) {
+    // Jenkins calls this from within the scheduler maintenance
+    // function (while owning the queue monitor).  If we are
+    // locked, only allow the build we are expecting to run.
+    logger.debug("AvailabilityMonitor canTake request for " + workerHoldingLock);
+    NodeParametersAction param = item.getAction(NodeParametersAction.class);
+    if (param != null) {
+        logger.debug("AvailabilityMonitor canTake request for UUID " + param.getUuid() + " expecting " + expectedUUID);
+        if (expectedUUID == param.getUuid()) {
+            return true;
+        }
+    }
+    return (workerHoldingLock == null);
+}
+#end_block
+
+#method_before
+public void reconnect() {
+    LOG.info("Starting reconnect for " + session.toString());
+    try {
+        session.initSession(ioAvailable, this);
+        if (id != null) {
+            sendToAll(new GearmanPacketImpl(GearmanPacketMagic.REQ, GearmanPacketType.SET_CLIENT_ID, ByteUtils.toUTF8Bytes(id)));
+        }
+        // this will cause a grab-job event
+        functionRegistry.setUpdated(true);
+    } catch (IOException e) {
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e1) {
+        }
+    }
+    LOG.info("Ending reconnect for " + session.toString());
+}
+#method_after
+public void reconnect() {
+    LOG.info("Starting reconnect for " + session.toString());
+    // In case we held the availability lock earlier, release it.
+    availability.unlock(this);
+    try {
+        session.initSession(ioAvailable, this);
+        if (id != null) {
+            sendToAll(new GearmanPacketImpl(GearmanPacketMagic.REQ, GearmanPacketType.SET_CLIENT_ID, ByteUtils.toUTF8Bytes(id)));
+        }
+        // this will cause a grab-job event
+        functionRegistry.setUpdated(true);
+    } catch (IOException e) {
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e1) {
+        }
+    }
+    LOG.info("Ending reconnect for " + session.toString());
+}
+#end_block
+
+#method_before
+public void start() {
+    thread = new Thread(this);
+    thread.start();
+}
+#method_after
+public void start() {
+    running = true;
+    thread = new Thread(this, "Gearman worker " + name);
+    thread.start();
+}
+#end_block
+
+#method_before
+public void stop() {
+    if (worker.isRunning()) {
+        try {
+            worker.stop();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    thread.interrupt();
+    // Wait until the thread exits
+    try {
+        thread.join();
+    } catch (InterruptedException ex) {
+        // Unexpected interruption
+        ex.printStackTrace();
+    }
+}
+#method_after
+public void stop() {
+    running = false;
+    if (worker.isRunning()) {
+        try {
+            worker.stop();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    thread.interrupt();
+    // Wait until the thread exits
+    try {
+        thread.join();
+    } catch (InterruptedException ex) {
+        // Unexpected interruption
+        ex.printStackTrace();
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void run() {
+    if (!worker.isRunning()) {
+        logger.info("---- Starting Worker " + getName() + " (" + new Date().toString() + ")");
+        worker.addServer(conn);
+        worker.setWorkerID(name);
+        worker.setJobUniqueIdRequired(true);
+        registerJobs();
+        worker.work();
+    }
+// Thread exits
+}
+#method_after
+@Override
+public void run() {
+    while (running) {
+        try {
+            logger.info("---- Starting Worker " + getName() + " (" + new Date().toString() + ")");
+            worker.addServer(conn);
+            worker.setWorkerID(name);
+            worker.setJobUniqueIdRequired(true);
+            registerJobs();
+            worker.work();
+        } catch (Exception ex) {
+            logger.error("Exception while running worker", ex);
+            worker.shutdown();
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e2) {
+            }
+            initWorker();
+        }
+    }
+// Thread exits
+}
+#end_block
+
+#method_before
+public void stop(Computer computer) {
+    // find the computer in the executor workers list and stop it
+    List<Integer> indexToWorkers = new ArrayList<Integer>();
+    // var to save index of workers to remove
+    int i = 0;
+    synchronized (gewtHandles) {
+        for (AbstractWorkerThread gewtHandle : gewtHandles) {
+            // stop executors
+            if (gewtHandle.name.contains(computer.getName())) {
+                indexToWorkers.add(i);
+                gewtHandle.stop();
+            }
+            i++;
+        }
+    }
+    synchronized (gewtHandles) {
+        // remove the stopped workers from the executor workers list
+        for (Integer index : Iterables.reverse(indexToWorkers)) {
+            getGewtHandles().remove(index.intValue());
+        }
+    }
+    logger.info("---- Num of executors running = " + getNumExecutors());
+}
+#method_after
+public void stop(Computer computer) {
+    // find the computer in the executor workers list and stop it
+    synchronized (gewtHandles) {
+        for (Iterator<AbstractWorkerThread> it = gewtHandles.iterator(); it.hasNext(); ) {
+            AbstractWorkerThread t = it.next();
+            if (t.name.contains(computer.getName())) {
+                t.stop();
+                it.remove();
+            }
+        }
+    }
+    logger.info("---- Num of executors running = " + getNumExecutors());
+}
+#end_block
+
+#method_before
+@Override
+public GearmanJobResult executeFunction() {
+    // check job results
+    boolean jobResult = false;
+    String jobFailureMsg = "";
+    String jobWarningMsg = "";
+    String jobResultMsg = "";
+    try {
+        // decode json
+        String decodedData = new String((byte[]) this.data, "UTF-8");
+        // convert parameters passed in from client to hash map
+        Gson gson = new Gson();
+        Map<String, String> data = gson.fromJson(decodedData, new TypeToken<Map<String, String>>() {
+        }.getType());
+        // get build description
+        String buildDescription = data.get("description");
+        // get build id
+        String buildId = data.get("build_id");
+        String[] idToken = buildId.split(":");
+        if (idToken.length != 2 || buildDescription == null || buildId == null) {
+            jobFailureMsg = "Invalid Unique Id";
+        } else {
+            String jobName = idToken[0];
+            String jobId = idToken[1];
+            if (!jobName.isEmpty() && !jobId.isEmpty()) {
+                // find build then update its description
+                Run<?, ?> build = findBuild(jobName, jobId);
+                if (build != null) {
+                    build.setDescription(buildDescription);
+                    jobResultMsg = "Updated jenkins build description to " + buildDescription;
+                    jobResult = true;
+                } else {
+                    jobFailureMsg = "Cannot find build with id " + buildId;
+                }
+            }
+        }
+    } catch (UnsupportedEncodingException e) {
+        jobFailureMsg = "Error decoding parameters";
+    } catch (NullPointerException e) {
+        jobFailureMsg = "Error decoding parameters";
+    } catch (IOException e) {
+        jobFailureMsg = "Error setting build description";
+    }
+    GearmanJobResult gjr = new GearmanJobResultImpl(this.jobHandle, jobResult, jobResultMsg.getBytes(), jobWarningMsg.getBytes(), jobFailureMsg.getBytes(), 0, 0);
+    return gjr;
+}
+#method_after
+@Override
+public GearmanJobResult executeFunction() {
+    // check job results
+    boolean jobResult = false;
+    String jobExceptionMsg = "";
+    String jobWarningMsg = "";
+    String jobResultMsg = "";
+    try {
+        // decode json
+        String decodedData = new String((byte[]) this.data, "UTF-8");
+        // convert parameters passed in from client to hash map
+        Gson gson = new Gson();
+        Map<String, String> data = gson.fromJson(decodedData, new TypeToken<Map<String, String>>() {
+        }.getType());
+        // get build description
+        String buildDescription = data.get("description");
+        // get build id
+        String buildId = data.get("build_id");
+        String[] idToken = buildId.split(":");
+        if (idToken.length != 2 || buildDescription == null || buildId == null) {
+            jobExceptionMsg = "Invalid Unique Id";
+            throw new IllegalArgumentException(jobExceptionMsg);
+        } else {
+            String jobName = idToken[0];
+            String jobId = idToken[1];
+            if (!jobName.isEmpty() && !jobId.isEmpty()) {
+                // find build then update its description
+                Run<?, ?> build = findBuild(jobName, jobId);
+                if (build != null) {
+                    build.setDescription(buildDescription);
+                    jobResultMsg = "Description for Jenkins build " + buildId + " was pdated to " + buildDescription;
+                    jobResult = true;
+                } else {
+                    jobExceptionMsg = "Cannot find build with id " + buildId;
+                    throw new IllegalArgumentException(jobExceptionMsg);
+                }
+            } else {
+                jobExceptionMsg = "Build id is invalid or not specified";
+                throw new IllegalArgumentException(jobExceptionMsg);
+            }
+        }
+    } catch (UnsupportedEncodingException e) {
+        jobExceptionMsg = "Error decoding parameters";
+    } catch (NullPointerException e) {
+        jobExceptionMsg = "Error decoding parameters";
+    } catch (IOException e) {
+        jobExceptionMsg = "Error setting build description";
+    } catch (IllegalArgumentException e) {
+        jobExceptionMsg = e.getMessage();
+    }
+    GearmanJobResult gjr = new GearmanJobResultImpl(this.jobHandle, jobResult, jobResultMsg.getBytes(), jobWarningMsg.getBytes(), jobExceptionMsg.getBytes(), 0, 0);
+    return gjr;
+}
+#end_block
+
+#method_before
+@Override
+public GearmanJobResult executeFunction() {
+    // decode the uniqueId from the client
+    String decodedUniqueId = null;
+    if (this.uniqueId != null) {
+        try {
+            decodedUniqueId = new String(this.uniqueId, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+    String cancelID = null;
+    String decodedData = null;
+    if (this.data != null) {
+        // decode the data from the client
+        try {
+            cancelID = new String((byte[]) this.data, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+    // check build and pass results back to client
+    boolean jobResult = true;
+    String jobFailureMsg = "";
+    String jobWarningMsg = "";
+    String jobResultMsg = "";
+    if (cancelID == null || cancelID.isEmpty()) {
+        logger.info("---- Client passed in an invalid UUID");
+        jobFailureMsg = "I need the job Id please";
+        jobResult = false;
+    } else {
+        // Abort running jenkins build that contain matching uuid
+        jobResult = abortBuild(cancelID);
+        if (jobResult) {
+            jobResultMsg = "Canceled jenkins build " + cancelID;
+        } else {
+            jobFailureMsg = "Could not cancel build " + cancelID;
+            jobResult = false;
+        }
+    }
+    GearmanJobResult gjr = new GearmanJobResultImpl(this.jobHandle, jobResult, jobResultMsg.getBytes(), jobWarningMsg.getBytes(), jobFailureMsg.getBytes(), 0, 0);
+    return gjr;
+}
+#method_after
+@Override
+public GearmanJobResult executeFunction() {
+    String cancelID = null;
+    if (this.data != null) {
+        // decode the data from the client
+        try {
+            cancelID = new String((byte[]) this.data, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+    // check build and pass results back to client
+    boolean jobResult = true;
+    String jobFailureMsg = "";
+    String jobWarningMsg = "";
+    String jobResultMsg = "";
+    if (cancelID == null || cancelID.isEmpty()) {
+        logger.info("---- Client passed in an invalid UUID");
+        jobFailureMsg = "I need the job Id please";
+        jobResult = false;
+    } else {
+        // Abort running jenkins build that contain matching uuid
+        jobResult = abortBuild(cancelID);
+        if (jobResult) {
+            jobResultMsg = "Canceled jenkins build " + cancelID;
+        } else {
+            jobFailureMsg = "Could not cancel build " + cancelID;
+            jobResult = false;
+        }
+    }
+    GearmanJobResult gjr = new GearmanJobResultImpl(this.jobHandle, jobResult, jobResultMsg.getBytes(), jobWarningMsg.getBytes(), jobFailureMsg.getBytes(), 0, 0);
+    return gjr;
+}
+#end_block
+
+#method_before
+private String buildStatusData(AbstractBuild<?, ?> build) {
+    Hudson hudson = Hudson.getInstance();
+    AbstractProject<?, ?> project = build.getProject();
+    Map data = new HashMap<String, String>();
+    Map params = new HashMap<String, String>();
+    data.put("name", project.getName());
+    data.put("number", build.getNumber());
+    data.put("id", build.getId());
+    data.put("url", build.getUrl());
+    String rootUrl = Hudson.getInstance().getRootUrl();
+    if (rootUrl != null) {
+        data.put("full_url", rootUrl + build.getUrl());
+    }
+    Result result = build.getResult();
+    if (result != null) {
+        data.put("result", result.toString());
+    }
+    Gson gson = new Gson();
+    return gson.toJson(data);
+}
+#method_after
+private String buildStatusData(AbstractBuild<?, ?> build) {
+    Hudson hudson = Hudson.getInstance();
+    AbstractProject<?, ?> project = build.getProject();
+    Map data = new HashMap<String, String>();
+    data.put("name", project.getName());
+    data.put("number", build.getNumber());
+    data.put("id", build.getId());
+    data.put("url", build.getUrl());
+    String rootUrl = Hudson.getInstance().getRootUrl();
+    if (rootUrl != null) {
+        data.put("full_url", rootUrl + build.getUrl());
+    }
+    Result result = build.getResult();
+    if (result != null) {
+        data.put("result", result.toString());
+    }
+    Gson gson = new Gson();
+    return gson.toJson(data);
+}
+#end_block
+
+#method_before
+@Before
+public void setUp() {
+    Jenkins jenkins = mock(Jenkins.class);
+    when(jenkins.getRootDir()).thenReturn(folder.getRoot());
+    PowerMockito.mockStatic(Jenkins.class);
+    when(Jenkins.getInstance()).thenReturn(jenkins);
+    gpc = new GearmanPluginConfig();
+}
+#method_after
+@Before
+public void setUp() {
+    TemporaryFolder folder = new TemporaryFolder();
+    Jenkins jenkins = mock(Jenkins.class);
+    PowerMockito.mockStatic(Jenkins.class);
+    when(Jenkins.getInstance()).thenReturn(jenkins);
+    gpc = new GearmanPluginConfig();
+}
+#end_block
+
+#method_before
+@Test
+public void testDefaultGearmanHost() {
+    // GearmanPluginConfig gpc = new GearmanPluginConfig();
+    assertEquals(Constants.GEARMAN_DEFAULT_TCP_HOST, gpc.getHost());
+}
+#method_after
+@Test
+public void testDefaultGearmanHost() {
+    assertEquals(Constants.GEARMAN_DEFAULT_TCP_HOST, gpc.getHost());
+}
+#end_block
+
+#method_before
+@Test
+public void testDefaultGearmanPort() {
+    // GearmanPluginConfig gpc = new GearmanPluginConfig();
+    assertEquals(Constants.GEARMAN_DEFAULT_TCP_PORT, gpc.getPort());
+}
+#method_after
+@Test
+public void testDefaultGearmanPort() {
+    assertEquals(Constants.GEARMAN_DEFAULT_TCP_PORT, gpc.getPort());
+}
+#end_block
+
+#method_before
+@Test
+public void testDefaultLaunchWorker() {
+    // GearmanPluginConfig gpc = new GearmanPluginConfig();
+    assertEquals(Constants.GEARMAN_DEFAULT_LAUNCH_WORKER, gpc.launchWorker());
+}
+#method_after
+@Test
+public void testDefaultLaunchWorker() {
+    assertEquals(Constants.GEARMAN_DEFAULT_LAUNCH_WORKER, gpc.launchWorker());
+}
+#end_block
+
+#method_before
+public boolean connectionIsAvailable(String host, int port, int timeout) {
+    InetSocketAddress endPoint = new InetSocketAddress(host, port);
+    Socket socket = new Socket();
+    if (endPoint.isUnresolved()) {
+        System.out.println("Failure " + endPoint);
+    } else {
+        try {
+            socket.connect(endPoint, timeout);
+            logger.info("Success:    %s  \n", endPoint);
+            return true;
+        } catch (Exception e) {
+            logger.info("Failure:    %s message: %s - %s \n", endPoint, e.getClass().getSimpleName(), e.getMessage());
+        } finally {
+            if (socket != null)
+                try {
+                    socket.close();
+                } catch (Exception e) {
+                    logger.info(e.getMessage());
+                }
+        }
+    }
+    return false;
+}
+#method_after
+public boolean connectionIsAvailable(String host, int port, int timeout) {
+    InetSocketAddress endPoint = new InetSocketAddress(host, port);
+    Socket socket = new Socket();
+    if (endPoint.isUnresolved()) {
+        System.out.println("Failure " + endPoint);
+    } else {
+        try {
+            socket.connect(endPoint, timeout);
+            logger.info("Connection Success:    " + endPoint);
+            return true;
+        } catch (Exception e) {
+            logger.info("Connection Failure:    " + endPoint + " message: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+        } finally {
+            if (socket != null) {
+                try {
+                    socket.close();
+                } catch (Exception e) {
+                    logger.info(e.getMessage());
+                }
+            }
+        }
+    }
+    return false;
+}
+#end_block
+
+#method_before
+@Override
+public boolean configure(StaplerRequest req, JSONObject json) throws Descriptor.FormException {
+    // set the gearman config from user entered values in jenkins config page
+    launchWorker = json.getBoolean("launchWorker");
+    host = json.getString("host");
+    port = Integer.parseInt(json.getString("port"));
+    /*
+         * Purpose here is to create a 1:1 mapping of 'gearman worker':'jenkins
+         * executor' then use the gearman worker to execute builds on that
+         * jenkins nodes
+         */
+    if (launchWorker && gmwtHandles.isEmpty() && gewtHandles.isEmpty()) {
+        // check for a valid connection to gearman server
+        logger.info("--- Check connection to Gearman Server " + getHost() + ":" + getPort());
+        if (!connectionIsAvailable(host, port, 5000)) {
+            this.launchWorker = false;
+            throw new RuntimeException("Could not get connection to Gearman Server " + getHost() + ":" + getPort());
+        }
+        /*
+             * Spawn management executor worker. This worker does not need any
+             * executors. It only needs to work with gearman.
+             */
+        AbstractWorkerThread gwt = null;
+        gwt = new ManagementWorkerThread(host, port, host);
+        gwt.registerJobs();
+        gwt.start();
+        gmwtHandles.push(gwt);
+        /*
+             * Spawn executors for the jenkins master Need to treat the master
+             * differently than slaves because the master is not the same as a
+             * slave
+             */
+        // first make sure master is enabled (or has executors)
+        Node masterNode = null;
+        try {
+            masterNode = Computer.currentComputer().getNode();
+        } catch (NullPointerException npe) {
+            logger.info("--- Master is offline");
+        } catch (Exception e) {
+            logger.info("--- Can't get Master");
+            e.printStackTrace();
+        }
+        if (masterNode != null) {
+            Computer computer = masterNode.toComputer();
+            int executors = computer.getExecutors().size();
+            for (int i = 0; i < executors; i++) {
+                // create a gearman worker for every executor on the master
+                gwt = new ExecutorWorkerThread(host, port, "master-exec" + Integer.toString(i), masterNode);
+                gwt.registerJobs();
+                gwt.start();
+                gewtHandles.push(gwt);
+            }
+        }
+        /*
+             * Spawn executors for the jenkins slaves
+             */
+        List<Node> nodes = Jenkins.getInstance().getNodes();
+        if (!nodes.isEmpty()) {
+            for (Node node : nodes) {
+                Computer computer = node.toComputer();
+                if (computer.isOnline()) {
+                    // create a gearman worker for every executor on the slave
+                    int slaveExecutors = computer.getExecutors().size();
+                    for (int i = 0; i < slaveExecutors; i++) {
+                        gwt = new ExecutorWorkerThread(host, port, node.getNodeName() + "-exec" + Integer.toString(i), node);
+                        gwt.registerJobs();
+                        gwt.start();
+                        gewtHandles.push(gwt);
+                    }
+                }
+            }
+        }
+    }
+    // stop gearman workers
+    if (!launchWorker) {
+        while (!gewtHandles.isEmpty()) {
+            // stop executors
+            gewtHandles.pop().stop();
+        }
+        while (!gmwtHandles.isEmpty()) {
+            // stop management
+            gmwtHandles.pop().stop();
+        }
+    }
+    int runningExecutors = gmwtHandles.size() + gewtHandles.size();
+    logger.info("--- Num of executors running = " + runningExecutors);
+    req.bindJSON(this, json);
+    save();
+    return true;
+}
+#method_after
+@Override
+public boolean configure(StaplerRequest req, JSONObject json) throws Descriptor.FormException {
+    // set the gearman config from user entered values in jenkins config page
+    launchWorker = json.getBoolean("launchWorker");
+    host = json.getString("host");
+    port = json.getInt("port");
+    /*
+         * Purpose here is to create a 1:1 mapping of 'gearman worker':'jenkins
+         * executor' then use the gearman worker to execute builds on that
+         * jenkins nodes
+         */
+    if (launchWorker && gmwtHandles.isEmpty() && gewtHandles.isEmpty()) {
+        // check for a valid connection to gearman server
+        logger.info("--- Check connection to Gearman Server " + getHost() + ":" + getPort());
+        if (!connectionIsAvailable(host, port, 5000)) {
+            this.launchWorker = false;
+            throw new RuntimeException("Could not get connection to Gearman Server " + getHost() + ":" + getPort());
+        }
+        /*
+             * Spawn management executor worker. This worker does not need any
+             * executors. It only needs to work with gearman.
+             */
+        AbstractWorkerThread gwt = null;
+        gwt = new ManagementWorkerThread(host, port, host);
+        gwt.registerJobs();
+        gwt.start();
+        gmwtHandles.push(gwt);
+        /*
+             * Spawn executors for the jenkins master Need to treat the master
+             * differently than slaves because the master is not the same as a
+             * slave
+             */
+        // first make sure master is enabled (or has executors)
+        Node masterNode = null;
+        try {
+            masterNode = Computer.currentComputer().getNode();
+        } catch (NullPointerException npe) {
+            logger.info("--- Master is offline");
+        } catch (Exception e) {
+            logger.info("--- Can't get Master");
+            e.printStackTrace();
+        }
+        if (masterNode != null) {
+            Computer computer = masterNode.toComputer();
+            int executors = computer.getExecutors().size();
+            for (int i = 0; i < executors; i++) {
+                // create a gearman worker for every executor on the master
+                gwt = new ExecutorWorkerThread(host, port, "master-exec" + Integer.toString(i), masterNode);
+                gwt.registerJobs();
+                gwt.start();
+                gewtHandles.push(gwt);
+            }
+        }
+        /*
+             * Spawn executors for the jenkins slaves
+             */
+        List<Node> nodes = Jenkins.getInstance().getNodes();
+        if (!nodes.isEmpty()) {
+            for (Node node : nodes) {
+                Computer computer = node.toComputer();
+                if (computer.isOnline()) {
+                    // create a gearman worker for every executor on the slave
+                    int slaveExecutors = computer.getExecutors().size();
+                    for (int i = 0; i < slaveExecutors; i++) {
+                        gwt = new ExecutorWorkerThread(host, port, node.getNodeName() + "-exec" + Integer.toString(i), node);
+                        gwt.registerJobs();
+                        gwt.start();
+                        gewtHandles.push(gwt);
+                    }
+                }
+            }
+        }
+    }
+    // stop gearman workers
+    if (!launchWorker) {
+        while (!gewtHandles.isEmpty()) {
+            // stop executors
+            gewtHandles.pop().stop();
+        }
+        while (!gmwtHandles.isEmpty()) {
+            // stop management
+            gmwtHandles.pop().stop();
+        }
+    }
+    int runningExecutors = gmwtHandles.size() + gewtHandles.size();
+    logger.info("--- Num of executors running = " + runningExecutors);
+    req.bindJSON(this, json);
+    save();
+    return true;
+}
+#end_block
+
+#method_before
+private Set<String> tokenizeLabelString(String label, String pattern) {
+    Set<String> labelSet = new HashSet<String>();
+    if (pattern == null) {
+        return labelSet;
+    }
+    if (pattern.isEmpty()) {
+        return labelSet;
+    }
+    if (label != null) {
+        // String projectLabelString = label.getExpression();
+        Scanner slabel = new Scanner(label);
+        try {
+            slabel.useDelimiter(pattern);
+            while (slabel.hasNext()) {
+                String newLabel = slabel.next();
+                labelSet.add(newLabel);
+            }
+        } finally {
+            slabel.close();
+        }
+    }
+    return labelSet;
+}
+#method_after
+private Set<String> tokenizeLabelString(String label, String pattern) {
+    Set<String> labelSet = new HashSet<String>();
+    if (pattern == null) {
+        return labelSet;
+    }
+    if (pattern.isEmpty()) {
+        return labelSet;
+    }
+    if (label != null) {
+        Scanner slabel = new Scanner(label);
+        try {
+            slabel.useDelimiter(pattern);
+            while (slabel.hasNext()) {
+                String newLabel = slabel.next();
+                labelSet.add(newLabel);
+            }
+        } finally {
+            slabel.close();
+        }
+    }
+    return labelSet;
+}
+#end_block
+
+#method_before
+@Override
+public void registerJobs() {
+    logger.info("----- Registering executor jobs on " + name + " ----");
+    /*
+         * We start with an empty worker.
+         */
+    worker.unregisterAll();
+    /*
+         * Now register or re-register all functions.
+         */
+    Jenkins jenkins = Jenkins.getInstance();
+    List<Project> allProjects = jenkins.getProjects();
+    // jenkins.getAllItems(AbstractProject.class);
+    for (Project<?, ?> project : allProjects) {
+        if (project.isDisabled()) {
+            // ignore all disabled projects
+            continue;
+        }
+        String projectName = project.getName();
+        Label label = project.getAssignedLabel();
+        if (label == null) {
+            // project has no label -> so register
+            // "build:projectName" on all nodes
+            String jobFunctionName = "build:" + projectName;
+            logger.info("Registering job " + jobFunctionName + " on " + name);
+            worker.registerFunctionFactory(new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, this.node));
+        } else {
+            // register "build:projectName:nodeName" on the
+            // node that has a matching label
+            Set<Node> projectLabelNodes = label.getNodes();
+            String projectLabelString = label.getExpression();
+            Set<String> projectLabels = tokenizeLabelString(projectLabelString, "\\|\\|");
+            // iterate thru all project labels and find matching nodes
+            for (String projectLabel : projectLabels) {
+                if (projectLabelNodes.contains(this.node)) {
+                    String jobFunctionName = "build:" + projectName + ":" + projectLabel;
+                    logger.info("Registering job " + jobFunctionName + " on " + this.node.getNodeName());
+                    worker.registerFunctionFactory(new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, this.node));
+                }
+            }
+        }
+    }
+}
+#method_after
+@Override
+public void registerJobs() {
+    logger.info("----- Registering executor jobs on " + name + " ----");
+    /*
+         * We start with an empty worker.
+         */
+    worker.unregisterAll();
+    /*
+         * Now register or re-register all functions.
+         */
+    Jenkins jenkins = Jenkins.getInstance();
+    List<AbstractProject> allProjects = jenkins.getAllItems(AbstractProject.class);
+    for (AbstractProject<?, ?> project : allProjects) {
+        if (project.isDisabled()) {
+            // ignore all disabled projects
+            continue;
+        }
+        String projectName = project.getName();
+        Label label = project.getAssignedLabel();
+        if (label == null) {
+            // project has no label -> so register
+            // "build:projectName" on all nodes
+            String jobFunctionName = "build:" + projectName;
+            logger.info("Registering job " + jobFunctionName + " on " + name);
+            worker.registerFunctionFactory(new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, this.node));
+        } else {
+            // register "build:$projectName:$projectLabel" if this
+            // node matches a node from the project label
+            Set<Node> projectLabelNodes = label.getNodes();
+            String projectLabelString = label.getExpression();
+            Set<String> projectLabels = tokenizeLabelString(projectLabelString, "\\|\\|");
+            // iterate thru all project labels and find matching nodes
+            for (String projectLabel : projectLabels) {
+                if (projectLabelNodes.contains(this.node)) {
+                    String jobFunctionName = "build:" + projectName + ":" + projectLabel;
+                    logger.info("Registering job " + jobFunctionName + " on " + this.node.getNodeName());
+                    // register with label (i.e. "build:$projectName:$projectLabel")
+                    worker.registerFunctionFactory(new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, this.node));
+                    // also register without label (i.e. "build:$projectName")
+                    worker.registerFunctionFactory(new CustomGearmanFunctionFactory("build:" + projectName, StartJobWorker.class.getName(), project, this.node));
+                }
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+public void stop() {
+    if (worker.isRunning()) {
+        logger.info("Stopping " + getName() + ":" + getId().toString() + " (" + new Date().toString() + ")");
+        worker.stop();
+        logger.info("Stopped " + getName() + ":" + getId().toString() + " (" + new Date().toString() + ")");
+    }
+    thread.interrupt();
+    // Wait until the thread exits
+    try {
+        thread.join();
+    } catch (InterruptedException ex) {
+        // Unexpected interruption
+        ex.printStackTrace();
+        System.exit(1);
+    }
+}
+#method_after
+public void stop() {
+    if (worker.isRunning()) {
+        logger.info("Stopping " + getName() + ":" + getId().toString() + " (" + new Date().toString() + ")");
+        worker.stop();
+    }
+    thread.interrupt();
+    // Wait until the thread exits
+    try {
+        thread.join();
+    } catch (InterruptedException ex) {
+        // Unexpected interruption
+        ex.printStackTrace();
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void run() {
+    if (!worker.isRunning()) {
+        logger.info("Starting Worker " + getName() + ":" + getId().toString() + " (" + new Date().toString() + ")");
+        worker.setWorkerID(name);
+        worker.addServer(conn);
+        worker.work();
+    }
+    while (!Thread.interrupted()) {
+        // Running the Gearman Worker
+        logger.info("Running Worker " + getName() + ":" + getId().toString() + " (" + new Date().toString() + ")");
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        }
+    }
+    logger.info("Thread Stopped" + " (" + new Date().toString() + ")");
+// Thread exits
+}
+#method_after
+@Override
+public void run() {
+    if (!worker.isRunning()) {
+        logger.info("Starting Worker " + getName() + ":" + getId().toString() + " (" + new Date().toString() + ")");
+        worker.setWorkerID(name);
+        worker.addServer(conn);
+        worker.work();
+    }
+// Thread exits
+}
+#end_block
+
+#method_before
+@Override
+public void registerJobs() {
+    String jobFunctionName = "stop:" + host;
+    System.out.println("Registering job " + jobFunctionName + " on " + host);
+    worker.registerFunctionFactory(new DefaultGearmanFunctionFactory(jobFunctionName, StopJobWorker.class.getName()));
+}
+#method_after
+@Override
+public void registerJobs() {
+    String jobFunctionName = "stop:" + host;
+    logger.info("Registering job " + jobFunctionName + " on " + host);
+    worker.registerFunctionFactory(new DefaultGearmanFunctionFactory(jobFunctionName, StopJobWorker.class.getName()));
+}
+#end_block
+
+#method_before
+@Override
+public GearmanJobResult executeFunction() {
+    logger.info("----- Running executeFunction in " + name + " ----");
+    // decode the data from the client
+    String decoded = null;
+    try {
+        decoded = new String((byte[]) this.data, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+        e.printStackTrace();
+    }
+    // convert parameters passed in from client to hash map
+    Gson gson = new Gson();
+    Map<String, String> inParams = gson.fromJson(decoded, new TypeToken<Map<String, String>>() {
+    }.getType());
+    // need to pass on uuid from client.
+    // temporarily passing uuid as a build parameter due to
+    // issue: https://answers.launchpad.net/gearman-java/+question/218865
+    /*
+         * make this node build this project with build params from the client
+         */
+    // create new parameter objects to pass to jenkins build
+    List<ParameterValue> buildParams = new ArrayList<ParameterValue>();
+    String uuid = null;
+    // create the build parameters that were passed in from client
+    for (Map.Entry<String, String> entry : inParams.entrySet()) {
+        buildParams.add(new StringParameterValue(entry.getKey(), entry.getValue()));
+        // get the build id for debugging
+        if (entry.getKey().equals("uuid")) {
+            uuid = entry.getValue();
+        }
+    }
+    // set the name of the node to execute build
+    String runNodeName = node.getNodeName();
+    if (runNodeName.isEmpty()) {
+        // master node name is ""
+        runNodeName = "master";
+    }
+    // create action to run on a specified node
+    Action runNode = new NodeAssignmentAction(runNodeName);
+    // create action for parameters
+    Action params = new NodeParametersAction(buildParams, uuid);
+    Action[] actions = { runNode, params };
+    logger.info("Scheduling " + project.getName() + " build #" + project.getNextBuildNumber() + " on " + runNodeName + " with UUID " + uuid + " and build params " + buildParams);
+    Future<?> future = project.scheduleBuild2(0, new Cause.UserIdCause(), actions);
+    try {
+        future.get();
+    } catch (InterruptedException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    } catch (ExecutionException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
+    // get result from the jenkins build
+    String jobResultMsg = "";
+    boolean jobResult = false;
+    Result res = project.getLastBuild().getResult();
+    if (res == Result.SUCCESS) {
+        logger.info("Jenkins build passed");
+        jobResult = true;
+        jobResultMsg = "Build passed on " + runNodeName + " with UUID " + uuid + " and build params " + buildParams;
+    } else {
+        logger.info("Jenkins build failed");
+        jobResultMsg = "Build failed on " + runNodeName + " with UUID " + uuid + " and build params " + buildParams;
+    }
+    // return result to client
+    GearmanJobResult gjr = new GearmanJobResultImpl(this.jobHandle, jobResult, jobResultMsg.getBytes(), new byte[0], new byte[0], 0, 0);
+    return gjr;
+}
+#method_after
+@Override
+public GearmanJobResult executeFunction() {
+    logger.info("----- Running executeFunction in " + name + " ----");
+    // decode the data from the client
+    String decoded = null;
+    try {
+        decoded = new String((byte[]) this.data, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+        e.printStackTrace();
+    }
+    // convert parameters passed in from client to hash map
+    Gson gson = new Gson();
+    Map<String, String> inParams = gson.fromJson(decoded, new TypeToken<Map<String, String>>() {
+    }.getType());
+    // need to pass on uuid from client.
+    // temporarily passing uuid as a build parameter due to
+    // issue: https://answers.launchpad.net/gearman-java/+question/218865
+    /*
+         * make this node build this project with build params from the client
+         */
+    // create new parameter objects to pass to jenkins build
+    List<ParameterValue> buildParams = new ArrayList<ParameterValue>();
+    String uuid = null;
+    // create the build parameters that were passed in from client
+    for (Map.Entry<String, String> entry : inParams.entrySet()) {
+        buildParams.add(new StringParameterValue(entry.getKey(), entry.getValue()));
+        // get the build id for debugging
+        if (entry.getKey().equals("uuid")) {
+            uuid = entry.getValue();
+        }
+    }
+    // set the name of the node to execute build
+    String runNodeName = node.getNodeName();
+    if (runNodeName.isEmpty()) {
+        // master node name is ""
+        runNodeName = "master";
+    }
+    // create action to run on a specified node
+    Action runNode = new NodeAssignmentAction(runNodeName);
+    // create action for parameters
+    Action params = new NodeParametersAction(buildParams, uuid);
+    Action[] actions = { runNode, params };
+    logger.info("Scheduling " + project.getName() + " build #" + project.getNextBuildNumber() + " on " + runNodeName + " with UUID " + uuid + " and build params " + buildParams);
+    Future<?> future = project.scheduleBuild2(0, new Cause.UserIdCause(), actions);
+    String jobException = "";
+    String jobResultMsg = "";
+    // jobResult does not change otherwise no results are returned:
+    // https://answers.launchpad.net/gearman-java/+question/221348
+    boolean jobResult = true;
+    try {
+        // wait for jenkins build to complete
+        Queue.Executable exec = (Executable) future.get();
+        // check Jenkins build results
+        AbstractBuild<?, ?> currBuild = (AbstractBuild<?, ?>) exec;
+        String buildId = currBuild.getId();
+        int buildNum = currBuild.number;
+        Result result = currBuild.getResult();
+        if (result == Result.SUCCESS) {
+            jobResultMsg = "Build Success : " + buildNum + ": " + buildId + " on " + runNodeName + " with UUID " + uuid + " and build params " + buildParams;
+        } else if (result == Result.ABORTED) {
+            jobResultMsg = "Build Aborted : " + buildNum + ": " + buildId + " on " + runNodeName + " with UUID " + uuid + " and build params " + buildParams;
+            jobException = jobResultMsg;
+        } else if (result == Result.UNSTABLE) {
+            jobResultMsg = "Build Unstable : " + buildNum + ": " + buildId + " on " + runNodeName + " with UUID " + uuid + " and build params " + buildParams;
+            jobException = jobResultMsg;
+        } else if (result == Result.FAILURE) {
+            jobResultMsg = "Build failed : " + buildNum + ": " + buildId + " on " + runNodeName + " with UUID " + uuid + " and build params " + buildParams;
+            jobException = jobResultMsg;
+        } else if (result == Result.NOT_BUILT) {
+            jobResultMsg = "Build not done : " + buildNum + ": " + buildId + " on " + runNodeName + " with UUID " + uuid + " and build params " + buildParams;
+            jobException = jobResultMsg;
+        }
+    } catch (InterruptedException e) {
+        jobException = e.getMessage();
+    } catch (ExecutionException e) {
+        jobException = e.getMessage();
+    }
+    // return result to client
+    GearmanJobResult gjr = new GearmanJobResultImpl(this.jobHandle, jobResult, jobResultMsg.getBytes(), new byte[0], jobException.getBytes(), 0, 0);
+    return gjr;
+}
+#end_block
+
+#method_before
+@Override
+public void registerJobs() {
+    logger.info("----- Registering executor jobs on " + name + " ----");
+    /*
+         * We start with an empty worker.
+         */
+    worker.unregisterAll();
+    /*
+         * Now register or re-register all functions.
+         */
+    Jenkins jenkins = Jenkins.getInstance();
+    List<Project> allProjects = jenkins.getProjects();
+    // jenkins.getAllItems(AbstractProject.class);
+    for (Project<?, ?> project : allProjects) {
+        if (project.isDisabled()) {
+            // ignore all disabled projects
+            continue;
+        }
+        String projectName = project.getName();
+        Label label = project.getAssignedLabel();
+        if (label == null) {
+            // project has no label -> so register
+            // "build:projectName" on all nodes
+            String jobFunctionName = "build:" + projectName;
+            logger.info("Regiserting job " + jobFunctionName + " on " + this.node.getNodeName());
+            worker.registerFunctionFactory(new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, this.node));
+        } else {
+            // register "build:projectName:nodeName" on the
+            // node that has a matching label
+            Set<Node> projectLabelNodes = label.getNodes();
+            String projectLabelString = label.getExpression();
+            Set<String> projectLabels = tokenizeLabelString(projectLabelString, "\\|\\|");
+            // iterate thru all project labels and find matching nodes
+            for (String projectLabel : projectLabels) {
+                for (Node projectLabelNode : projectLabelNodes) {
+                    if (this.node == projectLabelNode) {
+                        String jobFunctionName = "build:" + projectName + ":" + projectLabel;
+                        logger.info("Regiserting job " + jobFunctionName + " on " + this.node.getNodeName());
+                        worker.registerFunctionFactory(new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, this.node));
+                    }
+                }
+            }
+        }
+    }
+}
+#method_after
+@Override
+public void registerJobs() {
+    logger.info("----- Registering executor jobs on " + name + " ----");
+    /*
+         * We start with an empty worker.
+         */
+    worker.unregisterAll();
+    /*
+         * Now register or re-register all functions.
+         */
+    Jenkins jenkins = Jenkins.getInstance();
+    List<Project> allProjects = jenkins.getProjects();
+    // jenkins.getAllItems(AbstractProject.class);
+    for (Project<?, ?> project : allProjects) {
+        if (project.isDisabled()) {
+            // ignore all disabled projects
+            continue;
+        }
+        String projectName = project.getName();
+        Label label = project.getAssignedLabel();
+        if (label == null) {
+            // project has no label -> so register
+            // "build:projectName" on all nodes
+            String jobFunctionName = "build:" + projectName;
+            logger.info("Registering job " + jobFunctionName + " on " + this.node.getNodeName());
+            worker.registerFunctionFactory(new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, this.node));
+        } else {
+            // register "build:projectName:nodeName" on the
+            // node that has a matching label
+            Set<Node> projectLabelNodes = label.getNodes();
+            String projectLabelString = label.getExpression();
+            Set<String> projectLabels = tokenizeLabelString(projectLabelString, "\\|\\|");
+            // iterate thru all project labels and find matching nodes
+            for (String projectLabel : projectLabels) {
+                if (projectLabelNodes.contains(this.node)) {
+                    String jobFunctionName = "build:" + projectName + ":" + projectLabel;
+                    logger.info("Registering job " + jobFunctionName + " on " + this.node.getNodeName());
+                    worker.registerFunctionFactory(new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, this.node));
+                }
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void registerJobs() {
+    String jobFunctionName = "stop:" + host;
+    System.out.println("Regiserting job " + jobFunctionName + " on " + host);
+    worker.registerFunctionFactory(new DefaultGearmanFunctionFactory(jobFunctionName, StopJobWorker.class.getName()));
+}
+#method_after
+@Override
+public void registerJobs() {
+    String jobFunctionName = "stop:" + host;
+    System.out.println("Registering job " + jobFunctionName + " on " + host);
+    worker.registerFunctionFactory(new DefaultGearmanFunctionFactory(jobFunctionName, StopJobWorker.class.getName()));
+}
+#end_block
+
+#method_before
+@Override
+public void registerJobs() {
+    logger.info("----- Registering executor jobs on " + name + " ----");
+    /*
+         * We start with an empty worker.
+         */
+    worker.unregisterAll();
+    /*
+         * Now register or re-register all functions.
+         */
+    Jenkins jenkins = Jenkins.getInstance();
+    List<Project> allProjects = jenkins.getProjects();
+    // jenkins.getAllItems(AbstractProject.class);
+    for (Project<?, ?> project : allProjects) {
+        String projectName = project.getName();
+        // ignore all disabled projects
+        if (!project.isDisabled()) {
+            Label label = project.getAssignedLabel();
+            if (label == null) {
+                // project has no label -> so register
+                // "build:projectName"
+                String jobFunctionName = "build:" + projectName;
+                logger.info("Regiserting job " + jobFunctionName + " on " + node.getNodeName());
+                worker.registerFunctionFactory(new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, node));
+            } else {
+                // register "build:projectName:nodeName"
+                // make sure node is online
+                Computer c = node.toComputer();
+                boolean nodeOnline = c.isOnline();
+                if (nodeOnline) {
+                    // get and iterate thru them to build the functions
+                    // to register with the worker
+                    String projectLabelString = label.getExpression();
+                    Scanner projectLabels = new Scanner(projectLabelString);
+                    try {
+                        projectLabels.useDelimiter("\\|\\|");
+                        while (projectLabels.hasNext()) {
+                            String projectLabel = projectLabels.next();
+                            String jobFunctionName = "build:" + projectName + ":" + projectLabel;
+                            logger.info("Regiserting job " + jobFunctionName + " on " + node.getNodeName());
+                            worker.registerFunctionFactory(new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, node));
+                        }
+                    } finally {
+                        projectLabels.close();
+                    }
+                }
+            }
+        }
+    }
+}
+#method_after
+@Override
+public void registerJobs() {
+    logger.info("----- Registering executor jobs on " + name + " ----");
+    /*
+         * We start with an empty worker.
+         */
+    worker.unregisterAll();
+    /*
+         * Now register or re-register all functions.
+         */
+    Jenkins jenkins = Jenkins.getInstance();
+    List<Project> allProjects = jenkins.getProjects();
+    // jenkins.getAllItems(AbstractProject.class);
+    for (Project<?, ?> project : allProjects) {
+        String projectName = project.getName();
+        // ignore all disabled projects
+        if (!project.isDisabled()) {
+            Label label = project.getAssignedLabel();
+            if (label == null) {
+                // project has no label -> so register
+                // "build:projectName"
+                String jobFunctionName = "build:" + projectName;
+                logger.info("Registering job " + jobFunctionName + " on " + node.getNodeName());
+                worker.registerFunctionFactory(new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, node));
+            } else {
+                // register "build:projectName:nodeName"
+                // make sure node is online
+                Computer c = node.toComputer();
+                boolean nodeOnline = c.isOnline();
+                if (nodeOnline) {
+                    // get and iterate thru them to build the functions
+                    // to register with the worker
+                    String projectLabelString = label.getExpression();
+                    Scanner projectLabels = new Scanner(projectLabelString);
+                    try {
+                        projectLabels.useDelimiter("\\|\\|");
+                        while (projectLabels.hasNext()) {
+                            String projectLabel = projectLabels.next();
+                            String jobFunctionName = "build:" + projectName + ":" + projectLabel;
+                            logger.info("Registering job " + jobFunctionName + " on " + node.getNodeName());
+                            worker.registerFunctionFactory(new CustomGearmanFunctionFactory(jobFunctionName, StartJobWorker.class.getName(), project, node));
+                        }
+                    } finally {
+                        projectLabels.close();
+                    }
+                }
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+public GearmanFunction getFunction() {
+    return createFunctionInstance(theClass, project, node);
+}
+#method_after
+@Override
+public GearmanFunction getFunction() {
+    return createFunctionInstance(theClass, project, node);
+}
+#end_block
+
+#method_before
+@Override
+public DescriptorImpl getDescriptor() {
+    // see Descriptor javadoc for more about what a descriptor is.
+    return (DescriptorImpl) super.getDescriptor();
+}
+#method_after
+@Override
+public DescriptorImpl getDescriptor() {
+    return (DescriptorImpl) super.getDescriptor();
+}
+#end_block
+
+#method_before
+@Override
+public String getDisplayName() {
+    return "Say hello world";
+}
+#method_after
+@Override
+public String getDisplayName() {
+    return "GearmanPlugin";
+}
+#end_block
+
+#method_before
+@Override
+public boolean configure(StaplerRequest staplerRequest, JSONObject json) throws FormException {
+    // to persist global configuration information,
+    // set that to properties and call save().
+    launchWorker = json.getBoolean("launchWorker");
+    save();
+    System.out.println("--- DescriptorImpl Configure function ---" + this.launchWorker());
+    // indicate that everything is good so far
+    return true;
+}
+#method_after
+@Override
+public boolean configure(StaplerRequest staplerRequest, JSONObject json) throws FormException {
+    launchWorker = json.getBoolean("launchWorker");
+    logger.info("--- DescriptorImpl Configure function ---" + this.launchWorker());
+    // set the gearman server host from value in jenkins config page
+    try {
+        host = json.getString("host");
+    } catch (Exception e) {
+        throw new RuntimeException("Error getting the gearman host name");
+    }
+    // user input vaerification
+    if (StringUtils.isEmpty(host) || StringUtils.isBlank(host))
+        throw new RuntimeException("Invalid gearman host name");
+    // set the gearman server port from value in jenkins config page
+    try {
+        port = Integer.parseInt(json.getString("port"));
+    } catch (Exception e) {
+        throw new RuntimeException("Invalid gearman port value");
+    }
+    // basic verification here
+    if (port <= 0)
+        throw new RuntimeException("Invalid gearman port value");
+    logger.info("--- DescriptorImpl Configure function ---" + this.getHost());
+    logger.info("--- DescriptorImpl Configure function ---" + this.getPort());
+    save();
+    return true;
+}
+#end_block
+
+#method_before
+@Override
+public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+    // this also shows how you can consult the global configuration of the builder
+    if (getDescriptor().useFrench())
+        listener.getLogger().println("Bonjour, " + name + "!");
+    else
+        listener.getLogger().println("Hello, " + name + "!");
+    return true;
+}
+#method_after
+@Override
+public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+    return true;
+}
+#end_block
+
+#method_before
+@Override
+public DescriptorImpl getDescriptor() {
+    // see Descriptor javadoc for more about what a descriptor is.
+    return (DescriptorImpl) super.getDescriptor();
+}
+#method_after
+@Override
+public DescriptorImpl getDescriptor() {
+    return (DescriptorImpl) super.getDescriptor();
+}
+#end_block
+
+#method_before
+@Override
+public String getDisplayName() {
+    return "Say hello world";
+}
+#method_after
+@Override
+public String getDisplayName() {
+    return "GearmanPlugin";
+}
+#end_block
+
+#method_before
+@Override
+public boolean configure(StaplerRequest staplerRequest, JSONObject json) throws FormException {
+    // to persist global configuration information,
+    // set that to properties and call save().
+    useFrench = json.getBoolean("useFrench");
+    save();
+    // indicate that everything is good so far
+    return true;
+}
+#method_after
+@Override
+public boolean configure(StaplerRequest staplerRequest, JSONObject json) throws FormException {
+    save();
+    return true;
+}
+#end_block
+
+#method_before
+public void reviewForAccount(final Account.Id id, final AsyncCallback<AccountDashboardReviewInfo> callback) {
+    final Account.Id me = getAccountId();
+    final Account.Id target = id != null ? id : me;
+    if (target == null) {
+        callback.onFailure(new NoSuchEntityException());
+        return;
+    }
+    run(callback, new Action<AccountDashboardReviewInfo>() {
+
+        public AccountDashboardReviewInfo run(final ReviewDb db) throws OrmException, InvalidQueryException, Failure {
+            final AccountInfoCacheFactory ac = accountInfoCacheFactory.create();
+            final Account user = ac.get(target);
+            if (user == null) {
+                throw new Failure(new NoSuchEntityException());
+            }
+            final Set<Change.Id> stars = currentUser.get().getStarredChanges();
+            final ChangeAccess changes = db.changes();
+            final AccountDashboardReviewInfo d;
+            final Set<Change.Id> openReviews = new HashSet<Change.Id>();
+            final Set<Change.Id> haveReviewed = new HashSet<Change.Id>();
+            // Get all changes with patchsets owned by the current user
+            for (final PatchSetApproval ca : db.patchSetApprovals().openByUser(id)) {
+                openReviews.add(ca.getPatchSetId().getParentKey());
+            }
+            d = new AccountDashboardReviewInfo(target);
+            d.setByOwner(filter(changes.byOwnerOpen(target), stars, ac, db));
+            // Get remaining potentially reviewable changes.
+            openReviews.addAll(stars);
+            String sortkey = "z";
+            boolean gotResults;
+            do {
+                gotResults = false;
+                final ResultSet<Change> watchedChanges = searchQuery(db, "is:watched status:open", 1024, sortkey, QUERY_NEXT);
+                for (final Change change : watchedChanges) {
+                    openReviews.add(change.getId());
+                    sortkey = change.getSortKey();
+                    gotResults = true;
+                }
+            } while (gotResults);
+            // Remove changes started by the current user.
+            for (final ChangeInfo c : d.getByOwner()) {
+                openReviews.remove(c.getId());
+            }
+            // patchset.
+            for (final Change.Id cid : openReviews) {
+                final List<PatchSet> pss = db.patchSets().byChange(cid).toList();
+                final PatchSet ps = pss.get(pss.size() - 1);
+                for (final PatchSetApproval pa : db.patchSetApprovals().byPatchSetUser(ps.getId(), id)) {
+                    if (pa.getCategoryId().get().equals("CRVW") && pa.getValue() != 0) {
+                        haveReviewed.add(cid);
+                    }
+                }
+            }
+            openReviews.removeAll(haveReviewed);
+            d.setForReview(filter(changes.get(openReviews), stars, ac, db));
+            d.setHaveReviewed(filter(changes.get(haveReviewed), stars, ac, db));
+            Collections.sort(d.getForReview(), ID_COMP);
+            Collections.sort(d.getHaveReviewed(), ID_COMP);
+            d.setAccounts(ac.create());
+            return d;
+        }
+    });
+}
+#method_after
+public void reviewForAccount(final Account.Id id, final AsyncCallback<AccountDashboardReviewInfo> callback) {
+    final Account.Id me = getAccountId();
+    final Account.Id target = id != null ? id : me;
+    if (target == null) {
+        callback.onFailure(new NoSuchEntityException());
+        return;
+    }
+    run(callback, new Action<AccountDashboardReviewInfo>() {
+
+        public AccountDashboardReviewInfo run(final ReviewDb db) throws OrmException, InvalidQueryException, Failure {
+            final AccountInfoCacheFactory ac = accountInfoCacheFactory.create();
+            final Account user = ac.get(target);
+            if (user == null) {
+                throw new Failure(new NoSuchEntityException());
+            }
+            final Set<Change.Id> stars = currentUser.get().getStarredChanges();
+            final ChangeAccess changes = db.changes();
+            final AccountDashboardReviewInfo d;
+            final Set<Change.Id> openReviews = new HashSet<Change.Id>();
+            final Set<Change.Id> haveReviewed = new HashSet<Change.Id>();
+            d = new AccountDashboardReviewInfo(target);
+            d.setByOwner(filter(changes.byOwnerOpen(target), stars, ac, db));
+            // requested to review, or has reviewed previously.
+            for (final PatchSetApproval ca : db.patchSetApprovals().openByUser(id)) {
+                openReviews.add(ca.getPatchSetId().getParentKey());
+            }
+            // Get remaining potentially reviewable changes (Starred or Watched).
+            openReviews.addAll(stars);
+            String sortkey = "z";
+            boolean gotResults;
+            do {
+                gotResults = false;
+                final ResultSet<Change> watchedChanges = searchQuery(db, "is:watched status:open", 1024, sortkey, QUERY_NEXT);
+                for (final Change change : watchedChanges) {
+                    openReviews.add(change.getId());
+                    sortkey = change.getSortKey();
+                    gotResults = true;
+                }
+            } while (gotResults);
+            // Remove changes submitted by the current user.
+            for (final ChangeInfo c : d.getByOwner()) {
+                openReviews.remove(c.getId());
+            }
+            // patchset.
+            for (final Change.Id cid : openReviews) {
+                final PatchSet ps = db.patchSets().get(db.changes().get(cid).currPatchSetId());
+                for (final PatchSetApproval pa : db.patchSetApprovals().byPatchSetUser(ps.getId(), id)) {
+                    if (pa.getValue() != 0) {
+                        haveReviewed.add(cid);
+                    }
+                }
+            }
+            openReviews.removeAll(haveReviewed);
+            d.setForReview(filter(changes.get(openReviews), stars, ac, db));
+            d.setHaveReviewed(filter(changes.get(haveReviewed), stars, ac, db));
+            Collections.sort(d.getForReview(), ID_COMP);
+            Collections.sort(d.getHaveReviewed(), ID_COMP);
+            d.setAccounts(ac.create());
+            return d;
+        }
+    });
+}
+#end_block
+
+#method_before
+public static void doSignIn(String token) {
+    switch(myConfig.getAuthType()) {
+        case HTTP:
+        case HTTP_LDAP:
+        case CLIENT_SSL_CERT_LDAP:
+        case CUSTOM_EXTENSION:
+            Location.assign(loginRedirect(token));
+            break;
+        case DEVELOPMENT_BECOME_ANY_ACCOUNT:
+            Location.assign(selfRedirect("/become"));
+            break;
+        case OPENID:
+            new OpenIdSignInDialog(SignInMode.SIGN_IN, token, null).center();
+            break;
+        case LDAP:
+        case LDAP_BIND:
+            new UserPassSignInDialog(token, null).center();
+            break;
+    }
+}
+#method_after
+public static void doSignIn(String token) {
+    switch(myConfig.getAuthType()) {
+        case HTTP:
+        case HTTP_LDAP:
+        case CLIENT_SSL_CERT_LDAP:
+        case CUSTOM_EXTENSION:
+            Location.assign(loginRedirect(token));
+            break;
+        case DEVELOPMENT_BECOME_ANY_ACCOUNT:
+            Location.assign(selfRedirect("/become"));
+            break;
+        case OPENID_SSO:
+            singleSignOnPanel.authenticate(SignInMode.SIGN_IN, token);
+            break;
+        case OPENID:
+            new OpenIdSignInDialog(SignInMode.SIGN_IN, token, null).center();
+            break;
+        case LDAP:
+        case LDAP_BIND:
+            new UserPassSignInDialog(token, null).center();
+            break;
+    }
+}
+#end_block
+
+#method_before
+private void onModuleLoad2() {
+    RESOURCES.gwt_override().ensureInjected();
+    RESOURCES.css().ensureInjected();
+    final RootPanel gTopMenu = RootPanel.get("gerrit_topmenu");
+    final RootPanel gStarting = RootPanel.get("gerrit_startinggerrit");
+    final RootPanel gBody = RootPanel.get("gerrit_body");
+    final RootPanel gBottomMenu = RootPanel.get("gerrit_btmmenu");
+    gTopMenu.setStyleName(RESOURCES.css().gerritTopMenu());
+    gBody.setStyleName(RESOURCES.css().gerritBody());
+    final Grid menuLine = new Grid(1, 3);
+    menuLeft = new MorphingTabPanel();
+    menuRight = new LinkMenuBar();
+    searchPanel = new SearchPanel();
+    menuLeft.setStyleName(RESOURCES.css().topmenuMenuLeft());
+    menuLine.setStyleName(RESOURCES.css().topmenu());
+    gTopMenu.add(menuLine);
+    final FlowPanel menuRightPanel = new FlowPanel();
+    menuRightPanel.setStyleName(RESOURCES.css().topmenuMenuRight());
+    menuRightPanel.add(menuRight);
+    menuRightPanel.add(searchPanel);
+    menuLine.setWidget(0, 0, menuLeft);
+    menuLine.setWidget(0, 1, new FlowPanel());
+    menuLine.setWidget(0, 2, menuRightPanel);
+    final CellFormatter fmt = menuLine.getCellFormatter();
+    fmt.setStyleName(0, 0, RESOURCES.css().topmenuTDmenu());
+    fmt.setStyleName(0, 1, RESOURCES.css().topmenuTDglue());
+    fmt.setStyleName(0, 2, RESOURCES.css().topmenuTDmenu());
+    siteHeader = RootPanel.get("gerrit_header");
+    siteFooter = RootPanel.get("gerrit_footer");
+    body = new ViewSite<Screen>() {
+
+        @Override
+        protected void onShowView(Screen view) {
+            final String token = view.getToken();
+            if (!token.equals(History.getToken())) {
+                History.newItem(token, false);
+                dispatchHistoryHooks(token);
+            }
+            if (view instanceof ChangeListScreen) {
+                lastChangeListToken = token;
+            }
+            super.onShowView(view);
+            view.onShowView();
+        }
+    };
+    gBody.add(body);
+    RpcStatus.INSTANCE = new RpcStatus(gTopMenu);
+    JsonUtil.addRpcStartHandler(RpcStatus.INSTANCE);
+    JsonUtil.addRpcCompleteHandler(RpcStatus.INSTANCE);
+    JsonUtil.setDefaultXsrfManager(new XsrfManager() {
+
+        @Override
+        public String getToken(JsonDefTarget proxy) {
+            return xsrfToken;
+        }
+
+        @Override
+        public void setToken(JsonDefTarget proxy, String token) {
+        // Ignore the request, we always rely upon the cookie.
+        }
+    });
+    gStarting.getElement().getParentElement().removeChild(gStarting.getElement());
+    RootPanel.detachNow(gStarting);
+    applyUserPreferences();
+    initHistoryHooks();
+    populateBottomMenu(gBottomMenu);
+    refreshMenuBar();
+    History.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+        public void onValueChange(final ValueChangeEvent<String> event) {
+            display(event.getValue());
+        }
+    });
+    JumpKeys.register(body);
+    String token = History.getToken();
+    if (token.isEmpty()) {
+        token = isSignedIn() ? PageLinks.MINE : PageLinks.toChangeQuery("status:open");
+    }
+    if (signInAnchor != null) {
+        signInAnchor.setHref(loginRedirect(token));
+    }
+    display(token);
+}
+#method_after
+private void onModuleLoad2() {
+    RESOURCES.gwt_override().ensureInjected();
+    RESOURCES.css().ensureInjected();
+    final RootPanel gTopMenu = RootPanel.get("gerrit_topmenu");
+    final RootPanel gStarting = RootPanel.get("gerrit_startinggerrit");
+    final RootPanel gBody = RootPanel.get("gerrit_body");
+    final RootPanel gBottomMenu = RootPanel.get("gerrit_btmmenu");
+    gTopMenu.setStyleName(RESOURCES.css().gerritTopMenu());
+    gBody.setStyleName(RESOURCES.css().gerritBody());
+    final Grid menuLine = new Grid(1, 3);
+    menuLeft = new MorphingTabPanel();
+    menuRight = new LinkMenuBar();
+    searchPanel = new SearchPanel();
+    singleSignOnPanel = new OpenIdSsoPanel();
+    menuLeft.setStyleName(RESOURCES.css().topmenuMenuLeft());
+    menuLine.setStyleName(RESOURCES.css().topmenu());
+    gTopMenu.add(menuLine);
+    final FlowPanel menuRightPanel = new FlowPanel();
+    menuRightPanel.setStyleName(RESOURCES.css().topmenuMenuRight());
+    menuRightPanel.add(menuRight);
+    menuRightPanel.add(searchPanel);
+    menuRightPanel.add(singleSignOnPanel);
+    menuLine.setWidget(0, 0, menuLeft);
+    menuLine.setWidget(0, 1, new FlowPanel());
+    menuLine.setWidget(0, 2, menuRightPanel);
+    final CellFormatter fmt = menuLine.getCellFormatter();
+    fmt.setStyleName(0, 0, RESOURCES.css().topmenuTDmenu());
+    fmt.setStyleName(0, 1, RESOURCES.css().topmenuTDglue());
+    fmt.setStyleName(0, 2, RESOURCES.css().topmenuTDmenu());
+    siteHeader = RootPanel.get("gerrit_header");
+    siteFooter = RootPanel.get("gerrit_footer");
+    body = new ViewSite<Screen>() {
+
+        @Override
+        protected void onShowView(Screen view) {
+            final String token = view.getToken();
+            if (!token.equals(History.getToken())) {
+                History.newItem(token, false);
+                dispatchHistoryHooks(token);
+            }
+            if (view instanceof ChangeListScreen) {
+                lastChangeListToken = token;
+            }
+            super.onShowView(view);
+            view.onShowView();
+        }
+    };
+    gBody.add(body);
+    RpcStatus.INSTANCE = new RpcStatus(gTopMenu);
+    JsonUtil.addRpcStartHandler(RpcStatus.INSTANCE);
+    JsonUtil.addRpcCompleteHandler(RpcStatus.INSTANCE);
+    JsonUtil.setDefaultXsrfManager(new XsrfManager() {
+
+        @Override
+        public String getToken(JsonDefTarget proxy) {
+            return xsrfToken;
+        }
+
+        @Override
+        public void setToken(JsonDefTarget proxy, String token) {
+        // Ignore the request, we always rely upon the cookie.
+        }
+    });
+    gStarting.getElement().getParentElement().removeChild(gStarting.getElement());
+    RootPanel.detachNow(gStarting);
+    applyUserPreferences();
+    initHistoryHooks();
+    populateBottomMenu(gBottomMenu);
+    refreshMenuBar();
+    History.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+        public void onValueChange(final ValueChangeEvent<String> event) {
+            display(event.getValue());
+        }
+    });
+    JumpKeys.register(body);
+    String token = History.getToken();
+    if (token.isEmpty()) {
+        token = isSignedIn() ? PageLinks.MINE : PageLinks.toChangeQuery("status:open");
+    }
+    if (signInAnchor != null) {
+        signInAnchor.setHref(loginRedirect(token));
+    }
+    display(token);
+}
+#end_block
+
+#method_before
+public static void refreshMenuBar() {
+    menuLeft.clear();
+    menuRight.clear();
+    final boolean signedIn = isSignedIn();
+    final GerritConfig cfg = getConfig();
+    LinkMenuBar m;
+    m = new LinkMenuBar();
+    addLink(m, C.menuAllOpen(), PageLinks.toChangeQuery("status:open"));
+    addLink(m, C.menuAllMerged(), PageLinks.toChangeQuery("status:merged"));
+    addLink(m, C.menuAllAbandoned(), PageLinks.toChangeQuery("status:abandoned"));
+    menuLeft.add(m, C.menuAll());
+    if (signedIn) {
+        m = new LinkMenuBar();
+        addLink(m, C.menuMyChanges(), PageLinks.MINE);
+        addLink(m, C.menuMyImportantChanges(), PageLinks.MINE_IMPORTANT);
+        addLink(m, C.menuMyDrafts(), PageLinks.toChangeQuery("has:draft"));
+        addLink(m, C.menuMyWatchedChanges(), PageLinks.toChangeQuery("is:watched status:open"));
+        addLink(m, C.menuMyStarredChanges(), PageLinks.toChangeQuery("is:starred"));
+        menuLeft.add(m, C.menuMine());
+        menuLeft.selectTab(1);
+    } else {
+        menuLeft.selectTab(0);
+    }
+    patchScreen = null;
+    diffBar = new LinkMenuBar();
+    menuLeft.addInvisible(diffBar, C.menuDiff());
+    addDiffLink(diffBar, CC.patchTableDiffSideBySide(), PatchScreen.Type.SIDE_BY_SIDE);
+    addDiffLink(diffBar, CC.patchTableDiffUnified(), PatchScreen.Type.UNIFIED);
+    addDiffLink(diffBar, C.menuDiffCommit(), PatchScreen.TopView.COMMIT);
+    addDiffLink(diffBar, C.menuDiffPreferences(), PatchScreen.TopView.PREFERENCES);
+    addDiffLink(diffBar, C.menuDiffPatchSets(), PatchScreen.TopView.PATCH_SETS);
+    addDiffLink(diffBar, C.menuDiffFiles(), PatchScreen.TopView.FILES);
+    if (signedIn) {
+        m = new LinkMenuBar();
+        addLink(m, C.menuGroups(), PageLinks.ADMIN_GROUPS);
+        addLink(m, C.menuProjects(), PageLinks.ADMIN_PROJECTS);
+        menuLeft.add(m, C.menuAdmin());
+    }
+    if (getConfig().isDocumentationAvailable()) {
+        m = new LinkMenuBar();
+        addDocLink(m, C.menuDocumentationIndex(), "index.html");
+        addDocLink(m, C.menuDocumentationSearch(), "user-search.html");
+        addDocLink(m, C.menuDocumentationUpload(), "user-upload.html");
+        addDocLink(m, C.menuDocumentationAccess(), "access-control.html");
+        menuLeft.add(m, C.menuDocumentation());
+    }
+    if (signedIn) {
+        whoAmI();
+        addLink(menuRight, C.menuSettings(), PageLinks.SETTINGS);
+        if (cfg.getAuthType() != AuthType.CLIENT_SSL_CERT_LDAP) {
+            menuRight.add(anchor(C.menuSignOut(), selfRedirect("/logout")));
+        }
+    } else {
+        switch(cfg.getAuthType()) {
+            case HTTP:
+            case HTTP_LDAP:
+            case CLIENT_SSL_CERT_LDAP:
+                break;
+            case OPENID:
+                menuRight.addItem(C.menuRegister(), new Command() {
+
+                    public void execute() {
+                        final String to = History.getToken();
+                        new OpenIdSignInDialog(SignInMode.REGISTER, to, null).center();
+                    }
+                });
+                menuRight.addItem(C.menuSignIn(), new Command() {
+
+                    public void execute() {
+                        doSignIn(History.getToken());
+                    }
+                });
+                break;
+            case LDAP:
+            case LDAP_BIND:
+            case CUSTOM_EXTENSION:
+                if (cfg.getRegisterUrl() != null) {
+                    menuRight.add(anchor(C.menuRegister(), cfg.getRegisterUrl()));
+                }
+                signInAnchor = anchor(C.menuSignIn(), loginRedirect(History.getToken()));
+                menuRight.add(signInAnchor);
+                break;
+            case DEVELOPMENT_BECOME_ANY_ACCOUNT:
+                menuRight.add(anchor("Become", selfRedirect("/become")));
+                break;
+        }
+    }
+}
+#method_after
+public static void refreshMenuBar() {
+    menuLeft.clear();
+    menuRight.clear();
+    final boolean signedIn = isSignedIn();
+    final GerritConfig cfg = getConfig();
+    LinkMenuBar m;
+    m = new LinkMenuBar();
+    addLink(m, C.menuAllOpen(), PageLinks.toChangeQuery("status:open"));
+    addLink(m, C.menuAllMerged(), PageLinks.toChangeQuery("status:merged"));
+    addLink(m, C.menuAllAbandoned(), PageLinks.toChangeQuery("status:abandoned"));
+    menuLeft.add(m, C.menuAll());
+    if (signedIn) {
+        m = new LinkMenuBar();
+        addLink(m, C.menuMyChanges(), PageLinks.MINE);
+        addLink(m, C.menuMyImportantChanges(), PageLinks.MINE_IMPORTANT);
+        addLink(m, C.menuMyDrafts(), PageLinks.toChangeQuery("has:draft"));
+        addLink(m, C.menuMyWatchedChanges(), PageLinks.toChangeQuery("is:watched status:open"));
+        addLink(m, C.menuMyStarredChanges(), PageLinks.toChangeQuery("is:starred"));
+        menuLeft.add(m, C.menuMine());
+        menuLeft.selectTab(1);
+    } else {
+        menuLeft.selectTab(0);
+    }
+    patchScreen = null;
+    diffBar = new LinkMenuBar();
+    menuLeft.addInvisible(diffBar, C.menuDiff());
+    addDiffLink(diffBar, CC.patchTableDiffSideBySide(), PatchScreen.Type.SIDE_BY_SIDE);
+    addDiffLink(diffBar, CC.patchTableDiffUnified(), PatchScreen.Type.UNIFIED);
+    addDiffLink(diffBar, C.menuDiffCommit(), PatchScreen.TopView.COMMIT);
+    addDiffLink(diffBar, C.menuDiffPreferences(), PatchScreen.TopView.PREFERENCES);
+    addDiffLink(diffBar, C.menuDiffPatchSets(), PatchScreen.TopView.PATCH_SETS);
+    addDiffLink(diffBar, C.menuDiffFiles(), PatchScreen.TopView.FILES);
+    if (signedIn) {
+        m = new LinkMenuBar();
+        addLink(m, C.menuGroups(), PageLinks.ADMIN_GROUPS);
+        addLink(m, C.menuProjects(), PageLinks.ADMIN_PROJECTS);
+        menuLeft.add(m, C.menuAdmin());
+    }
+    if (getConfig().isDocumentationAvailable()) {
+        m = new LinkMenuBar();
+        addDocLink(m, C.menuDocumentationIndex(), "index.html");
+        addDocLink(m, C.menuDocumentationSearch(), "user-search.html");
+        addDocLink(m, C.menuDocumentationUpload(), "user-upload.html");
+        addDocLink(m, C.menuDocumentationAccess(), "access-control.html");
+        menuLeft.add(m, C.menuDocumentation());
+    }
+    if (signedIn) {
+        whoAmI();
+        addLink(menuRight, C.menuSettings(), PageLinks.SETTINGS);
+        if (cfg.getAuthType() != AuthType.CLIENT_SSL_CERT_LDAP) {
+            menuRight.add(anchor(C.menuSignOut(), selfRedirect("/logout")));
+        }
+    } else {
+        switch(cfg.getAuthType()) {
+            case HTTP:
+            case HTTP_LDAP:
+            case CLIENT_SSL_CERT_LDAP:
+                break;
+            case OPENID:
+                menuRight.addItem(C.menuRegister(), new Command() {
+
+                    public void execute() {
+                        final String to = History.getToken();
+                        new OpenIdSignInDialog(SignInMode.REGISTER, to, null).center();
+                    }
+                });
+                menuRight.addItem(C.menuSignIn(), new Command() {
+
+                    public void execute() {
+                        doSignIn(History.getToken());
+                    }
+                });
+                break;
+            case OPENID_SSO:
+                menuRight.addItem(C.menuSignIn(), new Command() {
+
+                    public void execute() {
+                        doSignIn(History.getToken());
+                    }
+                });
+                break;
+            case LDAP:
+            case LDAP_BIND:
+            case CUSTOM_EXTENSION:
+                if (cfg.getRegisterUrl() != null) {
+                    menuRight.add(anchor(C.menuRegister(), cfg.getRegisterUrl()));
+                }
+                signInAnchor = anchor(C.menuSignIn(), loginRedirect(History.getToken()));
+                menuRight.add(signInAnchor);
+                break;
+            case DEVELOPMENT_BECOME_ANY_ACCOUNT:
+                menuRight.add(anchor("Become", selfRedirect("/become")));
+                break;
+        }
+    }
+}
+#end_block
+

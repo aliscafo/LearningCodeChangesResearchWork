@@ -1,0 +1,2087 @@
+24
+#method_before
+@Override
+public InputPort decode(ScilabType element, InputPort into) throws ScicosFormatException {
+    InputPort port;
+    data = (ScilabMList) element;
+    port = allocatePort();
+    port = beforeDecode(element, port);
+    decodeModel(port);
+    decodeGraphicsStyle(port);
+    decodeGraphicsLabel(port);
+    // Update the index counter
+    alreadyDecodedCount++;
+    port = afterDecode(element, port);
+    return port;
+}
+#method_after
+@Override
+public InputPort decode(ScilabType element, InputPort into) throws ScicosFormatException {
+    InputPort port;
+    data = (ScilabMList) element;
+    port = allocatePort();
+    port = beforeDecode(element, port);
+    decodeModel(port);
+    decodeGraphics(port);
+    // Update the index counter
+    alreadyDecodedCount++;
+    port = afterDecode(element, port);
+    return port;
+}
+#end_block
+
+#method_before
+@Override
+public OutputPort decode(ScilabType element, OutputPort into) throws ScicosFormatException {
+    OutputPort port;
+    data = (ScilabMList) element;
+    port = allocatePort();
+    port = beforeDecode(element, port);
+    decodeModel(port);
+    decodeGraphicsStyle(port);
+    decodeGraphicsLabel(port);
+    // Update the index counter
+    alreadyDecodedCount++;
+    port = afterDecode(element, port);
+    return port;
+}
+#method_after
+@Override
+public OutputPort decode(ScilabType element, OutputPort into) throws ScicosFormatException {
+    OutputPort port;
+    data = (ScilabMList) element;
+    port = allocatePort();
+    port = beforeDecode(element, port);
+    decodeModel(port);
+    decodeGraphics(port);
+    // Update the index counter
+    alreadyDecodedCount++;
+    port = afterDecode(element, port);
+    return port;
+}
+#end_block
+
+#method_before
+@Override
+public void updateObject(String id, int property) {
+    if (SwapObject.getLastType() == (Integer) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_TYPE__)) {
+        Integer value = null;
+        if (property != 27 && property != 82 && property != 92 && property != 93 && property != 94 && property != 101 && property != 213 && property != 223 && property != 169 && property != 181 && property != 174 && property != 205 && property != 244 && property != 173 && property != 179 && property != 310 && property != 306 && property != 311 && property != 305 && property != 307) {
+            Inspector.getInspector(id);
+        }
+    }
+}
+#method_after
+@Override
+public void updateObject(String id, int property) {
+    if (SwapObject.getLastType() == (Integer) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_TYPE__)) {
+        boolean isValid = false;
+        switch(property) {
+            case GraphicObjectProperties.__GO_VISIBLE__:
+                boolean c_visible = (Boolean) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_VISIBLE__);
+                if (visible != c_visible) {
+                    isValid = true;
+                    visible = c_visible;
+                }
+                break;
+            case GraphicObjectProperties.__GO_AUTORESIZE__:
+                boolean c_autoresize = (Boolean) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_AUTORESIZE__);
+                if (autoresize != c_autoresize) {
+                    isValid = true;
+                    autoresize = c_autoresize;
+                }
+                break;
+            case GraphicObjectProperties.__GO_PIXMAP__:
+                boolean c_pixmap = (Boolean) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_PIXMAP__);
+                if (pixmap != c_pixmap) {
+                    isValid = true;
+                    pixmap = c_pixmap;
+                }
+                break;
+            case GraphicObjectProperties.__GO_PIXEL_DRAWING_MODE__:
+                Integer c_pixelDrawingMode = (Integer) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_PIXEL_DRAWING_MODE__);
+                if (pixelDrawingMode != c_pixelDrawingMode) {
+                    isValid = true;
+                    pixelDrawingMode = c_pixelDrawingMode;
+                }
+                break;
+            case GraphicObjectProperties.__GO_ANTIALIASING__:
+                Integer c_antialiasing = (Integer) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_ANTIALIASING__);
+                if (antialiasing != c_antialiasing) {
+                    isValid = true;
+                    antialiasing = c_antialiasing;
+                }
+                break;
+            case GraphicObjectProperties.__GO_ROTATION_TYPE__:
+                Integer c_rotationType = (Integer) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_ROTATION_TYPE__);
+                if (rotationType != c_rotationType) {
+                    isValid = true;
+                    rotationType = c_rotationType;
+                }
+                break;
+            case GraphicObjectProperties.__GO_CLIP_STATE__:
+                Integer c_clipState = (Integer) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_CLIP_STATE__);
+                if (clipState != c_clipState) {
+                    isValid = true;
+                    clipState = c_clipState;
+                }
+                break;
+            case GraphicObjectProperties.__GO_LINE_MODE__:
+                boolean c_lineMode = (Boolean) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_LINE_MODE__);
+                if (lineMode != c_lineMode) {
+                    isValid = true;
+                    lineMode = c_lineMode;
+                }
+                break;
+            case GraphicObjectProperties.__GO_LINE_STYLE__:
+                Integer c_lineStyle = (Integer) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_LINE_STYLE__);
+                if (lineStyle != c_lineStyle) {
+                    isValid = true;
+                    lineStyle = c_lineStyle;
+                }
+                break;
+            case GraphicObjectProperties.__GO_MARK_MODE__:
+                boolean c_markMode = (Boolean) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_MARK_MODE__);
+                if (markMode != c_markMode) {
+                    isValid = true;
+                    markMode = c_markMode;
+                }
+                break;
+            case GraphicObjectProperties.__GO_MARK_SIZE_UNIT__:
+                Integer c_markSizeUnit = (Integer) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_MARK_SIZE_UNIT__);
+                if (markSizeUnit != c_markSizeUnit) {
+                    isValid = true;
+                    markSizeUnit = c_markSizeUnit;
+                }
+                break;
+            case GraphicObjectProperties.__GO_DATA_MAPPING__:
+                Integer c_dataMapping = (Integer) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_DATA_MAPPING__);
+                if (dataMapping != c_dataMapping) {
+                    isValid = true;
+                    dataMapping = c_dataMapping;
+                }
+                break;
+            case GraphicObjectProperties.__GO_CLOSED__:
+                boolean c_closed = (Boolean) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_CLOSED__);
+                if (closed != c_closed) {
+                    isValid = true;
+                    closed = c_closed;
+                }
+                break;
+            case GraphicObjectProperties.__GO_SURFACE_MODE__:
+                boolean c_surfaceMode = (Boolean) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_SURFACE_MODE__);
+                if (surfaceMode != c_surfaceMode) {
+                    isValid = true;
+                    surfaceMode = c_surfaceMode;
+                }
+                break;
+            case GraphicObjectProperties.__GO_COLORED__:
+                boolean c_colored = (Boolean) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_COLORED__);
+                if (colored != c_colored) {
+                    isValid = true;
+                    colored = c_colored;
+                }
+                break;
+            case GraphicObjectProperties.__GO_DATATIP_ORIENTATION__:
+                Integer c_datatipOrientation = (Integer) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_DATATIP_ORIENTATION__);
+                if (datatipOrientation != c_datatipOrientation) {
+                    isValid = true;
+                    datatipOrientation = c_datatipOrientation;
+                }
+                break;
+            case GraphicObjectProperties.__GO_DATATIP_3COMPONENT__:
+                boolean c_datatip3Component = (Boolean) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_DATATIP_3COMPONENT__);
+                if (datatip3Component != c_datatip3Component) {
+                    isValid = true;
+                    datatip3Component = c_datatip3Component;
+                }
+                break;
+            case GraphicObjectProperties.__GO_DATATIP_AUTOORIENTATION__:
+                boolean c_datatipAutoOrientation = (Boolean) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_DATATIP_AUTOORIENTATION__);
+                if (datatipAutoOrientation != c_datatipAutoOrientation) {
+                    isValid = true;
+                    datatipAutoOrientation = c_datatipAutoOrientation;
+                }
+                break;
+            case GraphicObjectProperties.__GO_DATATIP_BOX_MODE__:
+                boolean c_datatipBoxMode = (Boolean) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_DATATIP_BOX_MODE__);
+                if (datatipBoxMode != c_datatipBoxMode) {
+                    isValid = true;
+                    datatipBoxMode = c_datatipBoxMode;
+                }
+                break;
+            case GraphicObjectProperties.__GO_DATATIP_LABEL_MODE__:
+                boolean c_datatipLabelMode = (Boolean) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_DATATIP_LABEL_MODE__);
+                if (datatipLabelMode != c_datatipLabelMode) {
+                    isValid = true;
+                    datatipLabelMode = c_datatipLabelMode;
+                }
+                break;
+            case GraphicObjectProperties.__GO_FONT_STYLE__:
+                Integer c_fontStyle = (Integer) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_FONT_STYLE__);
+                if (fontStyle != c_fontStyle) {
+                    isValid = true;
+                    fontStyle = c_fontStyle;
+                }
+                break;
+            case GraphicObjectProperties.__GO_FONT_FRACTIONAL__:
+                boolean c_fontFractional = (Boolean) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_FONT_FRACTIONAL__);
+                if (fontFractional != c_fontFractional) {
+                    isValid = true;
+                    fontFractional = c_fontFractional;
+                }
+                break;
+            case GraphicObjectProperties.__GO_LEGEND_LOCATION__:
+                Integer c_legendLocation = (Integer) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_LEGEND_LOCATION__);
+                if (legendLocation != c_legendLocation) {
+                    isValid = true;
+                    legendLocation = c_legendLocation;
+                }
+                break;
+            default:
+                isValid = true;
+        }
+        if (isValid) {
+            Inspector.getInspector(id);
+        }
+    }
+}
+#end_block
+
+#method_before
+public static void updateWestPortsPosition(BasicBlock block, List<? extends BasicPort> ports) {
+    double gridSize;
+    if (block.getParentDiagram() == null) {
+        gridSize = DEFAULT_GRIDSIZE;
+    } else {
+        gridSize = block.getParentDiagram().getGridSize();
+    }
+    final mxGeometry blockGeom = block.getGeometry();
+    assert blockGeom != null;
+    final int portsSize = ports.size();
+    final double blockLength = blockGeom.getHeight();
+    int max_ordering = 0;
+    for (int i = 0; i < portsSize; i++) {
+        final BasicPort port = (ports.get(i));
+        if (port.getOrdering() > max_ordering) {
+            max_ordering = port.getOrdering();
+        }
+    }
+    final double segLength = blockLength / (max_ordering + 1);
+    beginUpdate(block);
+    for (int i = 0; i < portsSize; i++) {
+        final BasicPort port = (ports.get(i));
+        final mxGeometry portGeom = port.getGeometry();
+        double nonVariantPosition = -portGeom.getWidth();
+        final int order = port.getOrdering() - 1;
+        double alignedPosition = calculateAlignedPosition(gridSize, segLength, order);
+        portGeom.setX(nonVariantPosition);
+        portGeom.setY(alignedPosition);
+        port.setLabelPosition(Orientation.WEST);
+    }
+    endUpdate(block);
+}
+#method_after
+public static void updateWestPortsPosition(BasicBlock block, List<? extends BasicPort> ports) {
+    double gridSize;
+    if (block.getParentDiagram() == null) {
+        gridSize = DEFAULT_GRIDSIZE;
+    } else {
+        gridSize = block.getParentDiagram().getGridSize();
+    }
+    // BasicBlock.sortsort(List<?> children) takes into account different
+    // parameters to order the ports list. We only need to order the ports
+    // given their ordering.
+    Collections.sort(ports, new PortComparator());
+    final mxGeometry blockGeom = block.getGeometry();
+    assert blockGeom != null;
+    final int portsSize = ports.size();
+    final double blockLength = blockGeom.getHeight();
+    final double segLength = blockLength / (portsSize + 1);
+    beginUpdate(block);
+    for (int i = 0; i < portsSize; ++i) {
+        final BasicPort port = (ports.get(i));
+        final mxGeometry portGeom = port.getGeometry();
+        double nonVariantPosition = -portGeom.getWidth();
+        final int order = i;
+        double alignedPosition = calculateAlignedPosition(gridSize, segLength, order);
+        portGeom.setX(nonVariantPosition);
+        portGeom.setY(alignedPosition);
+        port.setLabelPosition(Orientation.WEST);
+    }
+    endUpdate(block);
+}
+#end_block
+
+#method_before
+public static void updateNorthPortsPosition(BasicBlock block, List<? extends BasicPort> ports) {
+    double gridSize;
+    if (block.getParentDiagram() == null) {
+        gridSize = DEFAULT_GRIDSIZE;
+    } else {
+        gridSize = block.getParentDiagram().getGridSize();
+    }
+    final mxGeometry blockGeom = block.getGeometry();
+    assert blockGeom != null;
+    final int portsSize = ports.size();
+    final double blockLength = blockGeom.getWidth();
+    int max_ordering = 0;
+    for (int i = 0; i < portsSize; i++) {
+        final BasicPort port = (ports.get(i));
+        if (port.getOrdering() > max_ordering) {
+            max_ordering = port.getOrdering();
+        }
+    }
+    final double segLength = blockLength / (max_ordering + 1);
+    beginUpdate(block);
+    for (int i = 0; i < portsSize; ++i) {
+        final BasicPort port = (ports.get(i));
+        final mxGeometry portGeom = port.getGeometry();
+        double nonVariantPosition = -portGeom.getHeight();
+        final int order = port.getOrdering() - 1;
+        double alignedPosition = calculateAlignedPosition(gridSize, segLength, order);
+        portGeom.setX(alignedPosition);
+        portGeom.setY(nonVariantPosition);
+        port.setLabelPosition(Orientation.NORTH);
+    }
+    endUpdate(block);
+}
+#method_after
+public static void updateNorthPortsPosition(BasicBlock block, List<? extends BasicPort> ports) {
+    double gridSize;
+    if (block.getParentDiagram() == null) {
+        gridSize = DEFAULT_GRIDSIZE;
+    } else {
+        gridSize = block.getParentDiagram().getGridSize();
+    }
+    // BasicBlock.sortsort(List<?> children) takes into account different
+    // parameters to order the ports list. We only need to order the ports
+    // given their ordering.
+    Collections.sort(ports, new PortComparator());
+    final mxGeometry blockGeom = block.getGeometry();
+    assert blockGeom != null;
+    final int portsSize = ports.size();
+    final double blockLength = blockGeom.getWidth();
+    final double segLength = blockLength / (portsSize + 1);
+    beginUpdate(block);
+    for (int i = 0; i < portsSize; ++i) {
+        final BasicPort port = (ports.get(i));
+        final mxGeometry portGeom = port.getGeometry();
+        double nonVariantPosition = -portGeom.getHeight();
+        final int order = i;
+        double alignedPosition = calculateAlignedPosition(gridSize, segLength, order);
+        portGeom.setX(alignedPosition);
+        portGeom.setY(nonVariantPosition);
+        port.setLabelPosition(Orientation.NORTH);
+    }
+    endUpdate(block);
+}
+#end_block
+
+#method_before
+public static void updateEastPortsPosition(BasicBlock block, List<? extends BasicPort> ports) {
+    double gridSize;
+    if (block.getParentDiagram() == null) {
+        gridSize = DEFAULT_GRIDSIZE;
+    } else {
+        gridSize = block.getParentDiagram().getGridSize();
+    }
+    final mxGeometry blockGeom = block.getGeometry();
+    assert blockGeom != null;
+    final int portsSize = ports.size();
+    final double blockLength = blockGeom.getHeight();
+    int max_ordering = 0;
+    for (int i = 0; i < portsSize; i++) {
+        final BasicPort port = (ports.get(i));
+        if (port.getOrdering() > max_ordering) {
+            max_ordering = port.getOrdering();
+        }
+    }
+    final double segLength = blockLength / (max_ordering + 1);
+    beginUpdate(block);
+    for (int i = 0; i < portsSize; ++i) {
+        final BasicPort port = (ports.get(i));
+        final mxGeometry portGeom = port.getGeometry();
+        double nonVariantPosition = blockGeom.getWidth();
+        final int order = port.getOrdering() - 1;
+        double alignedPosition = calculateAlignedPosition(gridSize, segLength, order);
+        portGeom.setX(nonVariantPosition);
+        portGeom.setY(alignedPosition);
+        port.setLabelPosition(Orientation.EAST);
+    }
+    endUpdate(block);
+}
+#method_after
+public static void updateEastPortsPosition(BasicBlock block, List<? extends BasicPort> ports) {
+    double gridSize;
+    if (block.getParentDiagram() == null) {
+        gridSize = DEFAULT_GRIDSIZE;
+    } else {
+        gridSize = block.getParentDiagram().getGridSize();
+    }
+    // BasicBlock.sortsort(List<?> children) takes into account different
+    // parameters to order the ports list. We only need to order the ports
+    // given their ordering.
+    Collections.sort(ports, new PortComparator());
+    final mxGeometry blockGeom = block.getGeometry();
+    assert blockGeom != null;
+    final int portsSize = ports.size();
+    final double blockLength = blockGeom.getHeight();
+    final double segLength = blockLength / (portsSize + 1);
+    beginUpdate(block);
+    for (int i = 0; i < portsSize; ++i) {
+        final BasicPort port = (ports.get(i));
+        final mxGeometry portGeom = port.getGeometry();
+        double nonVariantPosition = blockGeom.getWidth();
+        final int order = i;
+        double alignedPosition = calculateAlignedPosition(gridSize, segLength, order);
+        portGeom.setX(nonVariantPosition);
+        portGeom.setY(alignedPosition);
+        port.setLabelPosition(Orientation.EAST);
+    }
+    endUpdate(block);
+}
+#end_block
+
+#method_before
+public static void updateSouthPortsPosition(BasicBlock block, List<? extends BasicPort> ports) {
+    double gridSize;
+    if (block.getParentDiagram() == null) {
+        gridSize = DEFAULT_GRIDSIZE;
+    } else {
+        gridSize = block.getParentDiagram().getGridSize();
+    }
+    final mxGeometry blockGeom = block.getGeometry();
+    assert blockGeom != null;
+    final int portsSize = ports.size();
+    final double blockLength = blockGeom.getWidth();
+    int max_ordering = 0;
+    for (int i = 0; i < portsSize; i++) {
+        final BasicPort port = (ports.get(i));
+        if (port.getOrdering() > max_ordering) {
+            max_ordering = port.getOrdering();
+        }
+    }
+    final double segLength = blockLength / (max_ordering + 1);
+    beginUpdate(block);
+    for (int i = 0; i < portsSize; ++i) {
+        final BasicPort port = (ports.get(i));
+        final mxGeometry portGeom = port.getGeometry();
+        double nonVariantPosition = blockGeom.getHeight();
+        final int order = port.getOrdering() - 1;
+        double alignedPosition = calculateAlignedPosition(gridSize, segLength, order);
+        portGeom.setX(alignedPosition);
+        portGeom.setY(nonVariantPosition);
+        port.setLabelPosition(Orientation.SOUTH);
+    }
+    endUpdate(block);
+}
+#method_after
+public static void updateSouthPortsPosition(BasicBlock block, List<? extends BasicPort> ports) {
+    double gridSize;
+    if (block.getParentDiagram() == null) {
+        gridSize = DEFAULT_GRIDSIZE;
+    } else {
+        gridSize = block.getParentDiagram().getGridSize();
+    }
+    // BasicBlock.sortsort(List<?> children) takes into account different
+    // parameters to order the ports list. We only need to order the ports
+    // given their ordering.
+    Collections.sort(ports, new PortComparator());
+    final mxGeometry blockGeom = block.getGeometry();
+    assert blockGeom != null;
+    final int portsSize = ports.size();
+    final double blockLength = blockGeom.getWidth();
+    final double segLength = blockLength / (portsSize + 1);
+    beginUpdate(block);
+    for (int i = 0; i < portsSize; ++i) {
+        final BasicPort port = (ports.get(i));
+        final mxGeometry portGeom = port.getGeometry();
+        double nonVariantPosition = blockGeom.getHeight();
+        final int order = i;
+        double alignedPosition = calculateAlignedPosition(gridSize, segLength, order);
+        portGeom.setX(alignedPosition);
+        portGeom.setY(nonVariantPosition);
+        port.setLabelPosition(Orientation.SOUTH);
+    }
+    endUpdate(block);
+}
+#end_block
+
+#method_before
+@Override
+public ScilabType getRealParameters() {
+    if (hasAValidRpar || child == null) {
+        return super.getRealParameters();
+    }
+    /*
+         * Encode the children as a new rpar.
+         */
+    final ScilabType rpar = new DiagramElement().encode(child);
+    super.setRealParameters(rpar);
+    hasAValidRpar = true;
+    return super.getRealParameters();
+}
+#method_after
+@Override
+public ScilabType getRealParameters() {
+    if (child == null) {
+        return super.getRealParameters();
+    }
+    /*
+         * Encode the children as a new rpar.
+         */
+    final ScilabType rpar = new DiagramElement().encode(child);
+    super.setRealParameters(rpar);
+    hasAValidRpar = true;
+    return super.getRealParameters();
+}
+#end_block
+
+#method_before
+public void updateExportedPort() {
+    if (child == null) {
+        return;
+    }
+    if (getParentDiagram() == null) {
+        setParentDiagram(Xcos.findParent(this));
+    }
+    // get a map of all the IOBlocks of the superdiagram
+    final Map<IOBlocks, List<mxICell>> blocksMap = IOBlocks.getAllBlocks(this);
+    // get a map of all the ports of the superblock
+    final Map<IOBlocks, List<mxICell>> portsMap = IOBlocks.getAllPorts(this);
+    // sort the superdiagram IOBlocks depending on their type
+    Hashtable<String, List<? extends mxICell>> context_block = new Hashtable<String, List<? extends mxICell>>();
+    if (!context_block.containsKey(XcosDiagram.IN)) {
+        List<mxICell> cell_list = blocksMap.get(IOBlocks.ExplicitInBlock);
+        cell_list.addAll(blocksMap.get(IOBlocks.ImplicitInBlock));
+        context_block.put(XcosDiagram.IN, iparSort(cell_list));
+    }
+    if (!context_block.containsKey(XcosDiagram.OUT)) {
+        List<mxICell> cell_list = blocksMap.get(IOBlocks.ExplicitOutBlock);
+        cell_list.addAll(blocksMap.get(IOBlocks.ImplicitOutBlock));
+        context_block.put(XcosDiagram.OUT, iparSort(cell_list));
+    }
+    if (!context_block.containsKey(XcosDiagram.EIN)) {
+        List<mxICell> cell_list = blocksMap.get(IOBlocks.EventInBlock);
+        context_block.put(XcosDiagram.EIN, iparSort(cell_list));
+    }
+    if (!context_block.containsKey(XcosDiagram.EOUT)) {
+        List<mxICell> cell_list = blocksMap.get(IOBlocks.EventOutBlock);
+        context_block.put(XcosDiagram.EOUT, iparSort(cell_list));
+    }
+    // sort the superblock ports depending on their type
+    Hashtable<String, List<? extends mxICell>> context_port = new Hashtable<String, List<? extends mxICell>>();
+    if (!context_port.containsKey(XcosDiagram.IN)) {
+        List<mxICell> cell_list = portsMap.get(IOBlocks.ExplicitInBlock);
+        cell_list.addAll(portsMap.get(IOBlocks.ImplicitInBlock));
+        context_port.put(XcosDiagram.IN, orderingSort(cell_list));
+    }
+    if (!context_port.containsKey(XcosDiagram.OUT)) {
+        List<mxICell> cell_list = portsMap.get(IOBlocks.ExplicitOutBlock);
+        cell_list.addAll(portsMap.get(IOBlocks.ImplicitOutBlock));
+        context_port.put(XcosDiagram.OUT, orderingSort(cell_list));
+    }
+    if (!context_port.containsKey(XcosDiagram.EIN)) {
+        List<mxICell> cell_list = portsMap.get(IOBlocks.EventInBlock);
+        context_port.put(XcosDiagram.EIN, orderingSort(cell_list));
+    }
+    if (!context_port.containsKey(XcosDiagram.EOUT)) {
+        List<mxICell> cell_list = portsMap.get(IOBlocks.EventOutBlock);
+        context_port.put(XcosDiagram.EOUT, orderingSort(cell_list));
+    }
+    for (String key : context_block.keySet()) {
+        // adding, removing or reordering the ports of the superblock
+        if (context_block.get(key).size() > context_port.get(key).size()) {
+            // iterate on the superdiagram blocks
+            for (mxICell cell : context_block.get(key)) {
+                if (cell instanceof BasicBlock) {
+                    BasicBlock basicblock = (BasicBlock) cell;
+                    int order = (int) ((ScilabDouble) basicblock.getIntegerParameters()).getRealPart()[0][0];
+                    // get the new added block if found
+                    List<? extends mxICell> port_list = context_port.get(key);
+                    boolean port_found = false;
+                    for (mxICell port : port_list) {
+                        if (port instanceof BasicPort) {
+                            BasicPort basicport = (BasicPort) port;
+                            if (order == basicport.getOrdering()) {
+                                port_found = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (port_found == false) {
+                        // add the port on the superblock
+                        try {
+                            for (IOBlocks b : IOBlocks.values()) {
+                                if (basicblock.getClass().equals(b.getReferencedClass())) {
+                                    BasicPort port;
+                                    port = b.getReferencedPortClass().newInstance();
+                                    port.setOrdering(order);
+                                    insert(port);
+                                    BlockPositioning.updateBlockView(this);
+                                }
+                            }
+                        } catch (InstantiationException e) {
+                            Logger.getLogger(SuperBlock.class.getName()).severe(e.toString());
+                        } catch (IllegalAccessException e) {
+                            Logger.getLogger(SuperBlock.class.getName()).severe(e.toString());
+                        }
+                    }
+                }
+            }
+        } else if (context_block.get(key).size() < context_port.get(key).size()) {
+            // iterate on the superblock ports
+            for (mxICell cell : context_port.get(key)) {
+                if (cell instanceof BasicPort) {
+                    BasicPort basicport = (BasicPort) cell;
+                    int order = basicport.getOrdering();
+                    // get the port to remove
+                    List<? extends mxICell> block_list = context_block.get(key);
+                    boolean block_found = false;
+                    for (mxICell block : block_list) {
+                        if (block instanceof BasicBlock) {
+                            BasicBlock basicblock = (BasicBlock) block;
+                            int block_order = (int) ((ScilabDouble) basicblock.getIntegerParameters()).getRealPart()[0][0];
+                            if (order == block_order) {
+                                block_found = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (block_found == false) {
+                        // delete the port
+                        removePort(basicport);
+                        BlockPositioning.updateBlockView(this);
+                    }
+                }
+            }
+        } else {
+            // iterate on the superdiagram blocks
+            for (mxICell cell : context_block.get(key)) {
+                if (cell instanceof BasicBlock) {
+                    BasicBlock basicblock = (BasicBlock) cell;
+                    int order = (int) ((ScilabDouble) basicblock.getIntegerParameters()).getRealPart()[0][0];
+                    // verify superblock port coherence
+                    List<? extends mxICell> port_list = context_port.get(key);
+                    BasicPort basicport = null;
+                    boolean port_found = false;
+                    for (mxICell port : port_list) {
+                        if (port instanceof BasicPort) {
+                            basicport = (BasicPort) port;
+                            if (order == basicport.getOrdering()) {
+                                port_found = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (port_found == true) {
+                        boolean port_deleted = false;
+                        for (IOBlocks b : IOBlocks.values()) {
+                            if (basicport.getClass().equals(b.getReferencedPortClass())) {
+                                if (!basicblock.getClass().equals(b.getReferencedClass())) {
+                                    // delete the port
+                                    removePort(basicport);
+                                    port_deleted = true;
+                                    BlockPositioning.updateBlockView(this);
+                                }
+                            }
+                        }
+                        // add the port on the superblock if deleted
+                        if (port_deleted == true) {
+                            try {
+                                for (IOBlocks b : IOBlocks.values()) {
+                                    if (basicblock.getClass().equals(b.getReferencedClass())) {
+                                        BasicPort port;
+                                        port = b.getReferencedPortClass().newInstance();
+                                        port.setOrdering(order);
+                                        insert(port);
+                                        BlockPositioning.updateBlockView(this);
+                                    }
+                                }
+                            } catch (InstantiationException e) {
+                                Logger.getLogger(SuperBlock.class.getName()).severe(e.toString());
+                            } catch (IllegalAccessException e) {
+                                Logger.getLogger(SuperBlock.class.getName()).severe(e.toString());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    getParentDiagram().fireEvent(new mxEventObject(XcosEvent.SUPER_BLOCK_UPDATED, XcosConstants.EVENT_BLOCK_UPDATED, this));
+}
+#method_after
+public void updateExportedPort() {
+    if (child == null) {
+        return;
+    }
+    if (getParentDiagram() == null) {
+        setParentDiagram(Xcos.findParent(this));
+    }
+    // extracting blocks from the superdiagram
+    Hashtable<String, List<? extends mxICell>> context_block = extractContextBlocks();
+    // extracting ports from the superblock
+    Hashtable<String, List<? extends mxICell>> context_port = extractContextPorts();
+    for (String key : context_block.keySet()) {
+        if (context_block.get(key).size() > context_port.get(key).size()) {
+            // adding ports of the superblock
+            addPorts(key, context_block, context_port);
+        } else if (context_block.get(key).size() < context_port.get(key).size()) {
+            // removing ports of the superblock
+            removePorts(key, context_block, context_port);
+        } else {
+            // reordering ports of the superblock
+            removeDeadPorts(key, context_block, context_port);
+            replacePort(key, context_block, context_port);
+        }
+    }
+    getParentDiagram().fireEvent(new mxEventObject(XcosEvent.SUPER_BLOCK_UPDATED, XcosConstants.EVENT_BLOCK_UPDATED, this));
+}
+#end_block
+
+#method_before
+private List<? extends BasicBlock> iparSort(final List<? extends BasicBlock> blocks) {
+    Collections.sort(blocks, new Comparator<BasicBlock>() {
+
+        @Override
+        public int compare(BasicBlock o1, BasicBlock o2) {
+            final ScilabDouble data1 = (ScilabDouble) o1.getIntegerParameters();
+            final ScilabDouble data2 = (ScilabDouble) o2.getIntegerParameters();
+            int value1 = 0;
+            int value2 = 0;
+            if (data1.getWidth() >= 1 && data1.getHeight() >= 1) {
+                value1 = (int) data1.getRealPart()[0][0];
+            }
+            if (data2.getWidth() >= 1 && data2.getHeight() >= 1) {
+                value2 = (int) data2.getRealPart()[0][0];
+            }
+            return value1 - value2;
+        }
+    });
+    return blocks;
+}
+#method_after
+public List<? extends BasicBlock> iparSort(final List<? extends BasicBlock> blocks) {
+    Collections.sort(blocks, new Comparator<BasicBlock>() {
+
+        @Override
+        public int compare(BasicBlock o1, BasicBlock o2) {
+            final ScilabDouble data1 = (ScilabDouble) o1.getIntegerParameters();
+            final ScilabDouble data2 = (ScilabDouble) o2.getIntegerParameters();
+            int value1 = 0;
+            int value2 = 0;
+            if (data1.getWidth() >= 1 && data1.getHeight() >= 1) {
+                value1 = (int) data1.getRealPart()[0][0];
+            }
+            if (data2.getWidth() >= 1 && data2.getHeight() >= 1) {
+                value2 = (int) data2.getRealPart()[0][0];
+            }
+            return value1 - value2;
+        }
+    });
+    return blocks;
+}
+#end_block
+
+#method_before
+public void postLoad(final File file) {
+    final String name = file.getName();
+    if (XcosFileType.getAvailableSaveFormats().contains(XcosFileType.findFileType(file))) {
+        setSavedFile(file);
+        Xcos.getInstance().addDiagram(file, this);
+    }
+    setTitle(name.substring(0, name.lastIndexOf('.')));
+    generateUID();
+    setModified(false);
+    fireEvent(new mxEventObject(mxEvent.ROOT));
+    info(XcosMessages.EMPTY_INFO);
+}
+#method_after
+public void postLoad(final File file) {
+    final String name = file.getName();
+    if (XcosFileType.getAvailableSaveFormats().contains(XcosFileType.findFileType(file))) {
+        setSavedFile(file);
+        Xcos.getInstance().addDiagram(file, this);
+    }
+    setTitle(name.substring(0, name.lastIndexOf('.')));
+    setModified(false);
+    fireEvent(new mxEventObject(mxEvent.ROOT));
+    info(XcosMessages.EMPTY_INFO);
+}
+#end_block
+
+#method_before
+public void transformAndLoadFile(final String file, final String variable) {
+    final File f;
+    final XcosFileType filetype;
+    if (file != null) {
+        f = new File(file);
+        filetype = XcosFileType.findFileType(f);
+    } else {
+        f = null;
+        filetype = null;
+    }
+    new SwingWorker<XcosDiagram, ActionEvent>() {
+
+        int counter = 0;
+
+        final Timer t = new Timer(1000, new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                counter = (counter + 1) % (XcosMessages.DOTS.length() + 1);
+                String str = XcosMessages.LOADING_DIAGRAM + XcosMessages.DOTS.substring(0, counter);
+                XcosDiagram.this.info(str);
+            }
+        });
+
+        @Override
+        protected XcosDiagram doInBackground() {
+            t.start();
+            final Xcos instance = Xcos.getInstance();
+            XcosDiagram diag = XcosDiagram.this;
+            diag.setReadOnly(true);
+            /*
+                 * Load, log errors and notify
+                 */
+            synchronized (instance) {
+                try {
+                    if (f != null && filetype != null) {
+                        filetype.load(file, XcosDiagram.this);
+                    }
+                    final ScilabDirectHandler handler = ScilabDirectHandler.acquire();
+                    try {
+                        if (variable != null && handler != null) {
+                            handler.readDiagram(XcosDiagram.this, variable);
+                        }
+                    } finally {
+                        if (handler != null) {
+                            handler.release();
+                        }
+                    }
+                    instance.setLastError("");
+                } catch (Exception e) {
+                    Throwable ex = e;
+                    while (ex instanceof RuntimeException) {
+                        ex = ex.getCause();
+                    }
+                    instance.setLastError(ex.getMessage());
+                }
+                instance.notify();
+            }
+            return diag;
+        }
+
+        @Override
+        protected void done() {
+            t.stop();
+            XcosDiagram.this.setReadOnly(false);
+            XcosDiagram.this.getUndoManager().clear();
+            /*
+                 * Load has finished
+                 */
+            if (f != null && filetype != null) {
+                postLoad(f);
+            }
+            XcosDiagram.this.info(XcosMessages.EMPTY_INFO);
+        }
+    }.execute();
+}
+#method_after
+public void transformAndLoadFile(final String file, final String variable) {
+    final File f;
+    final XcosFileType filetype;
+    if (file != null) {
+        f = new File(file);
+        filetype = XcosFileType.findFileType(f);
+    } else {
+        f = null;
+        filetype = null;
+    }
+    new SwingWorker<XcosDiagram, ActionEvent>() {
+
+        int counter = 0;
+
+        final Timer t = new Timer(1000, new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                counter = (counter + 1) % (XcosMessages.DOTS.length() + 1);
+                String str = XcosMessages.LOADING_DIAGRAM + XcosMessages.DOTS.substring(0, counter);
+                XcosDiagram.this.info(str);
+            }
+        });
+
+        @Override
+        protected XcosDiagram doInBackground() {
+            t.start();
+            final Xcos instance = Xcos.getInstance();
+            XcosDiagram diag = XcosDiagram.this;
+            diag.setReadOnly(true);
+            /*
+                 * Load, log errors and notify
+                 */
+            synchronized (instance) {
+                try {
+                    if (f != null && filetype != null) {
+                        filetype.load(file, XcosDiagram.this);
+                    }
+                    final ScilabDirectHandler handler = ScilabDirectHandler.acquire();
+                    try {
+                        if (variable != null && handler != null) {
+                            handler.readDiagram(XcosDiagram.this, variable);
+                        }
+                    } finally {
+                        if (handler != null) {
+                            handler.release();
+                        }
+                    }
+                    instance.setLastError("");
+                } catch (Exception e) {
+                    Throwable ex = e;
+                    while (ex instanceof RuntimeException) {
+                        ex = ex.getCause();
+                    }
+                    instance.setLastError(ex.getMessage());
+                }
+                instance.notify();
+            }
+            return diag;
+        }
+
+        @Override
+        protected void done() {
+            t.stop();
+            XcosDiagram.this.setReadOnly(false);
+            XcosDiagram.this.getUndoManager().clear();
+            XcosDiagram.this.refresh();
+            /*
+                 * Load has finished
+                 */
+            if (f != null && filetype != null) {
+                postLoad(f);
+            }
+            XcosDiagram.this.info(XcosMessages.EMPTY_INFO);
+        }
+    }.execute();
+}
+#end_block
+
+#method_before
+/**
+ * Initialize the dialog components.
+ *
+ * As this method perform a complex initialization, It doesn't pass NCSS.
+ */
+private void initComponents() {
+    JLabel integrationLabel = new JLabel(XcosMessages.FINAL_INTEGRATION_TIME);
+    integration = new JFormattedTextField(CURRENT_FORMAT);
+    integration.setInputVerifier(VALIDATE_POSITIVE_DOUBLE);
+    integration.setValue(new BigDecimal(parameters.getFinalIntegrationTime()));
+    JLabel rtsLabel = new JLabel(XcosMessages.REAL_TIME_SCALING);
+    rts = new JFormattedTextField(CURRENT_FORMAT);
+    rts.setInputVerifier(VALIDATE_POSITIVE_DOUBLE);
+    rts.setValue(new BigDecimal(parameters.getRealTimeScaling()));
+    JLabel integratorAbsLabel = new JLabel(XcosMessages.INTEGRATOR_ABSOLUTE_TOLERANCE);
+    integrator = new JFormattedTextField(CURRENT_FORMAT);
+    integrator.setInputVerifier(VALIDATE_POSITIVE_DOUBLE);
+    integrator.setValue(new BigDecimal(parameters.getIntegratorAbsoluteTolerance()));
+    JLabel integratorRelLabel = new JLabel(XcosMessages.INTEGRATOR_RELATIVE_TOLERANCE);
+    integratorRel = new JFormattedTextField(CURRENT_FORMAT);
+    integratorRel.setInputVerifier(VALIDATE_POSITIVE_DOUBLE);
+    integratorRel.setValue(new BigDecimal(parameters.getIntegratorRelativeTolerance()));
+    JLabel toleranceOnTimeLabel = new JLabel(XcosMessages.TOLERANCE_ON_TIME);
+    toleranceOnTime = new JFormattedTextField(CURRENT_FORMAT);
+    toleranceOnTime.setInputVerifier(VALIDATE_POSITIVE_DOUBLE);
+    toleranceOnTime.setValue(new BigDecimal(parameters.getToleranceOnTime()));
+    JLabel maxIntegrationTimeLabel = new JLabel(XcosMessages.MAX_INTEGRATION_TIME_INTERVAL);
+    maxIntegrationTime = new JFormattedTextField(CURRENT_FORMAT);
+    maxIntegrationTime.setInputVerifier(VALIDATE_POSITIVE_DOUBLE);
+    maxIntegrationTime.setValue(new BigDecimal(parameters.getMaxIntegrationTimeInterval()));
+    JLabel solverLabel = new JLabel(XcosMessages.SOLVER_CHOICE);
+    final String[] solvers = new String[] { "LSodar", "Sundials/CVODE - BDF - NEWTON", "Sundials/CVODE - BDF - FUNCTIONAL", "Sundials/CVODE - ADAMS - NEWTON", "Sundials/CVODE - ADAMS - FUNCTIONAL", "DOPRI5 - Dormand-Prince 4(5)", "RK45 - Runge-Kutta 4(5)", "Implicit RK45 - Runge-Kutta 4(5)", "Sundials/IDA", "DDaskr - Newton", "DDaskr - GMRes" };
+    final String[] solversTooltips = new String[] { "Method: dynamic, Nonlinear solver= dynamic", "Method: BDF, Nonlinear solver= NEWTON", "Method: BDF, Nonlinear solver= FUNCTIONAL", "Method: ADAMS, Nonlinear solver= NEWTON", "Method: ADAMS, Nonlinear solver= FUNCTIONAL", "Method: Fixed step", "Method: Fixed step", "Method: Fixed step, Nonlinear solver= FIXED-POINT", "Sundials/IDA", "Method: BDF, Nonlinear solver= NEWTON", "Method: BDF - Nonlinear solver = GMRES" };
+    solver = new JComboBox(solvers);
+    double solverValue = parameters.getSolver();
+    if (solverValue >= 0.0 && solverValue <= solvers.length - 2) {
+        solver.setSelectedIndex((int) solverValue);
+    } else {
+        solver.setSelectedIndex(solvers.length - 1);
+    }
+    final class ComboboxToolTipRenderer extends DefaultListCellRenderer {
+
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            JComponent comp = (JComponent) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (-1 < index && null != value && null != solversTooltips) {
+                list.setToolTipText(solversTooltips[index]);
+            }
+            return comp;
+        }
+    }
+    solver.setRenderer(new ComboboxToolTipRenderer());
+    JLabel maxStepSizeLabel = new JLabel(XcosMessages.MAXIMUN_STEP_SIZE);
+    maxStepSize = new JFormattedTextField(CURRENT_FORMAT);
+    maxStepSize.setInputVerifier(VALIDATE_POSITIVE_DOUBLE);
+    maxStepSize.setValue(new BigDecimal(parameters.getMaximumStepSize()));
+    JButton cancelButton = new JButton(XcosMessages.CANCEL);
+    JButton okButton = new JButton(XcosMessages.OK);
+    JButton defaultButton = new JButton(XcosMessages.DEFAULT);
+    JButton setContextButton = new JButton(XcosMessages.SET_CONTEXT);
+    okButton.setPreferredSize(cancelButton.getPreferredSize());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = 0;
+    gbc.gridy = 0;
+    gbc.gridheight = 1;
+    gbc.gridwidth = 1;
+    gbc.insets = new Insets(0, 10, 0, 0);
+    gbc.gridx = 0;
+    gbc.gridy = 4;
+    gbc.gridheight = 1;
+    gbc.gridwidth = 1;
+    gbc.fill = GridBagConstraints.NONE;
+    gbc.insets = new Insets(0, 10, 0, 0);
+    add(integrationLabel, gbc);
+    gbc.gridy = 5;
+    add(rtsLabel, gbc);
+    gbc.gridy = 6;
+    add(integratorAbsLabel, gbc);
+    gbc.gridy = 7;
+    add(integratorRelLabel, gbc);
+    gbc.gridy = 8;
+    add(toleranceOnTimeLabel, gbc);
+    gbc.gridy = 9;
+    add(maxIntegrationTimeLabel, gbc);
+    gbc.gridy = 10;
+    add(solverLabel, gbc);
+    gbc.gridy = 11;
+    add(maxStepSizeLabel, gbc);
+    gbc.gridy = 12;
+    add(setContextButton, gbc);
+    gbc.gridx = 1;
+    gbc.gridy = 4;
+    gbc.gridwidth = GridBagConstraints.REMAINDER;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.insets = new Insets(5, 10, 0, 10);
+    add(integration, gbc);
+    gbc.gridy = 5;
+    add(rts, gbc);
+    gbc.gridy = 6;
+    add(integrator, gbc);
+    gbc.gridy = 7;
+    add(integratorRel, gbc);
+    gbc.gridy = 8;
+    add(toleranceOnTime, gbc);
+    gbc.gridy = 9;
+    add(maxIntegrationTime, gbc);
+    gbc.gridy = 10;
+    add(solver, gbc);
+    gbc.gridy = 11;
+    add(maxStepSize, gbc);
+    gbc.gridx = 1;
+    gbc.gridy = 14;
+    gbc.gridheight = 1;
+    gbc.gridwidth = 1;
+    gbc.weightx = 1.;
+    gbc.fill = GridBagConstraints.NONE;
+    gbc.insets = new Insets(5, 0, 10, 5);
+    add(okButton, gbc);
+    gbc.gridx = 2;
+    gbc.weightx = 0.;
+    gbc.insets = new Insets(5, 0, 10, 10);
+    add(cancelButton, gbc);
+    gbc.gridx = 3;
+    gbc.weightx = 0.;
+    gbc.insets = new Insets(5, 0, 10, 10);
+    add(defaultButton, gbc);
+    installActionListeners(cancelButton, okButton, defaultButton, setContextButton);
+}
+#method_after
+/**
+ * Initialize the dialog components.
+ *
+ * As this method perform a complex initialization, It doesn't pass NCSS.
+ */
+private void initComponents() {
+    JLabel integrationLabel = new JLabel(XcosMessages.FINAL_INTEGRATION_TIME);
+    integration = new JFormattedTextField(CURRENT_FORMAT);
+    integration.setInputVerifier(VALIDATE_POSITIVE_DOUBLE);
+    integration.setValue(new BigDecimal(parameters.getFinalIntegrationTime()));
+    JLabel rtsLabel = new JLabel(XcosMessages.REAL_TIME_SCALING);
+    rts = new JFormattedTextField(CURRENT_FORMAT);
+    rts.setInputVerifier(VALIDATE_POSITIVE_DOUBLE);
+    rts.setValue(new BigDecimal(parameters.getRealTimeScaling()));
+    JLabel integratorAbsLabel = new JLabel(XcosMessages.INTEGRATOR_ABSOLUTE_TOLERANCE);
+    integrator = new JFormattedTextField(CURRENT_FORMAT);
+    integrator.setInputVerifier(VALIDATE_POSITIVE_DOUBLE);
+    integrator.setValue(new BigDecimal(parameters.getIntegratorAbsoluteTolerance()));
+    JLabel integratorRelLabel = new JLabel(XcosMessages.INTEGRATOR_RELATIVE_TOLERANCE);
+    integratorRel = new JFormattedTextField(CURRENT_FORMAT);
+    integratorRel.setInputVerifier(VALIDATE_POSITIVE_DOUBLE);
+    integratorRel.setValue(new BigDecimal(parameters.getIntegratorRelativeTolerance()));
+    JLabel toleranceOnTimeLabel = new JLabel(XcosMessages.TOLERANCE_ON_TIME);
+    toleranceOnTime = new JFormattedTextField(CURRENT_FORMAT);
+    toleranceOnTime.setInputVerifier(VALIDATE_POSITIVE_DOUBLE);
+    toleranceOnTime.setValue(new BigDecimal(parameters.getToleranceOnTime()));
+    JLabel maxIntegrationTimeLabel = new JLabel(XcosMessages.MAX_INTEGRATION_TIME_INTERVAL);
+    maxIntegrationTime = new JFormattedTextField(CURRENT_FORMAT);
+    maxIntegrationTime.setInputVerifier(VALIDATE_POSITIVE_DOUBLE);
+    maxIntegrationTime.setValue(new BigDecimal(parameters.getMaxIntegrationTimeInterval()));
+    JLabel solverLabel = new JLabel(XcosMessages.SOLVER_CHOICE);
+    final String[] solvers = new String[] { "LSodar", "Sundials/CVODE - BDF - NEWTON", "Sundials/CVODE - BDF - FUNCTIONAL", "Sundials/CVODE - ADAMS - NEWTON", "Sundials/CVODE - ADAMS - FUNCTIONAL", "DOPRI5 - Dormand-Prince 4(5)", "RK45 - Runge-Kutta 4(5)", "Implicit RK45 - Runge-Kutta 4(5)", "Sundials/IDA", "DDaskr - Newton", "DDaskr - GMRes" };
+    final String[] solversTooltips = new String[] { "Method: dynamic, Nonlinear solver= dynamic", "Method: BDF, Nonlinear solver= NEWTON", "Method: BDF, Nonlinear solver= FUNCTIONAL", "Method: ADAMS, Nonlinear solver= NEWTON", "Method: ADAMS, Nonlinear solver= FUNCTIONAL", "Method: Fixed step", "Method: Fixed step", "Method: Fixed step, Nonlinear solver= FIXED-POINT", "Method: BDF, Nonlinear solver= NEWTON", "Method: BDF, Nonlinear solver= NEWTON", "Method: BDF - Nonlinear solver = GMRES" };
+    solver = new JComboBox(solvers);
+    double solverValue = parameters.getSolver();
+    if (solverValue >= 0.0 && solverValue <= solvers.length - 2) {
+        solver.setSelectedIndex((int) solverValue);
+    } else {
+        // IDA = 8+92 = 100, DDaskr-Newton = 9+92 = 101, DDaskr-GMRes = 102
+        // Here, we turn IDA and DDaskr solver numbers back into indexes (8, 9 and 10)
+        solver.setSelectedIndex((int) solverValue - 92);
+    }
+    final class ComboboxToolTipRenderer extends DefaultListCellRenderer {
+
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            JComponent comp = (JComponent) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (-1 < index && null != value && null != solversTooltips) {
+                list.setToolTipText(solversTooltips[index]);
+            }
+            return comp;
+        }
+    }
+    solver.setRenderer(new ComboboxToolTipRenderer());
+    JLabel maxStepSizeLabel = new JLabel(XcosMessages.MAXIMUN_STEP_SIZE);
+    maxStepSize = new JFormattedTextField(CURRENT_FORMAT);
+    maxStepSize.setInputVerifier(VALIDATE_POSITIVE_DOUBLE);
+    maxStepSize.setValue(new BigDecimal(parameters.getMaximumStepSize()));
+    JButton cancelButton = new JButton(XcosMessages.CANCEL);
+    JButton okButton = new JButton(XcosMessages.OK);
+    JButton defaultButton = new JButton(XcosMessages.DEFAULT);
+    JButton setContextButton = new JButton(XcosMessages.SET_CONTEXT);
+    okButton.setPreferredSize(cancelButton.getPreferredSize());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = 0;
+    gbc.gridy = 0;
+    gbc.gridheight = 1;
+    gbc.gridwidth = 1;
+    gbc.insets = new Insets(0, 10, 0, 0);
+    gbc.gridx = 0;
+    gbc.gridy = 4;
+    gbc.gridheight = 1;
+    gbc.gridwidth = 1;
+    gbc.fill = GridBagConstraints.NONE;
+    gbc.insets = new Insets(0, 10, 0, 0);
+    add(integrationLabel, gbc);
+    gbc.gridy = 5;
+    add(rtsLabel, gbc);
+    gbc.gridy = 6;
+    add(integratorAbsLabel, gbc);
+    gbc.gridy = 7;
+    add(integratorRelLabel, gbc);
+    gbc.gridy = 8;
+    add(toleranceOnTimeLabel, gbc);
+    gbc.gridy = 9;
+    add(maxIntegrationTimeLabel, gbc);
+    gbc.gridy = 10;
+    add(solverLabel, gbc);
+    gbc.gridy = 11;
+    add(maxStepSizeLabel, gbc);
+    gbc.gridy = 12;
+    add(setContextButton, gbc);
+    gbc.gridx = 1;
+    gbc.gridy = 4;
+    gbc.gridwidth = GridBagConstraints.REMAINDER;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.insets = new Insets(5, 10, 0, 10);
+    add(integration, gbc);
+    gbc.gridy = 5;
+    add(rts, gbc);
+    gbc.gridy = 6;
+    add(integrator, gbc);
+    gbc.gridy = 7;
+    add(integratorRel, gbc);
+    gbc.gridy = 8;
+    add(toleranceOnTime, gbc);
+    gbc.gridy = 9;
+    add(maxIntegrationTime, gbc);
+    gbc.gridy = 10;
+    add(solver, gbc);
+    gbc.gridy = 11;
+    add(maxStepSize, gbc);
+    gbc.gridx = 1;
+    gbc.gridy = 14;
+    gbc.gridheight = 1;
+    gbc.gridwidth = 1;
+    gbc.weightx = 1.;
+    gbc.fill = GridBagConstraints.NONE;
+    gbc.insets = new Insets(5, 0, 10, 5);
+    add(okButton, gbc);
+    gbc.gridx = 2;
+    gbc.weightx = 0.;
+    gbc.insets = new Insets(5, 0, 10, 10);
+    add(cancelButton, gbc);
+    gbc.gridx = 3;
+    gbc.weightx = 0.;
+    gbc.insets = new Insets(5, 0, 10, 10);
+    add(defaultButton, gbc);
+    installActionListeners(cancelButton, okButton, defaultButton, setContextButton);
+}
+#end_block
+
+#method_before
+// CSON: JavaNCSS
+private void installActionListeners(JButton cancelButton, JButton okButton, JButton defaultButton, JButton setContextButton) {
+    cancelButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            dispose();
+        }
+    });
+    defaultButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            integration.setValue(new BigDecimal(ScicosParameters.FINAL_INTEGRATION_TIME));
+            rts.setValue(new BigDecimal(ScicosParameters.REAL_TIME_SCALING));
+            integrator.setValue(new BigDecimal(ScicosParameters.INTEGRATOR_ABSOLUTE_TOLERANCE));
+            integratorRel.setValue(new BigDecimal(ScicosParameters.INTEGRATOR_RELATIVE_TOLERANCE));
+            toleranceOnTime.setValue(new BigDecimal(ScicosParameters.TOLERANCE_ON_TIME));
+            maxIntegrationTime.setValue(new BigDecimal(ScicosParameters.MAX_INTEGRATION_TIME_INTERVAL));
+            solver.setSelectedIndex((int) ScicosParameters.SOLVER);
+            maxStepSize.setValue(new BigDecimal(ScicosParameters.MAXIMUM_STEP_SIZE));
+        }
+    });
+    okButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (((JButton) e.getSource()).hasFocus()) {
+                try {
+                    /*
+                         * FIXME This logic must be deported to a vetoable
+                         * handler
+                         */
+                    int solverSelectedIndex = solver.getSelectedIndex();
+                    if (solverSelectedIndex >= 0.0 && solverSelectedIndex <= solver.getModel().getSize() - 4) {
+                        parameters.setSolver(solverSelectedIndex);
+                    } else {
+                        // IDA = 8+92 = 100, DDaskr - Newton = 9+92 = 101, DDaskr - GMRes = 102
+                        parameters.setSolver(solverSelectedIndex + 92);
+                    }
+                    parameters.setFinalIntegrationTime(((BigDecimal) integration.getValue()).doubleValue());
+                    parameters.setRealTimeScaling(((BigDecimal) rts.getValue()).doubleValue());
+                    parameters.setIntegratorAbsoluteTolerance(((BigDecimal) integrator.getValue()).doubleValue());
+                    parameters.setIntegratorRelativeTolerance(((BigDecimal) integratorRel.getValue()).doubleValue());
+                    parameters.setToleranceOnTime(((BigDecimal) toleranceOnTime.getValue()).doubleValue());
+                    parameters.setMaxIntegrationTimeInterval(((BigDecimal) maxIntegrationTime.getValue()).doubleValue());
+                    parameters.setMaximumStepSize(((BigDecimal) maxStepSize.getValue()).doubleValue());
+                    dispose();
+                } catch (PropertyVetoException ex) {
+                    Logger.getLogger(SetupAction.class.getName()).severe(ex.toString());
+                }
+            }
+        }
+    });
+    setContextButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            final SetContextDialog dialog = new SetContextDialog(SetupDialog.this, rootGraph, parameters);
+            dialog.pack();
+            dialog.setVisible(true);
+        }
+    });
+}
+#method_after
+// CSON: JavaNCSS
+private void installActionListeners(JButton cancelButton, JButton okButton, JButton defaultButton, JButton setContextButton) {
+    cancelButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            dispose();
+        }
+    });
+    defaultButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            integration.setValue(new BigDecimal(ScicosParameters.FINAL_INTEGRATION_TIME));
+            rts.setValue(new BigDecimal(ScicosParameters.REAL_TIME_SCALING));
+            integrator.setValue(new BigDecimal(ScicosParameters.INTEGRATOR_ABSOLUTE_TOLERANCE));
+            integratorRel.setValue(new BigDecimal(ScicosParameters.INTEGRATOR_RELATIVE_TOLERANCE));
+            toleranceOnTime.setValue(new BigDecimal(ScicosParameters.TOLERANCE_ON_TIME));
+            maxIntegrationTime.setValue(new BigDecimal(ScicosParameters.MAX_INTEGRATION_TIME_INTERVAL));
+            solver.setSelectedIndex((int) ScicosParameters.SOLVER);
+            maxStepSize.setValue(new BigDecimal(ScicosParameters.MAXIMUM_STEP_SIZE));
+        }
+    });
+    okButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (((JButton) e.getSource()).hasFocus()) {
+                try {
+                    /*
+                         * FIXME This logic must be deported to a vetoable
+                         * handler
+                         */
+                    int solverSelectedIndex = solver.getSelectedIndex();
+                    if (solverSelectedIndex >= 0.0 && solverSelectedIndex <= solver.getModel().getSize() - 4) {
+                        parameters.setSolver(solverSelectedIndex);
+                    } else {
+                        // IDA = 8+92 = 100, DDaskr-Newton = 9+92 = 101, DDaskr-GMRes = 102
+                        parameters.setSolver(solverSelectedIndex + 92);
+                    }
+                    parameters.setFinalIntegrationTime(((BigDecimal) integration.getValue()).doubleValue());
+                    parameters.setRealTimeScaling(((BigDecimal) rts.getValue()).doubleValue());
+                    parameters.setIntegratorAbsoluteTolerance(((BigDecimal) integrator.getValue()).doubleValue());
+                    parameters.setIntegratorRelativeTolerance(((BigDecimal) integratorRel.getValue()).doubleValue());
+                    parameters.setToleranceOnTime(((BigDecimal) toleranceOnTime.getValue()).doubleValue());
+                    parameters.setMaxIntegrationTimeInterval(((BigDecimal) maxIntegrationTime.getValue()).doubleValue());
+                    parameters.setMaximumStepSize(((BigDecimal) maxStepSize.getValue()).doubleValue());
+                    dispose();
+                } catch (PropertyVetoException ex) {
+                    Logger.getLogger(SetupAction.class.getName()).severe(ex.toString());
+                }
+            }
+        }
+    });
+    setContextButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            final SetContextDialog dialog = new SetContextDialog(SetupDialog.this, rootGraph, parameters);
+            dialog.pack();
+            dialog.setVisible(true);
+        }
+    });
+}
+#end_block
+
+#method_before
+@Override
+public void invoke(final Object source, final mxEventObject evt) {
+    final XcosDiagram diagram = (XcosDiagram) source;
+    final Object[] cells = (Object[]) evt.getProperty(CELLS);
+    diagram.getModel().beginUpdate();
+    try {
+        final Filter filter = new Filter() {
+
+            @Override
+            public boolean filter(Object cell) {
+                if (cell instanceof BasicBlock) {
+                    // Update parent on cell addition
+                    ((BasicBlock) cell).setParentDiagram(diagram);
+                    // update port numbering
+                    diagram.updatePort((BasicBlock) cell);
+                }
+                return false;
+            }
+        };
+        for (int i = 0; i < cells.length; ++i) {
+            mxGraphModel.filterDescendants(diagram.getModel(), filter, cells[i]);
+        }
+    } finally {
+        diagram.getModel().endUpdate();
+    }
+}
+#method_after
+@Override
+public void invoke(final Object source, final mxEventObject evt) {
+    final XcosDiagram diagram = (XcosDiagram) source;
+    final Object[] cells = (Object[]) evt.getProperty(CELLS);
+    diagram.getModel().beginUpdate();
+    try {
+        final Filter filter = new Filter() {
+
+            @Override
+            public boolean filter(Object cell) {
+                if (cell instanceof BasicBlock) {
+                    // Update parent on cell addition
+                    ((BasicBlock) cell).setParentDiagram(diagram);
+                    // update port numbering
+                    diagram.updateIOBlocks((BasicBlock) cell);
+                }
+                return false;
+            }
+        };
+        for (int i = 0; i < cells.length; ++i) {
+            mxGraphModel.filterDescendants(diagram.getModel(), filter, cells[i]);
+        }
+    } finally {
+        diagram.getModel().endUpdate();
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void invoke(final Object source, final mxEventObject evt) {
+    final mxUndoableEdit edit = (mxUndoableEdit) evt.getProperty(ScilabGraphConstants.EVENT_CHANGE_EDIT);
+    final mxGraphModel model = (mxGraphModel) edit.getSource();
+    final List<mxUndoableChange> changes = edit.getChanges();
+    final Object[] changedCells = getSelectionCellsForChanges(changes, model);
+    model.beginUpdate();
+    try {
+        for (final Object object : changedCells) {
+            if (object instanceof BasicBlock) {
+                final BasicBlock current = (BasicBlock) object;
+                // some BasiBlock fields
+                if (changes.get(0) instanceof mxStyleChange) {
+                    current.updateFieldsFromStyle();
+                }
+                // update the superblock container ports if the block is inside a superblock diagram
+                if (current.getParentDiagram() instanceof SuperBlockDiagram) {
+                    SuperBlockDiagram superdiagram = (SuperBlockDiagram) current.getParentDiagram();
+                    SuperBlock superblock = superdiagram.getContainer();
+                    superblock.updateExportedPort();
+                }
+                // Update the block position
+                BlockPositioning.updateBlockView(current);
+                // force a refresh of the block ports and links connected to these ports
+                final int childCount = current.getParentDiagram().getModel().getChildCount(current);
+                for (int i = 0; i < childCount; i++) {
+                    final Object port = current.getParentDiagram().getModel().getChildAt(current, i);
+                    current.getParentDiagram().getView().clear(port, true, true);
+                    final int edgeCount = current.getParentDiagram().getModel().getEdgeCount(port);
+                    for (int j = 0; j < edgeCount; j++) {
+                        final Object edge = current.getParentDiagram().getModel().getEdgeAt(port, j);
+                        current.getParentDiagram().getView().clear(edge, true, true);
+                    }
+                }
+                // force a refresh of the block
+                current.getParentDiagram().getView().clear(current, true, true);
+                current.getParentDiagram().getView().validate();
+                current.getParentDiagram().repaint();
+            }
+        }
+    } finally {
+        model.endUpdate();
+    }
+}
+#method_after
+@Override
+public void invoke(final Object source, final mxEventObject evt) {
+    final mxUndoableEdit edit = (mxUndoableEdit) evt.getProperty(ScilabGraphConstants.EVENT_CHANGE_EDIT);
+    final mxGraphModel model = (mxGraphModel) edit.getSource();
+    final List<mxUndoableChange> changes = edit.getChanges();
+    final Object[] changedCells = getSelectionCellsForChanges(changes, model);
+    model.beginUpdate();
+    try {
+        for (final Object object : changedCells) {
+            if (object instanceof BasicBlock) {
+                final BasicBlock current = (BasicBlock) object;
+                // some BasiBlock fields
+                if (changes.get(0) instanceof mxStyleChange) {
+                    current.updateFieldsFromStyle();
+                }
+                // inside a superblock diagram
+                if (current.getParentDiagram() instanceof SuperBlockDiagram) {
+                    SuperBlockDiagram superdiagram = (SuperBlockDiagram) current.getParentDiagram();
+                    SuperBlock superblock = superdiagram.getContainer();
+                    superblock.updateExportedPort();
+                }
+                // Update the block position
+                BlockPositioning.updateBlockView(current);
+                // force a refresh of the block ports and links
+                // connected to these ports
+                final int childCount = current.getParentDiagram().getModel().getChildCount(current);
+                for (int i = 0; i < childCount; i++) {
+                    final Object port = current.getParentDiagram().getModel().getChildAt(current, i);
+                    current.getParentDiagram().getView().clear(port, true, true);
+                    final int edgeCount = current.getParentDiagram().getModel().getEdgeCount(port);
+                    for (int j = 0; j < edgeCount; j++) {
+                        final Object edge = current.getParentDiagram().getModel().getEdgeAt(port, j);
+                        current.getParentDiagram().getView().clear(edge, true, true);
+                    }
+                }
+                // force a refresh of the block
+                current.getParentDiagram().getView().clear(current, true, true);
+                current.getParentDiagram().getView().validate();
+                current.getParentDiagram().repaint();
+            }
+        }
+    } finally {
+        model.endUpdate();
+    }
+}
+#end_block
+
+#method_before
+public boolean saveDiagramAs(final File fileName) {
+    boolean isSuccess = false;
+    File writeFile = fileName;
+    XcosFileType format = XcosOptions.getPreferences().getFileFormat();
+    info(XcosMessages.SAVING_DIAGRAM);
+    if (fileName == null) {
+        final SwingScilabFileChooser fc = SaveAsAction.createFileChooser();
+        SaveAsAction.configureFileFilters(fc);
+        if (getSavedFile() != null) {
+            fc.setSelectedFile(getSavedFile());
+        } else {
+            final String title = getTitle();
+            if (title != null) {
+                /*
+                     * Escape file to handle not supported character in file
+                     * name (may be Windows only) see
+                     * http://msdn.microsoft.com/en
+                     * -us/library/windows/desktop/aa365247%28v=vs.85%29.aspx
+                     */
+                final char[] regex = "<>:\"/\\|?*".toCharArray();
+                String escaped = title;
+                for (char c : regex) {
+                    escaped = escaped.replace(c, '-');
+                }
+                fc.setSelectedFile(new File(escaped + XcosOptions.getPreferences().getFileFormat().getDottedExtension()));
+            }
+            ConfigurationManager.configureCurrentDirectory(fc);
+        }
+        int status = fc.showSaveDialog(this.getAsComponent());
+        if (status != JFileChooser.APPROVE_OPTION) {
+            info(XcosMessages.EMPTY_INFO);
+            return isSuccess;
+        }
+        // change the format if the user choose a save-able file format
+        final XcosFileType selectedFilter = XcosFileType.findFileType(fc.getFileFilter());
+        if (XcosFileType.getAvailableSaveFormats().contains(selectedFilter)) {
+            format = selectedFilter;
+        }
+        writeFile = fc.getSelectedFile();
+    }
+    /* Extension/format update */
+    // using a String filename also works on a non-existing file
+    final String filename = writeFile.getName();
+    /*
+         * Look for the user extension if it does not exists, append a default
+         * one
+         *
+         * if the specified extension is handled, update the save format ; else
+         * append a default extension and use the default format
+         */
+    XcosFileType userExtension = XcosFileType.findFileType(filename);
+    if (userExtension == null) {
+        writeFile = new File(writeFile.getParent(), filename + format.getDottedExtension());
+        userExtension = format;
+    }
+    if (XcosFileType.getAvailableSaveFormats().contains(userExtension)) {
+        format = userExtension;
+    } else {
+        writeFile = new File(writeFile.getParent(), filename + format.getDottedExtension());
+    }
+    /*
+         * If the file exists, ask for confirmation if this is not the
+         * previously saved file
+         */
+    if (writeFile.exists() && !writeFile.equals(getSavedFile())) {
+        final boolean overwrite = ScilabModalDialog.show(XcosTab.get(this), XcosMessages.OVERWRITE_EXISTING_FILE, XcosMessages.XCOS, IconType.QUESTION_ICON, ButtonType.YES_NO) == AnswerOption.YES_OPTION;
+        if (!overwrite) {
+            info(XcosMessages.EMPTY_INFO);
+            return false;
+        }
+    }
+    /*
+         * Really save the data
+         */
+    try {
+        format.save(writeFile.getCanonicalPath(), getRootDiagram());
+        setSavedFile(writeFile);
+        setTitle(writeFile.getName().substring(0, writeFile.getName().lastIndexOf('.')));
+        ConfigurationManager.getInstance().addToRecentFiles(writeFile);
+        setModified(false);
+        isSuccess = true;
+    } catch (final Exception e) {
+        LOG.severe(e.toString());
+        XcosDialogs.couldNotSaveFile(this);
+    }
+    info(XcosMessages.EMPTY_INFO);
+    return isSuccess;
+}
+#method_after
+public boolean saveDiagramAs(final File fileName) {
+    boolean isSuccess = false;
+    File writeFile = fileName;
+    XcosFileType format = XcosOptions.getPreferences().getFileFormat();
+    info(XcosMessages.SAVING_DIAGRAM);
+    if (fileName == null) {
+        final SwingScilabFileChooser fc = SaveAsAction.createFileChooser();
+        SaveAsAction.configureFileFilters(fc);
+        ConfigurationManager.configureCurrentDirectory(fc);
+        if (getSavedFile() != null) {
+            // using save-as, the file chooser should have a filename
+            // without extension as default
+            String filename = getSavedFile().getName();
+            filename = filename.substring(0, filename.lastIndexOf('.'));
+            fc.setSelectedFile(new File(filename));
+        } else {
+            final String title = getTitle();
+            if (title != null) {
+                /*
+                     * Escape file to handle not supported character in file
+                     * name (may be Windows only) see
+                     * http://msdn.microsoft.com/en
+                     * -us/library/windows/desktop/aa365247%28v=vs.85%29.aspx
+                     */
+                final char[] regex = "<>:\"/\\|?*".toCharArray();
+                String escaped = title;
+                for (char c : regex) {
+                    escaped = escaped.replace(c, '-');
+                }
+                fc.setSelectedFile(new File(escaped));
+            }
+        }
+        int status = fc.showSaveDialog(this.getAsComponent());
+        if (status != JFileChooser.APPROVE_OPTION) {
+            info(XcosMessages.EMPTY_INFO);
+            return isSuccess;
+        }
+        // change the format if the user choose a save-able file format
+        final XcosFileType selectedFilter = XcosFileType.findFileType(fc.getFileFilter());
+        if (XcosFileType.getAvailableSaveFormats().contains(selectedFilter)) {
+            format = selectedFilter;
+        }
+        writeFile = fc.getSelectedFile();
+    }
+    /* Extension/format update */
+    // using a String filename also works on a non-existing file
+    final String filename = writeFile.getName();
+    /*
+         * Look for the user extension if it does not exists, append a default
+         * one
+         *
+         * if the specified extension is handled, update the save format ; else
+         * append a default extension and use the default format
+         */
+    XcosFileType userExtension = XcosFileType.findFileType(filename);
+    if (userExtension == null) {
+        writeFile = new File(writeFile.getParent(), filename + format.getDottedExtension());
+        userExtension = format;
+    }
+    if (XcosFileType.getAvailableSaveFormats().contains(userExtension)) {
+        format = userExtension;
+    } else {
+        writeFile = new File(writeFile.getParent(), filename + format.getDottedExtension());
+    }
+    /*
+         * If the file exists, ask for confirmation if this is not the
+         * previously saved file
+         */
+    if (writeFile.exists() && !writeFile.equals(getSavedFile())) {
+        final boolean overwrite = ScilabModalDialog.show(XcosTab.get(this), XcosMessages.OVERWRITE_EXISTING_FILE, XcosMessages.XCOS, IconType.QUESTION_ICON, ButtonType.YES_NO) == AnswerOption.YES_OPTION;
+        if (!overwrite) {
+            info(XcosMessages.EMPTY_INFO);
+            return false;
+        }
+    }
+    /*
+         * Really save the data
+         */
+    try {
+        format.save(writeFile.getCanonicalPath(), getRootDiagram());
+        setSavedFile(writeFile);
+        setTitle(writeFile.getName().substring(0, writeFile.getName().lastIndexOf('.')));
+        ConfigurationManager.getInstance().addToRecentFiles(writeFile);
+        setModified(false);
+        isSuccess = true;
+    } catch (final Exception e) {
+        LOG.severe(e.toString());
+        XcosDialogs.couldNotSaveFile(this);
+    }
+    info(XcosMessages.EMPTY_INFO);
+    return isSuccess;
+}
+#end_block
+
+#method_before
+@Override
+public void callBack() {
+    try {
+        asynchronousScilabExec(null, "clear('" + getSelectedVariable() + "')");
+        // The variable has been deleted. Refresh!
+        asynchronousScilabExec(null, "browsevar");
+    } catch (InterpreterException e1) {
+        System.err.println("An error in the interpreter has been catched: " + e1.getLocalizedMessage());
+    }
+}
+#method_after
+@Override
+public void callBack() {
+    try {
+        asynchronousScilabExec(null, "clear('" + getSelectedVariable() + "'); updatebrowsevar()");
+    } catch (InterpreterException e1) {
+        System.err.println("An error in the interpreter has been catched: " + e1.getLocalizedMessage());
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void visit(Label label) {
+    if (label.isValid() && label.getVisible()) {
+        try {
+            labelManager.draw(drawingTools, colorMap, label, axesDrawer);
+        } catch (SciRendererException e) {
+            invalidate(label, e);
+        }
+    }
+}
+#method_after
+@Override
+public void visit(Label label) {
+    if (label.isValid() && label.getVisible() && !label.isEmpty()) {
+        try {
+            labelManager.draw(drawingTools, colorMap, label, axesDrawer);
+        } catch (SciRendererException e) {
+            invalidate(label, e);
+        }
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void visit(final Segs segs) {
+    if (segs.isValid() && segs.getVisible() && segs.getArrows().size() != 0) {
+        axesDrawer.enableClipping(currentAxes, segs.getClipProperty());
+        try {
+            DefaultGeometry segments = new DefaultGeometry();
+            segments.setFillDrawingMode(Geometry.FillDrawingMode.NONE);
+            segments.setLineDrawingMode(Geometry.LineDrawingMode.SEGMENTS);
+            segments.setVertices(dataManager.getVertexBuffer(segs.getIdentifier()));
+            segments.setColors(dataManager.getColorBuffer(segs.getIdentifier()));
+            segments.setWireIndices(dataManager.getWireIndexBuffer(segs.getIdentifier()));
+            segments.setFaceCullingMode(Geometry.FaceCullingMode.BOTH);
+            if (segs.getLineMode()) {
+                Appearance segmentAppearance = new Appearance();
+                segmentAppearance.setLineColor(null);
+                segmentAppearance.setLineWidth(segs.getLineThickness().floatValue());
+                segmentAppearance.setLinePattern(segs.getLineStyleAsEnum().asPattern());
+                drawingTools.draw(segments, segmentAppearance);
+            }
+            /*
+                 * Segs does not derive from ContouredObject but Arrow does, hence we have to get the former's first Arrow
+                 * in order to obtain the latter's Mark (all arrows are supposed to have the same contour properties for now).
+                 */
+            if (segs.getMarkMode()) {
+                Texture texture = markManager.getMarkSprite(segs.getIdentifier(), segs.getArrows().get(0).getMark(), colorMap);
+                ElementsBuffer positions = dataManager.getVertexBuffer(segs.getIdentifier());
+                drawingTools.draw(texture, AnchorPosition.CENTER, positions);
+            }
+            /* Draw the arrows */
+            if (segs.getArrowSize() != 0.0) {
+                arrowDrawer.drawArrows(segs.getParentAxes(), segs.getIdentifier(), segs.getArrowSize(), segs.getLineThickness(), true, true, segs.getLineColor(), false);
+            }
+        } catch (OutOfMemoryException e) {
+            invalidate(segs, e);
+        } catch (ObjectRemovedException e) {
+            invalidate(segs, e);
+        } catch (SciRendererException e) {
+            invalidate(segs, e);
+        }
+        axesDrawer.disableClipping(segs.getClipProperty());
+    }
+}
+#method_after
+@Override
+public void visit(final Segs segs) {
+    if (segs.isValid() && segs.getVisible() && segs.getArrows().size() != 0) {
+        axesDrawer.enableClipping(currentAxes, segs.getClipProperty());
+        try {
+            DefaultGeometry segments = new DefaultGeometry();
+            segments.setFillDrawingMode(Geometry.FillDrawingMode.NONE);
+            segments.setLineDrawingMode(Geometry.LineDrawingMode.SEGMENTS);
+            segments.setVertices(dataManager.getVertexBuffer(segs.getIdentifier()));
+            segments.setColors(dataManager.getColorBuffer(segs.getIdentifier()));
+            segments.setWireIndices(dataManager.getWireIndexBuffer(segs.getIdentifier()));
+            segments.setFaceCullingMode(Geometry.FaceCullingMode.BOTH);
+            if (segs.getLineMode()) {
+                Appearance segmentAppearance = new Appearance();
+                segmentAppearance.setLineColor(null);
+                segmentAppearance.setLineWidth(segs.getLineThickness().floatValue());
+                segmentAppearance.setLinePattern(segs.getLineStyleAsEnum().asPattern());
+                drawingTools.draw(segments, segmentAppearance);
+            }
+            /*
+                 * Segs does not derive from ContouredObject but Arrow does, hence we have to get the former's first Arrow
+                 * in order to obtain the latter's Mark (all arrows are supposed to have the same contour properties for now).
+                 */
+            if (segs.getMarkMode()) {
+                Texture texture = markManager.getMarkSprite(segs.getIdentifier(), segs.getArrows().get(0).getMark(), colorMap);
+                ElementsBuffer positions = dataManager.getVertexBuffer(segs.getIdentifier());
+                // Take only into account start-end of segs and not the arrow head.
+                positions.getData().limit(segs.getNumberArrows() * 2 * 4);
+                drawingTools.draw(texture, AnchorPosition.CENTER, positions);
+                positions.getData().limit(positions.getData().capacity());
+            }
+            /* Draw the arrows */
+            if (segs.getArrowSize() != 0.0) {
+                arrowDrawer.drawArrows(segs.getParentAxes(), segs.getIdentifier(), segs.getArrowSize(), segs.getLineThickness(), true, true, segs.getLineColor(), false);
+            }
+        } catch (OutOfMemoryException e) {
+            invalidate(segs, e);
+        } catch (ObjectRemovedException e) {
+            invalidate(segs, e);
+        } catch (SciRendererException e) {
+            invalidate(segs, e);
+        }
+        axesDrawer.disableClipping(segs.getClipProperty());
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void updateObject(String id, int property) {
+    try {
+        if (needUpdate(id, property)) {
+            GraphicController.getController().setProperty(id, GraphicObjectProperties.__GO_VALID__, true);
+            if (GraphicObjectProperties.__GO_COLORMAP__ == property && figure.getIdentifier().equals(id)) {
+                labelManager.disposeAll();
+                dataManager.disposeAllColorBuffers();
+                dataManager.disposeAllTextureCoordinatesBuffers();
+                markManager.disposeAll();
+                textManager.disposeAll();
+                axesDrawer.disposeAll();
+                fecDrawer.updateAll();
+                colorMapTextureDataProvider.update();
+                textureManager.disposeAll();
+            } else {
+                labelManager.update(id, property);
+                dataManager.update(id, property);
+                markManager.update(id, property);
+                textManager.update(id, property);
+                axesDrawer.update(id, property);
+                legendDrawer.update(id, property);
+                fecDrawer.update(id, property);
+            }
+            if (GraphicObjectProperties.__GO_ANTIALIASING__ == property) {
+                canvas.setAntiAliasingLevel(figure.getAntialiasing());
+            }
+            if (isImmediateDrawing(id)) {
+                if (GraphicObjectProperties.__GO_IMMEDIATE_DRAWING__ == property) {
+                    canvas.redrawAndWait();
+                } else {
+                    canvas.redraw();
+                }
+            }
+        }
+        if (GraphicObjectProperties.__GO_IMMEDIATE_DRAWING__ == property && !isImmediateDrawing(id)) {
+            canvas.waitImage();
+        }
+    } catch (OutOfMemoryException e) {
+        invalidate(GraphicController.getController().getObjectFromId(id), e);
+    } catch (ObjectRemovedException e) {
+    // Object has been removed before draw : do nothing.
+    }
+}
+#method_after
+@Override
+public void updateObject(String id, int property) {
+    try {
+        if (needUpdate(id, property)) {
+            if (GraphicObjectProperties.__GO_COLORMAP__ == property && figure.getIdentifier().equals(id)) {
+                labelManager.disposeAll();
+                dataManager.disposeAllColorBuffers();
+                dataManager.disposeAllTextureCoordinatesBuffers();
+                markManager.disposeAll();
+                textManager.disposeAll();
+                axesDrawer.disposeAll();
+                fecDrawer.updateAll();
+                colorMapTextureDataProvider.update();
+                textureManager.disposeAll();
+            } else {
+                labelManager.update(id, property);
+                dataManager.update(id, property);
+                markManager.update(id, property);
+                textManager.update(id, property);
+                axesDrawer.update(id, property);
+                legendDrawer.update(id, property);
+                fecDrawer.update(id, property);
+            }
+            if (GraphicObjectProperties.__GO_ANTIALIASING__ == property) {
+                canvas.setAntiAliasingLevel(figure.getAntialiasing());
+            }
+            if (isImmediateDrawing(id)) {
+                if (GraphicObjectProperties.__GO_IMMEDIATE_DRAWING__ == property) {
+                    canvas.redrawAndWait();
+                } else {
+                    canvas.redraw();
+                }
+            }
+        }
+        if (GraphicObjectProperties.__GO_IMMEDIATE_DRAWING__ == property && !isImmediateDrawing(id)) {
+            canvas.waitImage();
+        }
+    } catch (OutOfMemoryException e) {
+        invalidate(GraphicController.getController().getObjectFromId(id), e);
+    } catch (ObjectRemovedException e) {
+    // Object has been removed before draw : do nothing.
+    }
+}
+#end_block
+
+#method_before
+private boolean needUpdate(String id, int property) {
+    GraphicObject object = GraphicController.getController().getObjectFromId(id);
+    int objectType = (Integer) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_TYPE__);
+    if ((object != null) && isFigureChild(id) && objectType != GraphicObjectProperties.__GO_UICONTROL__ && objectType != GraphicObjectProperties.__GO_UIMENU__) {
+        if (GraphicObjectProperties.__GO_VALID__ == property) {
+            return false;
+        }
+        if (object instanceof Axes) {
+            Axes axes = (Axes) object;
+            if (axes.getXAxisAutoTicks() && X_AXIS_TICKS_PROPERTIES.contains(property)) {
+                return false;
+            }
+            if (axes.getYAxisAutoTicks() && Y_AXIS_TICKS_PROPERTIES.contains(property)) {
+                return false;
+            }
+            if (axes.getZAxisAutoTicks() && Z_AXIS_TICKS_PROPERTIES.contains(property)) {
+                return false;
+            }
+            if (property != GraphicObjectProperties.__GO_CHILDREN__) {
+                axesDrawer.computeRulers(axes);
+            }
+        }
+        if (object instanceof Figure) {
+            if (property == GraphicObjectProperties.__GO_SIZE__ || property == GraphicObjectProperties.__GO_AXES_SIZE__ || property == GraphicObjectProperties.__GO_CHILDREN__) {
+                Figure fig = (Figure) object;
+                for (String gid : fig.getChildren()) {
+                    GraphicObject go = GraphicController.getController().getObjectFromId(gid);
+                    if (go instanceof Axes) {
+                        axesDrawer.computeRulers((Axes) go);
+                    }
+                }
+            }
+            if (SILENT_FIGURE_PROPERTIES.contains(property)) {
+                return false;
+            }
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+#method_after
+private boolean needUpdate(String id, int property) {
+    GraphicObject object = GraphicController.getController().getObjectFromId(id);
+    int objectType = (Integer) GraphicController.getController().getProperty(id, GraphicObjectProperties.__GO_TYPE__);
+    if ((object != null) && isFigureChild(id) && objectType != GraphicObjectProperties.__GO_UICONTROL__ && objectType != GraphicObjectProperties.__GO_UIMENU__) {
+        if (GraphicObjectProperties.__GO_VALID__ == property) {
+            return false;
+        }
+        if (object instanceof Axes) {
+            Axes axes = (Axes) object;
+            if (axes.getXAxisAutoTicks() && X_AXIS_TICKS_PROPERTIES.contains(property)) {
+                return false;
+            }
+            if (axes.getYAxisAutoTicks() && Y_AXIS_TICKS_PROPERTIES.contains(property)) {
+                return false;
+            }
+            if (axes.getZAxisAutoTicks() && Z_AXIS_TICKS_PROPERTIES.contains(property)) {
+                return false;
+            }
+            if (property != GraphicObjectProperties.__GO_CHILDREN__) {
+                axesDrawer.computeRulers(axes);
+            }
+        }
+        if (object instanceof Figure) {
+            if (property == GraphicObjectProperties.__GO_SIZE__ || property == GraphicObjectProperties.__GO_AXES_SIZE__ || property == GraphicObjectProperties.__GO_CHILDREN__) {
+                Figure fig = (Figure) object;
+                for (String gid : fig.getChildren()) {
+                    GraphicObject go = GraphicController.getController().getObjectFromId(gid);
+                    if (go instanceof Axes) {
+                        axesDrawer.computeRulers((Axes) go);
+                    }
+                }
+            }
+            if (SILENT_FIGURE_PROPERTIES.contains(property)) {
+                return false;
+            }
+        }
+        if (!object.isValid()) {
+            GraphicController.getController().setProperty(id, GraphicObjectProperties.__GO_VALID__, true);
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+#end_block
+
+#method_before
+@Override
+public Texture create(double value, DecimalFormat adaptedFormat, TextureManager textureManager) {
+    // Simple ack to avoid ticks with "-0" as label.
+    if (value == -0) {
+        value = 0;
+    }
+    if (axisProperty.getAutoTicks()) {
+        setScilabStyle(adaptedFormat);
+        if (axisProperty.getLogFlag()) {
+            return createScientificStyleSprite(value, textureManager);
+        } else {
+            return createSimpleSprite(adaptedFormat.format(value), textureManager);
+        }
+    } else {
+        FormattedText formattedText = getTextAtValue(value);
+        if (formattedText != null && formattedText.getText() != null && !formattedText.getText().isEmpty()) {
+            FormattedTextSpriteDrawer textObjectSpriteDrawer = new FormattedTextSpriteDrawer(colorMap, formattedText);
+            Texture texture = textureManager.createTexture();
+            texture.setDrawer(textObjectSpriteDrawer);
+            return texture;
+        }
+        return null;
+    }
+}
+#method_after
+@Override
+public Texture create(double value, DecimalFormat adaptedFormat, TextureManager textureManager) {
+    // Simple ack to avoid ticks with "-0" as label.
+    if (value == -0) {
+        value = 0;
+    }
+    if (axisProperty.getAutoTicks()) {
+        setScilabStyle(adaptedFormat);
+        if (axisProperty.getLogFlag()) {
+            return createScientificStyleSprite(value, textureManager);
+        } else {
+            return createSimpleSprite(adaptedFormat.format(value), textureManager);
+        }
+    } else {
+        FormattedText formattedText = getTextAtValue(value);
+        if (formattedText != null && formattedText.getText() != null && !formattedText.getText().isEmpty()) {
+            FormattedTextSpriteDrawer textObjectSpriteDrawer = new FormattedTextSpriteDrawer(colorMap, formattedText);
+            Texture texture = textureManager.createTexture();
+            texture.setMagnificationFilter(Texture.Filter.LINEAR);
+            texture.setMinifyingFilter(Texture.Filter.LINEAR);
+            texture.setDrawer(textObjectSpriteDrawer);
+            return texture;
+        }
+        return null;
+    }
+}
+#end_block
+
+#method_before
+private Texture createSprite(final ColorMap colorMap, final Label label) {
+    LabelSpriteDrawer spriteDrawer = new LabelSpriteDrawer(colorMap, label);
+    Texture sprite = textureManager.createTexture();
+    sprite.setDrawer(spriteDrawer);
+    return sprite;
+}
+#method_after
+private Texture createSprite(final ColorMap colorMap, final Label label) {
+    LabelSpriteDrawer spriteDrawer = new LabelSpriteDrawer(colorMap, label);
+    Texture sprite = textureManager.createTexture();
+    sprite.setMagnificationFilter(Texture.Filter.LINEAR);
+    sprite.setMinifyingFilter(Texture.Filter.LINEAR);
+    sprite.setDrawer(spriteDrawer);
+    return sprite;
+}
+#end_block
+

@@ -1,0 +1,2518 @@
+79
+#method_before
+@Before
+@Override
+public void setUp() throws Exception {
+    super.setUp();
+    when(Config.GetValue(ConfigValues.DefaultTimeZone)).thenReturn("Israel Standard Time");
+}
+#method_after
+@Before
+@Override
+public void setUp() throws Exception {
+    super.setUp();
+    when(Config.GetValue(ConfigValues.DefaultTimeZone)).thenReturn(DEFAULT_TIME_ZONE);
+}
+#end_block
+
+#method_before
+@Test
+public void testExecuteQueryCommand() {
+    getQuery().executeQueryCommand();
+    @SuppressWarnings("unchecked")
+    KeyValuePairCompat<String, String> result = (KeyValuePairCompat<String, String>) getQuery().getQueryReturnValue().getReturnValue();
+    assertTrue("Wrong default time zone", result.getValue().contains("Israel"));
+}
+#method_after
+@Test
+public void testExecuteQueryCommand() {
+    getQuery().executeQueryCommand();
+    @SuppressWarnings("unchecked")
+    KeyValuePairCompat<String, String> result = (KeyValuePairCompat<String, String>) getQuery().getQueryReturnValue().getReturnValue();
+    assertTrue("Wrong default time zone", result.getValue().equals(DEFAULT_TIME_ZONE));
+}
+#end_block
+
+#method_before
+@Test
+public void testExecuteQueryCommand() {
+    // Mock parameters
+    Guid roleId = Guid.NewGuid();
+    when(getQueryParameters().getRoleId()).thenReturn(roleId);
+    // Mock the expected result
+    ActionGroup group = RandomUtils.instance().pickRandom(ActionGroup.values());
+    List<ActionGroup> expected = Collections.singletonList(group);
+    // Mock the DAO
+    ActionGroupDAO actionGroupDAOMock = mock(ActionGroupDAO.class);
+    when(actionGroupDAOMock.getAllForRole(roleId)).thenReturn(expected);
+    when(getDbFacadeMockInstance().getActionGroupDAO()).thenReturn(actionGroupDAOMock);
+    // Execute the query and assert the result
+    getQuery().executeQueryCommand();
+    assertEquals("Wrong query result", expected, getQuery().getQueryReturnValue().getReturnValue());
+}
+#method_after
+@Test
+public void testExecuteQueryCommand() {
+    // Mock parameters
+    Guid roleId = Guid.NewGuid();
+    when(getQueryParameters().getRoleId()).thenReturn(roleId);
+    // Mock the expected result
+    ActionGroup group = RandomUtils.instance().nextEnum(ActionGroup.class);
+    List<ActionGroup> expected = Collections.singletonList(group);
+    // Mock the DAO
+    ActionGroupDAO actionGroupDAOMock = mock(ActionGroupDAO.class);
+    when(actionGroupDAOMock.getAllForRole(roleId)).thenReturn(expected);
+    when(getDbFacadeMockInstance().getActionGroupDAO()).thenReturn(actionGroupDAOMock);
+    // Execute the query and assert the result
+    getQuery().executeQueryCommand();
+    assertEquals("Wrong query result", expected, getQuery().getQueryReturnValue().getReturnValue());
+}
+#end_block
+
+#method_before
+public String getRelatedTableNameWithOutTags(String obj) {
+    String retval;
+    if (obj == null) {
+        return null;
+    }
+    if (StringHelper.EqOp(obj, SearchObjects.VDC_USER_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VDC_USER_PLU_OBJ_NAME)) {
+        retval = "vdc_users";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VM_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VM_PLU_OBJ_NAME)) {
+        retval = "vms";
+    } else if (StringHelper.EqOp(obj, SearchObjects.DISK_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.DISK_PLU_OBJ_NAME)) {
+        retval = "vm_images_view";
+    } else if (StringHelper.EqOp(obj, SearchObjects.TEMPLATE_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.TEMPLATE_PLU_OBJ_NAME)) {
+        retval = "vm_templates_view";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDS_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VDS_PLU_OBJ_NAME)) {
+        retval = "vds";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_CLUSTER_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VDC_CLUSTER_PLU_OBJ_NAME)) {
+        retval = "vds_groups";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_STORAGE_POOL_OBJ_NAME)) {
+        retval = "storage_pool";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_STORAGE_DOMAIN_OBJ_NAME)) {
+        retval = "storage_domains_without_storage_pools";
+    } else {
+        retval = getRelatedTableName(obj);
+    }
+    return retval;
+}
+#method_after
+public String getRelatedTableNameWithOutTags(String obj) {
+    String retval;
+    if (obj == null) {
+        return null;
+    }
+    if (StringHelper.EqOp(obj, SearchObjects.VDC_USER_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VDC_USER_PLU_OBJ_NAME)) {
+        retval = "vdc_users";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VM_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VM_PLU_OBJ_NAME)) {
+        retval = "vms";
+    } else if (StringHelper.EqOp(obj, SearchObjects.DISK_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.DISK_PLU_OBJ_NAME)) {
+        retval = "vm_images_storage_domains_view";
+    } else if (StringHelper.EqOp(obj, SearchObjects.TEMPLATE_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.TEMPLATE_PLU_OBJ_NAME)) {
+        retval = "vm_templates_view";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDS_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VDS_PLU_OBJ_NAME)) {
+        retval = "vds";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_CLUSTER_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VDC_CLUSTER_PLU_OBJ_NAME)) {
+        retval = "vds_groups";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_STORAGE_POOL_OBJ_NAME)) {
+        retval = "storage_pool";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_STORAGE_DOMAIN_OBJ_NAME)) {
+        retval = "storage_domains_without_storage_pools";
+    } else {
+        retval = getRelatedTableName(obj);
+    }
+    return retval;
+}
+#end_block
+
+#method_before
+public String getRelatedTableName(String obj) {
+    String retval = null;
+    if (obj == null) {
+        return retval;
+    }
+    if (StringHelper.EqOp(obj, SearchObjects.VDS_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VDS_PLU_OBJ_NAME)) {
+        retval = "vds_with_tags";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VM_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VM_PLU_OBJ_NAME)) {
+        retval = "vms_with_tags";
+    } else if (StringHelper.EqOp(obj, SearchObjects.TEMPLATE_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.TEMPLATE_PLU_OBJ_NAME)) {
+        retval = "vm_templates_storage_domain";
+    } else if (StringHelper.EqOp(obj, SearchObjects.AUDIT_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.AUDIT_PLU_OBJ_NAME)) {
+        retval = "audit_log";
+    } else if (StringHelper.EqOp(obj, SearchObjects.DISK_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.DISK_PLU_OBJ_NAME)) {
+        retval = "vm_images_view";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_USER_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VDC_USER_PLU_OBJ_NAME)) {
+        retval = "vdc_users_with_tags";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_POOL_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VDC_POOL_PLU_OBJ_NAME)) {
+        retval = "vm_pools_full_view";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_CLUSTER_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VDC_CLUSTER_PLU_OBJ_NAME)) {
+        retval = "vds_groups_storage_domain";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_STORAGE_POOL_OBJ_NAME)) {
+        retval = "storage_pool_with_storage_domain";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_STORAGE_DOMAIN_OBJ_NAME)) {
+        retval = "storage_domains_with_hosts_view";
+    } else if (StringHelper.EqOp(obj, SearchObjects.GLUSTER_VOLUME_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.GLUSTER_VOLUME_PLU_OBJ_NAME)) {
+        retval = "gluster_volumes";
+    }
+    return retval;
+}
+#method_after
+public String getRelatedTableName(String obj) {
+    String retval = null;
+    if (obj == null) {
+        return retval;
+    }
+    if (StringHelper.EqOp(obj, SearchObjects.VDS_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VDS_PLU_OBJ_NAME)) {
+        retval = "vds_with_tags";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VM_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VM_PLU_OBJ_NAME)) {
+        retval = "vms_with_tags";
+    } else if (StringHelper.EqOp(obj, SearchObjects.TEMPLATE_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.TEMPLATE_PLU_OBJ_NAME)) {
+        retval = "vm_templates_storage_domain";
+    } else if (StringHelper.EqOp(obj, SearchObjects.AUDIT_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.AUDIT_PLU_OBJ_NAME)) {
+        retval = "audit_log";
+    } else if (StringHelper.EqOp(obj, SearchObjects.DISK_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.DISK_PLU_OBJ_NAME)) {
+        retval = "vm_images_storage_domains_view";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_USER_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VDC_USER_PLU_OBJ_NAME)) {
+        retval = "vdc_users_with_tags";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_POOL_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VDC_POOL_PLU_OBJ_NAME)) {
+        retval = "vm_pools_full_view";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_CLUSTER_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.VDC_CLUSTER_PLU_OBJ_NAME)) {
+        retval = "vds_groups_storage_domain";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_STORAGE_POOL_OBJ_NAME)) {
+        retval = "storage_pool_with_storage_domain";
+    } else if (StringHelper.EqOp(obj, SearchObjects.VDC_STORAGE_DOMAIN_OBJ_NAME)) {
+        retval = "storage_domains_with_hosts_view";
+    } else if (StringHelper.EqOp(obj, SearchObjects.GLUSTER_VOLUME_OBJ_NAME) || StringHelper.EqOp(obj, SearchObjects.GLUSTER_VOLUME_PLU_OBJ_NAME)) {
+        retval = "gluster_volumes";
+    }
+    return retval;
+}
+#end_block
+
+#method_before
+@Test
+public void testExecuteQuery() {
+    Guid vmID = Guid.NewGuid();
+    VM expectedResult = new VM();
+    expectedResult.setId(vmID);
+    GetVmByVmIdParameters paramsMock = getQueryParameters();
+    when(paramsMock.getId()).thenReturn(vmID);
+    VmDAO vmDAOMock = mock(VmDAO.class);
+    when(vmDAOMock.getById(vmID, getUser().getUserId(), paramsMock.isFiltered())).thenReturn(expectedResult);
+    DiskImage disk = new DiskImage();
+    disk.setvm_guid(vmID);
+    disk.setactive(true);
+    DiskImageDAO diskImageDAO = mock(DiskImageDAO.class);
+    when(diskImageDAO.getAllForVm(vmID)).thenReturn(Collections.singletonList(disk));
+    DbFacade dbFacadeMock = getDbFacadeMockInstance();
+    when(dbFacadeMock.getVmDAO()).thenReturn(vmDAOMock);
+    when(dbFacadeMock.getDiskImageDAO()).thenReturn(diskImageDAO);
+    getQuery().executeQueryCommand();
+    VM result = (VM) getQuery().getQueryReturnValue().getReturnValue();
+    assertEquals("Wrong VM pool returned", expectedResult, result);
+    assertEquals("Wrong number of disks on the VM", 1, result.getDiskList().size());
+    assertEquals("Wrong disk on the VM", disk, result.getDiskList().get(0));
+}
+#method_after
+@Test
+public void testExecuteQuery() {
+    Guid vmID = Guid.NewGuid();
+    VM expectedResult = new VM();
+    expectedResult.setId(vmID);
+    GetVmByVmIdParameters paramsMock = getQueryParameters();
+    when(paramsMock.getId()).thenReturn(vmID);
+    VmDAO vmDAOMock = mock(VmDAO.class);
+    when(vmDAOMock.getById(vmID, getUser().getUserId(), paramsMock.isFiltered())).thenReturn(expectedResult);
+    DiskImage disk = new DiskImage();
+    disk.setvm_guid(vmID);
+    disk.setactive(true);
+    DiskImageDAO diskImageDAO = mock(DiskImageDAO.class);
+    when(diskImageDAO.getAllForVm(vmID)).thenReturn(Collections.singletonList(disk));
+    DbFacade dbFacadeMock = getDbFacadeMockInstance();
+    when(dbFacadeMock.getVmDAO()).thenReturn(vmDAOMock);
+    when(dbFacadeMock.getDiskImageDAO()).thenReturn(diskImageDAO);
+    getQuery().executeQueryCommand();
+    VM result = (VM) getQuery().getQueryReturnValue().getReturnValue();
+    assertEquals("Wrong VM returned", expectedResult, result);
+    assertEquals("Wrong number of disks on the VM", 1, result.getDiskList().size());
+    assertEquals("Wrong disk on the VM", disk, result.getDiskList().get(0));
+}
+#end_block
+
+#method_before
+@Override
+public Response add(VM vm) {
+    validateParameters(vm, "name", "template.id|name", "cluster.id|name");
+    Guid templateId = getTemplateId(vm);
+    VmStatic staticVm = getMapper(VM.class, VmStatic.class).map(vm, getMapper(VmTemplate.class, VmStatic.class).map(lookupTemplate(templateId), null));
+    if (namedCluster(vm)) {
+        staticVm.setvds_group_id(getClusterId(vm));
+    }
+    // resolve the host's ID, because it will be needed down the line
+    if (vm.isSetPlacementPolicy() && vm.getPlacementPolicy().isSetHost() && vm.getPlacementPolicy().getHost().isSetName() && !vm.getPlacementPolicy().getHost().isSetId()) {
+        vm.getPlacementPolicy().getHost().setId(getHostId(vm.getPlacementPolicy().getHost().getName()));
+    }
+    Response response = null;
+    Guid storageDomainId = (vm.isSetStorageDomain() && vm.getStorageDomain().isSetId()) ? asGuid(vm.getStorageDomain().getId()) : Guid.Empty;
+    if (vm.isSetSnapshots() && vm.getSnapshots().getSnapshots() != null && !vm.getSnapshots().getSnapshots().isEmpty()) {
+        // If Vm has snapshots collection - this is a clone vm from snapshot operation
+        String snapshotId = getSnapshotId(vm.getSnapshots());
+        org.ovirt.engine.core.common.businessentities.VM vmConfiguration = getVmConfiguration(snapshotId);
+        getMapper(VM.class, VmStatic.class).map(vm, vmConfiguration.getStaticData());
+        // If vm passed in the call has disks attached on them,
+        // merge their data with the data of the disks on the configuration
+        // The parameters to AddVmFromSnapshot hold an array list of Disks
+        // and not List of Disks, as this is a GWT serialization limitation,
+        // and this parameter class serves GWT clients as well.
+        ArrayList<DiskImage> changedDisks = null;
+        if (vm.isSetDisks()) {
+            Map<Guid, DiskImage> diskImagesById = getDiskImagesByIdMap(vmConfiguration.getDiskMap().values());
+            changedDisks = getDiskImagesForCloneFromSnapshotParams(vm.getDisks(), diskImagesById);
+        }
+        response = cloneVmFromSnapshot(vmConfiguration.getStaticData(), snapshotId, changedDisks);
+    } else if (vm.isSetDisks() && vm.getDisks().isSetClone() && vm.getDisks().isClone()) {
+        // disks are always cloned on the storage-domain, which contains the disk from which they are cloned.
+        // therefore, even if user passed storage-domain, it is ignored in this context.
+        response = cloneVmFromTemplate(staticVm, vm.getDisks(), templateId);
+    } else if (Guid.Empty.equals(templateId)) {
+        response = addVmFromScratch(staticVm, storageDomainId, vm.getDisks());
+    } else {
+        response = addVm(staticVm, storageDomainId, vm.getDisks(), templateId);
+    }
+    return response;
+}
+#method_after
+@Override
+public Response add(VM vm) {
+    validateParameters(vm, "name", "template.id|name", "cluster.id|name");
+    Guid templateId = getTemplateId(vm);
+    VmStatic staticVm = getMapper(VM.class, VmStatic.class).map(vm, getMapper(VmTemplate.class, VmStatic.class).map(lookupTemplate(templateId), null));
+    if (namedCluster(vm)) {
+        staticVm.setvds_group_id(getClusterId(vm));
+    }
+    // resolve the host's ID, because it will be needed down the line
+    if (vm.isSetPlacementPolicy() && vm.getPlacementPolicy().isSetHost() && vm.getPlacementPolicy().getHost().isSetName() && !vm.getPlacementPolicy().getHost().isSetId()) {
+        vm.getPlacementPolicy().getHost().setId(getHostId(vm.getPlacementPolicy().getHost().getName()));
+    }
+    Response response = null;
+    Guid storageDomainId = (vm.isSetStorageDomain() && vm.getStorageDomain().isSetId()) ? asGuid(vm.getStorageDomain().getId()) : Guid.Empty;
+    if (vm.isSetSnapshots() && vm.getSnapshots().getSnapshots() != null && !vm.getSnapshots().getSnapshots().isEmpty()) {
+        // If Vm has snapshots collection - this is a clone vm from snapshot operation
+        String snapshotId = getSnapshotId(vm.getSnapshots());
+        org.ovirt.engine.core.common.businessentities.VM vmConfiguration = getVmConfiguration(snapshotId);
+        getMapper(VM.class, VmStatic.class).map(vm, vmConfiguration.getStaticData());
+        // If vm passed in the call has disks attached on them,
+        // merge their data with the data of the disks on the configuration
+        // The parameters to AddVmFromSnapshot hold an array list of Disks
+        // and not List of Disks, as this is a GWT serialization limitation,
+        // and this parameter class serves GWT clients as well.
+        ArrayList<DiskImage> changedDisks = null;
+        if (vm.isSetDisks()) {
+            Map<Guid, DiskImage> diskImagesById = getDiskImagesByIdMap(vmConfiguration.getDiskMap().values());
+            changedDisks = getDiskImagesForCloneFromSnapshotParams(vm.getDisks(), diskImagesById);
+        }
+        response = cloneVmFromSnapshot(vmConfiguration.getStaticData(), snapshotId, changedDisks);
+    } else if (vm.isSetDisks() && vm.getDisks().isSetClone() && vm.getDisks().isClone()) {
+        response = cloneVmFromTemplate(staticVm, vm.getDisks(), templateId);
+    } else if (Guid.Empty.equals(templateId)) {
+        response = addVmFromScratch(staticVm, storageDomainId, vm.getDisks());
+    } else {
+        response = addVm(staticVm, storageDomainId, vm.getDisks(), templateId);
+    }
+    return response;
+}
+#end_block
+
+#method_before
+public Quota getUnlimitedQuota(storage_pool storagePool, boolean isDefaultQuota) {
+    if (storagePool == null || storagePool.getId() == null) {
+        log.error("Unlimited Quota cannot be created, Storage pool is not valid ");
+        return null;
+    }
+    // Set new Quota definition.
+    Quota quota = new Quota();
+    Guid quotaId = Guid.NewGuid();
+    quota.setId(quotaId);
+    quota.setStoragePoolId(storagePool.getId());
+    quota.setQuotaName(getDefaultQuotaName(storagePool));
+    quota.setDescription("Automatic generated Quota for Data Center " + storagePool.getname());
+    quota.setThresholdVdsGroupPercentage(getIntegerConfig(ConfigValues.QuotaThresholdVdsGroup));
+    quota.setThresholdStoragePercentage(getIntegerConfig(ConfigValues.QuotaThresholdStorage));
+    quota.setGraceVdsGroupPercentage(getIntegerConfig(ConfigValues.QuotaGraceVdsGroup));
+    quota.setGraceStoragePercentage(getIntegerConfig(ConfigValues.QuotaGraceStorage));
+    quota.setIsDefaultQuota(isDefaultQuota);
+    quota.setQuotaVdsGroups(new ArrayList<QuotaVdsGroup>());
+    quota.setQuotaStorages(new ArrayList<QuotaStorage>());
+    // Set Quota storage capacity definition.
+    QuotaStorage quotaStorage = new QuotaStorage();
+    quotaStorage.setStorageSizeGB(UNLIMITED);
+    quota.setGlobalQuotaStorage(quotaStorage);
+    // Set Quota cluster virtual memory definition and virtual CPU definition.
+    QuotaVdsGroup quotaVdsGroup = new QuotaVdsGroup();
+    quotaVdsGroup.setVirtualCpu(UNLIMITED.intValue());
+    quotaVdsGroup.setMemSizeMB(UNLIMITED);
+    quota.setGlobalQuotaVdsGroup(quotaVdsGroup);
+    return quota;
+}
+#method_after
+public Quota getUnlimitedQuota(storage_pool storagePool, boolean isDefaultQuota) {
+    if (storagePool == null || storagePool.getId() == null) {
+        log.error("Unlimited Quota cannot be created, Storage pool is not valid ");
+        return null;
+    }
+    // Set new Quota definition.
+    Quota quota = new Quota();
+    Guid quotaId = Guid.NewGuid();
+    quota.setId(quotaId);
+    quota.setStoragePoolId(storagePool.getId());
+    quota.setQuotaName(getDefaultQuotaName(storagePool));
+    quota.setDescription("Automatic generated Quota for Data Center " + storagePool.getname());
+    quota.setThresholdVdsGroupPercentage(getQuotaThresholdVdsGroup());
+    quota.setThresholdStoragePercentage(getQuotaThresholdStorage());
+    quota.setGraceVdsGroupPercentage(getQuotaGraceVdsGroup());
+    quota.setGraceStoragePercentage(getQuotaGraceStorage());
+    quota.setIsDefaultQuota(isDefaultQuota);
+    quota.setQuotaVdsGroups(new ArrayList<QuotaVdsGroup>());
+    quota.setQuotaStorages(new ArrayList<QuotaStorage>());
+    // Set Quota storage capacity definition.
+    QuotaStorage quotaStorage = new QuotaStorage();
+    quotaStorage.setStorageSizeGB(UNLIMITED);
+    quota.setGlobalQuotaStorage(quotaStorage);
+    // Set Quota cluster virtual memory definition and virtual CPU definition.
+    QuotaVdsGroup quotaVdsGroup = new QuotaVdsGroup();
+    quotaVdsGroup.setVirtualCpu(UNLIMITED.intValue());
+    quotaVdsGroup.setMemSizeMB(UNLIMITED);
+    quota.setGlobalQuotaVdsGroup(quotaVdsGroup);
+    return quota;
+}
+#end_block
+
+#method_before
+protected Integer getIntegerConfig(ConfigValues value) {
+    return Config.GetValue(value);
+}
+#method_after
+private static int getIntegerConfig(ConfigValues value) {
+    return Config.<Integer>GetValue(value);
+}
+#end_block
+
+#method_before
+private void mockConfig() {
+    doReturn(80).when(quotaHelper).getIntegerConfig(ConfigValues.QuotaThresholdVdsGroup);
+    doReturn(80).when(quotaHelper).getIntegerConfig(ConfigValues.QuotaThresholdStorage);
+    doReturn(20).when(quotaHelper).getIntegerConfig(ConfigValues.QuotaGraceVdsGroup);
+    doReturn(20).when(quotaHelper).getIntegerConfig(ConfigValues.QuotaGraceStorage);
+}
+#method_after
+private void mockConfig() {
+    doReturn(80).when(quotaHelper).getQuotaThresholdVdsGroup();
+    doReturn(80).when(quotaHelper).getQuotaThresholdStorage();
+    doReturn(20).when(quotaHelper).getQuotaGraceVdsGroup();
+    doReturn(20).when(quotaHelper).getQuotaGraceStorage();
+}
+#end_block
+
+#method_before
+@Test
+public void testGetRelevantQuotasExistingVdsGroupNoSpecificQuotas() throws Exception {
+    // there are no specific quotas, but all the general quotas relate to the storage pool containing this group
+    assertGetAllRelevantQuoatsForVdsGroup(FixturesTool.VDS_GROUP_RHEL6_NFS_OTHER, NUM_QUOTAS - 1);
+}
+#method_after
+@Test
+public void testGetRelevantQuotasExistingVdsGroupNoSpecificQuotas() throws Exception {
+    // there are no specific quotas, but all the general quotas relate to the storage pool containing this group
+    assertGetAllRelevantQuoatsForVdsGroup(FixturesTool.VDS_GROUP_RHEL6_NFS_NO_SPECIFIC_QUOTAS, NUM_QUOTAS - 1);
+}
+#end_block
+
+#method_before
+@Test
+public void testGetRelevantQuotasExistingVdsGroupNoSpecificQuotas() throws Exception {
+    // there are no specific quotas, but all the general quotas relate to the storage pool containing this group
+    assertGetAllRelevantQuoatsForVdsGroup(FixturesTool.VDS_GROUP_RHEL6_NFS_OTHER, NUM_QUOTAS - 1);
+}
+#method_after
+@Test
+public void testGetRelevantQuotasExistingVdsGroupNoSpecificQuotas() throws Exception {
+    // there are no specific quotas, but all the general quotas relate to the storage pool containing this group
+    assertGetAllRelevantQuoatsForVdsGroup(FixturesTool.VDS_GROUP_RHEL6_NFS_NO_SPECIFIC_QUOTAS, NUM_QUOTAS - 1);
+}
+#end_block
+
+#method_before
+@Override
+public Map<Boolean, List<VM>> getForImage(Guid id) {
+    Map<Boolean, List<VM>> result = new HashMap<Boolean, List<VM>>(2);
+    List<VMWithPlugInfo> vms = getCallsHandler().executeReadList("GetVmByImageId", VMWithPlugInfoRowMapper.instance, getCustomMapSqlParameterSource().addValue("image_guid", id));
+    for (VMWithPlugInfo vm : vms) {
+        MultiValueMapUtils.addToMap(vm.isPlugged(), vm.getVM(), result);
+    }
+    return result;
+}
+#method_after
+@Override
+public Map<Boolean, List<VM>> getForImage(Guid id) {
+    Map<Boolean, List<VM>> result = new HashMap<Boolean, List<VM>>();
+    List<VMWithPlugInfo> vms = getCallsHandler().executeReadList("GetVmsByImageId", VMWithPlugInfoRowMapper.instance, getCustomMapSqlParameterSource().addValue("image_guid", id));
+    for (VMWithPlugInfo vm : vms) {
+        MultiValueMapUtils.addToMap(vm.isPlugged(), vm.getVM(), result);
+    }
+    return result;
+}
+#end_block
+
+#method_before
+private boolean checkVmIsDown() {
+    return Config.<Boolean>GetValue(ConfigValues.LiveSnapshotEnabled, getStoragePool().getcompatibility_version().getValue());
+}
+#method_after
+private boolean checkVmIsDown() {
+    return !Config.<Boolean>GetValue(ConfigValues.LiveSnapshotEnabled, getStoragePool().getcompatibility_version().getValue());
+}
+#end_block
+
+#method_before
+@Override
+protected void executeQueryCommand() {
+    Guid tryingImage = Guid.Empty;
+    DiskImage activeDisk = findImageForDrive(SnapshotType.ACTIVE);
+    DiskImage inactiveDisk = findImageForDrive(SnapshotType.PREVIEW);
+    ;
+    if (getDiskImageDao().getAllForVm(getParameters().getId(), getUserID(), getParameters().isFiltered()).isEmpty() || activeDisk == null || imageBeforePreviewIsMissing(activeDisk, inactiveDisk)) {
+        log.warnFormat("Vm {0} images data incorrect", getParameters().getId());
+        getQueryReturnValue().setReturnValue(new ArrayList<DiskImage>());
+        return;
+    }
+    if (inactiveDisk != null) {
+        tryingImage = activeDisk.getParentId();
+    }
+    Guid topmostImageGuid = inactiveDisk == null ? activeDisk.getId() : inactiveDisk.getId();
+    // Note that no additional permission filtering is needed -
+    // if a user could read the disk of a VM, all its snapshots are OK too
+    getQueryReturnValue().setReturnValue(ImagesHandler.getAllImageSnapshots(topmostImageGuid, activeDisk.getit_guid()));
+    getQueryReturnValue().setTryingImage(tryingImage);
+}
+#method_after
+@Override
+protected void executeQueryCommand() {
+    Guid tryingImage = Guid.Empty;
+    DiskImage activeDisk = findImageForDrive(SnapshotType.ACTIVE);
+    DiskImage inactiveDisk = findImageForDrive(SnapshotType.PREVIEW);
+    if (getDiskImageDao().getAllForVm(getParameters().getId(), getUserID(), getParameters().isFiltered()).isEmpty() || activeDisk == null || imageBeforePreviewIsMissing(activeDisk, inactiveDisk)) {
+        log.warnFormat("Vm {0} images data incorrect", getParameters().getId());
+        getQueryReturnValue().setReturnValue(new ArrayList<DiskImage>());
+        return;
+    }
+    if (inactiveDisk != null) {
+        tryingImage = activeDisk.getParentId();
+    }
+    Guid topmostImageGuid = inactiveDisk == null ? activeDisk.getId() : inactiveDisk.getId();
+    // Note that no additional permission filtering is needed -
+    // if a user could read the disk of a VM, all its snapshots are OK too
+    getQueryReturnValue().setReturnValue(ImagesHandler.getAllImageSnapshots(topmostImageGuid, activeDisk.getit_guid()));
+    getQueryReturnValue().setTryingImage(tryingImage);
+}
+#end_block
+
+#method_before
+public static void addDiskImage(DiskImage image, boolean active, image_storage_domain_map imageStorageDomainMap) {
+    // Adding new disk to the image table in the DB
+    try {
+        addImage(image, active, imageStorageDomainMap);
+        addDiskToVmIfNotExists(image.getDisk(), image.getvm_guid());
+    } catch (RuntimeException ex) {
+        log.error("Failed adding new disk image and related entities to db", ex);
+        throw new VdcBLLException(VdcBllErrors.DB, ex);
+    }
+}
+#method_after
+public static void addDiskImage(DiskImage image, boolean active, image_storage_domain_map imageStorageDomainMap) {
+    try {
+        addImage(image, active, imageStorageDomainMap);
+        addDiskToVmIfNotExists(image.getDisk(), image.getvm_guid());
+    } catch (RuntimeException ex) {
+        log.error("Failed adding new disk image and related entities to db", ex);
+        throw new VdcBLLException(VdcBllErrors.DB, ex);
+    }
+}
+#end_block
+
+#method_before
+public static void addDiskImage(DiskImage image) {
+    addDiskImage(image, image.getactive(), new image_storage_domain_map(image.getId(), image.getstorage_ids().get(0)));
+}
+#method_after
+public static void addDiskImage(DiskImage image) {
+    addDiskImage(image, image.getactive(), new image_storage_domain_map(image.getId(), getStorageDomainId(image)));
+}
+#end_block
+
+#method_before
+public static Map<String, String> string2Map(String str) {
+    // remove map markers
+    str = str.replaceAll("[{}]", "");
+    Map<String, String> map = new HashMap<String, String>();
+    if (str.length() > 0) {
+        String[] keyValPairs = str.split(",");
+        for (String pair : keyValPairs) {
+            String[] keyval = pair.split("=");
+            if (keyval.length == 2)
+                map.put(keyval[0], keyval[1]);
+            else if (keyval.length == 1)
+                map.put(keyval[0], "");
+        }
+    }
+    return map;
+}
+#method_after
+public static Map<String, String> string2Map(String str) {
+    Map<String, String> map = new HashMap<String, String>();
+    if (str != null) {
+        // remove map markers
+        str = str.replaceAll("[{}]", "");
+        if (str.length() > 0) {
+            String[] keyValPairs = str.split(DELIMITER);
+            for (String pair : keyValPairs) {
+                String[] keyval = pair.split(SEP);
+                if (keyval.length == 2)
+                    map.put(keyval[0], keyval[1]);
+                else if (keyval.length == 1)
+                    map.put(keyval[0], "");
+            }
+        }
+    }
+    return map;
+}
+#end_block
+
+#method_before
+@Override
+protected void buildVmCD() {
+    // get vm device for this CD from DB
+    List<VmDevice> vmDevices = DbFacade.getInstance().getVmDeviceDAO().getVmDeviceByVmIdTypeAndDevice(vm.getId(), VmDeviceType.getName(VmDeviceType.DISK), VmDeviceType.getName(VmDeviceType.CDROM));
+    for (VmDevice vmDevice : vmDevices) {
+        String file = StringUtils.string2Map(vmDevice.getSpecParams()).get("path");
+        if (!(file == null) && !(file.isEmpty())) {
+            XmlRpcStruct struct = new XmlRpcStruct();
+            struct.add(VdsProperties.Type, vmDevice.getType());
+            struct.add(VdsProperties.Device, vmDevice.getDevice());
+            // IDE slot 2 is reserved by VDSM to CDROM
+            struct.add(VdsProperties.Index, "2");
+            addAddress(vmDevice, struct);
+            struct.add(VdsProperties.Iface, "ide");
+            struct.add(VdsProperties.PoolId, vm.getstorage_pool_id().toString());
+            struct.add(VdsProperties.DomainId, DbFacade.getInstance().getStorageDomainDAO().getIsoStorageDomainIdForPool(vm.getstorage_pool_id()).toString());
+            struct.add(VdsProperties.ImageId, VmDeviceCommonUtils.CDROM_IMAGE_ID);
+            struct.add(VdsProperties.VolumeId, file.substring(file.lastIndexOf('/') + 1));
+            struct.add(VdsProperties.Path, file);
+            // CDROM is always read only
+            struct.add(VdsProperties.ReadOnly, "true");
+            addBootOrder(vmDevice, struct);
+            devices.add(struct);
+            // currently only one is supported, may change in future releases
+            break;
+        }
+    }
+}
+#method_after
+@Override
+protected void buildVmCD() {
+    // get vm device for this CD from DB
+    List<VmDevice> vmDevices = DbFacade.getInstance().getVmDeviceDAO().getVmDeviceByVmIdTypeAndDevice(vm.getId(), VmDeviceType.getName(VmDeviceType.DISK), VmDeviceType.getName(VmDeviceType.CDROM));
+    for (VmDevice vmDevice : vmDevices) {
+        String file = StringUtils.string2Map(vmDevice.getSpecParams()).get("path");
+        if (!(file == null) && !(file.isEmpty())) {
+            XmlRpcStruct struct = new XmlRpcStruct();
+            struct.add(VdsProperties.Type, vmDevice.getType());
+            struct.add(VdsProperties.Device, vmDevice.getDevice());
+            // IDE slot 2 is reserved by VDSM to CDROM
+            struct.add(VdsProperties.Index, "2");
+            addAddress(vmDevice, struct);
+            struct.add(VdsProperties.Iface, "ide");
+            struct.add(VdsProperties.PoolId, vm.getstorage_pool_id().toString());
+            struct.add(VdsProperties.DomainId, DbFacade.getInstance().getStorageDomainDAO().getIsoStorageDomainIdForPool(vm.getstorage_pool_id()).toString());
+            struct.add(VdsProperties.ImageId, VmDeviceCommonUtils.CDROM_IMAGE_ID);
+            struct.add(VdsProperties.VolumeId, file.substring(file.lastIndexOf('/') + 1));
+            struct.add(VdsProperties.Path, file);
+            // CDROM is always read only
+            struct.add(VdsProperties.ReadOnly, Boolean.TRUE.toString());
+            addBootOrder(vmDevice, struct);
+            devices.add(struct);
+            // currently only one is supported, may change in future releases
+            break;
+        }
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected void buildVmFloppy() {
+    // get vm device for this Floppy from DB
+    List<VmDevice> vmDevices = DbFacade.getInstance().getVmDeviceDAO().getVmDeviceByVmIdTypeAndDevice(vm.getId(), VmDeviceType.getName(VmDeviceType.DISK), VmDeviceType.getName(VmDeviceType.FLOPPY));
+    for (VmDevice vmDevice : vmDevices) {
+        XmlRpcStruct struct = new XmlRpcStruct();
+        struct.add(VdsProperties.Type, vmDevice.getType());
+        struct.add(VdsProperties.Device, vmDevice.getDevice());
+        struct.add(VdsProperties.Index, "0");
+        addAddress(vmDevice, struct);
+        struct.add(VdsProperties.Iface, "fdc");
+        struct.add(VdsProperties.PoolId, vm.getstorage_pool_id().toString());
+        struct.add(VdsProperties.DomainId, DbFacade.getInstance().getStorageDomainDAO().getIsoStorageDomainIdForPool(vm.getstorage_pool_id()).toString());
+        struct.add(VdsProperties.ImageId, Guid.Empty.toString());
+        String file = StringUtils.string2Map(vmDevice.getSpecParams()).get("path");
+        struct.add(VdsProperties.VolumeId, file.substring(file.lastIndexOf('/') + 1));
+        struct.add(VdsProperties.Path, file);
+        struct.add(VdsProperties.ReadOnly, new Boolean(vmDevice.getIsReadOnly()).toString());
+        devices.add(struct);
+        // currently only one is supported, may change in future releases
+        break;
+    }
+}
+#method_after
+@Override
+protected void buildVmFloppy() {
+    // get vm device for this Floppy from DB
+    List<VmDevice> vmDevices = DbFacade.getInstance().getVmDeviceDAO().getVmDeviceByVmIdTypeAndDevice(vm.getId(), VmDeviceType.getName(VmDeviceType.DISK), VmDeviceType.getName(VmDeviceType.FLOPPY));
+    for (VmDevice vmDevice : vmDevices) {
+        XmlRpcStruct struct = new XmlRpcStruct();
+        struct.add(VdsProperties.Type, vmDevice.getType());
+        struct.add(VdsProperties.Device, vmDevice.getDevice());
+        struct.add(VdsProperties.Index, "0");
+        addAddress(vmDevice, struct);
+        struct.add(VdsProperties.Iface, "fdc");
+        struct.add(VdsProperties.PoolId, vm.getstorage_pool_id().toString());
+        struct.add(VdsProperties.DomainId, DbFacade.getInstance().getStorageDomainDAO().getIsoStorageDomainIdForPool(vm.getstorage_pool_id()).toString());
+        struct.add(VdsProperties.ImageId, Guid.Empty.toString());
+        String file = StringUtils.string2Map(vmDevice.getSpecParams()).get("path");
+        struct.add(VdsProperties.VolumeId, file.substring(file.lastIndexOf('/') + 1));
+        struct.add(VdsProperties.Path, file);
+        struct.add(VdsProperties.ReadOnly, String.valueOf(vmDevice.getIsReadOnly()));
+        devices.add(struct);
+        // currently only one is supported, may change in future releases
+        break;
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected void buildVmDrives() {
+    // \\int ideCount = 0, pciCount = 0;
+    List<DiskImage> diskImages = getSortedDiskImages();
+    for (DiskImage disk : diskImages) {
+        XmlRpcStruct struct = new XmlRpcStruct();
+        // get vm device for this disk from DB
+        VmDevice vmDevice = DbFacade.getInstance().getVmDeviceDAO().get(new VmDeviceId(disk.getDisk().getId(), disk.getvm_guid()));
+        if (vmDevice.getIsPlugged()) {
+            struct.add(VdsProperties.Type, vmDevice.getType());
+            struct.add(VdsProperties.Device, vmDevice.getDevice());
+            switch(disk.getdisk_interface()) {
+                case IDE:
+                    struct.add(VdsProperties.Iface, "ide");
+                    // \\ideCount++;
+                    break;
+                case VirtIO:
+                    struct.add(VdsProperties.Iface, VdsProperties.Virtio);
+                    // \\pciCount++;
+                    break;
+                default:
+                    // ISCI not supported
+                    logUnsupportedInterfaceType();
+                    break;
+            }
+            // Insure that system disk is created first.
+            Guid diskId = vmDevice.getDeviceId();
+            if (DbFacade.getInstance().getDiskDao().get(diskId).getDiskType().equals(DiskType.System)) {
+                struct.add(VdsProperties.Index, 0);
+            }
+            addAddress(vmDevice, struct);
+            struct.add(VdsProperties.PoolId, disk.getstorage_pool_id().toString());
+            struct.add(VdsProperties.DomainId, disk.getstorage_ids().get(0).toString());
+            struct.add(VdsProperties.ImageId, disk.getimage_group_id().toString());
+            struct.add(VdsProperties.VolumeId, disk.getId().toString());
+            addBootOrder(vmDevice, struct);
+            struct.add(VdsProperties.Format, disk.getvolume_format().toString().toLowerCase());
+            struct.add(VdsProperties.PropagateErrors, disk.getpropagate_errors().toString().toLowerCase());
+            struct.add(VdsProperties.Optional, "false");
+            struct.add(VdsProperties.ReadOnly, new Boolean(vmDevice.getIsReadOnly()).toString());
+            struct.add(VdsProperties.SpecParams, StringUtils.string2Map(vmDevice.getSpecParams()));
+            devices.add(struct);
+        }
+    }
+}
+#method_after
+@Override
+protected void buildVmDrives() {
+    // \\int ideCount = 0, pciCount = 0;
+    List<DiskImage> diskImages = getSortedDiskImages();
+    for (DiskImage disk : diskImages) {
+        XmlRpcStruct struct = new XmlRpcStruct();
+        // get vm device for this disk from DB
+        VmDevice vmDevice = DbFacade.getInstance().getVmDeviceDAO().get(new VmDeviceId(disk.getDisk().getId(), disk.getvm_guid()));
+        if (vmDevice.getIsPlugged()) {
+            struct.add(VdsProperties.Type, vmDevice.getType());
+            struct.add(VdsProperties.Device, vmDevice.getDevice());
+            switch(disk.getdisk_interface()) {
+                case IDE:
+                    struct.add(VdsProperties.Iface, "ide");
+                    // \\ideCount++;
+                    break;
+                case VirtIO:
+                    struct.add(VdsProperties.Iface, VdsProperties.Virtio);
+                    // \\pciCount++;
+                    break;
+                default:
+                    // ISCI not supported
+                    logUnsupportedInterfaceType();
+                    break;
+            }
+            // Insure that system disk is created first.
+            Guid diskId = vmDevice.getDeviceId();
+            if (DbFacade.getInstance().getDiskDao().get(diskId).getDiskType().equals(DiskType.System)) {
+                struct.add(VdsProperties.Index, 0);
+            }
+            addAddress(vmDevice, struct);
+            struct.add(VdsProperties.PoolId, disk.getstorage_pool_id().toString());
+            struct.add(VdsProperties.DomainId, disk.getstorage_ids().get(0).toString());
+            struct.add(VdsProperties.ImageId, disk.getimage_group_id().toString());
+            struct.add(VdsProperties.VolumeId, disk.getId().toString());
+            addBootOrder(vmDevice, struct);
+            struct.add(VdsProperties.Format, disk.getvolume_format().toString().toLowerCase());
+            struct.add(VdsProperties.PropagateErrors, disk.getpropagate_errors().toString().toLowerCase());
+            struct.add(VdsProperties.Optional, Boolean.FALSE.toString());
+            struct.add(VdsProperties.ReadOnly, String.valueOf(vmDevice.getIsReadOnly()));
+            struct.add(VdsProperties.SpecParams, StringUtils.string2Map(vmDevice.getSpecParams()));
+            devices.add(struct);
+        }
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected void buildVmVideoCards() {
+    // vnc,qxl
+    createInfo.add(VdsProperties.display, vm.getdisplay_type().toString());
+    createInfo.add(VdsProperties.num_of_monitors, (new Integer(vm.getnum_of_monitors())).toString());
+}
+#method_after
+@Override
+protected void buildVmVideoCards() {
+    // vnc,qxl
+    createInfo.add(VdsProperties.display, vm.getdisplay_type().toString());
+    createInfo.add(VdsProperties.num_of_monitors, String.valueOf(vm.getnum_of_monitors()));
+}
+#end_block
+
+#method_before
+@Override
+protected void buildVmDrives() {
+    Map<String, String>[] drives = new Map[vm.getDiskMap().size()];
+    int ideCount = 0, pciCount = 0;
+    int i = 0;
+    List<DiskImage> diskImages = getSortedDiskImages();
+    for (DiskImage disk : diskImages) {
+        VmDevice vmDevice = DbFacade.getInstance().getVmDeviceDAO().get(new VmDeviceId(disk.getId(), vm.getId()));
+        Map<String, String> drive = new HashMap<String, String>();
+        drive.put("domainID", disk.getstorage_ids().get(0).toString());
+        drive.put("poolID", disk.getstorage_pool_id().toString());
+        drive.put("volumeID", disk.getId().toString());
+        drive.put("imageID", disk.getimage_group_id().toString());
+        drive.put("format", disk.getvolume_format().toString().toLowerCase());
+        drive.put("propagateErrors", disk.getpropagate_errors().toString().toLowerCase());
+        switch(disk.getdisk_interface()) {
+            case IDE:
+                try {
+                    drive.put("if", "ide");
+                    drive.put("index", String.valueOf(ideIndexSlots[ideCount]));
+                    ideCount++;
+                } catch (IndexOutOfBoundsException e) {
+                    log.errorFormat("buildVmDrives throws IndexOutOfBoundsException for index {0}, IDE slots are limited to 4.", ideCount);
+                    throw e;
+                }
+                break;
+            case VirtIO:
+                drive.put("if", "virtio");
+                drive.put("index", String.valueOf(pciCount));
+                drive.put("boot", String.valueOf(disk.getboot()).toLowerCase());
+                pciCount++;
+                break;
+            default:
+                // ISCI not supported
+                logUnsupportedInterfaceType();
+                break;
+        }
+        drives[i] = drive;
+        i++;
+    }
+    createInfo.add("drives", drives);
+}
+#method_after
+@Override
+protected void buildVmDrives() {
+    Map<String, String>[] drives = new Map[vm.getDiskMap().size()];
+    int ideCount = 0, pciCount = 0;
+    int i = 0;
+    List<DiskImage> diskImages = getSortedDiskImages();
+    for (DiskImage disk : diskImages) {
+        Map<String, String> drive = new HashMap<String, String>();
+        drive.put("domainID", disk.getstorage_ids().get(0).toString());
+        drive.put("poolID", disk.getstorage_pool_id().toString());
+        drive.put("volumeID", disk.getId().toString());
+        drive.put("imageID", disk.getimage_group_id().toString());
+        drive.put("format", disk.getvolume_format().toString().toLowerCase());
+        drive.put("propagateErrors", disk.getpropagate_errors().toString().toLowerCase());
+        switch(disk.getdisk_interface()) {
+            case IDE:
+                try {
+                    drive.put("if", "ide");
+                    drive.put("index", String.valueOf(ideIndexSlots[ideCount]));
+                    ideCount++;
+                } catch (IndexOutOfBoundsException e) {
+                    log.errorFormat("buildVmDrives throws IndexOutOfBoundsException for index {0}, IDE slots are limited to 4.", ideCount);
+                    throw e;
+                }
+                break;
+            case VirtIO:
+                drive.put("if", "virtio");
+                drive.put("index", String.valueOf(pciCount));
+                drive.put("boot", String.valueOf(disk.getboot()).toLowerCase());
+                pciCount++;
+                break;
+            default:
+                // ISCI not supported
+                logUnsupportedInterfaceType();
+                break;
+        }
+        drives[i] = drive;
+        i++;
+    }
+    createInfo.add("drives", drives);
+}
+#end_block
+
+#method_before
+private VmInfoBuilderBase createBuilder() {
+    if (VmDeviceCommonUtils.isOldClusterVersion(vm.getvds_group_compatibility_version()))
+        // backward compatibility for 3.0
+        return new VmOldInfoBuilder(vm, createInfo);
+    else
+        return new VmInfoBuilder(vm, createInfo);
+}
+#method_after
+private VmInfoBuilderBase createBuilder() {
+    if (VmDeviceCommonUtils.isOldClusterVersion(vm.getvds_group_compatibility_version())) {
+        // backward compatibility for 3.0
+        return new VmOldInfoBuilder(vm, createInfo);
+    } else {
+        return new VmInfoBuilder(vm, createInfo);
+    }
+}
+#end_block
+
+#method_before
+public static void copyVmDevices(Guid srcId, Guid dstId) {
+    Guid id;
+    VmBase vmBase = DbFacade.getInstance().getVmStaticDAO().get(dstId);
+    List<DiskImage> disks = DbFacade.getInstance().getDiskImageDAO().getAllForVm(dstId);
+    List<VmNetworkInterface> ifaces;
+    int diskCount = 0;
+    int ifaceCount = 0;
+    boolean isVm = (vmBase != null);
+    if (isVm) {
+        ifaces = DbFacade.getInstance().getVmNetworkInterfaceDAO().getAllForVm(dstId);
+    } else {
+        vmBase = DbFacade.getInstance().getVmTemplateDAO().get(dstId);
+        ifaces = DbFacade.getInstance().getVmNetworkInterfaceDAO().getAllForTemplate(dstId);
+    }
+    List<VmDevice> devices = dao.getVmDeviceByVmId(srcId);
+    for (VmDevice device : devices) {
+        id = Guid.NewGuid();
+        String specParams = "";
+        if (srcId.equals(Guid.Empty)) {
+            // only update number of monitors if this is a desktop
+            if (vmBase.getvm_type() == VmType.Desktop) {
+                updateNumOfMonitorsInVmDevice(null, vmBase);
+            }
+            // skip Blank template devices
+            continue;
+        }
+        if (device.getType().equalsIgnoreCase(VmDeviceType.DISK.name()) && device.getDevice().equalsIgnoreCase(VmDeviceType.DISK.name())) {
+            if (diskCount < disks.size()) {
+                id = (disks.get(diskCount++)).getimage_group_id();
+            }
+        } else if (device.getType().equalsIgnoreCase(VmDeviceType.INTERFACE.name())) {
+            if (ifaceCount < ifaces.size()) {
+                id = ifaces.get(ifaceCount++).getId();
+            }
+        } else if (device.getType().equalsIgnoreCase(VmDeviceType.VIDEO.name())) {
+            specParams = getMemExpr(vmBase.getnum_of_monitors());
+        }
+        device.setId(new VmDeviceId(id, dstId));
+        device.setSpecParams(appendDeviceIdToSpecParams(id, specParams));
+        dao.save(device);
+    }
+    // if destination is a VM , update devices boot order
+    if (isVm) {
+        updateBootOrderInVmDevice(vmBase);
+    }
+}
+#method_after
+public static void copyVmDevices(Guid srcId, Guid dstId) {
+    Guid id;
+    VmBase vmBase = DbFacade.getInstance().getVmStaticDAO().get(dstId);
+    List<DiskImage> disks = DbFacade.getInstance().getDiskImageDAO().getAllForVm(dstId);
+    List<VmNetworkInterface> ifaces;
+    int diskCount = 0;
+    int ifaceCount = 0;
+    boolean isVm = (vmBase != null);
+    if (isVm) {
+        ifaces = DbFacade.getInstance().getVmNetworkInterfaceDAO().getAllForVm(dstId);
+    } else {
+        vmBase = DbFacade.getInstance().getVmTemplateDAO().get(dstId);
+        ifaces = DbFacade.getInstance().getVmNetworkInterfaceDAO().getAllForTemplate(dstId);
+    }
+    List<VmDevice> devices = dao.getVmDeviceByVmId(srcId);
+    for (VmDevice device : devices) {
+        id = Guid.NewGuid();
+        String specParams = "";
+        if (srcId.equals(Guid.Empty)) {
+            // only update number of monitors if this is a desktop
+            if (vmBase.getvm_type() == VmType.Desktop) {
+                updateNumOfMonitorsInVmDevice(null, vmBase);
+            }
+            // skip Blank template devices
+            continue;
+        }
+        if (VmDeviceType.DISK.getName().equals(device.getType()) && VmDeviceType.DISK.getName().equals(device.getDevice())) {
+            if (diskCount < disks.size()) {
+                id = (disks.get(diskCount++)).getimage_group_id();
+            }
+        } else if (VmDeviceType.INTERFACE.getName().equals(device.getType())) {
+            if (ifaceCount < ifaces.size()) {
+                id = ifaces.get(ifaceCount++).getId();
+            }
+        } else if (VmDeviceType.VIDEO.getName().equals(device.getType())) {
+            specParams = getMemExpr(vmBase.getnum_of_monitors());
+        }
+        device.setId(new VmDeviceId(id, dstId));
+        device.setSpecParams(appendDeviceIdToSpecParams(id, specParams));
+        dao.save(device);
+    }
+    // if destination is a VM , update devices boot order
+    if (isVm) {
+        updateBootOrderInVmDevice(vmBase);
+    }
+}
+#end_block
+
+#method_before
+public static void addManagedDevice(VmDeviceId id, VmDeviceType type, VmDeviceType device, String specParams, boolean is_plugged, boolean isReadOnly) {
+    VmDevice managedDevice = new VmDevice(id, VmDeviceType.getName(type), VmDeviceType.getName(device), "", 0, specParams, true, is_plugged, isReadOnly);
+    dao.save(managedDevice);
+}
+#method_after
+public static void addManagedDevice(VmDeviceId id, VmDeviceType type, VmDeviceType device, String specParams, boolean is_plugged, boolean isReadOnly) {
+    VmDevice managedDevice = new VmDevice(id, type.getName(), device.getName(), "", 0, specParams, true, is_plugged, isReadOnly);
+    dao.save(managedDevice);
+}
+#end_block
+
+#method_before
+private static void updateCdInVmDevice(VmBase oldVmBase, VmBase newVmBase) {
+    String newIsoPath = newVmBase.getiso_path();
+    String oldIsoPath = oldVmBase.getiso_path();
+    if (StringUtils.isEmpty(oldIsoPath) && StringUtils.isNotEmpty(newIsoPath)) {
+        // new CD was added
+        VmDevice cd = new VmDevice(new VmDeviceId(Guid.NewGuid(), newVmBase.getId()), VmDeviceType.getName(VmDeviceType.DISK), VmDeviceType.getName(VmDeviceType.CDROM), "", 0, newIsoPath, true, null, false);
+        dao.save(cd);
+    } else {
+        if (StringUtils.isNotEmpty(oldIsoPath) && StringUtils.isEmpty(newIsoPath)) {
+            // existing CD was removed
+            List<VmDevice> list = DbFacade.getInstance().getVmDeviceDAO().getVmDeviceByVmIdTypeAndDevice(newVmBase.getId(), VmDeviceType.getName(VmDeviceType.DISK), VmDeviceType.getName(VmDeviceType.CDROM));
+            dao.remove(list.get(0).getId());
+        } else if (StringUtils.isNotEmpty(oldIsoPath) && StringUtils.isNotEmpty(newIsoPath) && !oldIsoPath.equals(newIsoPath)) {
+            // CD was changed
+            List<VmDevice> list = DbFacade.getInstance().getVmDeviceDAO().getVmDeviceByVmIdTypeAndDevice(newVmBase.getId(), VmDeviceType.getName(VmDeviceType.DISK), VmDeviceType.getName(VmDeviceType.CDROM));
+            VmDevice cd = list.get(0);
+            cd.setSpecParams(newIsoPath);
+            dao.update(cd);
+        }
+    }
+}
+#method_after
+private static void updateCdInVmDevice(VmBase oldVmBase, VmBase newVmBase) {
+    String newIsoPath = newVmBase.getiso_path();
+    String oldIsoPath = oldVmBase.getiso_path();
+    if (StringUtils.isEmpty(oldIsoPath) && StringUtils.isNotEmpty(newIsoPath)) {
+        // new CD was added
+        VmDevice cd = new VmDevice(new VmDeviceId(Guid.NewGuid(), newVmBase.getId()), VmDeviceType.DISK.getName(), VmDeviceType.CDROM.getName(), "", 0, newIsoPath, true, null, false);
+        dao.save(cd);
+    } else {
+        if (StringUtils.isNotEmpty(oldIsoPath) && StringUtils.isEmpty(newIsoPath)) {
+            // existing CD was removed
+            List<VmDevice> list = DbFacade.getInstance().getVmDeviceDAO().getVmDeviceByVmIdTypeAndDevice(newVmBase.getId(), VmDeviceType.DISK.getName(), VmDeviceType.CDROM.getName());
+            dao.remove(list.get(0).getId());
+        } else if (StringUtils.isNotEmpty(oldIsoPath) && StringUtils.isNotEmpty(newIsoPath) && !oldIsoPath.equals(newIsoPath)) {
+            // CD was changed
+            List<VmDevice> list = DbFacade.getInstance().getVmDeviceDAO().getVmDeviceByVmIdTypeAndDevice(newVmBase.getId(), VmDeviceType.DISK.getName(), VmDeviceType.CDROM.getName());
+            VmDevice cd = list.get(0);
+            cd.setSpecParams(newIsoPath);
+            dao.update(cd);
+        }
+    }
+}
+#end_block
+
+#method_before
+/**
+ * updates new VM CD ROM in vm_device
+ * @param newVmBase
+ */
+private static void updateCdInVmDevice(VmBase newVmBase) {
+    if (StringUtils.isNotEmpty(newVmBase.getiso_path())) {
+        // new CD was added
+        VmDevice cd = new VmDevice(new VmDeviceId(Guid.NewGuid(), newVmBase.getId()), VmDeviceType.getName(VmDeviceType.DISK), VmDeviceType.getName(VmDeviceType.CDROM), "", 0, newVmBase.getiso_path(), true, null, false);
+        dao.save(cd);
+    }
+}
+#method_after
+/**
+ * updates new VM CD ROM in vm_device
+ * @param newVmBase
+ */
+private static void updateCdInVmDevice(VmBase newVmBase) {
+    if (StringUtils.isNotEmpty(newVmBase.getiso_path())) {
+        // new CD was added
+        VmDevice cd = new VmDevice(new VmDeviceId(Guid.NewGuid(), newVmBase.getId()), VmDeviceType.DISK.getName(), VmDeviceType.CDROM.getName(), "", 0, newVmBase.getiso_path(), true, null, false);
+        dao.save(cd);
+    }
+}
+#end_block
+
+#method_before
+private static int setNetworkBootOrder(List<VmDevice> devices, int bootOrder) {
+    for (VmDevice device : devices) {
+        if (device.getType().equals(VmDeviceType.getName(VmDeviceType.INTERFACE)) && device.getDevice().equals(VmDeviceType.getName(VmDeviceType.BRIDGE))) {
+            device.setBootOrder(bootOrder++);
+        }
+    }
+    return bootOrder;
+}
+#method_after
+private static int setNetworkBootOrder(List<VmDevice> devices, int bootOrder) {
+    for (VmDevice device : devices) {
+        if (device.getType().equals(VmDeviceType.INTERFACE.getName()) && device.getDevice().equals(VmDeviceType.BRIDGE.getName())) {
+            device.setBootOrder(bootOrder++);
+        }
+    }
+    return bootOrder;
+}
+#end_block
+
+#method_before
+private static int setCDBootOrder(List<VmDevice> devices, int bootOrder) {
+    for (VmDevice device : devices) {
+        if (device.getType().equals(VmDeviceType.getName(VmDeviceType.DISK)) && device.getDevice().equals(VmDeviceType.getName(VmDeviceType.CDROM))) {
+            device.setBootOrder(bootOrder++);
+            // only one CD is currently supported.
+            break;
+        }
+    }
+    return bootOrder;
+}
+#method_after
+private static int setCDBootOrder(List<VmDevice> devices, int bootOrder) {
+    for (VmDevice device : devices) {
+        if (device.getType().equals(VmDeviceType.DISK.getName()) && device.getDevice().equals(VmDeviceType.CDROM.getName())) {
+            device.setBootOrder(bootOrder++);
+            // only one CD is currently supported.
+            break;
+        }
+    }
+    return bootOrder;
+}
+#end_block
+
+#method_before
+private static int setDiskBootOrder(List<VmDevice> devices, int bootOrder) {
+    VM vm = DbFacade.getInstance().getVmDAO().get(vmBaseInstance.getId());
+    boolean isOldCluster = VmDeviceCommonUtils.isOldClusterVersion(vm.getvds_group_compatibility_version());
+    for (VmDevice device : devices) {
+        if (device.getType().equals(VmDeviceType.getName(VmDeviceType.DISK)) && device.getDevice().equals(VmDeviceType.getName(VmDeviceType.DISK))) {
+            Guid id = device.getDeviceId();
+            Disk disk = DbFacade.getInstance().getDiskDao().get(id);
+            if (id != null && !id.equals(Guid.Empty)) {
+                if (isOldCluster) {
+                    // old version.
+                    if (disk != null && disk.getDiskType().equals(DiskType.System)) {
+                        device.setBootOrder(bootOrder++);
+                        break;
+                    }
+                } else {
+                    // supporting more than 1 bootable disk in 3.1 and up.
+                    device.setBootOrder(bootOrder++);
+                }
+            }
+        }
+    }
+    return bootOrder;
+}
+#method_after
+private static int setDiskBootOrder(List<VmDevice> devices, int bootOrder) {
+    VM vm = DbFacade.getInstance().getVmDAO().get(vmBaseInstance.getId());
+    boolean isOldCluster = VmDeviceCommonUtils.isOldClusterVersion(vm.getvds_group_compatibility_version());
+    for (VmDevice device : devices) {
+        if (device.getType().equals(VmDeviceType.DISK.getName()) && device.getDevice().equals(VmDeviceType.DISK.getName())) {
+            Guid id = device.getDeviceId();
+            Disk disk = DbFacade.getInstance().getDiskDao().get(id);
+            if (id != null && !id.equals(Guid.Empty)) {
+                if (isOldCluster) {
+                    // old version.
+                    if (disk != null && disk.getDiskType().equals(DiskType.System)) {
+                        device.setBootOrder(bootOrder++);
+                        break;
+                    }
+                } else {
+                    // supporting more than 1 bootable disk in 3.1 and up.
+                    device.setBootOrder(bootOrder++);
+                }
+            }
+        }
+    }
+    return bootOrder;
+}
+#end_block
+
+#method_before
+private static void updateNumOfMonitorsInVmDevice(VmBase oldVmBase, VmBase newStatic) {
+    int prevNumOfMonitors = 0;
+    if (oldVmBase != null) {
+        prevNumOfMonitors = oldVmBase.getnum_of_monitors();
+    }
+    if (newStatic.getnum_of_monitors() > prevNumOfMonitors) {
+        // monitors were added
+        for (int i = prevNumOfMonitors; i < newStatic.getnum_of_monitors(); i++) {
+            Guid newId = Guid.NewGuid();
+            StringBuilder sb = new StringBuilder(appendDeviceIdToSpecParams(newId, getMemExpr(newStatic.getnum_of_monitors())));
+            VmDeviceUtils.addManagedDevice(new VmDeviceId(newId, newStatic.getId()), VmDeviceType.VIDEO, VmDeviceType.QXL, sb.toString(), true, false);
+        }
+    } else {
+        // delete video cards
+        List<VmDevice> list = DbFacade.getInstance().getVmDeviceDAO().getVmDeviceByVmIdAndType(newStatic.getId(), VmDeviceType.getName(VmDeviceType.VIDEO));
+        for (int i = 0; i < (prevNumOfMonitors - newStatic.getnum_of_monitors()); i++) {
+            dao.remove(list.get(i).getId());
+        }
+    }
+}
+#method_after
+private static void updateNumOfMonitorsInVmDevice(VmBase oldVmBase, VmBase newStatic) {
+    int prevNumOfMonitors = 0;
+    if (oldVmBase != null) {
+        prevNumOfMonitors = oldVmBase.getnum_of_monitors();
+    }
+    if (newStatic.getnum_of_monitors() > prevNumOfMonitors) {
+        // monitors were added
+        for (int i = prevNumOfMonitors; i < newStatic.getnum_of_monitors(); i++) {
+            Guid newId = Guid.NewGuid();
+            StringBuilder sb = new StringBuilder(appendDeviceIdToSpecParams(newId, getMemExpr(newStatic.getnum_of_monitors())));
+            VmDeviceUtils.addManagedDevice(new VmDeviceId(newId, newStatic.getId()), VmDeviceType.VIDEO, VmDeviceType.QXL, sb.toString(), true, false);
+        }
+    } else {
+        // delete video cards
+        List<VmDevice> list = DbFacade.getInstance().getVmDeviceDAO().getVmDeviceByVmIdAndType(newStatic.getId(), VmDeviceType.VIDEO.getName());
+        for (int i = 0; i < (prevNumOfMonitors - newStatic.getnum_of_monitors()); i++) {
+            dao.remove(list.get(i).getId());
+        }
+    }
+}
+#end_block
+
+#method_before
+private static <T extends VmBase> void addImportedDisks(T entity) {
+    Guid id = entity.getId();
+    List<DiskImage> disks = entity.getImages();
+    if (entity instanceof VmTemplate) {
+        disks = entity.getDiskList();
+    }
+    for (DiskImage disk : disks) {
+        Guid deviceId = disk.getDisk().getId();
+        String specParams = appendDeviceIdToSpecParams(deviceId, "");
+        addManagedDevice(new VmDeviceId(deviceId, id), VmDeviceType.DISK, VmDeviceType.DISK, specParams, true, false);
+    }
+}
+#method_after
+private static <T extends VmBase> void addImportedDisks(T entity) {
+    final Guid id = entity.getId();
+    List<DiskImage> disks;
+    if (entity instanceof VmTemplate) {
+        disks = entity.getDiskList();
+    } else {
+        disks = entity.getImages();
+    }
+    for (DiskImage disk : disks) {
+        Guid deviceId = disk.getDisk().getId();
+        String specParams = appendDeviceIdToSpecParams(deviceId, "");
+        addManagedDevice(new VmDeviceId(deviceId, id), VmDeviceType.DISK, VmDeviceType.DISK, specParams, true, false);
+    }
+}
+#end_block
+
+#method_before
+private static <T extends VmBase> void addImportedInterfaces(T entity) {
+    Guid id = entity.getId();
+    List<VmNetworkInterface> ifaces = entity.getInterfaces();
+    for (VmNetworkInterface iface : ifaces) {
+        Guid deviceId = iface.getId();
+        String specParams = appendDeviceIdToSpecParams(deviceId, "");
+        addManagedDevice(new VmDeviceId(deviceId, id), VmDeviceType.INTERFACE, VmDeviceType.BRIDGE, specParams, true, false);
+    }
+}
+#method_after
+private static <T extends VmBase> void addImportedInterfaces(T entity) {
+    final Guid id = entity.getId();
+    for (VmNetworkInterface iface : entity.getInterfaces()) {
+        Guid deviceId = iface.getId();
+        String specParams = appendDeviceIdToSpecParams(deviceId, "");
+        addManagedDevice(new VmDeviceId(deviceId, id), VmDeviceType.INTERFACE, VmDeviceType.BRIDGE, specParams, true, false);
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected void executeQueryCommand() {
+    List<VM> vms = DbFacade.getInstance().getVmDAO().getAllVmsRelatedToQuotaId(getParameters().getQuotaId());
+    for (VM vm : vms) {
+        VmHandler.updateDisksFromDb(vm);
+    }
+    getQueryReturnValue().setReturnValue(vms);
+}
+#method_after
+@Override
+protected void executeQueryCommand() {
+    List<VmTemplate> vmTemplates = DbFacade.getInstance().getVmTemplateDAO().getAllTemplatesRelatedToQuotaId(getParameters().getQuotaId());
+    for (VmTemplate vmTemplate : vmTemplates) {
+        VmTemplateHandler.UpdateDisksFromDb(vmTemplate);
+    }
+    getQueryReturnValue().setReturnValue(vmTemplates);
+}
+#end_block
+
+#method_before
+@Override
+protected boolean validateQuota() {
+    // Set default quota id if storage pool enforcement is disabled.
+    getParameters().setQuotaId(QuotaHelper.getInstance().getQuotaIdToConsume(getParameters().getQuotaId(), getStoragePool()));
+    boolean isQuotaValid = true;
+    Double sizeRequestedForSnapshot = 0d;
+    for (DiskImage image : getDisksList()) {
+        sizeRequestedForSnapshot += image.getactual_size();
+    }
+    isQuotaValid = QuotaManager.validateStorageQuota(getDisksList().get(0).getstorage_id().getValue(), getParameters().getQuotaId(), getStoragePool().getQuotaEnforcementType(), sizeRequestedForSnapshot, getCommandId(), getReturnValue().getCanDoActionMessages());
+    return isQuotaValid;
+}
+#method_after
+@Override
+protected boolean validateQuota() {
+    // Set default quota id if storage pool enforcement is disabled.
+    getParameters().setQuotaId(QuotaHelper.getInstance().getQuotaIdToConsume(getParameters().getQuotaId(), getStoragePool()));
+    return QuotaManager.validateMultiStorageQuota(getStoragePool().getQuotaEnforcementType(), QuotaHelper.getInstance().getQuotaConsumeMap(getDisksList()), getCommandId(), getReturnValue().getCanDoActionMessages());
+}
+#end_block
+
+#method_before
+@Override
+protected void removeQuotaCommandLeftOver() {
+    if (!isInternalExecution()) {
+        QuotaManager.removeStorageDeltaQuotaCommand(getQuotaId(), getDisksList().get(0).getstorage_id().getValue(), getStoragePool().getQuotaEnforcementType(), getCommandId());
+    }
+}
+#method_after
+@Override
+protected void removeQuotaCommandLeftOver() {
+    if (!isInternalExecution()) {
+        QuotaManager.removeStorageDeltaQuotaCommand(getQuotaId(), getDisksList().get(0).getstorage_ids().get(0).getValue(), getStoragePool().getQuotaEnforcementType(), getCommandId());
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected boolean canDoAction() {
+    boolean result = true;
+    if (getDisksList().size() > 0) {
+        result = ImagesHandler.PerformImagesChecks(getVmId(), getReturnValue().getCanDoActionMessages(), getVm().getstorage_pool_id(), getDisksList().get(0).getstorage_id().getValue(), true, getParameters().getParentCommand() != VdcActionType.RunVm, true, true, true, getParameters().getParentCommand() != VdcActionType.RunVm, true);
+    }
+    if (!result) {
+        addCanDoActionMessage(VdcBllMessages.VAR__ACTION__CREATE);
+        addCanDoActionMessage(VdcBllMessages.VAR__TYPE__SNAPSHOT);
+    }
+    return result;
+}
+#method_after
+@Override
+protected boolean canDoAction() {
+    boolean result = true;
+    if (getDisksList().size() > 0) {
+        result = validate(new SnapshotsValidator().vmNotDuringSnapshot(getVmId())) && ImagesHandler.PerformImagesChecks(getVmId(), getReturnValue().getCanDoActionMessages(), getVm().getstorage_pool_id(), getDisksList().get(0).getstorage_ids().get(0), true, getParameters().getParentCommand() != VdcActionType.RunVm, true, true, true, getParameters().getParentCommand() != VdcActionType.RunVm, true);
+    }
+    if (!result) {
+        addCanDoActionMessage(VdcBllMessages.VAR__ACTION__CREATE);
+        addCanDoActionMessage(VdcBllMessages.VAR__TYPE__SNAPSHOT);
+    }
+    return result;
+}
+#end_block
+
+#method_before
+@Override
+public List<PermissionSubject> getPermissionCheckSubjects() {
+    List<PermissionSubject> permissionList = super.getPermissionCheckSubjects();
+    permissionList = QuotaHelper.addQuotaPermissionSubject(permissionList, getStoragePool(), getQuotaId());
+    return permissionList;
+}
+#method_after
+@Override
+public List<PermissionSubject> getPermissionCheckSubjects() {
+    List<PermissionSubject> permissionList = super.getPermissionCheckSubjects();
+    permissionList = QuotaHelper.getInstance().addQuotaPermissionSubject(permissionList, getStoragePool(), getQuotaId());
+    return permissionList;
+}
+#end_block
+
+#method_before
+private Guid getDisksStorageDomainId() {
+    return getVm().getDiskMap().values().iterator().next().getstorage_id().getValue();
+}
+#method_after
+private Guid getDisksStorageDomainId() {
+    return getVm().getDiskMap().values().iterator().next().getstorage_ids().get(0);
+}
+#end_block
+
+#method_before
+@Override
+protected boolean validateQuota() {
+    return (QuotaManager.validateStorageQuota(getStorageDomainId().getValue(), getParameters().getDiskInfo().getQuotaId(), getStoragePool().getQuotaEnforcementType(), new Double(getRequestDiskSpace()), getCommandId(), getReturnValue().getCanDoActionMessages()));
+}
+#method_after
+@Override
+protected boolean validateQuota() {
+    // Set default quota id if storage pool enforcement is disabled.
+    getParameters().setQuotaId(QuotaHelper.getInstance().getQuotaIdToConsume(getParameters().getDiskInfo().getQuotaId(), getStoragePool()));
+    return (QuotaManager.validateStorageQuota(getStorageDomainId().getValue(), getParameters().getQuotaId(), getStoragePool().getQuotaEnforcementType(), new Double(getRequestDiskSpace()), getCommandId(), getReturnValue().getCanDoActionMessages()));
+}
+#end_block
+
+#method_before
+@Override
+public List<PermissionSubject> getPermissionCheckSubjects() {
+    List<PermissionSubject> listPermissionSubjects = super.getPermissionCheckSubjects();
+    listPermissionSubjects = QuotaHelper.addQuotaPermissionSubject(listPermissionSubjects, getStoragePool(), getQuotaId());
+    return listPermissionSubjects;
+}
+#method_after
+@Override
+public List<PermissionSubject> getPermissionCheckSubjects() {
+    List<PermissionSubject> listPermissionSubjects = super.getPermissionCheckSubjects();
+    listPermissionSubjects = QuotaHelper.getInstance().addQuotaPermissionSubject(listPermissionSubjects, getStoragePool(), getQuotaId());
+    return listPermissionSubjects;
+}
+#end_block
+
+#method_before
+@Override
+protected void ExecuteVmCommand() {
+    // NOTE: Assuming that we need to lock the vm before adding a disk!
+    VmHandler.checkStatusAndLockVm(getVm().getId(), getCompensationContext());
+    // create from blank template, create new vm snapshot id
+    AddImageFromScratchParameters parameters = new AddImageFromScratchParameters(Guid.Empty, getVmId(), getParameters().getDiskInfo());
+    parameters.setStorageDomainId(getStorageDomainId().getValue());
+    parameters.setVmSnapshotId(calculateSnapshotId());
+    parameters.setParentCommand(VdcActionType.AddDiskToVm);
+    parameters.setEntityId(getParameters().getEntityId());
+    getParameters().getImagesParameters().add(parameters);
+    getParameters().setVmSnapshotId(parameters.getVmSnapshotId());
+    parameters.setParentParemeters(getParameters());
+    VdcReturnValueBase tmpRetValue = Backend.getInstance().runInternalAction(VdcActionType.AddImageFromScratch, parameters, ExecutionHandler.createDefaultContexForTasks(getExecutionContext()));
+    getReturnValue().getTaskIdList().addAll(tmpRetValue.getInternalTaskIdList());
+    getReturnValue().setActionReturnValue(tmpRetValue.getActionReturnValue());
+    getReturnValue().setFault(tmpRetValue.getFault());
+    setSucceeded(tmpRetValue.getSucceeded());
+}
+#method_after
+@Override
+protected void ExecuteVmCommand() {
+    // NOTE: Assuming that we need to lock the vm before adding a disk!
+    VmHandler.checkStatusAndLockVm(getVm().getId(), getCompensationContext());
+    // create from blank template, create new vm snapshot id
+    AddImageFromScratchParameters parameters = new AddImageFromScratchParameters(Guid.Empty, getVmId(), getParameters().getDiskInfo());
+    parameters.setQuotaId(getParameters().getQuotaId());
+    parameters.setStorageDomainId(getStorageDomainId().getValue());
+    parameters.setVmSnapshotId(calculateSnapshotId());
+    parameters.setParentCommand(VdcActionType.AddDiskToVm);
+    parameters.setEntityId(getParameters().getEntityId());
+    getParameters().getImagesParameters().add(parameters);
+    getParameters().setVmSnapshotId(parameters.getVmSnapshotId());
+    parameters.setParentParemeters(getParameters());
+    VdcReturnValueBase tmpRetValue = Backend.getInstance().runInternalAction(VdcActionType.AddImageFromScratch, parameters, ExecutionHandler.createDefaultContexForTasks(getExecutionContext()));
+    getReturnValue().getTaskIdList().addAll(tmpRetValue.getInternalTaskIdList());
+    getReturnValue().setActionReturnValue(tmpRetValue.getActionReturnValue());
+    getReturnValue().setFault(tmpRetValue.getFault());
+    setSucceeded(tmpRetValue.getSucceeded());
+}
+#end_block
+
+#method_before
+@Override
+protected boolean validateQuota() {
+    // Set default quota id if storage pool enforcement is disabled.
+    getParameters().setQuotaId(QuotaHelper.getInstance().getQuotaIdToConsume(getParameters().getQuotaId(), getStoragePool()));
+    if (!isInternalExecution()) {
+        return QuotaManager.validateMultiStorageQuota(getStoragePool().getQuotaEnforcementType(), getQuotaConsumeMap(), getCommandId(), getReturnValue().getCanDoActionMessages());
+    }
+    return true;
+}
+#method_after
+@Override
+protected boolean validateQuota() {
+    // Set default quota id if storage pool enforcement is disabled.
+    getParameters().setQuotaId(QuotaHelper.getInstance().getQuotaIdToConsume(getParameters().getVmStaticData().getQuotaId(), getStoragePool()));
+    for (DiskImage dit : getVmTemplate().getDiskMap().values()) {
+        dit.setQuotaId(QuotaHelper.getInstance().getQuotaIdToConsume(getParameters().getVmStaticData().getQuotaId(), getStoragePool()));
+    }
+    if (!isInternalExecution()) {
+        // TODO: Should be changed when multiple storage domain will be implemented and the desired quotas will be transferred.
+        return QuotaManager.validateMultiStorageQuota(getStoragePool().getQuotaEnforcementType(), QuotaHelper.getInstance().getQuotaConsumeMap(getVmTemplate().getDiskList()), getCommandId(), getReturnValue().getCanDoActionMessages());
+    }
+    return true;
+}
+#end_block
+
+#method_before
+protected boolean AddVmImages() {
+    if (getVmTemplate().getDiskMap().size() > 0) {
+        if (getVm().getstatus() != VMStatus.Down) {
+            log.error("Cannot add images. VM is not Down");
+            throw new VdcBLLException(VdcBllErrors.IRS_IMAGE_STATUS_ILLEGAL);
+        }
+        VmHandler.LockVm(getVmId());
+        for (DiskImage dit : getVmTemplate().getDiskMap().values()) {
+            CreateSnapshotFromTemplateParameters tempVar = new CreateSnapshotFromTemplateParameters(dit.getId(), getParameters().getVmStaticData().getId());
+            tempVar.setStorageDomainId(getStorageDomainId().getValue());
+            tempVar.setVmSnapshotId(getVmSnapshotId());
+            tempVar.setParentCommand(VdcActionType.AddVm);
+            tempVar.setEntityId(getParameters().getEntityId());
+            tempVar.setParentParemeters(getParameters());
+            VdcReturnValueBase result = Backend.getInstance().runInternalAction(VdcActionType.CreateSnapshotFromTemplate, tempVar);
+            reduceQuotaCommand(getStorageDomainId().getValue(), dit.getsize(), getStoragePool().getQuotaEnforcementType(), getCommandId(), getParameters().getQuotaId());
+            getParameters().getImagesParameters().add(tempVar);
+            /**
+             * if couldnt create snapshot then stop the transaction and the command
+             */
+            if (!result.getSucceeded()) {
+                throw new VdcBLLException(VdcBllErrors.IRS_IMAGE_STATUS_ILLEGAL);
+            } else {
+                getTaskIdList().addAll(result.getInternalTaskIdList());
+            }
+        }
+    }
+    return true;
+}
+#method_after
+protected boolean AddVmImages() {
+    if (getVmTemplate().getDiskMap().size() > 0) {
+        if (getVm().getstatus() != VMStatus.Down) {
+            log.error("Cannot add images. VM is not Down");
+            throw new VdcBLLException(VdcBllErrors.IRS_IMAGE_STATUS_ILLEGAL);
+        }
+        VmHandler.LockVm(getVmId());
+        for (DiskImage dit : getVmTemplate().getDiskMap().values()) {
+            CreateSnapshotFromTemplateParameters tempVar = new CreateSnapshotFromTemplateParameters(dit.getId(), getParameters().getVmStaticData().getId());
+            tempVar.setStorageDomainId(getStorageDomainId().getValue());
+            tempVar.setVmSnapshotId(getVmSnapshotId());
+            tempVar.setParentCommand(VdcActionType.AddVm);
+            tempVar.setEntityId(getParameters().getEntityId());
+            tempVar.setParentParemeters(getParameters());
+            tempVar.setQuotaId(dit.getQuotaId());
+            VdcReturnValueBase result = Backend.getInstance().runInternalAction(VdcActionType.CreateSnapshotFromTemplate, tempVar, ExecutionHandler.createDefaultContexForTasks(getExecutionContext()));
+            getParameters().getImagesParameters().add(tempVar);
+            /**
+             * if couldnt create snapshot then stop the transaction and the command
+             */
+            if (!result.getSucceeded()) {
+                throw new VdcBLLException(VdcBllErrors.IRS_IMAGE_STATUS_ILLEGAL);
+            } else {
+                getTaskIdList().addAll(result.getInternalTaskIdList());
+            }
+        }
+    }
+    return true;
+}
+#end_block
+
+#method_before
+protected void removeQuotaCommandLeftOver() {
+    if (!isInternalExecution()) {
+        QuotaManager.removeMultiStorageDeltaQuotaCommand(getQuotaConsumeMap(), getStoragePool().getQuotaEnforcementType(), getCommandId());
+    }
+}
+#method_after
+protected void removeQuotaCommandLeftOver() {
+    if (!isInternalExecution()) {
+        QuotaManager.removeMultiStorageDeltaQuotaCommand(QuotaHelper.getInstance().getQuotaConsumeMap(getVmTemplate().getDiskList()), getStoragePool().getQuotaEnforcementType(), getCommandId());
+    }
+}
+#end_block
+
+#method_before
+@Override
+public List<PermissionSubject> getPermissionCheckSubjects() {
+    List<PermissionSubject> permissionList = new ArrayList<PermissionSubject>();
+    permissionList.add(new PermissionSubject(getVdsGroupId(), VdcObjectType.VdsGroups, getActionType().getActionGroup()));
+    permissionList.add(new PermissionSubject(getVmTemplateId(), VdcObjectType.VmTemplate, getActionType().getActionGroup()));
+    permissionList = QuotaHelper.addQuotaPermissionSubject(permissionList, getStoragePool(), getQuotaId());
+    return permissionList;
+}
+#method_after
+@Override
+public List<PermissionSubject> getPermissionCheckSubjects() {
+    List<PermissionSubject> permissionList = new ArrayList<PermissionSubject>();
+    permissionList.add(new PermissionSubject(getVdsGroupId(), VdcObjectType.VdsGroups, getActionType().getActionGroup()));
+    permissionList.add(new PermissionSubject(getVmTemplateId(), VdcObjectType.VmTemplate, getActionType().getActionGroup()));
+    permissionList = QuotaHelper.getInstance().addQuotaPermissionSubject(permissionList, getStoragePool(), getQuotaId());
+    return permissionList;
+}
+#end_block
+
+#method_before
+public static void reduceCommandVdsGroupSize(Guid vdsGroupId, Integer subtractedCpuSize, QuotaEnforcmentTypeEnum quotaEnforcedType, Double subtractedMemSize, Guid commandId, Guid quotaId) {
+    if (!validateReduceQuotaParameters(vdsGroupId, quotaEnforcedType, commandId, quotaId)) {
+        return;
+    }
+    if ((subtractedCpuSize == null || subtractedCpuSize.longValue() == 0) && (subtractedMemSize == null || subtractedMemSize.longValue() == 0)) {
+        log.errorFormat("Sutracted size is not valid, quota delta will not be reduced.");
+        return;
+    }
+    getLockForQuotaId(quotaId).lock();
+    try {
+        Map<Guid, QuotaDeltaValue> quotaDeltaMap = commandDeltaMap.get(vdsGroupId);
+        if (quotaDeltaMap == null) {
+            log.errorFormat("Quota id {0} for vds group id {1} has no associated command map", quotaId, vdsGroupId);
+        } else if (quotaDeltaMap.get(commandId) == null) {
+            log.errorFormat("Quota id {0} for vds group id {1} and command id (2) has no associated delta quota", quotaId, vdsGroupId, commandId);
+        } else {
+            QuotaDeltaValue quotaDeltaValue = quotaDeltaMap.get(commandId);
+            Integer cpuDeltaForCommandVal = quotaDeltaValue.getCpuSizeToBeUsed();
+            Double memDeltaForCommandVal = quotaDeltaValue.getMemSizeToBeUsed();
+            if ((cpuDeltaForCommandVal == null) && (memDeltaForCommandVal == null)) {
+                log.errorFormat("Quota id {0} for vds group id {1} and command id (2) does not have cpu and memory delta parameters.", quotaId, vdsGroupId, commandId);
+            } else if ((cpuDeltaForCommandVal < subtractedCpuSize) || (memDeltaForCommandVal < subtractedMemSize)) {
+                log.errorFormat("Quota id {0} for vds group id {1} and command id (2) has less vds group delta from the size requested to be reduced. The delta value will be set to 0", quotaId, vdsGroupId, commandId);
+                quotaDeltaValue.setCpuSizeToBeUsed(0);
+                quotaDeltaValue.setMemSizeToBeUsed(0d);
+            } else {
+                quotaDeltaValue.setMemSizeToBeUsed(quotaDeltaValue.getMemSizeToBeUsed() - subtractedMemSize);
+                quotaDeltaValue.setCpuSizeToBeUsed(quotaDeltaValue.getCpuSizeToBeUsed() - subtractedCpuSize);
+            }
+        }
+    } finally {
+        getLockForQuotaId(quotaId).unlock();
+    }
+}
+#method_after
+public static void reduceCommandVdsGroupSize(Guid vdsGroupId, Integer subtractedCpuSize, QuotaEnforcmentTypeEnum quotaEnforcedType, Double subtractedMemSize, Guid commandId, Guid quotaId) {
+    if (!validateReduceQuotaParameters(vdsGroupId, quotaEnforcedType, commandId, quotaId)) {
+        return;
+    }
+    if ((subtractedCpuSize == null || subtractedCpuSize.longValue() == 0) && (subtractedMemSize == null || subtractedMemSize.longValue() == 0)) {
+        log.errorFormat("Subtracted size is not valid, quota delta will not be reduced for qutoa Id {0} and vds group Id {1}.", quotaId, vdsGroupId);
+        return;
+    }
+    getLockForQuotaId(quotaId).lock();
+    try {
+        Map<Guid, QuotaDeltaValue> quotaDeltaMap = commandDeltaMap.get(vdsGroupId);
+        if (quotaDeltaMap == null) {
+            log.errorFormat("Quota id {0} for vds group id {1} has no associated command map", quotaId, vdsGroupId);
+        } else if (quotaDeltaMap.get(commandId) == null) {
+            log.errorFormat("Quota id {0} for vds group id {1} and command id (2) has no associated delta quota", quotaId, vdsGroupId, commandId);
+        } else {
+            QuotaDeltaValue quotaDeltaValue = quotaDeltaMap.get(commandId);
+            Integer cpuDeltaForCommandVal = quotaDeltaValue.getCpuSizeToBeUsed();
+            Double memDeltaForCommandVal = quotaDeltaValue.getMemSizeToBeUsed();
+            if ((cpuDeltaForCommandVal == null) && (memDeltaForCommandVal == null)) {
+                log.errorFormat("Quota id {0} for vds group id {1} and command id (2) does not have cpu and memory delta parameters.", quotaId, vdsGroupId, commandId);
+            } else if ((cpuDeltaForCommandVal < subtractedCpuSize) || (memDeltaForCommandVal < subtractedMemSize)) {
+                log.errorFormat("Quota id {0} for vds group id {1} and command id (2) has less vds group delta from the size requested to be reduced. The delta value will be set to 0", quotaId, vdsGroupId, commandId);
+                quotaDeltaValue.setCpuSizeToBeUsed(0);
+                quotaDeltaValue.setMemSizeToBeUsed(0d);
+            } else {
+                quotaDeltaValue.setMemSizeToBeUsed(quotaDeltaValue.getMemSizeToBeUsed() - subtractedMemSize);
+                quotaDeltaValue.setCpuSizeToBeUsed(quotaDeltaValue.getCpuSizeToBeUsed() - subtractedCpuSize);
+            }
+        }
+    } finally {
+        getLockForQuotaId(quotaId).unlock();
+    }
+}
+#end_block
+
+#method_before
+public static void reduceCommandStorageSize(Guid storageDomainId, Long subtractedSize, QuotaEnforcmentTypeEnum quotaEnforcedType, Guid commandId, Guid quotaId) {
+    if (!validateReduceQuotaParameters(storageDomainId, quotaEnforcedType, commandId, quotaId)) {
+        return;
+    }
+    if (subtractedSize == null || subtractedSize.longValue() == 0) {
+        log.errorFormat("Sutracted size is not valid, quota delta will not be reduced.");
+        return;
+    }
+    QuotaStorage quotaStorage = getQuotaStorageForStorageDomainId(quotaId, storageDomainId);
+    getLockForQuotaId(quotaId).lock();
+    try {
+        Map<Guid, QuotaDeltaValue> quotaDeltaMap = commandDeltaMap.get(quotaStorage.getQuotaStorageId());
+        if (quotaDeltaMap == null) {
+            log.errorFormat("Quota id {0} for storage domain id {1} has no associated command map", quotaId, storageDomainId);
+        } else if (quotaDeltaMap.get(commandId) == null) {
+            log.errorFormat("Quota id {0} for storage domain id {1} and command id (2) has no associated delta quota", quotaId, storageDomainId, commandId);
+        } else {
+            QuotaDeltaValue quotaDeltaValue = quotaDeltaMap.get(commandId);
+            Double storageSize = quotaDeltaValue.getStorageSizeToBeUsed();
+            if (storageSize == null) {
+                log.errorFormat("Quota id {0} for storage domain id {1} and command id (2) does not have storage delta size", quotaId, storageDomainId, commandId);
+            } else if (storageSize < subtractedSize) {
+                log.errorFormat("Quota id {0} for storage domain id {1} and command id (2) has less storage delta size from the size requested to be reduced. The delta value will be se to 0", quotaId, storageDomainId, commandId);
+                quotaDeltaValue.setStorageSizeToBeUsed(0d);
+            } else {
+                quotaDeltaValue.setStorageSizeToBeUsed(quotaDeltaValue.getStorageSizeToBeUsed() - subtractedSize);
+            }
+        }
+    } finally {
+        getLockForQuotaId(quotaId).unlock();
+    }
+}
+#method_after
+public static void reduceCommandStorageSize(Guid storageDomainId, Long subtractedSize, QuotaEnforcmentTypeEnum quotaEnforcedType, Guid commandId, Guid quotaId) {
+    if (!validateReduceQuotaParameters(storageDomainId, quotaEnforcedType, commandId, quotaId)) {
+        return;
+    }
+    if (subtractedSize == null || subtractedSize.longValue() == 0) {
+        log.errorFormat("Subtracted size is not valid, quota delta will not be reduced for qutoa Id {0} and storage domain Id {1}.", quotaId, storageDomainId);
+        return;
+    }
+    QuotaStorage quotaStorage = getQuotaStorageForStorageDomainId(quotaId, storageDomainId);
+    getLockForQuotaId(quotaId).lock();
+    try {
+        Map<Guid, QuotaDeltaValue> quotaDeltaMap = commandDeltaMap.get(quotaStorage.getQuotaStorageId());
+        if (quotaDeltaMap == null) {
+            log.errorFormat("Quota id {0} for storage domain id {1} has no associated command map", quotaId, storageDomainId);
+        } else if (quotaDeltaMap.get(commandId) == null) {
+            log.errorFormat("Quota id {0} for storage domain id {1} and command id (2) has no associated delta quota", quotaId, storageDomainId, commandId);
+        } else {
+            QuotaDeltaValue quotaDeltaValue = quotaDeltaMap.get(commandId);
+            Double storageSize = quotaDeltaValue.getStorageSizeToBeUsed();
+            if (storageSize == null) {
+                log.errorFormat("Quota id {0} for storage domain id {1} and command id (2) does not have storage delta size", quotaId, storageDomainId, commandId);
+            } else if (storageSize < subtractedSize) {
+                log.errorFormat("Quota id {0} for storage domain id {1} and command id (2) has less storage delta size from the size requested to be reduced. The delta value will be se to 0", quotaId, storageDomainId, commandId);
+                quotaDeltaValue.setStorageSizeToBeUsed(0d);
+            } else {
+                quotaDeltaValue.setStorageSizeToBeUsed(quotaDeltaValue.getStorageSizeToBeUsed() - subtractedSize);
+            }
+        }
+    } finally {
+        getLockForQuotaId(quotaId).unlock();
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected boolean canDoAction() {
+    if (getParameters() == null) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_QUOTA_IS_NOT_VALID);
+        return false;
+    } else if (!QuotaHelper.getInstance().checkQuotaValidationForAddEdit(getParameters().getQuota(), getReturnValue().getCanDoActionMessages())) {
+        return false;
+    } else if (getParameters().getQuota().getId() == null) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_QUOTA_IS_NOT_VALID);
+        return false;
+    }
+    return true;
+}
+#method_after
+@Override
+protected boolean canDoAction() {
+    if (!QuotaHelper.getInstance().checkQuotaValidationForAddEdit(getParameters().getQuota(), getReturnValue().getCanDoActionMessages())) {
+        return false;
+    } else if (getParameters().getQuota().getId() == null) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_QUOTA_IS_NOT_VALID);
+        return false;
+    } else if (getQuotaDAO().getById(getParameters().getQuota().getId()) == null) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_QUOTA_NOT_EXIST);
+        return false;
+    }
+    return true;
+}
+#end_block
+
+#method_before
+@Override
+protected boolean canDoAction() {
+    if (getParameters() == null || (getParameters().getQuotaId() == null)) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_QUOTA_NOT_EXIST);
+    }
+    Quota quota = getQuotaDAO().getById(getParameters().getQuotaId());
+    if (quota == null) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_QUOTA_NOT_EXIST);
+        return false;
+    }
+    // Check if there is attempt to delete the default quota while storage pool enforcement type is disabled.
+    if (getStoragePool().getQuotaEnforcementType() == QuotaEnforcmentTypeEnum.DISABLED && quota.getIsDefaultQuota()) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_QUOTA_CAN_NOT_HAVE_DEFAULT_INDICATION);
+    }
+    // Check If we try to delete the last quota in the DC.
+    List<Quota> quotaList = getQuotaDAO().getQuotaByStoragePoolGuid(getParameters().getStoragePoolId());
+    if (quotaList.size() <= 1) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_DATA_CENTER_MUST_HAVE_AT_LEAST_ONE_QUOTA);
+    }
+    // TODO : Add Check if there are no VMs/images that are part of the Quota.
+    return true;
+}
+#method_after
+@Override
+protected boolean canDoAction() {
+    if (getParameters() == null || (getParameters().getQuotaId() == null)) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_QUOTA_NOT_EXIST);
+    }
+    Quota quota = getQuota();
+    if (quota == null) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_QUOTA_NOT_EXIST);
+        return false;
+    }
+    // Check if there is attempt to delete the default quota while storage pool enforcement type is disabled.
+    if (getStoragePoolDAO().get(quota.getStoragePoolId()).getQuotaEnforcementType() == QuotaEnforcmentTypeEnum.DISABLED && quota.getIsDefaultQuota()) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_QUOTA_CAN_NOT_HAVE_DEFAULT_INDICATION);
+    }
+    // Check If we try to delete the last quota in the DC.
+    List<Quota> quotaList = getQuotaDAO().getQuotaByStoragePoolGuid(getParameters().getStoragePoolId());
+    if (quotaList.size() <= 1) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_DATA_CENTER_MUST_HAVE_AT_LEAST_ONE_QUOTA);
+    }
+    return true;
+}
+#end_block
+
+#method_before
+@Override
+protected void executeCommand() {
+    getQuotaDAO().remove(getParameters().getQuotaId());
+    getReturnValue().setSucceeded(true);
+}
+#method_after
+@Override
+protected void executeCommand() {
+    setQuota(getQuotaDAO().getById(getParameters().getQuotaId()));
+    getQuotaDAO().remove(getParameters().getQuotaId());
+    getReturnValue().setSucceeded(true);
+}
+#end_block
+
+#method_before
+@Override
+protected boolean canDoAction() {
+    if (getParameters() == null) {
+        return false;
+    } else if (!QuotaHelper.getInstance().checkQuotaValidationForAddEdit(getParameters().getQuota(), getReturnValue().getCanDoActionMessages())) {
+        return false;
+    }
+    return true;
+}
+#method_after
+@Override
+protected boolean canDoAction() {
+    return (QuotaHelper.getInstance().checkQuotaValidationForAddEdit(getParameters().getQuota(), getReturnValue().getCanDoActionMessages()));
+}
+#end_block
+
+#method_before
+@Override
+public Map<Guid, VdcObjectType> getPermissionCheckSubjects() {
+    return Collections.singletonMap(getQuotaId() == null ? null : getQuotaId().getValue(), VdcObjectType.Quota);
+}
+#method_after
+@Override
+public Map<Guid, VdcObjectType> getPermissionCheckSubjects() {
+    return Collections.singletonMap(getStoragePoolId() == null ? null : getStoragePoolId().getValue(), VdcObjectType.StoragePool);
+}
+#end_block
+
+#method_before
+private void setQuotaParameter() {
+    Quota quotaParameter = getParameters().getQuota();
+    setQuotaId(Guid.NewGuid());
+    setQuotaName(quotaParameter.getQuotaName());
+    if (quotaParameter.getQuotaStorages() != null) {
+        for (QuotaStorage quotaStorage : quotaParameter.getQuotaStorages()) {
+            quotaStorage.setQuotaId(getQuotaId());
+            quotaStorage.setQuotaStorageId(Guid.NewGuid());
+        }
+    }
+    if (quotaParameter.getQuotaVdsGroups() != null) {
+        for (QuotaVdsGroup quotaVdsGroup : quotaParameter.getQuotaVdsGroups()) {
+            quotaVdsGroup.setQuotaId(getQuotaId());
+            quotaVdsGroup.setQuotaVdsGroupId(Guid.NewGuid());
+        }
+    }
+    setQuota(quotaParameter);
+}
+#method_after
+private void setQuotaParameter() {
+    Quota quotaParameter = getParameters().getQuota();
+    quotaParameter.setId(Guid.NewGuid());
+    setStoragePoolId(quotaParameter.getStoragePoolId());
+    setQuotaName(quotaParameter.getQuotaName());
+    if (quotaParameter.getQuotaStorages() != null) {
+        for (QuotaStorage quotaStorage : quotaParameter.getQuotaStorages()) {
+            quotaStorage.setQuotaId(getQuotaId());
+            quotaStorage.setQuotaStorageId(Guid.NewGuid());
+        }
+    }
+    if (quotaParameter.getQuotaVdsGroups() != null) {
+        for (QuotaVdsGroup quotaVdsGroup : quotaParameter.getQuotaVdsGroups()) {
+            quotaVdsGroup.setQuotaId(getQuotaId());
+            quotaVdsGroup.setQuotaVdsGroupId(Guid.NewGuid());
+        }
+    }
+    setQuota(quotaParameter);
+}
+#end_block
+
+#method_before
+@Override
+public int compare(bookmarks o1, bookmarks o2) {
+    String name1 = o1.getbookmark_name();
+    String name2 = o2.getbookmark_name();
+    if (name1 == null || name2 == null) {
+        return 0;
+    }
+    return name1.compareTo(name2);
+}
+#method_after
+@Override
+public int compare(bookmarks o1, bookmarks o2) {
+    String name1 = o1.getbookmark_name();
+    String name2 = o2.getbookmark_name();
+    if (name1 == null || name2 == null) {
+        throw new IllegalArgumentException("Bookmark name cannot be null");
+    }
+    return name1.compareTo(name2);
+}
+#end_block
+
+#method_before
+@Test
+public void testGetAllForConnection() {
+    List<storage_domains> result = dao.getAllForConnection(EXISTING_CONNECTION);
+    assertNotNull(result);
+    assertFalse(result.isEmpty());
+    for (storage_domains domain : result) {
+        assertEquals(EXISTING_STORAGE_POOL_ID, domain.getstorage_pool_id());
+    }
+}
+#method_after
+@Test
+public void testGetAllForConnection() {
+    List<storage_domains> result = dao.getAllForConnection(EXISTING_CONNECTION);
+    assertGetAllForStoragePoolResult(result);
+}
+#end_block
+
+#method_before
+@Test
+public void testGetAllByStoragePoolAndConnection() {
+    List<storage_domains> result = dao.getAllByStoragePoolAndConnection(EXISTING_STORAGE_POOL_ID, EXISTING_CONNECTION);
+    assertNotNull(result);
+    assertFalse(result.isEmpty());
+    for (storage_domains domain : result) {
+        assertEquals(EXISTING_STORAGE_POOL_ID, domain.getstorage_pool_id());
+    }
+}
+#method_after
+@Test
+public void testGetAllByStoragePoolAndConnection() {
+    List<storage_domains> result = dao.getAllByStoragePoolAndConnection(EXISTING_STORAGE_POOL_ID, EXISTING_CONNECTION);
+    assertGetAllForStoragePoolResult(result);
+}
+#end_block
+
+#method_before
+@Test
+public void testGetAllForStoragePool() {
+    List<storage_domains> result = dao.getAllForStoragePool(EXISTING_STORAGE_POOL_ID);
+    assertNotNull(result);
+    assertFalse(result.isEmpty());
+    for (storage_domains domain : result) {
+        assertEquals(EXISTING_STORAGE_POOL_ID, domain.getstorage_pool_id());
+    }
+}
+#method_after
+@Test
+public void testGetAllForStoragePool() {
+    List<storage_domains> result = dao.getAllForStoragePool(EXISTING_STORAGE_POOL_ID);
+    assertGetAllForStoragePoolResult(result);
+}
+#end_block
+
+#method_before
+@Test
+public void testGetAllForStoragePoolWithPermissionsPrivilegedUser() {
+    List<storage_domains> result = dao.getAllForStoragePool(EXISTING_STORAGE_POOL_ID, PRIVILEGED_USER_ID, true);
+    assertNotNull(result);
+    assertFalse(result.isEmpty());
+    for (storage_domains domain : result) {
+        assertEquals(EXISTING_STORAGE_POOL_ID, domain.getstorage_pool_id());
+    }
+}
+#method_after
+@Test
+public void testGetAllForStoragePoolWithPermissionsPrivilegedUser() {
+    List<storage_domains> result = dao.getAllForStoragePool(EXISTING_STORAGE_POOL_ID, PRIVILEGED_USER_ID, true);
+    assertGetAllForStoragePoolResult(result);
+}
+#end_block
+
+#method_before
+@Test
+public void testGetAllForStoragePoolWithPermissionsDisabledUnprivilegedUser() {
+    List<storage_domains> result = dao.getAllForStoragePool(EXISTING_STORAGE_POOL_ID, UNPRIVILEGED_USER_ID, false);
+    assertNotNull(result);
+    assertFalse(result.isEmpty());
+    for (storage_domains domain : result) {
+        assertEquals(EXISTING_STORAGE_POOL_ID, domain.getstorage_pool_id());
+    }
+}
+#method_after
+@Test
+public void testGetAllForStoragePoolWithPermissionsDisabledUnprivilegedUser() {
+    List<storage_domains> result = dao.getAllForStoragePool(EXISTING_STORAGE_POOL_ID, UNPRIVILEGED_USER_ID, false);
+    assertGetAllForStoragePoolResult(result);
+}
+#end_block
+
+#method_before
+@Test
+public void testGetAllForVM() {
+    List<DiskImage> disks = dao.getAllForVm(EXISTING_VM_ID);
+    assertEquals("VM should have two disks", 2, disks.size());
+}
+#method_after
+@Test
+public void testGetAllForVM() {
+    List<DiskImage> disks = dao.getAllForVm(EXISTING_VM_ID);
+    assertFullGetAllForVMResult(disks);
+}
+#end_block
+
+#method_before
+@Test
+public void testGetAllForVMFilteredWithPermissions() {
+    // test user 3 - has permissions
+    List<DiskImage> disks = dao.getAllForVm(EXISTING_VM_ID, PRIVILEGED_USER_ID, true);
+    assertEquals("VM should have two disks", 2, disks.size());
+}
+#method_after
+@Test
+public void testGetAllForVMFilteredWithPermissions() {
+    // test user 3 - has permissions
+    List<DiskImage> disks = dao.getAllForVm(EXISTING_VM_ID, PRIVILEGED_USER_ID, true);
+    assertFullGetAllForVMResult(disks);
+}
+#end_block
+
+#method_before
+@Test
+public void testGetAllForVMFilteredWithPermissionsNoPermissions() {
+    // test user 2 - hasn't got permissions
+    List<DiskImage> disks = dao.getAllForVm(EXISTING_VM_ID, UNPRIVILEGED_USER_ID, true);
+    assertEquals("VM should have two disks", 0, disks.size());
+}
+#method_after
+@Test
+public void testGetAllForVMFilteredWithPermissionsNoPermissions() {
+    // test user 2 - hasn't got permissions
+    List<DiskImage> disks = dao.getAllForVm(EXISTING_VM_ID, UNPRIVILEGED_USER_ID, true);
+    assertTrue("VM should have no disks viewable to the user", disks.isEmpty());
+}
+#end_block
+
+#method_before
+@Test
+public void testGetAllForVMFilteredWithPermissionsNoPermissionsAndNoFilter() {
+    // test user 2 - hasn't got permissions, but no filtering was requested
+    List<DiskImage> disks = dao.getAllForVm(EXISTING_VM_ID, UNPRIVILEGED_USER_ID, false);
+    assertEquals("VM should have two disks", 2, disks.size());
+}
+#method_after
+@Test
+public void testGetAllForVMFilteredWithPermissionsNoPermissionsAndNoFilter() {
+    // test user 2 - hasn't got permissions, but no filtering was requested
+    List<DiskImage> disks = dao.getAllForVm(EXISTING_VM_ID, UNPRIVILEGED_USER_ID, false);
+    assertFullGetAllForVMResult(disks);
+}
+#end_block
+
+#method_before
+public static java.util.ArrayList<DiskImage> getAllImageSnapshots(Guid imageId, Guid imageTemplateId) {
+    java.util.ArrayList<DiskImage> snapshots = new java.util.ArrayList<DiskImage>();
+    Guid curImage = imageId;
+    while (!imageTemplateId.equals(curImage) && !curImage.equals(Guid.Empty)) {
+        DiskImage curDiskImage = DbFacade.getInstance().getDiskImageDAO().getSnapshotById(curImage);
+        snapshots.add(curDiskImage);
+        curImage = curDiskImage.getParentId();
+    }
+    return snapshots;
+}
+#method_after
+public static ArrayList<DiskImage> getAllImageSnapshots(Guid imageId, Guid imageTemplateId) {
+    ArrayList<DiskImage> snapshots = new ArrayList<DiskImage>();
+    Guid curImage = imageId;
+    while (!imageTemplateId.equals(curImage) && !curImage.equals(Guid.Empty)) {
+        DiskImage curDiskImage = DbFacade.getInstance().getDiskImageDAO().getSnapshotById(curImage);
+        snapshots.add(curDiskImage);
+        curImage = curDiskImage.getParentId();
+    }
+    return snapshots;
+}
+#end_block
+
+#method_before
+public static Iterable<DiskImage> getAllImageSnapshotsFromIrs(Guid imageId, Guid imageTemplateId) {
+    java.util.ArrayList<DiskImage> snapshots = new java.util.ArrayList<DiskImage>();
+    Guid curImage = imageId;
+    while (!imageTemplateId.equals(curImage) && !curImage.equals(Guid.Empty)) {
+        DiskImage image = DbFacade.getInstance().getDiskImageDAO().getSnapshotById(curImage);
+        Guid storagePoolId = image.getstorage_pool_id() != null ? image.getstorage_pool_id().getValue() : Guid.Empty;
+        Guid storageDomainId = image.getstorage_id() != null ? image.getstorage_id().getValue() : Guid.Empty;
+        Guid imageGroupId = image.getimage_group_id() != null ? image.getimage_group_id().getValue() : Guid.Empty;
+        DiskImage curDiskImage = (DiskImage) Backend.getInstance().getResourceManager().RunVdsCommand(VDSCommandType.GetImageInfo, new GetImageInfoVDSCommandParameters(storagePoolId, storageDomainId, imageGroupId, curImage)).getReturnValue();
+        snapshots.add(curDiskImage);
+        curImage = curDiskImage.getParentId();
+    }
+    return snapshots;
+}
+#method_after
+public static Iterable<DiskImage> getAllImageSnapshotsFromIrs(Guid imageId, Guid imageTemplateId) {
+    List<DiskImage> snapshots = new ArrayList<DiskImage>();
+    Guid curImage = imageId;
+    while (!imageTemplateId.equals(curImage) && !curImage.equals(Guid.Empty)) {
+        DiskImage image = DbFacade.getInstance().getDiskImageDAO().getSnapshotById(curImage);
+        Guid storagePoolId = image.getstorage_pool_id() != null ? image.getstorage_pool_id().getValue() : Guid.Empty;
+        Guid storageDomainId = image.getstorage_id() != null ? image.getstorage_id().getValue() : Guid.Empty;
+        Guid imageGroupId = image.getimage_group_id() != null ? image.getimage_group_id().getValue() : Guid.Empty;
+        DiskImage curDiskImage = (DiskImage) Backend.getInstance().getResourceManager().RunVdsCommand(VDSCommandType.GetImageInfo, new GetImageInfoVDSCommandParameters(storagePoolId, storageDomainId, imageGroupId, curImage)).getReturnValue();
+        snapshots.add(curDiskImage);
+        curImage = curDiskImage.getParentId();
+    }
+    return snapshots;
+}
+#end_block
+
+#method_before
+public static boolean isImagesExists(Iterable<DiskImage> images, Guid storagePoolId, Guid storageDomainId) {
+    return isImagesExists(images, storagePoolId, storageDomainId, new RefObject<java.util.ArrayList<DiskImage>>());
+}
+#method_after
+public static boolean isImagesExists(Iterable<DiskImage> images, Guid storagePoolId, Guid storageDomainId) {
+    return isImagesExists(images, storagePoolId, storageDomainId, new RefObject<ArrayList<DiskImage>>());
+}
+#end_block
+
+#method_before
+@Test
+public void validateAddingNonExistingNetwork() {
+    List<VdsNetworkInterface> vdsNics = new ArrayList<VdsNetworkInterface>();
+    VdsNetworkInterface nic1 = new VdsNetworkInterface();
+    nic1.setNetworkName("vmnet");
+    nic1.setName("nic1");
+    vdsNics.add(nic1);
+    VdsNetworkInterface nic2 = new VdsNetworkInterface();
+    nic2.setNetworkName("mgmtnet");
+    nic2.setName("nic2");
+    vdsNics.add(nic2);
+    List<network> clusterNetworks = new ArrayList<network>();
+    network net1 = new network();
+    net1.setname("vmnet");
+    network net2 = new network();
+    net2.setname("mgmtnet");
+    clusterNetworks.add(net1);
+    clusterNetworks.add(net2);
+    List<VdsNetworkInterface> nics = new ArrayList<VdsNetworkInterface>();
+    VdsNetworkInterface nicWithUknownNetowrk = new VdsNetworkInterface();
+    nicWithUknownNetowrk.setNetworkName("nonExisitigNetworkName");
+    nicWithUknownNetowrk.setName("nic3");
+    nics.add(nicWithUknownNetowrk);
+    initMocks(vdsNics, clusterNetworks);
+    SetupNetworksParameters params = new SetupNetworksParameters();
+    params.setInterfaces(nics);
+    SetupNetworksHelper validator = createHelper(params);
+    assertTrue(validator.validate().contains(NETWORK_NOT_EXISTS_IN_CURRENT_CLUSTER));
+}
+#method_after
+@Test
+public void validateAddingNonExistingNetwork() {
+    List<VdsNetworkInterface> vdsNics = new ArrayList<VdsNetworkInterface>();
+    VdsNetworkInterface nic1 = new VdsNetworkInterface();
+    nic1.setNetworkName("vmnet");
+    nic1.setName("nic1");
+    vdsNics.add(nic1);
+    VdsNetworkInterface nic2 = new VdsNetworkInterface();
+    nic2.setNetworkName("mgmtnet");
+    nic2.setName("nic2");
+    vdsNics.add(nic2);
+    List<network> clusterNetworks = new ArrayList<network>();
+    network net1 = new network();
+    net1.setname("vmnet");
+    network net2 = new network();
+    net2.setname("mgmtnet");
+    clusterNetworks.add(net1);
+    clusterNetworks.add(net2);
+    List<VdsNetworkInterface> nics = new ArrayList<VdsNetworkInterface>();
+    VdsNetworkInterface nicWithUnknownNetwork = new VdsNetworkInterface();
+    nicWithUnknownNetwork.setNetworkName("nonExisitigNetworkName");
+    nicWithUnknownNetwork.setName("nic3");
+    nics.add(nicWithUnknownNetwork);
+    initMocks(vdsNics, clusterNetworks);
+    SetupNetworksParameters params = new SetupNetworksParameters();
+    params.setInterfaces(nics);
+    SetupNetworksHelper validator = createHelper(params);
+    assertTrue(validator.validate().contains(NETWORK_NOT_EXISTS_IN_CURRENT_CLUSTER));
+}
+#end_block
+
+#method_before
+@OnTimerMethodAnnotation("cleanExpiredUsersSessions")
+public final void cleanExpiredUsersSessions() {
+    Map<String, Map<String, Object>> map = getInstance().deleteOldGeneration();
+    if (map != null && !map.isEmpty()) {
+        Map<String, Guid> userSessionMap = new HashMap<String, Guid>();
+        for (Map.Entry<String, Map<String, Object>> entry : map.entrySet()) {
+            VdcUser user = (VdcUser) entry.getValue().get("VdcUser");
+            if (user != null) {
+                userSessionMap.put(entry.getKey(), user.getUserId());
+            }
+        }
+        if (!userSessionMap.isEmpty()) {
+            DbFacade.getInstance().getDbUserDAO().removeUserSessions(userSessionMap);
+        }
+    }
+}
+#method_after
+@OnTimerMethodAnnotation("cleanExpiredUsersSessions")
+public final void cleanExpiredUsersSessions() {
+    Map<String, Map<String, Object>> map = deleteOldGeneration();
+    if (map != null && !map.isEmpty()) {
+        Map<String, Guid> userSessionMap = new HashMap<String, Guid>();
+        for (Map.Entry<String, Map<String, Object>> entry : map.entrySet()) {
+            VdcUser user = (VdcUser) entry.getValue().get("VdcUser");
+            if (user != null) {
+                userSessionMap.put(entry.getKey(), user.getUserId());
+            }
+        }
+        if (!userSessionMap.isEmpty()) {
+            DbFacade.getInstance().getDbUserDAO().removeUserSessions(userSessionMap);
+        }
+    }
+}
+#end_block
+
+#method_before
+public java.util.ArrayList<VdcActionParametersBase> getImagesParameters() {
+    if (imagesParameters == null) {
+        imagesParameters = new java.util.ArrayList<VdcActionParametersBase>();
+    }
+    return imagesParameters;
+}
+#method_after
+public ArrayList<VdcActionParametersBase> getImagesParameters() {
+    if (imagesParameters == null) {
+        imagesParameters = new ArrayList<VdcActionParametersBase>();
+    }
+    return imagesParameters;
+}
+#end_block
+
+#method_before
+public void setImagesParameters(java.util.ArrayList<VdcActionParametersBase> value) {
+    imagesParameters = value;
+}
+#method_after
+public void setImagesParameters(ArrayList<VdcActionParametersBase> value) {
+    imagesParameters = value;
+}
+#end_block
+
+#method_before
+public java.util.ArrayList<Guid> getTaskIds() {
+    return taskIds;
+}
+#method_after
+public ArrayList<Guid> getTaskIds() {
+    return taskIds;
+}
+#end_block
+
+#method_before
+public void setTaskIds(java.util.ArrayList<Guid> value) {
+    taskIds = value;
+}
+#method_after
+public void setTaskIds(ArrayList<Guid> value) {
+    taskIds = value;
+}
+#end_block
+
+#method_before
+@Override
+protected void ExecuteVmCommand() {
+    this.setVmName(DbFacade.getInstance().getVmStaticDAO().get(getParameters().getVmId()).getvm_name());
+    // return mac to pool
+    List<VmNetworkInterface> interfaces = DbFacade.getInstance().getVmNetworkInterfaceDAO().getAllForVm(getParameters().getVmId());
+    // LINQ 29456
+    // Interface iface = interfaces.FirstOrDefault(i => i.id ==
+    // RemoveVmInterfaceParameters.InterfaceId);
+    VmNetworkInterface iface = LinqUtils.firstOrNull(interfaces, new Predicate<VmNetworkInterface>() {
+
+        @Override
+        public boolean eval(VmNetworkInterface i) {
+            return i.getId().equals(getParameters().getInterfaceId());
+        }
+    });
+    // LINQ 29456
+    if (iface != null) {
+        MacPoolManager.getInstance().freeMac(iface.getMacAddress());
+        _interfaceName = iface.getName();
+        // Get Interface type.
+        String interType = VmInterfaceType.forValue(iface.getType()).getInterfaceTranslation().toString();
+        if (interType != null) {
+            AddCustomValue("InterfaceType", interType);
+        }
+    }
+    // remove from db
+    DbFacade.getInstance().getVmNetworkInterfaceDAO().remove(getParameters().getInterfaceId());
+    DbFacade.getInstance().getVmNetworkStatisticsDAO().remove(getParameters().getInterfaceId());
+    DbFacade.getInstance().getVmDeviceDAO().remove(new VmDeviceId(getParameters().getInterfaceId(), getParameters().getVmId()));
+    setSucceeded(true);
+}
+#method_after
+@Override
+protected void ExecuteVmCommand() {
+    this.setVmName(DbFacade.getInstance().getVmStaticDAO().get(getParameters().getVmId()).getvm_name());
+    // return mac to pool
+    List<VmNetworkInterface> interfaces = DbFacade.getInstance().getVmNetworkInterfaceDAO().getAllForVm(getParameters().getVmId());
+    // LINQ 29456
+    // Interface iface = interfaces.FirstOrDefault(i => i.id ==
+    // RemoveVmInterfaceParameters.InterfaceId);
+    VmNetworkInterface iface = LinqUtils.firstOrNull(interfaces, new Predicate<VmNetworkInterface>() {
+
+        @Override
+        public boolean eval(VmNetworkInterface i) {
+            return i.getId().equals(getParameters().getInterfaceId());
+        }
+    });
+    // LINQ 29456
+    if (iface != null) {
+        MacPoolManager.getInstance().freeMac(iface.getMacAddress());
+        _interfaceName = iface.getName();
+        // Get Interface type.
+        String interType = VmInterfaceType.forValue(iface.getType()).getInterfaceTranslation().toString();
+        if (interType != null) {
+            AddCustomValue("InterfaceType", interType);
+        }
+    }
+    // remove from db
+    DbFacade dbFacade = DbFacade.getInstance();
+    dbFacade.getVmNetworkInterfaceDAO().remove(getParameters().getInterfaceId());
+    dbFacade.getVmNetworkStatisticsDAO().remove(getParameters().getInterfaceId());
+    dbFacade.getVmDeviceDAO().remove(new VmDeviceId(getParameters().getInterfaceId(), getParameters().getVmId()));
+    setSucceeded(true);
+}
+#end_block
+
+#method_before
+@Override
+protected void ExecuteVmCommand() {
+    AddCustomValue("InterfaceType", (VmInterfaceType.forValue(getParameters().getInterface().getType()).getInterfaceTranslation()).toString());
+    this.setVmName(DbFacade.getInstance().getVmStaticDAO().get(getParameters().getVmId()).getvm_name());
+    if (StringHelper.isNullOrEmpty(getParameters().getInterface().getMacAddress())) {
+        String mac = null;
+        RefObject<String> tempRefObject = new RefObject<String>(mac);
+        MacPoolManager.getInstance().allocateNewMac(tempRefObject);
+        mac = tempRefObject.argvalue;
+        getParameters().getInterface().setMacAddress(mac);
+    }
+    getParameters().getInterface().setSpeed(VmInterfaceType.forValue(getParameters().getInterface().getType()).getSpeed());
+    getParameters().getInterface().setId(Guid.NewGuid());
+    getParameters().getInterface().setVmId(getParameters().getVmId());
+    DbFacade.getInstance().getVmNetworkInterfaceDAO().save(getParameters().getInterface());
+    DbFacade.getInstance().getVmNetworkStatisticsDAO().save(getParameters().getInterface().getStatistics());
+    VmDevice iface = new VmDevice(new VmDeviceId(getParameters().getInterface().getId(), getParameters().getVmId()), VmDeviceCommonUtils.INTERFACE, VmDeviceCommonUtils.BRIDGE, "", 0, "", true, false, false, false);
+    DbFacade.getInstance().getVmDeviceDAO().save(iface);
+    setSucceeded(true);
+}
+#method_after
+@Override
+protected void ExecuteVmCommand() {
+    AddCustomValue("InterfaceType", (VmInterfaceType.forValue(getParameters().getInterface().getType()).getInterfaceTranslation()).toString());
+    this.setVmName(DbFacade.getInstance().getVmStaticDAO().get(getParameters().getVmId()).getvm_name());
+    if (StringHelper.isNullOrEmpty(getParameters().getInterface().getMacAddress())) {
+        String mac = null;
+        RefObject<String> tempRefObject = new RefObject<String>(mac);
+        MacPoolManager.getInstance().allocateNewMac(tempRefObject);
+        mac = tempRefObject.argvalue;
+        getParameters().getInterface().setMacAddress(mac);
+    }
+    getParameters().getInterface().setSpeed(VmInterfaceType.forValue(getParameters().getInterface().getType()).getSpeed());
+    getParameters().getInterface().setId(Guid.NewGuid());
+    getParameters().getInterface().setVmId(getParameters().getVmId());
+    DbFacade dbFacade = DbFacade.getInstance();
+    dbFacade.getVmNetworkInterfaceDAO().save(getParameters().getInterface());
+    dbFacade.getVmNetworkStatisticsDAO().save(getParameters().getInterface().getStatistics());
+    VmDevice iface = new VmDevice(new VmDeviceId(getParameters().getInterface().getId(), getParameters().getVmId()), VmDeviceType.getName(VmDeviceType.INTERFACE), VmDeviceType.getName(VmDeviceType.BRIDGE), "", 0, "", true, false, false, false);
+    dbFacade.getVmDeviceDAO().save(iface);
+    setSucceeded(true);
+}
+#end_block
+
+#method_before
+@SuppressWarnings("unchecked")
+public static <P extends VdcActionParametersBase> CommandBase<P> CreateCommand(VdcActionType action, P parameters) {
+    try {
+        Constructor<CommandBase<? extends VdcActionParametersBase>> constructor = findCommandConstructor(getCommandClass(action.name(), CommandSuffix), parameters.getClass());
+        return (CommandBase<P>) constructor.newInstance(new Object[] { parameters });
+    } catch (java.lang.Exception e) {
+        log.error("CommandsFactory [parameter: VdcActionParametersBase]: Failed to get type information using " + "reflection for Action: " + action, e);
+        return null;
+    }
+}
+#method_after
+@SuppressWarnings("unchecked")
+public static <P extends VdcActionParametersBase> CommandBase<P> CreateCommand(VdcActionType action, P parameters) {
+    try {
+        Constructor<CommandBase<? extends VdcActionParametersBase>> constructor = findCommandConstructor(getCommandClass(action.name(), CommandSuffix), parameters.getClass());
+        return (CommandBase<P>) constructor.newInstance(new Object[] { parameters });
+    } catch (Exception e) {
+        log.error("CommandsFactory [parameter: VdcActionParametersBase]: Failed to get type information using " + "reflection for Action: " + action, e);
+        return null;
+    }
+}
+#end_block
+
+#method_before
+public static CommandBase<?> CreateCommand(String className, Guid commandId) {
+    Constructor<?> constructor = null;
+    Boolean isAcessible = null;
+    try {
+        constructor = Class.forName(className).getDeclaredConstructor(Guid.class);
+        // since this constructor is defined as protected, we must modify accessability and restore it afterwards
+        if (!constructor.isAccessible()) {
+            isAcessible = constructor.isAccessible();
+            constructor.setAccessible(true);
+        }
+        return (CommandBase<?>) constructor.newInstance(new Object[] { commandId });
+    } catch (java.lang.Exception e) {
+        log.error("CommandsFactory : Failed to get type information using " + "reflection for Class : " + className + ", Command Id:" + commandId, e);
+        return null;
+    } finally {
+        if (isAcessible != null) {
+            constructor.setAccessible(isAcessible);
+        }
+    }
+}
+#method_after
+public static CommandBase<?> CreateCommand(String className, Guid commandId) {
+    Constructor<?> constructor = null;
+    Boolean isAcessible = null;
+    try {
+        constructor = Class.forName(className).getDeclaredConstructor(Guid.class);
+        // since this constructor is defined as protected, we must modify accessability and restore it afterwards
+        if (!constructor.isAccessible()) {
+            isAcessible = constructor.isAccessible();
+            constructor.setAccessible(true);
+        }
+        return (CommandBase<?>) constructor.newInstance(new Object[] { commandId });
+    } catch (Exception e) {
+        log.error("CommandsFactory : Failed to get type information using " + "reflection for Class : " + className + ", Command Id:" + commandId, e);
+        return null;
+    } finally {
+        if (isAcessible != null) {
+            constructor.setAccessible(isAcessible);
+        }
+    }
+}
+#end_block
+
+#method_before
+static List<Class<?>> getClassNamesInJarPackage(ClassLoader loader, String jarName, String packageName) throws MalformedURLException {
+    ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
+    packageName = packageName.replaceAll("\\.", "/");
+    JarInputStream jarFileInputStream = null;
+    try {
+        jarFileInputStream = new JarInputStream(new FileInputStream(jarName));
+        JarEntry jarEntry;
+        while (true) {
+            jarEntry = jarFileInputStream.getNextJarEntry();
+            if (jarEntry == null)
+                break;
+            if ((jarEntry.getName().startsWith(packageName)) && (jarEntry.getName().endsWith(".class"))) {
+                classes.add(loader.loadClass(jarEntry.getName().replaceAll("/", "\\.").replace(".class", "")));
+            }
+        }
+        jarFileInputStream.close();
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        try {
+            if (jarFileInputStream != null) {
+                jarFileInputStream.close();
+            }
+        } catch (IOException e) {
+        // ignore
+        }
+    }
+    return classes;
+}
+#method_after
+static List<Class<?>> getClassNamesInJarPackage(ClassLoader loader, String jarName, String packageName) throws MalformedURLException {
+    ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
+    packageName = packageName.replaceAll("\\.", "/");
+    JarInputStream jarFileInputStream = null;
+    try {
+        jarFileInputStream = new JarInputStream(new FileInputStream(jarName));
+        JarEntry jarEntry;
+        while (true) {
+            jarEntry = jarFileInputStream.getNextJarEntry();
+            if (jarEntry == null)
+                break;
+            if ((jarEntry.getName().startsWith(packageName)) && (jarEntry.getName().endsWith(".class"))) {
+                classes.add(loader.loadClass(jarEntry.getName().replaceAll("/", "\\.").replace(".class", "")));
+            }
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    } finally {
+        try {
+            if (jarFileInputStream != null) {
+                jarFileInputStream.close();
+            }
+        } catch (IOException e) {
+        // ignore
+        }
+    }
+    return classes;
+}
+#end_block
+

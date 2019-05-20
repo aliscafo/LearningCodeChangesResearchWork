@@ -1,0 +1,1879 @@
+36
+#method_before
+@Override
+public BasicPort startElement(HandledElement found, Attributes atts) {
+    String v;
+    BasicPort port;
+    ObjectProperties relatedProperty;
+    boolean isImplicit;
+    /*
+         * First, check if the port has already been defined. Otherwise, create the object in the model
+         */
+    String strUID = atts.getValue("id");
+    long uid = 0;
+    if (strUID != null) {
+        if (shared.allChildren.peek().containsKey(strUID)) {
+            uid = shared.allChildren.peek().get(strUID);
+        } else {
+            uid = shared.controller.createObject(Kind.PORT);
+            shared.allChildren.peek().put(strUID, uid);
+        }
+    }
+    String style = atts.getValue("style");
+    if (style != null) {
+        shared.controller.setObjectProperty(uid, Kind.PORT, ObjectProperties.STYLE, style);
+    }
+    String value = atts.getValue("value");
+    if (value != null) {
+        shared.controller.setObjectProperty(uid, Kind.PORT, ObjectProperties.LABEL, value);
+    }
+    switch(found) {
+        case CommandPort:
+            port = new CommandPort(shared.controller, uid, Kind.PORT, value, style, strUID);
+            relatedProperty = ObjectProperties.EVENT_OUTPUTS;
+            isImplicit = false;
+            break;
+        case ControlPort:
+            port = new ControlPort(shared.controller, uid, Kind.PORT, value, style, strUID);
+            relatedProperty = ObjectProperties.EVENT_INPUTS;
+            isImplicit = false;
+            break;
+        case ExplicitInputPort:
+            port = new ExplicitInputPort(shared.controller, uid, Kind.PORT, value, style, strUID);
+            relatedProperty = ObjectProperties.INPUTS;
+            isImplicit = false;
+            break;
+        case ExplicitOutputPort:
+            port = new ExplicitOutputPort(shared.controller, uid, Kind.PORT, value, style, strUID);
+            relatedProperty = ObjectProperties.OUTPUTS;
+            isImplicit = false;
+            break;
+        case ImplicitInputPort:
+            port = new ImplicitInputPort(shared.controller, uid, Kind.PORT, value, style, strUID);
+            relatedProperty = ObjectProperties.INPUTS;
+            isImplicit = true;
+            break;
+        case ImplicitOutputPort:
+            port = new ImplicitOutputPort(shared.controller, uid, Kind.PORT, value, style, strUID);
+            relatedProperty = ObjectProperties.OUTPUTS;
+            isImplicit = true;
+            break;
+        default:
+            throw new IllegalArgumentException();
+    }
+    /*
+         * Setup the properties
+         */
+    int intValue;
+    VectorOfInt datatype = new VectorOfInt();
+    shared.controller.getObjectProperty(uid, Kind.PORT, ObjectProperties.DATATYPE, datatype);
+    v = atts.getValue("dataType");
+    // Magic default value, used in Scilab 5.x
+    intValue = BasicPort.DataType.REAL_MATRIX.ordinal();
+    if (v != null) {
+        intValue = BasicPort.DataType.valueOf(v).ordinal();
+    }
+    datatype.set(2, intValue);
+    // Magic default value, used in Scilab 5.x
+    intValue = -2;
+    v = atts.getValue("dataColumns");
+    if (v != null) {
+        intValue = Integer.parseInt(v);
+    }
+    datatype.set(1, intValue);
+    // Magic default value, used in Scilab 5.x
+    intValue = -1;
+    v = atts.getValue("dataLines");
+    if (v != null) {
+        intValue = Integer.parseInt(v);
+    }
+    datatype.set(0, intValue);
+    shared.controller.setObjectProperty(uid, Kind.PORT, ObjectProperties.DATATYPE, datatype);
+    v = atts.getValue("initialState");
+    if (v != null) {
+        shared.controller.setObjectProperty(uid, Kind.PORT, ObjectProperties.FIRING, Double.valueOf(v));
+    }
+    /*
+         * Associate to the parent block : now or later
+         */
+    int ordering = 0;
+    Long parent = 0l;
+    v = atts.getValue("ordering");
+    if (v != null) {
+        ordering = Integer.parseInt(v) - 1;
+    }
+    v = atts.getValue("parent");
+    if (v != null) {
+        parent = shared.allChildren.peek().get(v);
+        // if we can resolve the parent, then connect it directly
+        if (parent != null) {
+            VectorOfScicosID associatedPorts = new VectorOfScicosID();
+            shared.controller.getObjectProperty(parent, Kind.BLOCK, relatedProperty, associatedPorts);
+            associatedPorts.resize(Math.max(associatedPorts.size(), ordering + 1));
+            associatedPorts.set(ordering, uid);
+            shared.controller.referenceObject(uid);
+            shared.controller.setObjectProperty(uid, Kind.PORT, ObjectProperties.SOURCE_BLOCK, parent);
+            shared.controller.setObjectProperty(parent, Kind.BLOCK, relatedProperty, associatedPorts);
+        } else {
+            // resolve the parent later
+            ArrayList<UnresolvedReference> refList = shared.unresolvedReferences.get(v);
+            if (refList == null) {
+                refList = new ArrayList<>();
+                shared.unresolvedReferences.put(v, refList);
+            }
+            refList.add(new UnresolvedReference(new ScicosObjectOwner(uid, Kind.PORT), ObjectProperties.SOURCE_BLOCK, relatedProperty, ordering));
+        }
+    }
+    /*
+         * Associate to the link if possible (reverse linking)
+         */
+    v = atts.getValue("as");
+    if (v != null) {
+        ObjectProperties opposite = null;
+        if ("source".equals(v)) {
+            opposite = ObjectProperties.SOURCE_PORT;
+        } else if ("target".equals(v)) {
+            opposite = ObjectProperties.DESTINATION_PORT;
+        }
+        XcosCell cell = shared.lookupForParentXcosCellElement();
+        if (cell.getKind() == Kind.LINK) {
+            shared.controller.setObjectProperty(cell.getUID(), cell.getKind(), opposite, port.getUID());
+            shared.controller.setObjectProperty(port.getUID(), port.getKind(), ObjectProperties.CONNECTED_SIGNALS, cell.getUID());
+        }
+    }
+    return port;
+}
+#method_after
+@Override
+public BasicPort startElement(HandledElement found, Attributes atts) {
+    String v;
+    BasicPort port;
+    ObjectProperties relatedProperty;
+    boolean isImplicit;
+    /*
+         * First, check if the port has already been defined. Otherwise, create the object in the model
+         */
+    String strUID = atts.getValue("id");
+    long uid = 0;
+    if (strUID != null) {
+        if (shared.allChildren.peek().containsKey(strUID)) {
+            uid = shared.allChildren.peek().get(strUID);
+        } else {
+            uid = shared.controller.createObject(Kind.PORT);
+            shared.allChildren.peek().put(strUID, uid);
+        }
+    }
+    String style = atts.getValue("style");
+    if (style != null) {
+        shared.controller.setObjectProperty(uid, Kind.PORT, ObjectProperties.STYLE, style);
+    }
+    String value = atts.getValue("value");
+    if (value != null) {
+        shared.controller.setObjectProperty(uid, Kind.PORT, ObjectProperties.LABEL, value);
+    }
+    switch(found) {
+        case CommandPort:
+            port = new CommandPort(shared.controller, uid, Kind.PORT, value, style, strUID);
+            relatedProperty = ObjectProperties.EVENT_OUTPUTS;
+            isImplicit = false;
+            break;
+        case ControlPort:
+            port = new ControlPort(shared.controller, uid, Kind.PORT, value, style, strUID);
+            relatedProperty = ObjectProperties.EVENT_INPUTS;
+            isImplicit = false;
+            break;
+        case ExplicitInputPort:
+            port = new ExplicitInputPort(shared.controller, uid, Kind.PORT, value, style, strUID);
+            relatedProperty = ObjectProperties.INPUTS;
+            isImplicit = false;
+            break;
+        case ExplicitOutputPort:
+            port = new ExplicitOutputPort(shared.controller, uid, Kind.PORT, value, style, strUID);
+            relatedProperty = ObjectProperties.OUTPUTS;
+            isImplicit = false;
+            break;
+        case ImplicitInputPort:
+            port = new ImplicitInputPort(shared.controller, uid, Kind.PORT, value, style, strUID);
+            relatedProperty = ObjectProperties.INPUTS;
+            isImplicit = true;
+            break;
+        case ImplicitOutputPort:
+            port = new ImplicitOutputPort(shared.controller, uid, Kind.PORT, value, style, strUID);
+            relatedProperty = ObjectProperties.OUTPUTS;
+            isImplicit = true;
+            break;
+        default:
+            throw new IllegalArgumentException();
+    }
+    /*
+         * Setup the properties
+         */
+    VectorOfInt datatype = new VectorOfInt();
+    shared.controller.getObjectProperty(uid, Kind.PORT, ObjectProperties.DATATYPE, datatype);
+    v = atts.getValue("dataType");
+    // Magic default value, used in Scilab 5.x
+    int intValue = BasicPort.DataType.REAL_MATRIX.ordinal();
+    if (v != null) {
+        intValue = BasicPort.DataType.valueOf(v).ordinal();
+    }
+    datatype.set(2, intValue);
+    // Magic default value, used in Scilab 5.x
+    intValue = -2;
+    v = atts.getValue("dataColumns");
+    if (v != null) {
+        intValue = Integer.parseInt(v);
+    }
+    datatype.set(1, intValue);
+    // Magic default value, used in Scilab 5.x
+    intValue = -1;
+    v = atts.getValue("dataLines");
+    if (v != null) {
+        intValue = Integer.parseInt(v);
+    }
+    datatype.set(0, intValue);
+    shared.controller.setObjectProperty(uid, Kind.PORT, ObjectProperties.DATATYPE, datatype);
+    v = atts.getValue("initialState");
+    if (v != null) {
+        shared.controller.setObjectProperty(uid, Kind.PORT, ObjectProperties.FIRING, Double.valueOf(v));
+    }
+    /*
+         * Associate to the parent block : now or later
+         */
+    int ordering = 0;
+    Long parent = 0l;
+    v = atts.getValue("ordering");
+    if (v != null) {
+        ordering = Integer.parseInt(v) - 1;
+    }
+    v = atts.getValue("parent");
+    if (v != null) {
+        parent = shared.allChildren.peek().get(v);
+        // if we can resolve the parent, then connect it directly
+        if (parent != null) {
+            VectorOfScicosID associatedPorts = new VectorOfScicosID();
+            shared.controller.getObjectProperty(parent, Kind.BLOCK, relatedProperty, associatedPorts);
+            associatedPorts.resize(Math.max(associatedPorts.size(), ordering + 1));
+            associatedPorts.set(ordering, uid);
+            shared.controller.referenceObject(uid);
+            shared.controller.setObjectProperty(uid, Kind.PORT, ObjectProperties.SOURCE_BLOCK, parent);
+            shared.controller.setObjectProperty(parent, Kind.BLOCK, relatedProperty, associatedPorts);
+        } else {
+            // resolve the parent later
+            ArrayList<UnresolvedReference> refList = shared.unresolvedReferences.get(v);
+            if (refList == null) {
+                refList = new ArrayList<>();
+                shared.unresolvedReferences.put(v, refList);
+            }
+            refList.add(new UnresolvedReference(new ScicosObjectOwner(uid, Kind.PORT), ObjectProperties.SOURCE_BLOCK, relatedProperty, ordering));
+        }
+    }
+    /*
+         * Associate to the link if possible (reverse linking)
+         */
+    v = atts.getValue("as");
+    if (v != null) {
+        ObjectProperties opposite = null;
+        if ("source".equals(v)) {
+            opposite = ObjectProperties.SOURCE_PORT;
+        } else if ("target".equals(v)) {
+            opposite = ObjectProperties.DESTINATION_PORT;
+        }
+        XcosCell cell = shared.lookupForParentXcosCellElement();
+        if (cell.getKind() == Kind.LINK) {
+            shared.controller.setObjectProperty(cell.getUID(), cell.getKind(), opposite, port.getUID());
+            shared.controller.setObjectProperty(port.getUID(), port.getKind(), ObjectProperties.CONNECTED_SIGNALS, cell.getUID());
+        }
+    }
+    return port;
+}
+#end_block
+
+#method_before
+@Override
+public void write(long uid, Kind kind) throws XMLStreamException {
+    VectorOfDouble vDouble = new VectorOfDouble();
+    switch(kind) {
+        case ANNOTATION:
+        case BLOCK:
+            shared.controller.getObjectProperty(uid, kind, ObjectProperties.GEOMETRY, vDouble);
+            shared.stream.writeEmptyElement("mxGeometry");
+            shared.stream.writeAttribute("as", "geometry");
+            shared.stream.writeAttribute("x", Double.toString(vDouble.get(0)));
+            shared.stream.writeAttribute("y", Double.toString(vDouble.get(1)));
+            shared.stream.writeAttribute("width", Double.toString(vDouble.get(2)));
+            shared.stream.writeAttribute("height", Double.toString(vDouble.get(3)));
+            break;
+        case LINK:
+            shared.controller.getObjectProperty(uid, kind, ObjectProperties.CONTROL_POINTS, vDouble);
+            int i = 0;
+            final int nbOfPoints = vDouble.size() / 2;
+            shared.stream.writeStartElement("mxGeometry");
+            shared.stream.writeAttribute("as", "geometry");
+            if (i < nbOfPoints) {
+                shared.stream.writeEmptyElement("mxPoint");
+                shared.stream.writeAttribute("as", "sourcePoint");
+                shared.stream.writeAttribute("x", Double.toString(vDouble.get(2 * i)));
+                shared.stream.writeAttribute("y", Double.toString(vDouble.get(2 * i + 1)));
+                i++;
+            }
+            shared.stream.writeStartElement("Array");
+            shared.stream.writeAttribute("as", "points");
+            for (; i < nbOfPoints - 1; i++) {
+                shared.stream.writeEmptyElement("mxPoint");
+                shared.stream.writeAttribute("x", Double.toString(vDouble.get(2 * i)));
+                shared.stream.writeAttribute("y", Double.toString(vDouble.get(2 * i + 1)));
+            }
+            // Array
+            shared.stream.writeEndElement();
+            if (i < nbOfPoints) {
+                shared.stream.writeEmptyElement("mxPoint");
+                shared.stream.writeAttribute("as", "targetPoint");
+                shared.stream.writeAttribute("x", Double.toString(vDouble.get(2 * i)));
+                shared.stream.writeAttribute("y", Double.toString(vDouble.get(2 * i + 1)));
+                i++;
+            }
+            // mxGeometry
+            shared.stream.writeEndElement();
+            break;
+        // no break on purpose
+        case PORT:
+        case DIAGRAM:
+            break;
+    }
+}
+#method_after
+@Override
+public void write(long uid, Kind kind) throws XMLStreamException {
+    VectorOfDouble vDouble = new VectorOfDouble();
+    switch(kind) {
+        case ANNOTATION:
+        case BLOCK:
+            shared.controller.getObjectProperty(uid, kind, ObjectProperties.GEOMETRY, vDouble);
+            shared.stream.writeEmptyElement("mxGeometry");
+            shared.stream.writeAttribute("as", "geometry");
+            shared.stream.writeAttribute("x", Double.toString(vDouble.get(0)));
+            shared.stream.writeAttribute("y", Double.toString(vDouble.get(1)));
+            shared.stream.writeAttribute("width", Double.toString(vDouble.get(2)));
+            shared.stream.writeAttribute("height", Double.toString(vDouble.get(3)));
+            break;
+        case LINK:
+            shared.controller.getObjectProperty(uid, kind, ObjectProperties.CONTROL_POINTS, vDouble);
+            int i = 0;
+            final int nbOfPoints = vDouble.size() / 2;
+            shared.stream.writeStartElement("mxGeometry");
+            shared.stream.writeAttribute("as", "geometry");
+            if (i < nbOfPoints) {
+                shared.stream.writeEmptyElement("mxPoint");
+                shared.stream.writeAttribute("as", "sourcePoint");
+                shared.stream.writeAttribute("x", Double.toString(vDouble.get(2 * i)));
+                shared.stream.writeAttribute("y", Double.toString(vDouble.get(2 * i + 1)));
+                i++;
+            }
+            shared.stream.writeStartElement("Array");
+            shared.stream.writeAttribute("as", "points");
+            for (; i < nbOfPoints - 1; i++) {
+                shared.stream.writeEmptyElement("mxPoint");
+                shared.stream.writeAttribute("x", Double.toString(vDouble.get(2 * i)));
+                shared.stream.writeAttribute("y", Double.toString(vDouble.get(2 * i + 1)));
+            }
+            // Array
+            shared.stream.writeEndElement();
+            if (i < nbOfPoints) {
+                shared.stream.writeEmptyElement("mxPoint");
+                shared.stream.writeAttribute("as", "targetPoint");
+                shared.stream.writeAttribute("x", Double.toString(vDouble.get(2 * i)));
+                shared.stream.writeAttribute("y", Double.toString(vDouble.get(2 * i + 1)));
+            }
+            // mxGeometry
+            shared.stream.writeEndElement();
+            break;
+        // no break on purpose
+        case PORT:
+        case DIAGRAM:
+            break;
+    }
+}
+#end_block
+
+#method_before
+private static String getItemValue(Element item, String nodeName) {
+    NodeList nodeList = item.getElementsByTagName(nodeName);
+    if (nodeList.getLength() > 0) {
+        return nodeList.item(0).getFirstChild().getNodeValue();
+    } else {
+        return null;
+    }
+}
+#method_after
+private static String getItemValue(Element item, String nodeName) {
+    NodeList nodeList = item.getElementsByTagName(nodeName);
+    if (nodeList.getLength() > 0) {
+        Node node = nodeList.item(0);
+        if (node.hasChildNodes()) {
+            return node.getFirstChild().getNodeValue();
+        } else {
+            return null;
+        }
+    } else {
+        return null;
+    }
+}
+#end_block
+
+#method_before
+public SwingScilabDockablePanel getTab(String uuid) {
+    NewsFeedTab newsFeedTab = NewsFeedTab.getInstance();
+    // newsFeedTab.startNewsFeed();
+    ScilabTabFactory.getInstance().addToCache(newsFeedTab);
+    return newsFeedTab;
+}
+#method_after
+public SwingScilabDockablePanel getTab(String uuid) {
+    NewsFeedTab newsFeedTab = NewsFeedTab.getInstance();
+    ScilabTabFactory.getInstance().addToCache(newsFeedTab);
+    return newsFeedTab;
+}
+#end_block
+
+#method_before
+public boolean isAValidUUID(String uuid) {
+    return NewsFeedTab.NEWSFEEDUUID.equals(uuid);
+}
+#method_after
+public boolean isAValidUUID(String uuid) {
+    return NewsFeedTab.NEWSFEED_UUID.equals(uuid);
+}
+#end_block
+
+#method_before
+public void newsFeedEventReceived(NewsFeedEvent evt) {
+    switch(evt.getEventType()) {
+        case NewsFeedEvent.NEWS_CHANGED:
+            {
+                displayNews(newsFeed.getCurrentNews());
+                break;
+            }
+        case NewsFeedEvent.NEWSFEED_ERROR:
+            {
+                displayError(((NewsFeedErrorEvent) evt).getErrorMessage());
+                break;
+            }
+    }
+}
+#method_after
+public void newsFeedEventReceived(NewsFeedEvent evt) {
+    switch(evt.getEventType()) {
+        case NewsFeedEvent.NEWS_CHANGED:
+            {
+                displayNews(newsFeedController.getCurrentNews());
+                break;
+            }
+        case NewsFeedEvent.NEWSFEED_ERROR:
+            {
+                displayError(((NewsFeedErrorEvent) evt).getErrorMessage());
+                break;
+            }
+    }
+}
+#end_block
+
+#method_before
+private void displayNews(News news) {
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE dd MMM yyyy HH:mm");
+    String dateStr = simpleDateFormat.format(news.getDate());
+    StringBuilder newsHtmlContent = new StringBuilder(String.format("<html><body><h1>%s - %s</h1>%s", dateStr, news.getTitle(), news.getDescription()));
+    if (news.getLink() != null) {
+        newsHtmlContent.append(String.format("<p><a href='%s'>%s</a></p>", news.getLink(), news.getLink()));
+    }
+    newsHtmlContent.append("</body></html>");
+    display(newsHtmlContent.toString());
+}
+#method_after
+private void displayNews(News news) {
+    StringBuilder newsHtmlBuilder = new StringBuilder();
+    // Add navigation links
+    // Previous news icon link
+    String previousIconUrl = getIconURL("go-previous");
+    String previousIconHtml = getImageHtml("previous", previousIconUrl);
+    String previousLinkHtml = getSpanHtml(getLinkHtml("previous", "previous", previousIconHtml), PREVIOUS_HTML_ID);
+    // Next news icon link
+    String nextIconUrl = getIconURL("go-next");
+    String nextIconHtml = getImageHtml("next", nextIconUrl);
+    String nextLinkHtml = getSpanHtml(getLinkHtml("next", "next", nextIconHtml), NEXT_HTML_ID);
+    newsHtmlBuilder.append(getDivHtml(String.format("%s %s", previousLinkHtml, nextLinkHtml), NAVIGATION_HTML_ID));
+    // Add news title & date
+    String newsTitleHtml = getSpanHtml(news.getTitle(), NEWS_TITLE_HTML_ID);
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE dd MMM yyyy HH:mm");
+    String dateStr = simpleDateFormat.format(news.getDate());
+    String newsDateHtml = getSpanHtml(dateStr, NEWS_DATE_HTML_ID);
+    newsHtmlBuilder.append(getDivHtml(String.format("%s - %s", newsTitleHtml, newsDateHtml)));
+    newsHtmlBuilder.append(getDivHtml(news.getDescription(), NEWS_DESCRIPTION_HTML_ID));
+    // Add news link if exist
+    if (news.getLink() != null) {
+        newsHtmlBuilder.append(getDivHtml(getLinkHtml(news.getLink(), news.getLink()), NEWS_LINK_HTML_ID));
+    }
+    display(getHTML(newsHtmlBuilder));
+    System.out.println(getHTML(newsHtmlBuilder));
+}
+#end_block
+
+#method_before
+private void displayError(String errorMessage) {
+    String errorHtmlContent = String.format("<html><body>%s</body></html>", errorMessage);
+    display(errorHtmlContent);
+}
+#method_after
+private void displayError(String errorMessage) {
+    StringBuilder errMsgHtmlBuilder = new StringBuilder(errorMessage);
+    display(getHTML(errMsgHtmlBuilder));
+}
+#end_block
+
+#method_before
+private void display(String htmlContent) {
+    try {
+        SwingUtilities.invokeAndWait(new Runnable() {
+
+            @Override
+            public void run() {
+                setText(htmlContent);
+            }
+        });
+    } catch (Exception e) {
+    }
+}
+#method_after
+private void display(String htmlContent) {
+    editorPane.setText(htmlContent);
+    try {
+        SwingUtilities.invokeLater(new Runnable() {
+
+            public void run() {
+                scrollPane.getHorizontalScrollBar().setValue(0);
+                scrollPane.getVerticalScrollBar().setValue(0);
+                repaint();
+            }
+        });
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+#end_block
+
+#method_before
+public static void displayTab() {
+    if (instance == null) {
+        if (!WindowsConfigurationManager.restoreUUID(NEWSFEEDUUID)) {
+            NewsFeedTabFactory.getInstance().getTab(NEWSFEEDUUID);
+            instance.createTabWindow();
+        }
+    }
+    instance.setVisible(true);
+}
+#method_after
+public static void displayTab() {
+    if (instance == null) {
+        if (!WindowsConfigurationManager.restoreUUID(NEWSFEED_UUID)) {
+            NewsFeedTabFactory.getInstance().getTab(NEWSFEED_UUID);
+            instance.createTabWindow();
+        }
+    }
+    instance.setVisible(true);
+}
+#end_block
+
+#method_before
+private void closeTab() {
+    stopNewsFeed();
+    instance = null;
+}
+#method_after
+public void closeTab() {
+    stopNewsFeed();
+    instance = null;
+}
+#end_block
+
+#method_before
+public void addInfoBar(TextBox infoBarToAdd) {
+// setInfoBar(infoBarToAdd);
+}
+#method_after
+public void addInfoBar(TextBox infoBar) {
+// setInfoBar(infoBarToAdd);
+}
+#end_block
+
+#method_before
+public void addMenuBar(MenuBar menuBarToAdd) {
+    setMenuBar(menuBarToAdd);
+}
+#method_after
+public void addMenuBar(MenuBar menuBar) {
+    setMenuBar(menuBar);
+}
+#end_block
+
+#method_before
+private SwingScilabWindow createTabWindow() {
+    SwingScilabWindow window = SwingScilabWindow.createWindow(true);
+    window.addTab(this);
+    window.setLocation(0, 0);
+    window.setSize(500, 200);
+    window.setVisible(true);
+    return window;
+}
+#method_after
+private SwingScilabWindow createTabWindow() {
+    SwingScilabWindow window = SwingScilabWindow.createWindow(true);
+    window.addTab(this);
+    window.setVisible(true);
+    return window;
+}
+#end_block
+
+#method_before
+private void stopNewsFeed() {
+    newsFeedController.interrupt();
+}
+#method_after
+private void stopNewsFeed() {
+    newsFeedController.stop();
+}
+#end_block
+
+#method_before
+private void updateNewsFeed() {
+    Calendar now = Calendar.getInstance();
+    if (now.after(nextFeedUpdateTime)) {
+        news = null;
+        readSettings();
+        if (!newsFetcher.isOK()) {
+            return;
+        }
+        try {
+            // TODO : update only if RSS feed has new news
+            news = newsFetcher.fetchNews();
+        } catch (Exception e) {
+            System.err.println(e);
+            e.printStackTrace();
+            fireNewsFeedErrorEvent(UiDataMessages.NEWS_FEED_UNAVAILABLE);
+        }
+        nextFeedUpdateTime = now;
+        nextFeedUpdateTime.add(Calendar.SECOND, feedUpdateTimeInterval);
+        newsIterator = null;
+    }
+}
+#method_after
+public void updateNewsFeed() {
+    news = null;
+    try {
+        newsFetcher.readSettings();
+        if (!newsFetcher.isOK()) {
+            return;
+        }
+        // TODO : update only if RSS feed has new news
+        news = newsFetcher.fetchNews();
+    } catch (Exception e) {
+        System.err.println(e);
+        e.printStackTrace();
+        fireNewsFeedErrorEvent(NewsFeedUIMessages.NEWS_FEED_UNAVAILABLE_ERROR);
+    }
+    newsIterator = null;
+}
+#end_block
+
+#method_before
+private void readSettings() {
+    try {
+        newsFetcher.readSettings();
+        newsChangeTimeInterval = NewsFeedSettings.getIntSetting("newsChangeTimeInterval") * 1000;
+        feedUpdateTimeInterval = NewsFeedSettings.getIntSetting("feedUpdateTimeInterval") * 1000;
+    } catch (Exception e) {
+        System.err.println(e);
+        e.printStackTrace();
+        fireNewsFeedErrorEvent(UiDataMessages.NEWS_FEED_CONFIGURATION_ERROR);
+    }
+}
+#method_after
+private void readSettings() {
+    try {
+        newsFetcher.readSettings();
+        newsChangeTimeInterval = NewsFeedSettings.getIntSetting("newsChangeTimeInterval");
+        if (newsChangeTimeInterval != NO_TIME_INTERVAL) {
+            newsChangeTimeInterval *= ONE_SECOND;
+        }
+        feedUpdateTimeInterval = NewsFeedSettings.getIntSetting("feedUpdateTimeInterval");
+        if (feedUpdateTimeInterval != NO_TIME_INTERVAL) {
+            feedUpdateTimeInterval *= ONE_SECOND;
+        }
+    } catch (Exception e) {
+        System.err.println(e);
+        e.printStackTrace();
+        fireNewsFeedErrorEvent(NewsFeedUIMessages.NEWS_FEED_CONFIGURATION_ERROR);
+    }
+}
+#end_block
+
+#method_before
+private void fireNewsFeedEvent(int eventType) {
+    NewsFeedEvent event = new NewsFeedEvent(this, eventType);
+    Iterator<NewsFeedEventListener> iterator = listeners.iterator();
+    while (iterator.hasNext()) {
+        ((NewsFeedEventListener) iterator.next()).newsFeedEventReceived(event);
+    }
+}
+#method_after
+private void fireNewsFeedEvent(int eventType) {
+    NewsFeedEvent event = new NewsFeedEvent(this, eventType);
+    Iterator<NewsFeedEventListener> iterator = listeners.iterator();
+    while (iterator.hasNext()) {
+        iterator.next().newsFeedEventReceived(event);
+    }
+}
+#end_block
+
+#method_before
+private void fireNewsFeedErrorEvent(String errorMessage) {
+    NewsFeedErrorEvent errorEvent = new NewsFeedErrorEvent(this, errorMessage);
+    Iterator<NewsFeedEventListener> iterator = listeners.iterator();
+    while (iterator.hasNext()) {
+        ((NewsFeedEventListener) iterator.next()).newsFeedEventReceived(errorEvent);
+    }
+}
+#method_after
+private void fireNewsFeedErrorEvent(String errorMessage) {
+    NewsFeedErrorEvent errorEvent = new NewsFeedErrorEvent(this, errorMessage);
+    Iterator<NewsFeedEventListener> iterator = listeners.iterator();
+    while (iterator.hasNext()) {
+        iterator.next().newsFeedEventReceived(errorEvent);
+    }
+}
+#end_block
+
+#method_before
+public List<News> fetchNews() throws Exception {
+    List<News> newsList = new ArrayList<News>();
+    DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+    Document doc = builder.parse(rssURL.openStream());
+    NodeList items = doc.getElementsByTagName("item");
+    SimpleDateFormat formatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
+    for (int i = 0; i < items.getLength(); i++) {
+        Element item = (Element) items.item(i);
+        String title = getItemValue(item, "title");
+        String dateStr = getItemValue(item, "pubDate");
+        Date date = formatter.parse(dateStr);
+        String description = getItemValue(item, "description");
+        String link = getItemValue(item, "link");
+        newsList.add(new News(title, date, description, link));
+    }
+    return newsList;
+}
+#method_after
+public List<News> fetchNews() throws Exception {
+    List<News> newsList = new ArrayList<News>();
+    DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+    Document doc = builder.parse(rssURL.openStream());
+    NodeList items = doc.getElementsByTagName("item");
+    if ((items == null) || (items.getLength() == 0)) {
+        throw new Exception("The fetched document has no 'item' element, please check it is a RSS feed.");
+    }
+    SimpleDateFormat formatter = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US);
+    for (int i = 0; i < items.getLength(); i++) {
+        Element item = (Element) items.item(i);
+        String title = getItemValue(item, "title");
+        String dateStr = getItemValue(item, "pubDate");
+        Date date = formatter.parse(dateStr);
+        String description = getItemValue(item, "description");
+        String link = getItemValue(item, "link");
+        newsList.add(new News(title, date, description, link));
+    }
+    return newsList;
+}
+#end_block
+
+#method_before
+private String getItemValue(Element item, String nodeName) {
+    NodeList nodeList = item.getElementsByTagName(nodeName);
+    if (nodeList.getLength() > 0) {
+        return nodeList.item(0).getFirstChild().getNodeValue();
+    } else {
+        return null;
+    }
+}
+#method_after
+private String getItemValue(Element item, String nodeName) {
+    NodeList nodeList = item.getElementsByTagName(nodeName);
+    if (nodeList.getLength() > 0) {
+        Node node = nodeList.item(0);
+        if (node.hasChildNodes()) {
+            return node.getFirstChild().getNodeValue();
+        } else {
+            return null;
+        }
+    } else {
+        return null;
+    }
+}
+#end_block
+
+#method_before
+private static void insertPortChildren(final JavaController controller, final ObjectProperties property, final XcosCell parent) {
+    if (parent.getKind() != Kind.BLOCK) {
+        return;
+    }
+    VectorOfScicosID modelChildren = new VectorOfScicosID();
+    controller.getObjectProperty(parent.getUID(), parent.getKind(), property, modelChildren);
+    XcosCell[] children = new XcosCell[modelChildren.size()];
+    for (int i = 0; i < children.length; i++) {
+        XcosCell child = createPort(controller, modelChildren.get(i), property);
+        children[i] = child;
+    }
+    Arrays.stream(children).forEach(c -> parent.insert(c));
+}
+#method_after
+private static void insertPortChildren(final JavaController controller, final ObjectProperties property, final XcosCell parent) {
+    VectorOfScicosID modelChildren = new VectorOfScicosID();
+    controller.getObjectProperty(parent.getUID(), parent.getKind(), property, modelChildren);
+    XcosCell[] children = new XcosCell[modelChildren.size()];
+    for (int i = 0; i < children.length; i++) {
+        XcosCell child = createPort(controller, modelChildren.get(i), property);
+        children[i] = child;
+    }
+    Arrays.stream(children).forEach(c -> parent.insert(c));
+}
+#end_block
+
+#method_before
+@Override
+public void endElement(HandledElement found) {
+    switch(found) {
+        case Array:
+        // no break on purpose
+        case ScilabBoolean:
+        // no break on purpose
+        case ScilabDouble:
+        // no break on purpose
+        case ScilabInteger:
+        // no break on purpose
+        case ScilabString:
+            {
+                // defensive programming
+                if (!(saxHandler.parents.peek() instanceof RawDataDescriptor)) {
+                    return;
+                }
+                RawDataDescriptor fieldValue = (RawDataDescriptor) saxHandler.parents.peek();
+                Object parent = saxHandler.parents.peek(1);
+                switch(fieldValue.as) {
+                    case CONTROL_POINTS:
+                        {
+                            // defensive programming
+                            if (!(parent instanceof mxGeometry)) {
+                                return;
+                            }
+                            mxGeometry geom = (mxGeometry) parent;
+                            @SuppressWarnings("unchecked")
+                            ArrayList<mxPoint> value = (ArrayList<mxPoint>) fieldValue.value;
+                            geom.setPoints(value);
+                            break;
+                        }
+                    case DIAGRAM_CONTEXT:
+                        {
+                            // defensive programming
+                            if (!(parent instanceof ScicosObjectOwner)) {
+                                return;
+                            }
+                            ScicosObjectOwner diagram = (ScicosObjectOwner) parent;
+                            @SuppressWarnings("unchecked")
+                            ArrayList<String> value = (ArrayList<String>) fieldValue.value;
+                            VectorOfString ctx = new VectorOfString(value.size());
+                            for (int i = 0; i < value.size(); i++) {
+                                ctx.set(i, value.get(i));
+                            }
+                            saxHandler.controller.setObjectProperty(diagram.getUID(), diagram.getKind(), ObjectProperties.DIAGRAM_CONTEXT, ctx);
+                            break;
+                        }
+                    case STATE:
+                    case DSTATE:
+                    case NZCROSS:
+                    case NMODE:
+                    case IPAR:
+                    case RPAR:
+                        {
+                            // defensive programming
+                            if (!(parent instanceof XcosCell)) {
+                                return;
+                            }
+                            XcosCell cell = (XcosCell) parent;
+                            if (fieldValue.value instanceof ScilabMList) {
+                                // decode the rpar as a subdiagram using the legacy decoders
+                                try {
+                                    new DiagramElement(saxHandler.controller).decode((ScilabMList) fieldValue.value, new XcosDiagram(cell.getUID(), cell.getKind()));
+                                } catch (ScicosFormatException e) {
+                                }
+                                return;
+                            }
+                            VectorOfDouble vec;
+                            if (fieldValue.value instanceof ScilabString) {
+                                /*
+                             * This seems to be a corner-case used for code generation on ScicosLab
+                             */
+                                vec = new VectorOfDouble(0);
+                            } else {
+                                ScilabDouble value = (ScilabDouble) fieldValue.value;
+                                vec = new VectorOfDouble(value.getHeight());
+                                for (int i = 0; i < value.getHeight(); i++) {
+                                    vec.set(i, value.getRealElement(i, 0));
+                                }
+                            }
+                            saxHandler.controller.setObjectProperty(cell.getUID(), cell.getKind(), fieldValue.as, vec);
+                            break;
+                        }
+                    case EXPRS:
+                    case EQUATIONS:
+                    case OPAR:
+                    case ODSTATE:
+                        {
+                            // defensive programming
+                            if (!(parent instanceof XcosCell)) {
+                                return;
+                            }
+                            XcosCell cell = (XcosCell) parent;
+                            ScilabType value = (ScilabType) fieldValue.value;
+                            saxHandler.controller.setObjectProperty(cell.getUID(), cell.getKind(), fieldValue.as, new ScilabTypeCoder().var2vec(value));
+                            break;
+                        }
+                    default:
+                        System.err.println("RawDataHandler not handled: " + fieldValue.as);
+                        break;
+                }
+                break;
+            }
+        case add:
+            break;
+        case data:
+            break;
+        default:
+            throw new IllegalArgumentException();
+    }
+}
+#method_after
+@Override
+public void endElement(HandledElement found) {
+    switch(found) {
+        case Array:
+        // no break on purpose
+        case ScilabBoolean:
+        // no break on purpose
+        case ScilabDouble:
+        // no break on purpose
+        case ScilabInteger:
+        // no break on purpose
+        case ScilabString:
+            {
+                // defensive programming
+                if (!(saxHandler.parents.peek() instanceof RawDataDescriptor)) {
+                    return;
+                }
+                RawDataDescriptor fieldValue = (RawDataDescriptor) saxHandler.parents.peek();
+                Object parent = saxHandler.parents.peek(1);
+                switch(fieldValue.as) {
+                    case CONTROL_POINTS:
+                        {
+                            // defensive programming
+                            if (!(parent instanceof mxGeometry)) {
+                                return;
+                            }
+                            mxGeometry geom = (mxGeometry) parent;
+                            @SuppressWarnings("unchecked")
+                            ArrayList<mxPoint> value = (ArrayList<mxPoint>) fieldValue.value;
+                            geom.setPoints(value);
+                            break;
+                        }
+                    case DIAGRAM_CONTEXT:
+                        {
+                            // defensive programming
+                            if (!(parent instanceof ScicosObjectOwner)) {
+                                return;
+                            }
+                            ScicosObjectOwner diagram = (ScicosObjectOwner) parent;
+                            @SuppressWarnings("unchecked")
+                            ArrayList<String> value = (ArrayList<String>) fieldValue.value;
+                            VectorOfString ctx = new VectorOfString(value.size());
+                            for (int i = 0; i < value.size(); i++) {
+                                ctx.set(i, value.get(i));
+                            }
+                            saxHandler.controller.setObjectProperty(diagram.getUID(), diagram.getKind(), ObjectProperties.DIAGRAM_CONTEXT, ctx);
+                            break;
+                        }
+                    case STATE:
+                    case DSTATE:
+                    case NZCROSS:
+                    case NMODE:
+                    case IPAR:
+                    case RPAR:
+                        {
+                            // defensive programming
+                            if (!(parent instanceof XcosCell)) {
+                                return;
+                            }
+                            XcosCell cell = (XcosCell) parent;
+                            if (fieldValue.value instanceof ScilabMList) {
+                                // decode the rpar as a subdiagram using the legacy decoders
+                                try {
+                                    new DiagramElement(saxHandler.controller).decode((ScilabMList) fieldValue.value, new XcosDiagram(cell.getUID(), cell.getKind()));
+                                } catch (ScicosFormatException e) {
+                                }
+                                return;
+                            }
+                            VectorOfDouble vec;
+                            if (fieldValue.value instanceof ScilabDouble) {
+                                // defensive programming against old schema
+                                ScilabDouble value = (ScilabDouble) fieldValue.value;
+                                vec = new VectorOfDouble(value.getHeight());
+                                for (int i = 0; i < value.getHeight(); i++) {
+                                    vec.set(i, value.getRealElement(i, 0));
+                                }
+                                saxHandler.controller.setObjectProperty(cell.getUID(), cell.getKind(), fieldValue.as, vec);
+                            }
+                            break;
+                        }
+                    case EXPRS:
+                    case EQUATIONS:
+                    case OPAR:
+                    case ODSTATE:
+                        {
+                            // defensive programming
+                            if (!(parent instanceof XcosCell)) {
+                                return;
+                            }
+                            XcosCell cell = (XcosCell) parent;
+                            ScilabType value = (ScilabType) fieldValue.value;
+                            saxHandler.controller.setObjectProperty(cell.getUID(), cell.getKind(), fieldValue.as, new ScilabTypeCoder().var2vec(value));
+                            break;
+                        }
+                    default:
+                        System.err.println("RawDataHandler not handled: " + fieldValue.as);
+                        break;
+                }
+                break;
+            }
+        case add:
+            break;
+        case data:
+            break;
+        default:
+            throw new IllegalArgumentException();
+    }
+}
+#end_block
+
+#method_before
+@Override
+public BasicBlock startElement(HandledElement found, Attributes atts) {
+    String v;
+    BasicBlock block;
+    Kind k = Kind.BLOCK;
+    if (found == HandledElement.TextBlock) {
+        k = Kind.ANNOTATION;
+    }
+    final long uid = saxHandler.controller.createObject(k);
+    switch(found) {
+        case AfficheBlock:
+            block = new AfficheBlock(uid);
+            break;
+        case BasicBlock:
+            block = new BasicBlock(uid);
+            break;
+        case BigSom:
+            block = new BigSom(uid);
+            break;
+        case ConstBlock:
+            // FIXME: why not needed anymore
+            block = new BasicBlock(uid);
+            break;
+        case EventInBlock:
+            block = new EventInBlock(uid);
+            break;
+        case EventOutBlock:
+            block = new EventOutBlock(uid);
+            break;
+        case ExplicitInBlock:
+            block = new ExplicitInBlock(uid);
+            break;
+        case ExplicitOutBlock:
+            block = new ExplicitOutBlock(uid);
+            break;
+        case GainBlock:
+            // FIXME: why not needed anymore
+            block = new BasicBlock(uid);
+            break;
+        case GroundBlock:
+            block = new GroundBlock(uid);
+            break;
+        case ImplicitInBlock:
+            block = new ImplicitInBlock(uid);
+            break;
+        case ImplicitOutBlock:
+            block = new ImplicitOutBlock(uid);
+            break;
+        case PrintBlock:
+            // FIXME: why not needed anymore
+            block = new BasicBlock(uid);
+            break;
+        case Product:
+            block = new Product(uid);
+            break;
+        case RoundBlock:
+            block = new RoundBlock(uid);
+            break;
+        case SplitBlock:
+            block = new SplitBlock(uid);
+            break;
+        case Summation:
+            block = new Summation(uid);
+            break;
+        case SuperBlock:
+            block = new SuperBlock(uid);
+            break;
+        case TextBlock:
+            block = new TextBlock(uid);
+            break;
+        case VoltageSensorBlock:
+            block = new VoltageSensorBlock(uid);
+            break;
+        default:
+            throw new IllegalArgumentException();
+    }
+    /*
+         * Set the attributes
+         */
+    v = atts.getValue("id");
+    if (v != null) {
+        block.setId(v);
+        saxHandler.allChildren.peek().put(v, uid);
+    }
+    v = atts.getValue("interfaceFunctionName");
+    if (v != null) {
+        saxHandler.controller.setObjectProperty(uid, k, ObjectProperties.INTERFACE_FUNCTION, v);
+    } else if (k == Kind.BLOCK) {
+        // Setup the interface function accordingly to the mapping table
+        // by default it is empty and might not be serialized (depending on
+        // the class)
+        String defaultInterfaceFunction = Arrays.stream(BlockInterFunction.values()).filter(n -> n.getKlass().equals(block.getClass())).map(e -> e.name()).findFirst().get();
+        saxHandler.controller.setObjectProperty(uid, k, ObjectProperties.INTERFACE_FUNCTION, defaultInterfaceFunction);
+    }
+    v = atts.getValue("simulationFunctionName");
+    if (v != null) {
+        saxHandler.controller.setObjectProperty(uid, k, ObjectProperties.SIM_FUNCTION_NAME, v);
+    }
+    v = atts.getValue("blockType");
+    if (v != null) {
+        saxHandler.controller.setObjectProperty(uid, k, ObjectProperties.SIM_BLOCKTYPE, v);
+    }
+    v = atts.getValue("style");
+    if (v != null) {
+        saxHandler.controller.setObjectProperty(uid, k, ObjectProperties.STYLE, v);
+    }
+    saxHandler.insertChild(block);
+    return block;
+}
+#method_after
+@Override
+public BasicBlock startElement(HandledElement found, Attributes atts) {
+    String v;
+    BasicBlock block;
+    Kind kind;
+    if (found == HandledElement.TextBlock) {
+        kind = Kind.ANNOTATION;
+    } else {
+        kind = Kind.BLOCK;
+    }
+    final long uid = saxHandler.controller.createObject(kind);
+    switch(found) {
+        case AfficheBlock:
+            block = new AfficheBlock(uid);
+            break;
+        case BasicBlock:
+            block = new BasicBlock(uid);
+            break;
+        case BigSom:
+            block = new BigSom(uid);
+            break;
+        case ConstBlock:
+            // FIXME: why not needed anymore
+            block = new BasicBlock(uid);
+            break;
+        case EventInBlock:
+            block = new EventInBlock(uid);
+            break;
+        case EventOutBlock:
+            block = new EventOutBlock(uid);
+            break;
+        case ExplicitInBlock:
+            block = new ExplicitInBlock(uid);
+            break;
+        case ExplicitOutBlock:
+            block = new ExplicitOutBlock(uid);
+            break;
+        case GainBlock:
+            // FIXME: why not needed anymore
+            block = new BasicBlock(uid);
+            break;
+        case GroundBlock:
+            block = new GroundBlock(uid);
+            break;
+        case ImplicitInBlock:
+            block = new ImplicitInBlock(uid);
+            break;
+        case ImplicitOutBlock:
+            block = new ImplicitOutBlock(uid);
+            break;
+        case PrintBlock:
+            // FIXME: why not needed anymore
+            block = new BasicBlock(uid);
+            break;
+        case Product:
+            block = new Product(uid);
+            break;
+        case RoundBlock:
+            block = new RoundBlock(uid);
+            break;
+        case SplitBlock:
+            block = new SplitBlock(uid);
+            break;
+        case Summation:
+            block = new Summation(uid);
+            break;
+        case SuperBlock:
+            block = new SuperBlock(uid);
+            break;
+        case TextBlock:
+            block = new TextBlock(uid);
+            break;
+        case VoltageSensorBlock:
+            block = new VoltageSensorBlock(uid);
+            break;
+        default:
+            throw new IllegalArgumentException();
+    }
+    /*
+         * Set the attributes
+         */
+    v = atts.getValue("id");
+    if (v != null) {
+        block.setId(v);
+        saxHandler.allChildren.peek().put(v, uid);
+    }
+    v = atts.getValue("interfaceFunctionName");
+    if (v != null) {
+        saxHandler.controller.setObjectProperty(uid, kind, ObjectProperties.INTERFACE_FUNCTION, v);
+    } else if (kind == Kind.BLOCK) {
+        // Setup the interface function accordingly to the mapping table
+        // by default it is empty and might not be serialized (depending on
+        // the class)
+        String defaultInterfaceFunction = Arrays.stream(BlockInterFunction.values()).filter(n -> n.getKlass().equals(block.getClass())).map(e -> e.name()).findFirst().get();
+        saxHandler.controller.setObjectProperty(uid, kind, ObjectProperties.INTERFACE_FUNCTION, defaultInterfaceFunction);
+    }
+    v = atts.getValue("simulationFunctionName");
+    if (v != null) {
+        saxHandler.controller.setObjectProperty(uid, kind, ObjectProperties.SIM_FUNCTION_NAME, v);
+    }
+    v = atts.getValue("blockType");
+    if (v != null) {
+        saxHandler.controller.setObjectProperty(uid, kind, ObjectProperties.SIM_BLOCKTYPE, v);
+    }
+    v = atts.getValue("style");
+    if (v != null) {
+        saxHandler.controller.setObjectProperty(uid, kind, ObjectProperties.STYLE, v);
+    }
+    saxHandler.insertChild(block);
+    return block;
+}
+#end_block
+
+#method_before
+public long getUID() {
+    return uid;
+}
+#method_after
+public long getUID() {
+    return owner.getUID();
+}
+#end_block
+
+#method_before
+public Kind getKind() {
+    return kind;
+}
+#method_after
+public Kind getKind() {
+    return owner.getKind();
+}
+#end_block
+
+#method_before
+/*
+     * Override setters and hierarchy modifiers to propagate changes to the model
+     */
+@Override
+public void setValue(Object value) {
+    super.setValue(value);
+    if (getKind() == null) {
+        return;
+    }
+    JavaController controller = new JavaController();
+    switch(getKind()) {
+        case ANNOTATION:
+            controller.setObjectProperty(getUID(), getKind(), ObjectProperties.DESCRIPTION, String.valueOf(value));
+            break;
+        case BLOCK:
+        case LINK:
+        case PORT:
+            controller.setObjectProperty(getUID(), getKind(), ObjectProperties.LABEL, String.valueOf(value));
+            break;
+        default:
+            break;
+    }
+}
+#method_after
+/*
+     * Override setters and hierarchy modifiers to propagate changes to the model
+     */
+@Override
+public void setValue(Object value) {
+    super.setValue(value);
+    if (owner == null) {
+        return;
+    }
+    JavaController controller = new JavaController();
+    switch(getKind()) {
+        case ANNOTATION:
+            controller.setObjectProperty(getUID(), getKind(), ObjectProperties.DESCRIPTION, String.valueOf(value));
+            break;
+        case BLOCK:
+        case LINK:
+        case PORT:
+            controller.setObjectProperty(getUID(), getKind(), ObjectProperties.LABEL, String.valueOf(value));
+            break;
+        default:
+            break;
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void setId(String id) {
+    super.setId(id);
+    JavaController controller = new JavaController();
+    switch(getKind()) {
+        case BLOCK:
+            controller.setObjectProperty(getUID(), getKind(), ObjectProperties.UID, id);
+            break;
+        default:
+            break;
+    }
+}
+#method_after
+@Override
+public void setId(String id) {
+    super.setId(id);
+    JavaController controller = new JavaController();
+    switch(getKind()) {
+        case ANNOTATION:
+            controller.setObjectProperty(getUID(), getKind(), ObjectProperties.UID, id);
+            break;
+        case BLOCK:
+            controller.setObjectProperty(getUID(), getKind(), ObjectProperties.UID, id);
+            break;
+        case LINK:
+            controller.setObjectProperty(getUID(), getKind(), ObjectProperties.UID, id);
+            break;
+        case PORT:
+            controller.setObjectProperty(getUID(), getKind(), ObjectProperties.UID, id);
+            break;
+        default:
+            break;
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void setGeometry(mxGeometry geometry) {
+    super.setGeometry(geometry);
+    if (getKind() == null) {
+        return;
+    }
+    JavaController controller = new JavaController();
+    switch(getKind()) {
+        case ANNOTATION:
+        case BLOCK:
+            {
+                VectorOfDouble v = new VectorOfDouble(4);
+                v.set(0, geometry.getX());
+                v.set(1, geometry.getY());
+                v.set(2, geometry.getWidth());
+                v.set(3, geometry.getHeight());
+                controller.setObjectProperty(getUID(), getKind(), ObjectProperties.GEOMETRY, v);
+                break;
+            }
+        case LINK:
+            {
+                VectorOfDouble v = new VectorOfDouble(4);
+                v.set(0, geometry.getX());
+                v.set(1, geometry.getY());
+                v.set(2, geometry.getWidth());
+                v.set(3, geometry.getHeight());
+                controller.setObjectProperty(getUID(), getKind(), ObjectProperties.GEOMETRY, v);
+                break;
+            }
+        default:
+            break;
+    }
+}
+#method_after
+@Override
+public void setGeometry(mxGeometry geometry) {
+    super.setGeometry(geometry);
+    if (owner == null) {
+        return;
+    }
+    JavaController controller = new JavaController();
+    switch(getKind()) {
+        case ANNOTATION:
+        case BLOCK:
+            {
+                VectorOfDouble v = new VectorOfDouble(4);
+                v.set(0, geometry.getX());
+                v.set(1, geometry.getY());
+                v.set(2, geometry.getWidth());
+                v.set(3, geometry.getHeight());
+                controller.setObjectProperty(getUID(), getKind(), ObjectProperties.GEOMETRY, v);
+                break;
+            }
+        case LINK:
+            {
+                /*
+                 * try to find the origin of the source and target accordingly to the JGraphX implementation
+                 */
+                mxPoint sourcePoint = null;
+                mxPoint targetPoint = null;
+                mxICell sourceCell = getSource();
+                mxICell targetCell = getTarget();
+                if (sourceCell != null && sourceCell.getGeometry() != null) {
+                    sourcePoint = new mxPoint(sourceCell.getGeometry().getCenterX(), sourceCell.getGeometry().getCenterY());
+                }
+                if (targetCell != null && targetCell.getGeometry() != null) {
+                    targetPoint = new mxPoint(targetCell.getGeometry().getCenterX(), targetCell.getGeometry().getCenterY());
+                }
+                if (sourcePoint == null) {
+                    sourcePoint = geometry.getSourcePoint();
+                }
+                if (targetPoint == null) {
+                    targetPoint = geometry.getTargetPoint();
+                }
+                if (sourcePoint == null) {
+                    sourcePoint = new mxPoint();
+                }
+                if (targetPoint == null) {
+                    targetPoint = new mxPoint();
+                }
+                List<mxPoint> points = geometry.getPoints();
+                if (points == null) {
+                    points = Collections.emptyList();
+                }
+                /*
+                 * At that point, the sourcePoint, targetPoint and points are valid values (but may be unknown)
+                 * encode them to the the CONTROL_POINTS
+                 */
+                // Allocate some space to contains them all
+                int nbOfPoints = 2 + points.size();
+                VectorOfDouble v = new VectorOfDouble(2 * nbOfPoints);
+                int i = 0;
+                // then fill the allocation space
+                v.set(2 * i, sourcePoint.getX());
+                v.set(2 * i + 1, sourcePoint.getY());
+                i++;
+                for (; i < nbOfPoints - 1; i++) {
+                    v.set(2 * i, points.get(i - 1).getX());
+                    v.set(2 * i + 1, points.get(i - 1).getY());
+                }
+                v.set(2 * i, targetPoint.getX());
+                v.set(2 * i + 1, targetPoint.getY());
+                i++;
+                /*
+                 * Finally push the values to the model
+                 */
+                controller.setObjectProperty(getUID(), getKind(), ObjectProperties.CONTROL_POINTS, v);
+                break;
+            }
+        default:
+            break;
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void setStyle(String style) {
+    super.setStyle(style);
+    if (getKind() == null) {
+        return;
+    }
+    JavaController controller = new JavaController();
+    switch(getKind()) {
+        case ANNOTATION:
+        case BLOCK:
+        case PORT:
+            controller.setObjectProperty(getUID(), getKind(), ObjectProperties.STYLE, String.valueOf(style));
+            break;
+        default:
+            break;
+    }
+}
+#method_after
+@Override
+public void setStyle(String style) {
+    super.setStyle(style);
+    if (owner == null) {
+        return;
+    }
+    JavaController controller = new JavaController();
+    switch(getKind()) {
+        case ANNOTATION:
+        case BLOCK:
+        case PORT:
+            controller.setObjectProperty(getUID(), getKind(), ObjectProperties.STYLE, String.valueOf(style));
+            break;
+        default:
+            break;
+    }
+}
+#end_block
+
+#method_before
+/*
+     * Override methods from Object
+     */
+@Override
+public Object clone() throws CloneNotSupportedException {
+    JavaController controller = new JavaController();
+    XcosCell c = (XcosCell) super.clone();
+    c.uid = controller.cloneObject(getUID(), false, false);
+    c.kind = getKind();
+    return c;
+}
+#method_after
+/*
+     * Override methods from Object
+     */
+@Override
+public Object clone() throws CloneNotSupportedException {
+    JavaController controller = new JavaController();
+    XcosCell c = (XcosCell) super.clone();
+    c.owner = new ScicosObjectOwner(controller.cloneObject(getUID(), false, false), getKind());
+    return c;
+}
+#end_block
+
+#method_before
+public long cloneObject(long uid, boolean cloneChildren, boolean clonePorts) {
+    return JavaControllerJNI.Controller_cloneObject__SWIG_0(swigCPtr, this, uid, cloneChildren, clonePorts);
+}
+#method_after
+public long cloneObject(long uid, boolean cloneChildren, boolean clonePorts) {
+    return JavaControllerJNI.Controller_cloneObject(swigCPtr, this, uid, cloneChildren, clonePorts);
+}
+#end_block
+
+#method_before
+private void installActionListeners(JButton cancelButton, JButton okButton) {
+    /*
+         * The cancel button just exit without doing anything
+         */
+    cancelButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            dispose();
+        }
+    });
+    /*
+         * The ok button parse the contextArea, reconstruct the real context and
+         * set the scicosParameters before exiting.
+         */
+    okButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                String context = contextArea.getText();
+                final VectorOfString v = new VectorOfString();
+                // Force a carriage return if needed so the last line is not ignored
+                if (context.length() > 0 && !context.endsWith("\n")) {
+                    context += "\n";
+                }
+                int off = 0;
+                int next = 0;
+                while ((next = context.indexOf('\n', off)) != -1) {
+                    v.add(context.substring(off, next));
+                    off = next + 1;
+                }
+                parameters.setContext(new JavaController(), v);
+                // FIXME : context validation is not handled yet
+                // 
+                // /*
+                // * Validate the context
+                // */
+                // final ScilabDirectHandler handler = ScilabDirectHandler.acquire();
+                // if (handler == null) {
+                // return;
+                // }
+                // try {
+                // 
+                // ScilabInterpreterManagement.putCommandInScilabQueue("script2var(" + ScilabDirectHandler.CONTEXT + ", struct()); ");
+                // } finally {
+                // handler.release();
+                // }
+                dispose();
+            } catch (PropertyVetoException e2) {
+                Logger.getLogger(SetContextAction.class.getName()).severe(e2.toString());
+            }
+        /*
+                 * if superblock is concerned, then regenerate child diagram.
+                 */
+        // if (rootGraph instanceof SuperBlockDiagram) {
+        // SuperBlockDiagram superBlockDiagram = (SuperBlockDiagram) rootGraph;
+        // superBlockDiagram.getContainer().invalidateRpar();
+        // }
+        }
+    });
+}
+#method_after
+private void installActionListeners(JButton cancelButton, JButton okButton) {
+    /*
+         * The cancel button just exit without doing anything
+         */
+    cancelButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            dispose();
+        }
+    });
+    /*
+         * The ok button parse the contextArea, reconstruct the real context and
+         * set the scicosParameters before exiting.
+         */
+    okButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                String context = contextArea.getText();
+                final VectorOfString v = new VectorOfString();
+                // Force a carriage return if needed so the last line is not ignored
+                if (context.length() > 0 && !context.endsWith("\n")) {
+                    context += '\n';
+                }
+                int off = 0;
+                int next = 0;
+                while ((next = context.indexOf('\n', off)) != -1) {
+                    v.add(context.substring(off, next));
+                    off = next + 1;
+                }
+                parameters.setContext(new JavaController(), v);
+                // FIXME : context validation is not handled yet
+                // 
+                // /*
+                // * Validate the context
+                // */
+                // final ScilabDirectHandler handler = ScilabDirectHandler.acquire();
+                // if (handler == null) {
+                // return;
+                // }
+                // try {
+                // 
+                // ScilabInterpreterManagement.putCommandInScilabQueue("script2var(" + ScilabDirectHandler.CONTEXT + ", struct()); ");
+                // } finally {
+                // handler.release();
+                // }
+                dispose();
+            } catch (PropertyVetoException e2) {
+                Logger.getLogger(SetContextAction.class.getName()).severe(e2.toString());
+            }
+        /*
+                 * if superblock is concerned, then regenerate child diagram.
+                 */
+        // if (rootGraph instanceof SuperBlockDiagram) {
+        // SuperBlockDiagram superBlockDiagram = (SuperBlockDiagram) rootGraph;
+        // superBlockDiagram.getContainer().invalidateRpar();
+        // }
+        }
+    });
+}
+#end_block
+
+#method_before
+@Override
+public void actionPerformed(ActionEvent e) {
+    final XcosDiagram graph = (XcosDiagram) getGraph(e);
+    // action disabled when the cell is edited
+    final ScilabComponent comp = ((ScilabComponent) graph.getAsComponent());
+    if (comp.isEditing()) {
+        return;
+    }
+    final Object[] links = getLinks();
+    this.updateLinkOptimal(graph, links);
+// graph.getModel().beginUpdate();
+// try {
+// graph.setCellStyles(mxConstants.STYLE_NOEDGESTYLE, "1", links);
+// 
+// reset(graph, links);
+// } finally {
+// graph.getModel().endUpdate();
+// }
+}
+#method_after
+@Override
+public void actionPerformed(ActionEvent e) {
+    final XcosDiagram graph = (XcosDiagram) getGraph(e);
+    // action disabled when the cell is edited
+    final ScilabComponent comp = ((ScilabComponent) graph.getAsComponent());
+    if (comp.isEditing()) {
+        return;
+    }
+    final Object[] links = getLinks();
+    graph.getModel().beginUpdate();
+    try {
+        double scale = graph.getView().getScale();
+        graph.getView().setScale(1.0);
+        graph.setCellStyles(mxConstants.STYLE_NOEDGESTYLE, "1", links);
+        reset(graph, links);
+        this.updateLinkOptimal(graph, links);
+        graph.getView().setScale(scale);
+    } finally {
+        graph.getModel().endUpdate();
+    }
+}
+#end_block
+
+#method_before
+public void updateLinkOptimal(XcosDiagram graph, Object[] links) {
+    for (Object o : links) {
+        if (o instanceof BasicLink) {
+            BasicLink link = (BasicLink) o;
+            if (link.isEdge()) {
+                this.updateRoute(link, graph);
+            }
+        }
+    }
+}
+#method_after
+public void updateLinkOptimal(XcosDiagram graph, Object[] links) {
+    Object[] allChildCells = graph.getChildCells(graph.getDefaultParent());
+    XcosRoute route = new XcosRoute();
+    for (Object o : links) {
+        if (o instanceof BasicLink) {
+            BasicLink link = (BasicLink) o;
+            route.updateRoute(link, allChildCells, graph);
+        }
+    }
+}
+#end_block
+
+#method_before
+public static void exportBitmap(int uid, TYPE type, File file, boolean fromScreen, ExportParams params) throws IOException {
+    if (isBitmapFormat(type)) {
+        JoGLCanvas joglCanvas = null;
+        if (fromScreen) {
+            DrawerVisitor visitor = DrawerVisitor.getVisitor(uid);
+            Canvas canvas = visitor.getCanvas();
+            if (canvas instanceof JoGLCanvas) {
+                joglCanvas = (JoGLCanvas) canvas;
+            }
+        } else {
+            Figure figure = (Figure) GraphicController.getController().getObjectFromId(uid);
+            Integer[] dims = figure.getAxesSize();
+            DrawerVisitor oldVisitor = DrawerVisitor.getVisitor(uid);
+            joglCanvas = (JoGLCanvas) JoGLCanvasFactory.createCanvas(dims[0], dims[1]);
+            DrawerVisitor visitor = new DrawerVisitor(null, joglCanvas, figure) {
+
+                @Override
+                public void updateObject(Integer id, int property) {
+                // Don't update during the export
+                }
+
+                @Override
+                public void deleteObject(Integer id) {
+                // Don't delete during the export
+                }
+            };
+            joglCanvas.setMainDrawer(visitor);
+            joglCanvas.redraw();
+            GraphicController.getController().unregister(visitor);
+            DrawerVisitor.changeVisitor(figure, oldVisitor);
+        }
+        if (joglCanvas != null) {
+            BufferedImage image = joglCanvas.getImage();
+            // joglCanvas.destroy();
+            PNGExporter exporter = (PNGExporter) getExporter(type);
+            if (image.getType() == BufferedImage.TYPE_INT_ARGB) {
+                // Conversion needed since JoGL 2.2.4
+                // BMP can not be generated from ARGB image ==> convert to RGB
+                BufferedImage argbImage = image;
+                image = new BufferedImage(argbImage.getWidth(), argbImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+                ColorConvertOp colorConvertOp = new ColorConvertOp(null);
+                colorConvertOp.filter(argbImage, image);
+            }
+            exporter.setImage(file, image, params);
+            exporter.write();
+            exporter.dispose();
+        }
+    }
+}
+#method_after
+public static void exportBitmap(int uid, TYPE type, File file, boolean fromScreen, ExportParams params) throws IOException {
+    if (isBitmapFormat(type)) {
+        JoGLCanvas joglCanvas = null;
+        if (fromScreen) {
+            DrawerVisitor visitor = DrawerVisitor.getVisitor(uid);
+            Canvas canvas = visitor.getCanvas();
+            if (canvas instanceof JoGLCanvas) {
+                joglCanvas = (JoGLCanvas) canvas;
+            }
+        } else {
+            Figure figure = (Figure) GraphicController.getController().getObjectFromId(uid);
+            Integer[] dims = figure.getAxesSize();
+            DrawerVisitor oldVisitor = DrawerVisitor.getVisitor(uid);
+            joglCanvas = (JoGLCanvas) JoGLCanvasFactory.createCanvas(dims[0], dims[1]);
+            DrawerVisitor visitor = new DrawerVisitor(null, joglCanvas, figure) {
+
+                @Override
+                public void updateObject(Integer id, int property) {
+                // Don't update during the export
+                }
+
+                @Override
+                public void deleteObject(Integer id) {
+                // Don't delete during the export
+                }
+            };
+            joglCanvas.setMainDrawer(visitor);
+            joglCanvas.redraw();
+            GraphicController.getController().unregister(visitor);
+            DrawerVisitor.changeVisitor(figure, oldVisitor);
+        }
+        if (joglCanvas != null) {
+            PNGExporter exporter = (PNGExporter) getExporter(type);
+            BufferedImage image = joglCanvas.getImage(exporter.isAlphaChannelSupported());
+            exporter.setImage(file, image, params);
+            exporter.write();
+            exporter.dispose();
+        }
+    }
+}
+#end_block
+

@@ -1,0 +1,1818 @@
+41
+#method_before
+@Override
+public void edit(FenceAgentModel fenceAgentModel) {
+    if (this.model != null && fenceAgentModel != null && !fenceAgentModel.equals(this.model)) {
+        // Clean up the model.
+        driver.cleanup();
+    }
+    driver.edit(fenceAgentModel);
+    this.model = fenceAgentModel;
+    determineLabelValue(fenceAgentModel);
+    fenceAgentModel.getManagementIp().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            determineLabelValue(model);
+        }
+    });
+}
+#method_after
+@Override
+public void edit(FenceAgentModel fenceAgentModel) {
+    if (this.model != null && fenceAgentModel != null && !fenceAgentModel.equals(this.model)) {
+        // Clean up the model.
+        driver.cleanup();
+    }
+    if (fenceAgentModel != null) {
+        driver.edit(fenceAgentModel);
+        this.model = fenceAgentModel;
+        determineLabelValue(fenceAgentModel);
+        fenceAgentModel.getManagementIp().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+            @Override
+            public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+                determineLabelValue(model);
+            }
+        });
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void cleanup() {
+// Don't cleanup the model here
+}
+#method_after
+@Override
+public void cleanup() {
+// Don't cleanup the model here as it will stop the edit dialog from opening twice, the model gets cleaned
+// up when the host dialog closes.
+}
+#end_block
+
+#method_before
+@Override
+public void edit(FenceAgentModel fenceAgentModel) {
+    if (this.model != null && fenceAgentModel != null && !fenceAgentModel.equals(this.model)) {
+        // Clean up the model.
+        driver.cleanup();
+    }
+    driver.edit(fenceAgentModel);
+    this.model = fenceAgentModel;
+    determineLabelValue(fenceAgentModel);
+    fenceAgentModel.getManagementIp().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+            determineLabelValue(model);
+        }
+    });
+    fenceAgentModel.getConcurrentSelectList().getPropertyChangedEvent().addListener(new IEventListener<PropertyChangedEventArgs>() {
+
+        @Override
+        public void eventRaised(Event<? extends PropertyChangedEventArgs> ev, Object sender, PropertyChangedEventArgs args) {
+            if ("IsAvailable".equals(args.propertyName)) {
+                // $NON-NLS-1$
+                determineLabelValue(model);
+            }
+        }
+    });
+}
+#method_after
+@Override
+public void edit(FenceAgentModel fenceAgentModel) {
+    if (this.model != null && fenceAgentModel != null && !fenceAgentModel.equals(this.model)) {
+        // Clean up the model.
+        driver.cleanup();
+    }
+    if (fenceAgentModel != null) {
+        driver.edit(fenceAgentModel);
+        this.model = fenceAgentModel;
+        determineLabelValue(fenceAgentModel);
+        fenceAgentModel.getManagementIp().getEntityChangedEvent().addListener(new IEventListener<EventArgs>() {
+
+            @Override
+            public void eventRaised(Event<? extends EventArgs> ev, Object sender, EventArgs args) {
+                determineLabelValue(model);
+            }
+        });
+        fenceAgentModel.getConcurrentSelectList().getPropertyChangedEvent().addListener(new IEventListener<PropertyChangedEventArgs>() {
+
+            @Override
+            public void eventRaised(Event<? extends PropertyChangedEventArgs> ev, Object sender, PropertyChangedEventArgs args) {
+                if ("IsAvailable".equals(args.propertyName)) {
+                    // $NON-NLS-1$
+                    determineLabelValue(model);
+                }
+            }
+        });
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void cleanup() {
+// Don't clean up this model, as it will stop the edit dialog from opening a second time.
+}
+#method_after
+@Override
+public void cleanup() {
+// Don't cleanup the model here as it will stop the edit dialog from opening twice, the model gets cleaned
+// up when the host dialog closes.
+}
+#end_block
+
+#method_before
+protected void addVmInterfaces() {
+    VmInterfaceManager vmInterfaceManager = new VmInterfaceManager(macPool);
+    VnicProfileHelper vnicProfileHelper = new VnicProfileHelper(getClusterId(), getStoragePoolId(), AuditLogType.IMPORTEXPORT_IMPORT_VM_INVALID_INTERFACES);
+    List<VmNetworkInterface> nics = getVm().getInterfaces();
+    vmInterfaceManager.sortVmNics(nics, getVm().getStaticData().getManagedDeviceMap());
+    // If we import it as a new entity, then we allocate all MAC addresses in advance
+    if (getParameters().isImportAsNewEntity()) {
+        List<String> macAddresses = macPool.allocateMacAddresses(nics.size());
+        for (int i = 0; i < nics.size(); ++i) {
+            nics.get(i).setMacAddress(macAddresses.get(i));
+        }
+    } else {
+        reportExternalMacs();
+    }
+    for (VmNetworkInterface iface : getVm().getInterfaces()) {
+        initInterface(iface);
+        vnicProfileHelper.updateNicWithVnicProfileForUser(iface, getCurrentUser());
+        vmInterfaceManager.add(iface, getCompensationContext(), !getParameters().isImportAsNewEntity(), getVm().getOs(), getEffectiveCompatibilityVersion());
+        macsAdded.add(iface.getMacAddress());
+    }
+    vnicProfileHelper.auditInvalidInterfaces(getVmName());
+}
+#method_after
+protected void addVmInterfaces() {
+    VmInterfaceManager vmInterfaceManager = new VmInterfaceManager(macPool);
+    VnicProfileHelper vnicProfileHelper = new VnicProfileHelper(getClusterId(), getStoragePoolId(), AuditLogType.IMPORTEXPORT_IMPORT_VM_INVALID_INTERFACES);
+    List<VmNetworkInterface> nics = getVm().getInterfaces();
+    vmInterfaceManager.sortVmNics(nics, getVm().getStaticData().getManagedDeviceMap());
+    // If we import it as a new entity, then we allocate all MAC addresses in advance
+    if (getParameters().isImportAsNewEntity()) {
+        List<String> macAddresses = macPool.allocateMacAddresses(nics.size());
+        for (int i = 0; i < nics.size(); ++i) {
+            nics.get(i).setMacAddress(macAddresses.get(i));
+        }
+    } else {
+        if (isExternalMacsToBeReported()) {
+            reportExternalMacs();
+        }
+    }
+    if (getParameters().isReassignBadMacs()) {
+        reassignBadMacs(nics);
+    }
+    for (VmNetworkInterface iface : getVm().getInterfaces()) {
+        initInterface(iface);
+        vnicProfileHelper.updateNicWithVnicProfileForUser(iface, getCurrentUser());
+        vmInterfaceManager.add(iface, getCompensationContext(), !getParameters().isImportAsNewEntity(), getVm().getOs(), getEffectiveCompatibilityVersion());
+        macsAdded.add(iface.getMacAddress());
+    }
+    vnicProfileHelper.auditInvalidInterfaces(getVmName());
+}
+#end_block
+
+#method_before
+public static void updateOperationProgress(final VM vm) {
+    vm.setBackgroundOperationDescription(ResourceManager.getInstance().getVmManager(vm.getId()).getConvertOperationDescription());
+    vm.setBackgroundOperationProgress(ResourceManager.getInstance().getVmManager(vm.getId()).getConvertOperationProgress());
+}
+#method_after
+public static void updateOperationProgress(final VM vm) {
+    VmManager vmManager = ResourceManager.getInstance().getVmManager(vm.getId(), false);
+    if (vmManager != null) {
+        vm.setBackgroundOperationDescription(vmManager.getConvertOperationDescription());
+        vm.setBackgroundOperationProgress(vmManager.getConvertOperationProgress());
+    } else {
+        vm.setBackgroundOperationDescription(null);
+        vm.setBackgroundOperationProgress(-1);
+    }
+}
+#end_block
+
+#method_before
+public static void updateVmStatistics(final VM vm) {
+    vm.setStatisticsData(ResourceManager.getInstance().getVmManager(vm.getId()).getStatistics());
+}
+#method_after
+public static void updateVmStatistics(final VM vm) {
+    VmManager vmManager = ResourceManager.getInstance().getVmManager(vm.getId(), false);
+    if (vmManager != null) {
+        vm.setStatisticsData(vmManager.getStatistics());
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected void executeIrsBrokerCommand() {
+    StorageDomainHelper.checkNumberOfLVsForBlockDomain(getParameters().getStorageDomainId());
+    setReturnValue(Guid.Empty);
+    log.info("-- executeIrsBrokerCommand: calling 'createVolume' with two new parameters: description and UUID");
+    // NOTE: The 'uuidReturn' variable will contain the taskID and not
+    // the created image id!
+    String imageInitSize = null;
+    if (getParameters().getImageInitialSizeInBytes() != 0) {
+        imageInitSize = Long.valueOf(getParameters().getImageInitialSizeInBytes()).toString();
+    }
+    uuidReturn = getIrsProxy().createVolume(getParameters().getStorageDomainId().toString(), getParameters().getStoragePoolId().toString(), getParameters().getImageGroupId().toString(), Long.valueOf(getParameters().getImageSizeInBytes()).toString(), getParameters().getVolumeFormat().getValue(), getParameters().getImageType().getValue(), 2, getParameters().getNewImageID().toString(), getParameters().getNewImageDescription(), getParameters().getSourceImageGroupId().toString(), getParameters().getImageId().toString(), imageInitSize);
+    proceedProxyReturnValue();
+    Guid taskID = new Guid(uuidReturn.uuid);
+    createdImageId = getParameters().getNewImageID().toString();
+    setReturnValue(new Guid(createdImageId));
+    getVDSReturnValue().setCreationInfo(new AsyncTaskCreationInfo(taskID, AsyncTaskType.createVolume, getParameters().getStoragePoolId()));
+}
+#method_after
+@Override
+protected void executeIrsBrokerCommand() {
+    StorageDomainHelper.checkNumberOfLVsForBlockDomain(getParameters().getStorageDomainId());
+    setReturnValue(Guid.Empty);
+    log.info("-- executeIrsBrokerCommand: calling 'createVolume' with two new parameters: description and UUID");
+    // NOTE: The 'uuidReturn' variable will contain the taskID and not
+    // the created image id!
+    String imageInitSize = null;
+    if (getParameters().getImageInitialSizeInBytes() != 0) {
+        imageInitSize = String.valueOf(getParameters().getImageInitialSizeInBytes());
+    }
+    uuidReturn = getIrsProxy().createVolume(getParameters().getStorageDomainId().toString(), getParameters().getStoragePoolId().toString(), getParameters().getImageGroupId().toString(), Long.valueOf(getParameters().getImageSizeInBytes()).toString(), getParameters().getVolumeFormat().getValue(), getParameters().getImageType().getValue(), 2, getParameters().getNewImageID().toString(), getParameters().getNewImageDescription(), getParameters().getSourceImageGroupId().toString(), getParameters().getImageId().toString(), imageInitSize);
+    proceedProxyReturnValue();
+    Guid taskID = new Guid(uuidReturn.uuid);
+    createdImageId = getParameters().getNewImageID().toString();
+    setReturnValue(new Guid(createdImageId));
+    getVDSReturnValue().setCreationInfo(new AsyncTaskCreationInfo(taskID, AsyncTaskType.createVolume, getParameters().getStoragePoolId()));
+}
+#end_block
+
+#method_before
+@Override
+public GraphicsConsole get() {
+    return GraphicsConsoleResourceHelper.get(parent::list, consoleId);
+}
+#method_after
+@Override
+public GraphicsConsole get() {
+    return BackendGraphicsConsoleHelper.get(parent::list, consoleId);
+}
+#end_block
+
+#method_before
+@Override
+public Response remove() {
+    return GraphicsConsoleResourceHelper.remove(this, guid, consoleId);
+}
+#method_after
+@Override
+public Response remove() {
+    return BackendGraphicsConsoleHelper.remove(this, guid, consoleId);
+}
+#end_block
+
+#method_before
+@GET
+@Produces({ ApiMediaType.APPLICATION_X_VIRT_VIEWER })
+public Response generateDescriptor() {
+    org.ovirt.engine.core.common.businessentities.GraphicsType graphicsType = GraphicsConsoleResourceHelper.asGraphicsType(this, consoleId);
+    ConsoleOptions consoleOptions = new ConsoleOptions(graphicsType);
+    consoleOptions.setVmId(guid);
+    VdcQueryReturnValue configuredOptionsReturnValue = runQuery(VdcQueryType.ConfigureConsoleOptions, new ConfigureConsoleOptionsParams(consoleOptions, true));
+    if (!configuredOptionsReturnValue.getSucceeded()) {
+        return handleConfigureConsoleError(configuredOptionsReturnValue);
+    }
+    VdcQueryReturnValue consoleDescriptorReturnValue = runQuery(VdcQueryType.GetConsoleDescriptorFile, new ConsoleOptionsParams(configuredOptionsReturnValue.getReturnValue()));
+    Response.ResponseBuilder builder;
+    if (consoleDescriptorReturnValue.getSucceeded() && consoleDescriptorReturnValue.getReturnValue() != null) {
+        builder = Response.ok(((String) consoleDescriptorReturnValue.getReturnValue()).getBytes(StandardCharsets.UTF_8), ApiMediaType.APPLICATION_X_VIRT_VIEWER);
+    } else {
+        builder = Response.noContent();
+    }
+    return builder.build();
+}
+#method_after
+@GET
+@Produces({ ApiMediaType.APPLICATION_X_VIRT_VIEWER })
+public Response generateDescriptor() {
+    org.ovirt.engine.core.common.businessentities.GraphicsType graphicsType = BackendGraphicsConsoleHelper.asGraphicsType(this, consoleId);
+    ConsoleOptions consoleOptions = new ConsoleOptions(graphicsType);
+    consoleOptions.setVmId(guid);
+    VdcQueryReturnValue configuredOptionsReturnValue = runQuery(VdcQueryType.ConfigureConsoleOptions, new ConfigureConsoleOptionsParams(consoleOptions, true));
+    if (!configuredOptionsReturnValue.getSucceeded()) {
+        return handleConfigureConsoleError(configuredOptionsReturnValue);
+    }
+    VdcQueryReturnValue consoleDescriptorReturnValue = runQuery(VdcQueryType.GetConsoleDescriptorFile, new ConsoleOptionsParams(configuredOptionsReturnValue.getReturnValue()));
+    Response.ResponseBuilder builder;
+    if (consoleDescriptorReturnValue.getSucceeded() && consoleDescriptorReturnValue.getReturnValue() != null) {
+        builder = Response.ok(((String) consoleDescriptorReturnValue.getReturnValue()).getBytes(StandardCharsets.UTF_8), ApiMediaType.APPLICATION_X_VIRT_VIEWER);
+    } else {
+        builder = Response.noContent();
+    }
+    return builder.build();
+}
+#end_block
+
+#method_before
+@Override
+public GraphicsConsole get() {
+    return GraphicsConsoleResourceHelper.get(parent::list, consoleId);
+}
+#method_after
+@Override
+public GraphicsConsole get() {
+    return BackendGraphicsConsoleHelper.get(parent::list, consoleId);
+}
+#end_block
+
+#method_before
+@Override
+public Response remove() {
+    return GraphicsConsoleResourceHelper.remove(this, guid, consoleId);
+}
+#method_after
+@Override
+public Response remove() {
+    return BackendGraphicsConsoleHelper.remove(this, guid, consoleId);
+}
+#end_block
+
+#method_before
+public VdcQueryReturnValue runQuery(VdcQueryType queryType, VdcQueryParametersBase queryParams) {
+    BackendLocal backend = getBackend();
+    queryParams.setFiltered(isFiltered());
+    return backend.runQuery(queryType, sessionize(queryParams));
+}
+#method_after
+public VdcQueryReturnValue runQuery(VdcQueryType queryType, VdcQueryParametersBase queryParams) {
+    BackendLocal backend = getBackend();
+    setCorrelationId(queryParams);
+    queryParams.setFiltered(isFiltered());
+    return backend.runQuery(queryType, sessionize(queryParams));
+}
+#end_block
+
+#method_before
+private void setCorrelationId(VdcActionParametersBase params) {
+    if (httpHeaders == null) {
+        return;
+    }
+    List<String> correlationIds = httpHeaders.getRequestHeader(CORRELATION_ID);
+    if (correlationIds != null && correlationIds.size() > 0) {
+        params.setCorrelationId(correlationIds.get(0));
+    }
+}
+#method_after
+private void setCorrelationId(HasCorrelationId params) {
+    String correlationId = getCurrent().getParameters().get(CORRELATION_ID);
+    if (correlationId != null) {
+        params.setCorrelationId(correlationId);
+    }
+}
+#end_block
+
+#method_before
+@Override
+public Response add(GraphicsConsole console) {
+    GraphicsDevice device = getMapper(GraphicsConsole.class, GraphicsDevice.class).map(console, null);
+    device.setVmId(guid);
+    VdcReturnValueBase res = doCreateEntity(VdcActionType.AddGraphicsDevice, createAddGraphicsDeviceParams(device));
+    if (res != null && res.getSucceeded()) {
+        return GraphicsConsoleResourceHelper.find(console, this::list);
+    }
+    throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).build());
+}
+#method_after
+@Override
+public Response add(GraphicsConsole console) {
+    GraphicsDevice device = getMapper(GraphicsConsole.class, GraphicsDevice.class).map(console, null);
+    device.setVmId(guid);
+    VdcReturnValueBase res = doCreateEntity(VdcActionType.AddGraphicsDevice, createAddGraphicsDeviceParams(device));
+    if (res != null && res.getSucceeded()) {
+        return BackendGraphicsConsoleHelper.find(console, this::list);
+    }
+    throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).build());
+}
+#end_block
+
+#method_before
+@Override
+public GraphicsConsole get() {
+    return GraphicsConsoleResourceHelper.get(parent::list, consoleId);
+}
+#method_after
+@Override
+public GraphicsConsole get() {
+    return BackendGraphicsConsoleHelper.get(parent::list, consoleId);
+}
+#end_block
+
+#method_before
+@Override
+public Response remove() {
+    return GraphicsConsoleResourceHelper.remove(this, guid, consoleId);
+}
+#method_after
+@Override
+public Response remove() {
+    return BackendGraphicsConsoleHelper.remove(this, guid, consoleId);
+}
+#end_block
+
+#method_before
+@Override
+public GraphicsConsoles list() {
+    GraphicsConsoles consoles = new GraphicsConsoles();
+    VmTemplate entity = loadEntity();
+    GraphicsConsoleResourceHelper.list(this, guid).entrySet().forEach(graphicsInfo -> consoles.getGraphicsConsoles().add(addLinks(populate(VmMapper.map(graphicsInfo, null), entity))));
+    return consoles;
+}
+#method_after
+@Override
+public GraphicsConsoles list() {
+    GraphicsConsoles consoles = new GraphicsConsoles();
+    VmTemplate entity = loadEntity();
+    BackendGraphicsConsoleHelper.list(this, guid).entrySet().forEach(graphicsInfo -> consoles.getGraphicsConsoles().add(addLinks(populate(VmMapper.map(graphicsInfo, null), entity))));
+    return consoles;
+}
+#end_block
+
+#method_before
+@Override
+public Response add(GraphicsConsole console) {
+    GraphicsDevice device = getMapper(GraphicsConsole.class, GraphicsDevice.class).map(console, null);
+    device.setVmId(guid);
+    VdcReturnValueBase res = doCreateEntity(VdcActionType.AddGraphicsDevice, createAddGraphicsDeviceParams(device));
+    if (res != null && res.getSucceeded()) {
+        return GraphicsConsoleResourceHelper.find(console, this::list);
+    }
+    throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).build());
+}
+#method_after
+@Override
+public Response add(GraphicsConsole console) {
+    GraphicsDevice device = getMapper(GraphicsConsole.class, GraphicsDevice.class).map(console, null);
+    device.setVmId(guid);
+    VdcReturnValueBase res = doCreateEntity(VdcActionType.AddGraphicsDevice, createAddGraphicsDeviceParams(device));
+    if (res != null && res.getSucceeded()) {
+        return BackendGraphicsConsoleHelper.find(console, this::list);
+    }
+    throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).build());
+}
+#end_block
+
+#method_before
+@Override
+public GraphicsConsoles list() {
+    GraphicsConsoles consoles = new GraphicsConsoles();
+    InstanceType entity = loadEntity();
+    GraphicsConsoleResourceHelper.list(this, guid).entrySet().forEach(graphicsInfo -> consoles.getGraphicsConsoles().add(addLinks(populate(VmMapper.map(graphicsInfo, null), entity))));
+    return consoles;
+}
+#method_after
+@Override
+public GraphicsConsoles list() {
+    GraphicsConsoles consoles = new GraphicsConsoles();
+    InstanceType entity = loadEntity();
+    BackendGraphicsConsoleHelper.list(this, guid).entrySet().forEach(graphicsInfo -> consoles.getGraphicsConsoles().add(addLinks(populate(VmMapper.map(graphicsInfo, null), entity))));
+    return consoles;
+}
+#end_block
+
+#method_before
+@Override
+public Response add(GraphicsConsole console) {
+    GraphicsDevice device = getMapper(GraphicsConsole.class, GraphicsDevice.class).map(console, null);
+    device.setVmId(guid);
+    VdcReturnValueBase res = doCreateEntity(VdcActionType.AddGraphicsDevice, createAddGraphicsDeviceParams(device));
+    if (res != null && res.getSucceeded()) {
+        return GraphicsConsoleResourceHelper.find(console, this::list);
+    }
+    throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).build());
+}
+#method_after
+@Override
+public Response add(GraphicsConsole console) {
+    GraphicsDevice device = getMapper(GraphicsConsole.class, GraphicsDevice.class).map(console, null);
+    device.setVmId(guid);
+    VdcReturnValueBase res = doCreateEntity(VdcActionType.AddGraphicsDevice, createAddGraphicsDeviceParams(device));
+    if (res != null && res.getSucceeded()) {
+        return BackendGraphicsConsoleHelper.find(console, this::list);
+    }
+    throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).build());
+}
+#end_block
+
+#method_before
+@Override
+public void doPolling(Guid cmdId, List<Guid> childCmdIds) {
+    CommandEntity commandEntity = CommandCoordinatorUtil.getCommandEntity(cmdId);
+    StorageJobCommandParameters cmdParams = (StorageJobCommandParameters) commandEntity.getCommandParameters();
+    Guid job = cmdParams.getStorageJobId();
+    Guid vdsId = cmdParams.getVdsRunningOn();
+    HostJobStatus jobStatus = null;
+    VDS vds = getVdsDao().get(vdsId);
+    boolean jobReportedByHost = false;
+    if (vds.getStatus() == VDSStatus.Up) {
+        try {
+            HostJobInfo jobInfo = pollStorageJob(job, vdsId);
+            if (jobInfo != null) {
+                jobStatus = jobInfo.getStatus();
+                updateStepProgress(commandEntity.getStepId(), jobInfo.getProgress());
+                jobReportedByHost = true;
+            }
+        } catch (Exception e) {
+            // We shouldn't get an error when polling the host job (as it access the local storage only).
+            // If we got an error, it will usually be a network error - so the host will either move
+            // to Non Responsive or the polling will succeed on the next attempt.
+            log.warn("Command {} id: '{}': Failed to poll the job '{}' on host '{}' (id: '{}'), will retry soon", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+            return;
+        }
+    } else {
+        log.warn("Command {} id: '{}': can't poll the job '{}' as host '{}' (id: '{}') isn't in status UP", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+    }
+    // If we couldn't determine job status by polling the host, we can try to determine it using different methods.
+    if (jobStatus == null) {
+        jobStatus = handleUndeterminedJobStatus(getCommand(cmdId), jobReportedByHost);
+    }
+    if (jobStatus == null) {
+        log.info("Command {} id: '{}': couldn't get the status of job '{}' on host '{}' (id: '{}'), assuming it's " + "still running", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+        return;
+    }
+    if (jobStatus.isAlive()) {
+        log.info("Command {} id: '{}': waiting for job '{}' on host '{}' (id: '{}') to complete", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+        return;
+    }
+    log.info("Command {} id: '{}': job '{}' execution was completed with VDSM job status '{}'", commandEntity.getCommandType(), cmdId, job, jobStatus);
+    CommandBase<?> command = getCommand(cmdId);
+    CommandExecutionStatus status = CommandCoordinatorUtil.getCommandExecutionStatus(cmdId);
+    command.getParameters().setTaskGroupSuccess(status == CommandExecutionStatus.EXECUTED && jobStatus == HostJobStatus.done);
+    command.setCommandStatus(command.getParameters().getTaskGroupSuccess() ? CommandStatus.SUCCEEDED : CommandStatus.FAILED);
+    log.info("Command {} id: '{}': execution was completed, the command status is '{}'", command.getActionType(), command.getCommandId(), command.getCommandStatus());
+}
+#method_after
+@Override
+public void doPolling(Guid cmdId, List<Guid> childCmdIds) {
+    CommandEntity commandEntity = CommandCoordinatorUtil.getCommandEntity(cmdId);
+    StorageJobCommandParameters cmdParams = (StorageJobCommandParameters) commandEntity.getCommandParameters();
+    Guid job = cmdParams.getStorageJobId();
+    Guid vdsId = cmdParams.getVdsRunningOn();
+    HostJobStatus jobStatus = null;
+    VDS vds = getVdsDao().get(vdsId);
+    boolean jobsReportedByHost = false;
+    if (vds.getStatus() == VDSStatus.Up) {
+        try {
+            HostJobInfo jobInfo = pollStorageJob(job, vdsId);
+            if (jobInfo != null) {
+                jobStatus = jobInfo.getStatus();
+                updateStepProgress(commandEntity.getStepId(), jobInfo.getProgress());
+            }
+            jobsReportedByHost = true;
+        } catch (Exception e) {
+            // We shouldn't get an error when polling the host job (as it access the local storage only).
+            // If we got an error, it will usually be a network error - so the host will either move
+            // to Non Responsive or the polling will succeed on the next attempt.
+            log.warn("Command {} id: '{}': Failed to poll the job '{}' on host '{}' (id: '{}'), will retry soon", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+            return;
+        }
+    } else {
+        log.warn("Command {} id: '{}': can't poll the job '{}' as host '{}' (id: '{}') isn't in status UP", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+    }
+    // If we couldn't determine job status by polling the host, we can try to determine it using different methods.
+    if (jobStatus == null) {
+        jobStatus = handleUndeterminedJobStatus(getCommand(cmdId), jobsReportedByHost);
+    }
+    if (jobStatus == null) {
+        log.info("Command {} id: '{}': couldn't get the status of job '{}' on host '{}' (id: '{}'), assuming it's " + "still running", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+        return;
+    }
+    if (jobStatus.isAlive()) {
+        log.info("Command {} id: '{}': waiting for job '{}' on host '{}' (id: '{}') to complete", commandEntity.getCommandType(), cmdId, job, vds.getName(), vdsId);
+        return;
+    }
+    log.info("Command {} id: '{}': job '{}' execution was completed with VDSM job status '{}'", commandEntity.getCommandType(), cmdId, job, jobStatus);
+    CommandBase<?> command = getCommand(cmdId);
+    CommandExecutionStatus status = CommandCoordinatorUtil.getCommandExecutionStatus(cmdId);
+    command.getParameters().setTaskGroupSuccess(status == CommandExecutionStatus.EXECUTED && jobStatus == HostJobStatus.done);
+    command.setCommandStatus(command.getParameters().getTaskGroupSuccess() ? CommandStatus.SUCCEEDED : CommandStatus.FAILED);
+    log.info("Command {} id: '{}': execution was completed, the command status is '{}'", command.getActionType(), command.getCommandId(), command.getCommandStatus());
+}
+#end_block
+
+#method_before
+private boolean isEntityPollingSupported(CommandBase<?> cmd) {
+    return (cmd instanceof EntityPollingCommand);
+}
+#method_after
+private boolean isEntityPollingSupported(CommandBase<?> cmd) {
+    return cmd instanceof EntityPollingCommand;
+}
+#end_block
+
+#method_before
+private HostJobStatus handleUndeterminedJobStatus(CommandBase<?> cmd, boolean jobReportedByHost) {
+    // If the command supports entity polling, we can use it in order to determine the status.
+    if (isEntityPollingSupported(cmd)) {
+        return pollEntityIfSupported(cmd);
+    }
+    // support entity polling).
+    if (!jobReportedByHost) {
+        log.error("Command {} id: '{}': entity polling isn't supported and the job isn't reported by the host," + "assuming it failed so that the command execution will end.", cmd.getActionType(), cmd.getCommandId());
+        return HostJobStatus.failed;
+    }
+    // if the job status couldn't have been determined because of a different reason, we'll retry to poll it.
+    log.error("Command {} id: '{}': entity polling isn't supported, will retry to poll the job soon", cmd.getActionType(), cmd.getCommandId());
+    return null;
+}
+#method_after
+private HostJobStatus handleUndeterminedJobStatus(CommandBase<?> cmd, boolean jobsReportedByHost) {
+    // If the command supports entity polling, we can use it in order to determine the status.
+    if (isEntityPollingSupported(cmd)) {
+        return pollEntity(cmd);
+    }
+    // (as the command doesn't support entity polling - so we don't have any way to poll it).
+    if (jobsReportedByHost) {
+        log.error("Command {} id: '{}': entity polling isn't supported and the job isn't reported by the host," + "assuming it failed so that the command execution will end.", cmd.getActionType(), cmd.getCommandId());
+        return HostJobStatus.failed;
+    }
+    // if the job status couldn't have been determined because of a different reason, we'll retry to poll it.
+    log.error("Command {} id: '{}': entity polling isn't supported, will retry to poll the job soon", cmd.getActionType(), cmd.getCommandId());
+    return null;
+}
+#end_block
+
+#method_before
+void initTable() {
+    getTable().enableColumnResizing();
+    VmStatusColumn<VM> statusIconColumn = new VmStatusColumn<>();
+    statusIconColumn.setContextMenuTitle(constants.statusIconVm());
+    // $NON-NLS-1$
+    getTable().addColumn(statusIconColumn, constants.empty(), "30px");
+    AbstractTextColumn<VM> nameColumn = new AbstractTextColumn<VM>() {
+
+        @Override
+        public String getValue(VM object) {
+            return object.getName();
+        }
+    };
+    nameColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(nameColumn, constants.nameVm(), "160px");
+    VmTypeColumn typeColumn = new VmTypeColumn();
+    typeColumn.setContextMenuTitle(constants.typeVm());
+    // $NON-NLS-1$
+    getTable().addColumn(typeColumn, constants.empty(), "30px");
+    AbstractTextColumn<VM> clusterColumn = new AbstractTextColumn<VM>() {
+
+        @Override
+        public String getValue(VM object) {
+            return object.getClusterName();
+        }
+    };
+    clusterColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(clusterColumn, constants.clusterVm(), "160px");
+    AbstractTextColumn<VM> ipColumn = new AbstractTextColumn<VM>() {
+
+        @Override
+        public String getValue(VM object) {
+            return object.getIp();
+        }
+    };
+    ipColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(ipColumn, constants.ipVm(), "200px");
+    AbstractTextColumn<VM> fqdnColumn = new AbstractTextColumn<VM>() {
+
+        @Override
+        public String getValue(VM object) {
+            return object.getFqdn();
+        }
+    };
+    fqdnColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(fqdnColumn, constants.fqdn(), "200px");
+    AbstractPercentColumn<VM> memColumn = new AbstractPercentColumn<VM>() {
+
+        @Override
+        public Integer getProgressValue(VM object) {
+            return object.getUsageMemPercent();
+        }
+    };
+    memColumn.makeSortable();
+    getTable().addColumn(new ColumnResizeTableLineChartProgressBar<VM>(getTable(), new ResourceConsumptionComparator() {
+
+        @Override
+        protected Integer extractValue(VM vm) {
+            return vm.getUsageMemPercent();
+        }
+    }) {
+
+        @Override
+        protected List<Integer> getProgressValues(VM object) {
+            return object.getMemoryUsageHistory();
+        }
+    }, constants.memoryVm(), // $NON-NLS-1$
+    "120px");
+    getTable().addColumn(new ColumnResizeTableLineChartProgressBar<VM>(getTable(), new ResourceConsumptionComparator() {
+
+        @Override
+        protected Integer extractValue(VM vm) {
+            return vm.getUsageCpuPercent();
+        }
+    }) {
+
+        @Override
+        protected List<Integer> getProgressValues(VM object) {
+            return object.getCpuUsageHistory();
+        }
+    }, constants.cpuVm(), // $NON-NLS-1$
+    "120px");
+    getTable().addColumn(new ColumnResizeTableLineChartProgressBar<VM>(getTable(), new ResourceConsumptionComparator() {
+
+        @Override
+        protected Integer extractValue(VM vm) {
+            return vm.getUsageNetworkPercent();
+        }
+    }) {
+
+        @Override
+        protected List<Integer> getProgressValues(VM object) {
+            return object.getNetworkUsageHistory();
+        }
+    }, constants.networkVm(), // $NON-NLS-1$
+    "120px");
+    AbstractTextColumn<VM> statusColumn = new AbstractEnumColumn<VM, VMStatus>() {
+
+        @Override
+        protected VMStatus getRawValue(VM object) {
+            // check, if the current host is a target for the migration, then override status
+            final VDS vds = getDetailModel().getEntity();
+            if (object.getStatus().equals(VMStatus.MigratingFrom) && vds != null && vds.getId().equals(object.getMigratingToVds())) {
+                return VMStatus.MigratingTo;
+            }
+            return object.getStatus();
+        }
+    };
+    statusColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(statusColumn, constants.statusVm(), "130px");
+    AbstractTextColumn<VM> uptimeColumn = new AbstractUptimeColumn<VM>() {
+
+        @Override
+        protected Double getRawValue(VM object) {
+            return object.getRoundedElapsedTime();
+        }
+    };
+    uptimeColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(uptimeColumn, constants.uptimeVm(), "110px");
+    // add action buttons
+    getTable().addActionButton(new WebAdminImageButtonDefinition<VM>(constants.suspendVm(), resources.suspendVmImage(), resources.suspendVmDisabledImage()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getPauseCommand();
+        }
+
+        @Override
+        public SafeHtml getTooltip() {
+            return SafeHtmlUtils.fromSafeConstant(constants.suspendVm());
+        }
+    });
+    getTable().addActionButton(new WebAdminImageButtonDefinition<VM>(constants.shutDownVm(), resources.stopVmImage(), resources.stopVmDisabledImage()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getShutdownCommand();
+        }
+
+        @Override
+        public SafeHtml getTooltip() {
+            return SafeHtmlUtils.fromSafeConstant(constants.shutDownVm());
+        }
+    });
+    getTable().addActionButton(new WebAdminButtonDefinition<VM>(constants.powerOffVm(), CommandLocation.OnlyFromContext) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getStopCommand();
+        }
+
+        @Override
+        public SafeHtml getTooltip() {
+            return SafeHtmlUtils.fromSafeConstant(constants.powerOffVm());
+        }
+    });
+    getTable().addActionButton(new WebAdminImageButtonDefinition<VM>(constants.consoleVm(), resources.consoleImage(), resources.consoleDisabledImage()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getConsoleConnectCommand();
+        }
+
+        @Override
+        public SafeHtml getTooltip() {
+            return SafeHtmlUtils.fromSafeConstant(constants.consoleVm());
+        }
+    });
+    // TODO: separator
+    getTable().addActionButton(new WebAdminButtonDefinition<VM>(constants.migrateVm()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getMigrateCommand();
+        }
+    });
+    getTable().addActionButton(new WebAdminButtonDefinition<VM>(constants.cancelMigrationVm()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getCancelMigrateCommand();
+        }
+    });
+}
+#method_after
+void initTable() {
+    getTable().enableColumnResizing();
+    VmStatusColumn<VM> statusIconColumn = new VmStatusColumn<>();
+    statusIconColumn.setContextMenuTitle(constants.statusIconVm());
+    // $NON-NLS-1$
+    getTable().addColumn(statusIconColumn, constants.empty(), "30px");
+    AbstractTextColumn<VM> nameColumn = new AbstractTextColumn<VM>() {
+
+        @Override
+        public String getValue(VM object) {
+            return object.getName();
+        }
+    };
+    nameColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(nameColumn, constants.nameVm(), "160px");
+    VmTypeColumn typeColumn = new VmTypeColumn();
+    typeColumn.setContextMenuTitle(constants.typeVm());
+    // $NON-NLS-1$
+    getTable().addColumn(typeColumn, constants.empty(), "30px");
+    AbstractTextColumn<VM> clusterColumn = new AbstractTextColumn<VM>() {
+
+        @Override
+        public String getValue(VM object) {
+            return object.getClusterName();
+        }
+    };
+    clusterColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(clusterColumn, constants.clusterVm(), "160px");
+    AbstractTextColumn<VM> ipColumn = new AbstractTextColumn<VM>() {
+
+        @Override
+        public String getValue(VM object) {
+            return object.getIp();
+        }
+    };
+    ipColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(ipColumn, constants.ipVm(), "200px");
+    AbstractTextColumn<VM> fqdnColumn = new AbstractTextColumn<VM>() {
+
+        @Override
+        public String getValue(VM object) {
+            return object.getFqdn();
+        }
+    };
+    fqdnColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(fqdnColumn, constants.fqdn(), "200px");
+    getTable().addColumn(new ColumnResizeTableLineChartProgressBar<VM>(getTable(), new ResourceConsumptionComparator() {
+
+        @Override
+        protected Integer extractValue(VM vm) {
+            return vm.getUsageMemPercent();
+        }
+    }) {
+
+        @Override
+        protected List<Integer> getProgressValues(VM object) {
+            return object.getMemoryUsageHistory();
+        }
+    }, constants.memoryVm(), // $NON-NLS-1$
+    "120px");
+    getTable().addColumn(new ColumnResizeTableLineChartProgressBar<VM>(getTable(), new ResourceConsumptionComparator() {
+
+        @Override
+        protected Integer extractValue(VM vm) {
+            return vm.getUsageCpuPercent();
+        }
+    }) {
+
+        @Override
+        protected List<Integer> getProgressValues(VM object) {
+            return object.getCpuUsageHistory();
+        }
+    }, constants.cpuVm(), // $NON-NLS-1$
+    "120px");
+    getTable().addColumn(new ColumnResizeTableLineChartProgressBar<VM>(getTable(), new ResourceConsumptionComparator() {
+
+        @Override
+        protected Integer extractValue(VM vm) {
+            return vm.getUsageNetworkPercent();
+        }
+    }) {
+
+        @Override
+        protected List<Integer> getProgressValues(VM object) {
+            return object.getNetworkUsageHistory();
+        }
+    }, constants.networkVm(), // $NON-NLS-1$
+    "120px");
+    AbstractTextColumn<VM> statusColumn = new AbstractEnumColumn<VM, VMStatus>() {
+
+        @Override
+        protected VMStatus getRawValue(VM object) {
+            // check, if the current host is a target for the migration, then override status
+            final VDS vds = getDetailModel().getEntity();
+            if (object.getStatus().equals(VMStatus.MigratingFrom) && vds != null && vds.getId().equals(object.getMigratingToVds())) {
+                return VMStatus.MigratingTo;
+            }
+            return object.getStatus();
+        }
+    };
+    statusColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(statusColumn, constants.statusVm(), "130px");
+    AbstractTextColumn<VM> uptimeColumn = new AbstractUptimeColumn<VM>() {
+
+        @Override
+        protected Double getRawValue(VM object) {
+            return object.getRoundedElapsedTime();
+        }
+    };
+    uptimeColumn.makeSortable();
+    // $NON-NLS-1$
+    getTable().addColumn(uptimeColumn, constants.uptimeVm(), "110px");
+    // add action buttons
+    getTable().addActionButton(new WebAdminImageButtonDefinition<VM>(constants.suspendVm(), resources.suspendVmImage(), resources.suspendVmDisabledImage()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getPauseCommand();
+        }
+
+        @Override
+        public SafeHtml getTooltip() {
+            return SafeHtmlUtils.fromSafeConstant(constants.suspendVm());
+        }
+    });
+    getTable().addActionButton(new WebAdminImageButtonDefinition<VM>(constants.shutDownVm(), resources.stopVmImage(), resources.stopVmDisabledImage()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getShutdownCommand();
+        }
+
+        @Override
+        public SafeHtml getTooltip() {
+            return SafeHtmlUtils.fromSafeConstant(constants.shutDownVm());
+        }
+    });
+    getTable().addActionButton(new WebAdminButtonDefinition<VM>(constants.powerOffVm(), CommandLocation.OnlyFromContext) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getStopCommand();
+        }
+
+        @Override
+        public SafeHtml getTooltip() {
+            return SafeHtmlUtils.fromSafeConstant(constants.powerOffVm());
+        }
+    });
+    getTable().addActionButton(new WebAdminImageButtonDefinition<VM>(constants.consoleVm(), resources.consoleImage(), resources.consoleDisabledImage()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getConsoleConnectCommand();
+        }
+
+        @Override
+        public SafeHtml getTooltip() {
+            return SafeHtmlUtils.fromSafeConstant(constants.consoleVm());
+        }
+    });
+    // TODO: separator
+    getTable().addActionButton(new WebAdminButtonDefinition<VM>(constants.migrateVm()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getMigrateCommand();
+        }
+    });
+    getTable().addActionButton(new WebAdminButtonDefinition<VM>(constants.cancelMigrationVm()) {
+
+        @Override
+        protected UICommand resolveCommand() {
+            return getDetailModel().getCancelMigrateCommand();
+        }
+    });
+}
+#end_block
+
+#method_before
+@Override
+public void setUp() {
+    super.setUp();
+    cmd.init();
+    generateStorageToDisksMap();
+    initDestSDs();
+    doReturn(ValidationResult.VALID).when(storageDomainValidator).isDomainWithinThresholds();
+}
+#method_after
+@Override
+public void setUp() {
+    super.setUp();
+    generateStorageToDisksMap();
+    initDestSDs();
+    doReturn(ValidationResult.VALID).when(storageDomainValidator).isDomainWithinThresholds();
+}
+#end_block
+
+#method_before
+@Test
+public void canAddVm() {
+    List<String> reasons = new ArrayList<>();
+    initCommandMethods();
+    doReturn(true).when(cmd).validateCustomProperties(any(VmStatic.class), anyListOf(String.class));
+    doReturn(true).when(cmd).validateSpaceRequirements();
+    assertTrue("vm could not be added", cmd.canAddVm(reasons, Collections.singletonList(createStorageDomain())));
+}
+#method_after
+@Test
+public void canAddVm() {
+    List<String> reasons = new ArrayList<>();
+    initCommandMethods();
+    cmd.init();
+    doReturn(true).when(cmd).validateCustomProperties(any(VmStatic.class), anyListOf(String.class));
+    doReturn(true).when(cmd).validateSpaceRequirements();
+    assertTrue("vm could not be added", cmd.canAddVm(reasons, Collections.singletonList(createStorageDomain())));
+}
+#end_block
+
+#method_before
+@Test
+public void refuseBalloonOnPPC() {
+    setupCanAddPpcTest();
+    cmd.getParameters().setBalloonEnabled(true);
+    when(osRepository.isBalloonEnabled(cmd.getParameters().getVm().getVmOsId(), cmd.getCluster().getCompatibilityVersion())).thenReturn(false);
+    ValidateTestUtils.runAndAssertValidateFailure(cmd, EngineMessage.BALLOON_REQUESTED_ON_NOT_SUPPORTED_ARCH);
+}
+#method_after
+@Test
+public void refuseBalloonOnPPC() {
+    setupCanAddPpcTest();
+    cmd.getParameters().setBalloonEnabled(true);
+    when(osRepository.isBalloonEnabled(cmd.getParameters().getVm().getVmOsId(), cmd.getCluster().getCompatibilityVersion())).thenReturn(false);
+    cmd.init();
+    ValidateTestUtils.runAndAssertValidateFailure(cmd, EngineMessage.BALLOON_REQUESTED_ON_NOT_SUPPORTED_ARCH);
+}
+#end_block
+
+#method_before
+@Test
+public void refuseSoundDeviceOnPPC() {
+    setupCanAddPpcTest();
+    cmd.getParameters().setSoundDeviceEnabled(true);
+    ValidateTestUtils.runAndAssertValidateFailure(cmd, EngineMessage.SOUND_DEVICE_REQUESTED_ON_NOT_SUPPORTED_ARCH);
+}
+#method_after
+@Test
+public void refuseSoundDeviceOnPPC() {
+    setupCanAddPpcTest();
+    cmd.getParameters().setSoundDeviceEnabled(true);
+    cmd.init();
+    ValidateTestUtils.runAndAssertValidateFailure(cmd, EngineMessage.SOUND_DEVICE_REQUESTED_ON_NOT_SUPPORTED_ARCH);
+}
+#end_block
+
+#method_before
+@Test
+public void testBlockUseHostCpuWithPPCArch() {
+    setupCanAddPpcTest();
+    cmd.setEffectiveCompatibilityVersion(Version.v4_0);
+    doReturn(Collections.emptyList()).when(cmd).getImagesToCheckDestinationStorageDomains();
+    initPpcCluster();
+    when(clusterDao.get(any(Guid.class))).thenReturn(cluster);
+    doReturn(true).when(cmd).areParametersLegal(Collections.emptyList());
+    doReturn(true).when(cmd).validateAddVmCommand();
+    doReturn(true).when(cmd).isVmNameValidLength(any(VM.class));
+    when(osRepository.getArchitectureFromOS(any(Integer.class))).thenReturn(ArchitectureType.ppc64);
+    cmd.getParameters().getVm().setClusterArch(ArchitectureType.ppc64);
+    cmd.getParameters().getVm().setUseHostCpuFlags(true);
+    cmd.getParameters().getVm().setMigrationSupport(MigrationSupport.PINNED_TO_HOST);
+    cmd.getParameters().getVm().setClusterId(cluster.getId());
+    cmd.getParameters().getVm().setVmOs(OsType.Other.ordinal());
+    ValidateTestUtils.runAndAssertValidateFailure(cmd, EngineMessage.USE_HOST_CPU_REQUESTED_ON_UNSUPPORTED_ARCH);
+}
+#method_after
+@Test
+public void testBlockUseHostCpuWithPPCArch() {
+    setupCanAddPpcTest();
+    cmd.setEffectiveCompatibilityVersion(Version.v4_0);
+    doReturn(Collections.emptyList()).when(cmd).getImagesToCheckDestinationStorageDomains();
+    initPpcCluster();
+    when(clusterDao.get(any(Guid.class))).thenReturn(cluster);
+    doReturn(true).when(cmd).areParametersLegal(Collections.emptyList());
+    doReturn(true).when(cmd).validateAddVmCommand();
+    doReturn(true).when(cmd).isVmNameValidLength(any(VM.class));
+    when(osRepository.getArchitectureFromOS(any(Integer.class))).thenReturn(ArchitectureType.ppc64);
+    cmd.getParameters().getVm().setClusterArch(ArchitectureType.ppc64);
+    cmd.getParameters().getVm().setUseHostCpuFlags(true);
+    cmd.getParameters().getVm().setMigrationSupport(MigrationSupport.PINNED_TO_HOST);
+    cmd.getParameters().getVm().setClusterId(cluster.getId());
+    cmd.getParameters().getVm().setVmOs(OsType.Other.ordinal());
+    cmd.init();
+    ValidateTestUtils.runAndAssertValidateFailure(cmd, EngineMessage.USE_HOST_CPU_REQUESTED_ON_UNSUPPORTED_ARCH);
+}
+#end_block
+
+#method_before
+private boolean hostCompliesWithRngDeviceSources(VDS vds, Cluster cluster) {
+    /*
+         * For purpose if this method 'random' and 'urandom' are considered to be equivalent. It's because vdsm can't
+         * report 'urandom' yet. (Though vdsm is able to set 'urandom'-based RNG device for newly started VM.)
+         * See https://gerrit.ovirt.org/#/c/59031/.
+         * This 'hack' can be removed when engine will not be required to work with vdsm that doesn't report 'urandom'.
+         */
+    return vds.getSupportedRngSources().containsAll(cluster.getAdditionalRngSources()) && (vds.getSupportedRngSources().contains(VmRngDevice.Source.URANDOM) || vds.getSupportedRngSources().contains(VmRngDevice.Source.RANDOM));
+}
+#method_after
+private boolean hostCompliesWithRngDeviceSources(VDS vds, Cluster cluster) {
+    /*
+         * For purpose of this method 'random' and 'urandom' are considered to be equivalent. It's because vdsm can't
+         * report 'urandom' yet.
+         * This 'hack' can be removed when engine will not be required to work with vdsm that doesn't report 'urandom',
+         * i.e. when engine 4.0 will not be supported.
+         */
+    return vds.getSupportedRngSources().containsAll(cluster.getAdditionalRngSources()) && (vds.getSupportedRngSources().contains(VmRngDevice.Source.URANDOM) || vds.getSupportedRngSources().contains(VmRngDevice.Source.RANDOM));
+}
+#end_block
+
+#method_before
+@Mapping(from = org.ovirt.engine.api.model.Cluster.class, to = Cluster.class)
+public static Cluster map(org.ovirt.engine.api.model.Cluster model, Cluster template) {
+    Cluster entity = template != null ? template : new Cluster();
+    if (model.isSetSwitchType()) {
+        entity.setRequiredSwitchTypeForCluster(SwitchTypeMapper.mapFromModel(model.getSwitchType()));
+    }
+    if (model.isSetId()) {
+        entity.setId(GuidUtils.asGuid(model.getId()));
+    }
+    if (model.isSetName()) {
+        entity.setName(model.getName());
+    }
+    if (model.isSetDescription()) {
+        entity.setDescription(model.getDescription());
+    }
+    if (model.isSetComment()) {
+        entity.setComment(model.getComment());
+    }
+    if (model.isSetCpu() && model.getCpu().isSetType()) {
+        entity.setCpuName(model.getCpu().getType());
+    }
+    if (model.isSetCpu() && model.getCpu().isSetArchitecture()) {
+        entity.setArchitecture(CPUMapper.map(model.getCpu().getArchitecture(), null));
+    }
+    if (model.isSetDataCenter() && model.getDataCenter().isSetId()) {
+        entity.setStoragePoolId(GuidUtils.asGuid(model.getDataCenter().getId()));
+    }
+    if (model.isSetVersion() && model.getVersion().getMajor() != null && model.getVersion().getMinor() != null) {
+        entity.setCompatibilityVersion(VersionMapper.map(model.getVersion()));
+    }
+    if (model.isSetMemoryPolicy()) {
+        entity = map(model.getMemoryPolicy(), entity);
+    } else if (model.isSetVersion() && model.getVersion().getMajor() != null && model.getVersion().getMinor() != null && greaterOrEqual(model.getVersion(), min_thp_version)) {
+        entity.setTransparentHugepages(true);
+    }
+    SchedulingPolicy schedulingPolicy = model.getSchedulingPolicy();
+    if (schedulingPolicy != null) {
+        if (schedulingPolicy.isSetName()) {
+            entity.setClusterPolicyName(schedulingPolicy.getName());
+        }
+        if (schedulingPolicy.isSetId()) {
+            entity.setClusterPolicyId(GuidUtils.asGuid(schedulingPolicy.getId()));
+        }
+    }
+    if (model.isSetErrorHandling() && model.getErrorHandling().isSetOnError()) {
+        entity.setMigrateOnError(map(model.getErrorHandling().getOnError(), null));
+    }
+    if (model.isSetVirtService()) {
+        entity.setVirtService(model.isVirtService());
+    }
+    if (model.isSetGlusterService()) {
+        entity.setGlusterService(model.isGlusterService());
+    }
+    if (model.isSetThreadsAsCores()) {
+        entity.setCountThreadsAsCores(model.isThreadsAsCores());
+    }
+    if (model.isSetTunnelMigration()) {
+        entity.setTunnelMigration(model.isTunnelMigration());
+    }
+    if (model.isSetTrustedService()) {
+        entity.setTrustedService(model.isTrustedService());
+    }
+    if (model.isSetHaReservation()) {
+        entity.setHaReservation(model.isHaReservation());
+    }
+    if (model.isSetOptionalReason()) {
+        entity.setOptionalReasonRequired(model.isOptionalReason());
+    }
+    if (model.isSetMaintenanceReasonRequired()) {
+        entity.setMaintenanceReasonRequired(model.isMaintenanceReasonRequired());
+    }
+    if (model.isSetBallooningEnabled()) {
+        entity.setEnableBallooning(model.isBallooningEnabled());
+    }
+    if (model.isSetKsm()) {
+        if (model.getKsm().isSetEnabled()) {
+            entity.setEnableKsm(model.getKsm().isEnabled());
+        }
+        if (model.getKsm().isSetMergeAcrossNodes()) {
+            entity.setKsmMergeAcrossNumaNodes(model.getKsm().isMergeAcrossNodes());
+        }
+    }
+    if (model.isSetDisplay() && model.getDisplay().isSetProxy()) {
+        entity.setSpiceProxy("".equals(model.getDisplay().getProxy()) ? null : model.getDisplay().getProxy());
+    }
+    if (model.isSetSerialNumber()) {
+        SerialNumberMapper.copySerialNumber(model.getSerialNumber(), entity);
+    }
+    /*
+         * For backward compatibility additional rng sources are presented in <required_rng_sources> together with
+         * implicit /dev/random source. <required_rng_sources> should be changed to <additional_rng_sources> during
+         * next api change.
+         */
+    if (model.isSetRequiredRngSources()) {
+        entity.getAdditionalRngSources().clear();
+        entity.getAdditionalRngSources().addAll(RngDeviceMapper.mapRngSources(model.getRequiredRngSources().getRequiredRngSources()));
+        entity.getAdditionalRngSources().remove(VmRngDevice.Source.RANDOM);
+        entity.getAdditionalRngSources().remove(VmRngDevice.Source.URANDOM);
+    }
+    if (model.isSetFencingPolicy()) {
+        entity.setFencingPolicy(FencingPolicyMapper.map(model.getFencingPolicy(), null));
+    }
+    if (model.isSetMigration()) {
+        ClusterMigrationOptionsMapper.copyMigrationOptions(model.getMigration(), entity);
+    }
+    if (model.isSetMacPool() && model.getMacPool().isSetId()) {
+        entity.setMacPoolId(GuidUtils.asGuid(model.getMacPool().getId()));
+    }
+    // properties will override thresholds
+    if (model.isSetCustomSchedulingPolicyProperties()) {
+        Map<String, String> properties = entity.getClusterPolicyProperties();
+        if (properties == null) {
+            properties = new HashMap<>();
+            entity.setClusterPolicyProperties(properties);
+        }
+        Map<String, String> customProperties = CustomPropertiesParser.toMap(model.getCustomSchedulingPolicyProperties());
+        properties.putAll(customProperties);
+    }
+    return entity;
+}
+#method_after
+@Mapping(from = org.ovirt.engine.api.model.Cluster.class, to = Cluster.class)
+public static Cluster map(org.ovirt.engine.api.model.Cluster model, Cluster template) {
+    Cluster entity = template != null ? template : new Cluster();
+    if (model.isSetSwitchType()) {
+        entity.setRequiredSwitchTypeForCluster(SwitchTypeMapper.mapFromModel(model.getSwitchType()));
+    }
+    if (model.isSetId()) {
+        entity.setId(GuidUtils.asGuid(model.getId()));
+    }
+    if (model.isSetName()) {
+        entity.setName(model.getName());
+    }
+    if (model.isSetDescription()) {
+        entity.setDescription(model.getDescription());
+    }
+    if (model.isSetComment()) {
+        entity.setComment(model.getComment());
+    }
+    if (model.isSetCpu() && model.getCpu().isSetType()) {
+        entity.setCpuName(model.getCpu().getType());
+    }
+    if (model.isSetCpu() && model.getCpu().isSetArchitecture()) {
+        entity.setArchitecture(CPUMapper.map(model.getCpu().getArchitecture(), null));
+    }
+    if (model.isSetDataCenter() && model.getDataCenter().isSetId()) {
+        entity.setStoragePoolId(GuidUtils.asGuid(model.getDataCenter().getId()));
+    }
+    if (model.isSetVersion() && model.getVersion().getMajor() != null && model.getVersion().getMinor() != null) {
+        entity.setCompatibilityVersion(VersionMapper.map(model.getVersion()));
+    }
+    if (model.isSetMemoryPolicy()) {
+        entity = map(model.getMemoryPolicy(), entity);
+    } else if (model.isSetVersion() && model.getVersion().getMajor() != null && model.getVersion().getMinor() != null && greaterOrEqual(model.getVersion(), min_thp_version)) {
+        entity.setTransparentHugepages(true);
+    }
+    SchedulingPolicy schedulingPolicy = model.getSchedulingPolicy();
+    if (schedulingPolicy != null) {
+        if (schedulingPolicy.isSetName()) {
+            entity.setClusterPolicyName(schedulingPolicy.getName());
+        }
+        if (schedulingPolicy.isSetId()) {
+            entity.setClusterPolicyId(GuidUtils.asGuid(schedulingPolicy.getId()));
+        }
+    }
+    if (model.isSetErrorHandling() && model.getErrorHandling().isSetOnError()) {
+        entity.setMigrateOnError(map(model.getErrorHandling().getOnError(), null));
+    }
+    if (model.isSetVirtService()) {
+        entity.setVirtService(model.isVirtService());
+    }
+    if (model.isSetGlusterService()) {
+        entity.setGlusterService(model.isGlusterService());
+    }
+    if (model.isSetThreadsAsCores()) {
+        entity.setCountThreadsAsCores(model.isThreadsAsCores());
+    }
+    if (model.isSetTunnelMigration()) {
+        entity.setTunnelMigration(model.isTunnelMigration());
+    }
+    if (model.isSetTrustedService()) {
+        entity.setTrustedService(model.isTrustedService());
+    }
+    if (model.isSetHaReservation()) {
+        entity.setHaReservation(model.isHaReservation());
+    }
+    if (model.isSetOptionalReason()) {
+        entity.setOptionalReasonRequired(model.isOptionalReason());
+    }
+    if (model.isSetMaintenanceReasonRequired()) {
+        entity.setMaintenanceReasonRequired(model.isMaintenanceReasonRequired());
+    }
+    if (model.isSetBallooningEnabled()) {
+        entity.setEnableBallooning(model.isBallooningEnabled());
+    }
+    if (model.isSetKsm()) {
+        if (model.getKsm().isSetEnabled()) {
+            entity.setEnableKsm(model.getKsm().isEnabled());
+        }
+        if (model.getKsm().isSetMergeAcrossNodes()) {
+            entity.setKsmMergeAcrossNumaNodes(model.getKsm().isMergeAcrossNodes());
+        }
+    }
+    if (model.isSetDisplay() && model.getDisplay().isSetProxy()) {
+        entity.setSpiceProxy("".equals(model.getDisplay().getProxy()) ? null : model.getDisplay().getProxy());
+    }
+    if (model.isSetSerialNumber()) {
+        SerialNumberMapper.copySerialNumber(model.getSerialNumber(), entity);
+    }
+    /*
+         * For backward compatibility additional rng sources are presented in <required_rng_sources> together with
+         * implicit /dev/urandom or /dev/random source. <required_rng_sources> should be changed to
+         * <additional_rng_sources> during next api change.
+         */
+    if (model.isSetRequiredRngSources()) {
+        entity.getAdditionalRngSources().clear();
+        entity.getAdditionalRngSources().addAll(RngDeviceMapper.mapRngSources(model.getRequiredRngSources().getRequiredRngSources()));
+        entity.getAdditionalRngSources().remove(VmRngDevice.Source.RANDOM);
+        entity.getAdditionalRngSources().remove(VmRngDevice.Source.URANDOM);
+    }
+    if (model.isSetFencingPolicy()) {
+        entity.setFencingPolicy(FencingPolicyMapper.map(model.getFencingPolicy(), null));
+    }
+    if (model.isSetMigration()) {
+        ClusterMigrationOptionsMapper.copyMigrationOptions(model.getMigration(), entity);
+    }
+    if (model.isSetMacPool() && model.getMacPool().isSetId()) {
+        entity.setMacPoolId(GuidUtils.asGuid(model.getMacPool().getId()));
+    }
+    // properties will override thresholds
+    if (model.isSetCustomSchedulingPolicyProperties()) {
+        Map<String, String> properties = entity.getClusterPolicyProperties();
+        if (properties == null) {
+            properties = new HashMap<>();
+            entity.setClusterPolicyProperties(properties);
+        }
+        Map<String, String> customProperties = CustomPropertiesParser.toMap(model.getCustomSchedulingPolicyProperties());
+        properties.putAll(customProperties);
+    }
+    return entity;
+}
+#end_block
+
+#method_before
+private void checkVdsMemoryThreshold(VdsStatistics stat) {
+    Integer minAvailableThreshold = Config.getValue(ConfigValues.LogPhysicalMemoryThresholdInMB);
+    Integer maxUsedPercentageThreshold = Config.getValue(ConfigValues.LogMaxPhysicalMemoryUsedThresholdInPercentage);
+    if (stat.getMemFree() == null || stat.getUsageMemPercent() == null) {
+        return;
+    }
+    AuditLogType valueToLog = stat.getMemFree() < minAvailableThreshold ? AuditLogType.VDS_LOW_MEM : AuditLogType.VDS_HIGH_MEM_USE;
+    if (stat.getMemFree() < minAvailableThreshold || stat.getUsageMemPercent() > maxUsedPercentageThreshold) {
+        AuditLogableBase logable = new AuditLogableBase(stat.getId());
+        logable.addCustomValue("HostName", vds.getName());
+        logable.addCustomValue("AvailableMemory", stat.getMemFree().toString());
+        logable.addCustomValue("UsedMemory", stat.getUsageMemPercent().toString());
+        logable.addCustomValue("Threshold", stat.getMemFree() < minAvailableThreshold ? minAvailableThreshold.toString() : maxUsedPercentageThreshold.toString());
+        auditLog(logable, valueToLog);
+    }
+}
+#method_after
+private void checkVdsMemoryThreshold(VdsStatistics stat) {
+    Integer minAvailableThreshold = Config.getValue(ConfigValues.LogPhysicalMemoryThresholdInMB);
+    Integer maxUsedPercentageThreshold = Config.getValue(ConfigValues.LogMaxPhysicalMemoryUsedThresholdInPercentage);
+    if (stat.getMemFree() == null || stat.getUsageMemPercent() == null) {
+        return;
+    }
+    AuditLogType valueToLog = stat.getMemFree() < minAvailableThreshold ? AuditLogType.VDS_LOW_MEM : AuditLogType.VDS_HIGH_MEM_USE;
+    if (stat.getMemFree() < minAvailableThreshold || stat.getUsageMemPercent() > maxUsedPercentageThreshold) {
+        AuditLogableBase logable = Injector.injectMembers(new AuditLogableBase(stat.getId()));
+        logable.addCustomValue("HostName", vds.getName());
+        logable.addCustomValue("AvailableMemory", stat.getMemFree().toString());
+        logable.addCustomValue("UsedMemory", stat.getUsageMemPercent().toString());
+        logable.addCustomValue("Threshold", stat.getMemFree() < minAvailableThreshold ? minAvailableThreshold.toString() : maxUsedPercentageThreshold.toString());
+        auditLog(logable, valueToLog);
+    }
+}
+#end_block
+
+#method_before
+private void checkVdsCpuThreshold(VdsStatistics stat) {
+    Integer maxUsedPercentageThreshold = Config.getValue(ConfigValues.LogMaxCpuUsedThresholdInPercentage);
+    if (stat.getUsageCpuPercent() != null && stat.getUsageCpuPercent() > maxUsedPercentageThreshold) {
+        AuditLogableBase logable = new AuditLogableBase(stat.getId());
+        logable.addCustomValue("HostName", vds.getName());
+        logable.addCustomValue("UsedCpu", stat.getUsageCpuPercent().toString());
+        logable.addCustomValue("Threshold", maxUsedPercentageThreshold.toString());
+        auditLog(logable, AuditLogType.VDS_HIGH_CPU_USE);
+    }
+}
+#method_after
+private void checkVdsCpuThreshold(VdsStatistics stat) {
+    Integer maxUsedPercentageThreshold = Config.getValue(ConfigValues.LogMaxCpuUsedThresholdInPercentage);
+    if (stat.getUsageCpuPercent() != null && stat.getUsageCpuPercent() > maxUsedPercentageThreshold) {
+        AuditLogableBase logable = Injector.injectMembers(new AuditLogableBase(stat.getId()));
+        logable.addCustomValue("HostName", vds.getName());
+        logable.addCustomValue("UsedCpu", stat.getUsageCpuPercent().toString());
+        logable.addCustomValue("Threshold", maxUsedPercentageThreshold.toString());
+        auditLog(logable, AuditLogType.VDS_HIGH_CPU_USE);
+    }
+}
+#end_block
+
+#method_before
+private void checkVdsNetworkThreshold(VdsStatistics stat) {
+    Integer maxUsedPercentageThreshold = Config.getValue(ConfigValues.LogMaxNetworkUsedThresholdInPercentage);
+    for (VdsNetworkInterface iface : vds.getInterfaces()) {
+        Double transmitRate = iface.getStatistics().getTransmitRate();
+        Double receiveRate = iface.getStatistics().getReceiveRate();
+        if ((transmitRate != null && iface.getStatistics().getTransmitRate().intValue() > maxUsedPercentageThreshold) || (receiveRate != null && iface.getStatistics().getReceiveRate().intValue() > maxUsedPercentageThreshold)) {
+            AuditLogableBase logable = new AuditLogableBase(vds.getId());
+            logable.setCustomId(iface.getName());
+            logable.addCustomValue("HostName", vds.getName());
+            logable.addCustomValue("InterfaceName", iface.getName());
+            logable.addCustomValue("Threshold", maxUsedPercentageThreshold.toString());
+            logable.addCustomValue("TransmitRate", String.valueOf(transmitRate.intValue()));
+            logable.addCustomValue("ReceiveRate", String.valueOf(receiveRate.intValue()));
+            auditLog(logable, AuditLogType.HOST_INTERFACE_HIGH_NETWORK_USE);
+        }
+    }
+}
+#method_after
+private void checkVdsNetworkThreshold(VdsStatistics stat) {
+    Integer maxUsedPercentageThreshold = Config.getValue(ConfigValues.LogMaxNetworkUsedThresholdInPercentage);
+    for (VdsNetworkInterface iface : vds.getInterfaces()) {
+        Double transmitRate = iface.getStatistics().getTransmitRate();
+        Double receiveRate = iface.getStatistics().getReceiveRate();
+        if ((transmitRate != null && iface.getStatistics().getTransmitRate().intValue() > maxUsedPercentageThreshold) || (receiveRate != null && iface.getStatistics().getReceiveRate().intValue() > maxUsedPercentageThreshold)) {
+            AuditLogableBase logable = Injector.injectMembers(new AuditLogableBase(vds.getId()));
+            logable.setCustomId(iface.getName());
+            logable.addCustomValue("HostName", vds.getName());
+            logable.addCustomValue("InterfaceName", iface.getName());
+            logable.addCustomValue("Threshold", maxUsedPercentageThreshold.toString());
+            logable.addCustomValue("TransmitRate", String.valueOf(transmitRate.intValue()));
+            logable.addCustomValue("ReceiveRate", String.valueOf(receiveRate.intValue()));
+            auditLog(logable, AuditLogType.HOST_INTERFACE_HIGH_NETWORK_USE);
+        }
+    }
+}
+#end_block
+
+#method_before
+private void checkVdsSwapThreshold(VdsStatistics stat) {
+    final double THRESHOLD = 0.98;
+    Integer minAvailableThreshold = Config.getValue(ConfigValues.LogSwapMemoryThresholdInMB);
+    Integer maxUsedPercentageThreshold = Config.getValue(ConfigValues.LogMaxSwapMemoryUsedThresholdInPercentage);
+    if (stat.getSwapTotal() == null || stat.getSwapFree() == null || stat.getSwapTotal() == 0) {
+        return;
+    }
+    Long swapUsedPercent = (stat.getSwapTotal() - stat.getSwapFree()) / stat.getSwapTotal();
+    // Allow the space to be up to 2% lower than as defined in configuration
+    Long allowedMinAvailableThreshold = Math.round(minAvailableThreshold.doubleValue() * THRESHOLD);
+    AuditLogType valueToLog = stat.getSwapFree() < allowedMinAvailableThreshold ? AuditLogType.VDS_LOW_SWAP : AuditLogType.VDS_HIGH_SWAP_USE;
+    if (stat.getSwapFree() < allowedMinAvailableThreshold || swapUsedPercent > maxUsedPercentageThreshold) {
+        AuditLogableBase logable = new AuditLogableBase(stat.getId());
+        logable.addCustomValue("HostName", vds.getName());
+        logable.addCustomValue("UsedSwap", swapUsedPercent.toString());
+        logable.addCustomValue("AvailableSwapMemory", stat.getSwapFree().toString());
+        logable.addCustomValue("Threshold", stat.getSwapFree() < allowedMinAvailableThreshold ? minAvailableThreshold.toString() : maxUsedPercentageThreshold.toString());
+        auditLog(logable, valueToLog);
+    }
+}
+#method_after
+private void checkVdsSwapThreshold(VdsStatistics stat) {
+    final double THRESHOLD = 0.98;
+    Integer minAvailableThreshold = Config.getValue(ConfigValues.LogSwapMemoryThresholdInMB);
+    Integer maxUsedPercentageThreshold = Config.getValue(ConfigValues.LogMaxSwapMemoryUsedThresholdInPercentage);
+    if (stat.getSwapTotal() == null || stat.getSwapFree() == null || stat.getSwapTotal() == 0) {
+        return;
+    }
+    Long swapUsedPercent = (stat.getSwapTotal() - stat.getSwapFree()) / stat.getSwapTotal();
+    // Allow the space to be up to 2% lower than as defined in configuration
+    Long allowedMinAvailableThreshold = Math.round(minAvailableThreshold.doubleValue() * THRESHOLD);
+    AuditLogType valueToLog = stat.getSwapFree() < allowedMinAvailableThreshold ? AuditLogType.VDS_LOW_SWAP : AuditLogType.VDS_HIGH_SWAP_USE;
+    if (stat.getSwapFree() < allowedMinAvailableThreshold || swapUsedPercent > maxUsedPercentageThreshold) {
+        AuditLogableBase logable = Injector.injectMembers(new AuditLogableBase(stat.getId()));
+        logable.addCustomValue("HostName", vds.getName());
+        logable.addCustomValue("UsedSwap", swapUsedPercent.toString());
+        logable.addCustomValue("AvailableSwapMemory", stat.getSwapFree().toString());
+        logable.addCustomValue("Threshold", stat.getSwapFree() < allowedMinAvailableThreshold ? minAvailableThreshold.toString() : maxUsedPercentageThreshold.toString());
+        auditLog(logable, valueToLog);
+    }
+}
+#end_block
+
+#method_before
+private void logLowDiskSpaceOnHostDisks(List<String> disksWithLowSpace, final Integer lowSpaceThreshold, AuditLogType logType) {
+    if (!disksWithLowSpace.isEmpty()) {
+        AuditLogableBase logable = new AuditLogableBase(vds.getId());
+        logable.addCustomValue("DiskSpace", lowSpaceThreshold.toString());
+        logable.addCustomValue("Disks", StringUtils.join(disksWithLowSpace, ", "));
+        auditLog(logable, logType);
+    }
+}
+#method_after
+private void logLowDiskSpaceOnHostDisks(List<String> disksWithLowSpace, final Integer lowSpaceThreshold, AuditLogType logType) {
+    if (!disksWithLowSpace.isEmpty()) {
+        AuditLogableBase logable = Injector.injectMembers(new AuditLogableBase(vds.getId()));
+        logable.addCustomValue("DiskSpace", lowSpaceThreshold.toString());
+        logable.addCustomValue("Disks", StringUtils.join(disksWithLowSpace, ", "));
+        auditLog(logable, logType);
+    }
+}
+#end_block
+
+#method_before
+// Check if one of the Host interfaces is down, we set the host to non-operational
+private void checkVdsInterfaces() {
+    if (vds.getStatus() != VDSStatus.Up) {
+        return;
+    }
+    Map<String, Set<String>> problematicNicsWithNetworks = new HashMap<>();
+    try {
+        reportNicStatusChanges();
+        problematicNicsWithNetworks = NetworkMonitoringHelper.determineProblematicNics(vds.getInterfaces(), getDbFacade().getNetworkDao().getAllForCluster(vds.getClusterId()));
+    } catch (Exception e) {
+        log.error("Failure on checkInterfaces on update runtime info for host '{}': {}", vds.getName(), e.getMessage());
+        log.error("Exception", e);
+    } finally {
+        if (!problematicNicsWithNetworks.isEmpty()) {
+            // we give 1 minutes to a nic to get up in case the nic get the ip from DHCP server
+            if (!hostDownTimes.containsKey(vds.getId())) {
+                hostDownTimes.put(vds.getId(), System.currentTimeMillis());
+                return;
+            }
+            // if less then 1 minutes, still waiting for DHCP
+            int delay = Config.<Integer>getValue(ConfigValues.NicDHCPDelayGraceInMS) * 1000;
+            if (System.currentTimeMillis() < hostDownTimes.get(vds.getId()) + delay) {
+                return;
+            }
+            // if we could retrieve it within the timeout, remove from map (for future checks) and set the host to
+            // non-operational
+            hostDownTimes.remove(vds.getId());
+            try {
+                String problematicNicsWithNetworksString = constructNicsWithNetworksString(problematicNicsWithNetworks);
+                vds.setNonOperationalReason(NonOperationalReason.NETWORK_INTERFACE_IS_DOWN);
+                vdsManager.setStatus(VDSStatus.NonOperational, vds);
+                log.info("Host '{}' moved to Non-Operational state because interface/s which are down are needed by required network/s in the current cluster: '{}'", vds.getName(), problematicNicsWithNetworksString);
+                AuditLogableBase logable = new AuditLogableBase(vds.getId());
+                logable.addCustomValue("NicsWithNetworks", problematicNicsWithNetworksString);
+                logable.setCustomId(problematicNicsWithNetworksString);
+                auditLog(logable, AuditLogType.VDS_SET_NONOPERATIONAL_IFACE_DOWN);
+            } catch (Exception e) {
+                log.error("checkInterface: Failure on moving host: '{}' to non-operational: {}", vds.getName(), e.getMessage());
+                log.error("Exception", e);
+            }
+        } else {
+            // no nics are down, remove from list if exists
+            hostDownTimes.remove(vds.getId());
+        }
+    }
+}
+#method_after
+// Check if one of the Host interfaces is down, we set the host to non-operational
+private void checkVdsInterfaces() {
+    if (vds.getStatus() != VDSStatus.Up) {
+        return;
+    }
+    Map<String, Set<String>> problematicNicsWithNetworks = new HashMap<>();
+    try {
+        reportNicStatusChanges();
+        problematicNicsWithNetworks = NetworkMonitoringHelper.determineProblematicNics(vds.getInterfaces(), getDbFacade().getNetworkDao().getAllForCluster(vds.getClusterId()));
+    } catch (Exception e) {
+        log.error("Failure on checkInterfaces on update runtime info for host '{}': {}", vds.getName(), e.getMessage());
+        log.error("Exception", e);
+    } finally {
+        if (!problematicNicsWithNetworks.isEmpty()) {
+            // we give 1 minutes to a nic to get up in case the nic get the ip from DHCP server
+            if (!hostDownTimes.containsKey(vds.getId())) {
+                hostDownTimes.put(vds.getId(), System.currentTimeMillis());
+                return;
+            }
+            // if less then 1 minutes, still waiting for DHCP
+            int delay = Config.<Integer>getValue(ConfigValues.NicDHCPDelayGraceInMS) * 1000;
+            if (System.currentTimeMillis() < hostDownTimes.get(vds.getId()) + delay) {
+                return;
+            }
+            // if we could retrieve it within the timeout, remove from map (for future checks) and set the host to
+            // non-operational
+            hostDownTimes.remove(vds.getId());
+            try {
+                String problematicNicsWithNetworksString = constructNicsWithNetworksString(problematicNicsWithNetworks);
+                vds.setNonOperationalReason(NonOperationalReason.NETWORK_INTERFACE_IS_DOWN);
+                vdsManager.setStatus(VDSStatus.NonOperational, vds);
+                log.info("Host '{}' moved to Non-Operational state because interface/s which are down are needed by required network/s in the current cluster: '{}'", vds.getName(), problematicNicsWithNetworksString);
+                AuditLogableBase logable = Injector.injectMembers(new AuditLogableBase(vds.getId()));
+                logable.addCustomValue("NicsWithNetworks", problematicNicsWithNetworksString);
+                logable.setCustomId(problematicNicsWithNetworksString);
+                auditLog(logable, AuditLogType.VDS_SET_NONOPERATIONAL_IFACE_DOWN);
+            } catch (Exception e) {
+                log.error("checkInterface: Failure on moving host: '{}' to non-operational: {}", vds.getName(), e.getMessage());
+                log.error("Exception", e);
+            }
+        } else {
+            // no nics are down, remove from list if exists
+            hostDownTimes.remove(vds.getId());
+        }
+    }
+}
+#end_block
+
+#method_before
+private void reportNicStatusChanges() {
+    List<VdsNetworkInterface> interfaces = vds.getInterfaces();
+    Set<VdsNetworkInterface> slaves = new HashSet<>();
+    Map<String, VdsNetworkInterface> monitoredInterfaces = new HashMap<>();
+    Map<String, VdsNetworkInterface> interfaceByName = Entities.entitiesByName(interfaces);
+    for (VdsNetworkInterface iface : interfaces) {
+        if (iface.getBondName() != null) {
+            slaves.add(iface);
+        }
+        String baseIfaceName = NetworkCommonUtils.stripVlan(iface);
+        // If the parent interface already marked as monitored- no need to check it again
+        if (monitoredInterfaces.containsKey(baseIfaceName)) {
+            continue;
+        }
+        // The status of the interface should be monitored only if it has networks attached to it or has labels
+        if (StringUtils.isNotEmpty(iface.getNetworkName()) || NetworkUtils.isLabeled(iface)) {
+            VdsNetworkInterface baseIface = iface;
+            // If vlan find the parent interface
+            if (iface.getVlanId() != null) {
+                baseIface = interfaceByName.get(baseIfaceName);
+            }
+            monitoredInterfaces.put(baseIfaceName, baseIface);
+        }
+    }
+    // Slaves should be monitored if the bond is monitored
+    for (VdsNetworkInterface slave : slaves) {
+        if (monitoredInterfaces.containsKey(slave.getBondName())) {
+            monitoredInterfaces.put(slave.getName(), slave);
+        }
+    }
+    for (Map.Entry<String, InterfaceStatus> entry : oldInterfaceStatus.entrySet()) {
+        VdsNetworkInterface iface = monitoredInterfaces.get(entry.getKey());
+        InterfaceStatus oldStatus = entry.getValue();
+        InterfaceStatus status;
+        if (iface != null) {
+            status = iface.getStatistics().getStatus();
+            if (oldStatus != InterfaceStatus.NONE && oldStatus != status) {
+                AuditLogableBase logable = new AuditLogableBase(vds.getId());
+                logable.setCustomId(iface.getName());
+                if (iface.getBondName() != null) {
+                    logable.addCustomValue("SlaveName", iface.getName());
+                    logable.addCustomValue("BondName", iface.getBondName());
+                    auditLog(logable, status == InterfaceStatus.UP ? AuditLogType.HOST_BOND_SLAVE_STATE_UP : AuditLogType.HOST_BOND_SLAVE_STATE_DOWN);
+                } else {
+                    logable.addCustomValue("InterfaceName", iface.getName());
+                    auditLog(logable, status == InterfaceStatus.UP ? AuditLogType.HOST_INTERFACE_STATE_UP : AuditLogType.HOST_INTERFACE_STATE_DOWN);
+                }
+            }
+        }
+    }
+}
+#method_after
+private void reportNicStatusChanges() {
+    List<VdsNetworkInterface> interfaces = vds.getInterfaces();
+    Set<VdsNetworkInterface> slaves = new HashSet<>();
+    Map<String, VdsNetworkInterface> monitoredInterfaces = new HashMap<>();
+    Map<String, VdsNetworkInterface> interfaceByName = Entities.entitiesByName(interfaces);
+    for (VdsNetworkInterface iface : interfaces) {
+        if (iface.getBondName() != null) {
+            slaves.add(iface);
+        }
+        String baseIfaceName = NetworkCommonUtils.stripVlan(iface);
+        // If the parent interface already marked as monitored- no need to check it again
+        if (monitoredInterfaces.containsKey(baseIfaceName)) {
+            continue;
+        }
+        // The status of the interface should be monitored only if it has networks attached to it or has labels
+        if (StringUtils.isNotEmpty(iface.getNetworkName()) || NetworkUtils.isLabeled(iface)) {
+            VdsNetworkInterface baseIface = iface;
+            // If vlan find the parent interface
+            if (iface.getVlanId() != null) {
+                baseIface = interfaceByName.get(baseIfaceName);
+            }
+            monitoredInterfaces.put(baseIfaceName, baseIface);
+        }
+    }
+    // Slaves should be monitored if the bond is monitored
+    for (VdsNetworkInterface slave : slaves) {
+        if (monitoredInterfaces.containsKey(slave.getBondName())) {
+            monitoredInterfaces.put(slave.getName(), slave);
+        }
+    }
+    for (Map.Entry<String, InterfaceStatus> entry : oldInterfaceStatus.entrySet()) {
+        VdsNetworkInterface iface = monitoredInterfaces.get(entry.getKey());
+        InterfaceStatus oldStatus = entry.getValue();
+        InterfaceStatus status;
+        if (iface != null) {
+            status = iface.getStatistics().getStatus();
+            if (oldStatus != InterfaceStatus.NONE && oldStatus != status) {
+                AuditLogableBase logable = Injector.injectMembers(new AuditLogableBase(vds.getId()));
+                logable.setCustomId(iface.getName());
+                if (iface.getBondName() != null) {
+                    logable.addCustomValue("SlaveName", iface.getName());
+                    logable.addCustomValue("BondName", iface.getBondName());
+                    auditLog(logable, status == InterfaceStatus.UP ? AuditLogType.HOST_BOND_SLAVE_STATE_UP : AuditLogType.HOST_BOND_SLAVE_STATE_DOWN);
+                } else {
+                    logable.addCustomValue("InterfaceName", iface.getName());
+                    auditLog(logable, status == InterfaceStatus.UP ? AuditLogType.HOST_INTERFACE_STATE_UP : AuditLogType.HOST_INTERFACE_STATE_DOWN);
+                }
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+private void beforeFirstRefreshTreatment(boolean isVdsUpOrGoingToMaintenance) {
+    if (vdsManager.getbeforeFirstRefresh()) {
+        boolean flagsChanged = false;
+        final AtomicBoolean processHardwareCapsNeededTemp = new AtomicBoolean();
+        vdsManager.refreshCapabilities(processHardwareCapsNeededTemp, vds);
+        flagsChanged = processHardwareCapsNeededTemp.get();
+        vdsManager.setbeforeFirstRefresh(false);
+        refreshedCapabilities = true;
+        saveVdsDynamic = true;
+        // change the _cpuFlagsChanged flag only if it was false,
+        // because get capabilities is called twice on a new server in same
+        // loop!
+        processHardwareCapsNeeded = processHardwareCapsNeeded ? processHardwareCapsNeeded : flagsChanged;
+    } else if (isVdsUpOrGoingToMaintenance || vds.getStatus() == VDSStatus.Error) {
+        return;
+    }
+    // show status UP in audit only when InitVdsOnUpCommand finished successfully
+    if (vds.getStatus() != VDSStatus.Up) {
+        AuditLogableBase logable = new AuditLogableBase(vds.getId());
+        logable.addCustomValue("HostStatus", vds.getStatus().toString());
+        auditLog(logable, AuditLogType.VDS_DETECTED);
+    }
+}
+#method_after
+private void beforeFirstRefreshTreatment(boolean isVdsUpOrGoingToMaintenance) {
+    if (vdsManager.getbeforeFirstRefresh()) {
+        boolean flagsChanged = false;
+        final AtomicBoolean processHardwareCapsNeededTemp = new AtomicBoolean();
+        vdsManager.refreshCapabilities(processHardwareCapsNeededTemp, vds);
+        flagsChanged = processHardwareCapsNeededTemp.get();
+        vdsManager.setbeforeFirstRefresh(false);
+        refreshedCapabilities = true;
+        saveVdsDynamic = true;
+        // change the _cpuFlagsChanged flag only if it was false,
+        // because get capabilities is called twice on a new server in same
+        // loop!
+        processHardwareCapsNeeded = processHardwareCapsNeeded ? processHardwareCapsNeeded : flagsChanged;
+    } else if (isVdsUpOrGoingToMaintenance || vds.getStatus() == VDSStatus.Error) {
+        return;
+    }
+    // show status UP in audit only when InitVdsOnUpCommand finished successfully
+    if (vds.getStatus() != VDSStatus.Up) {
+        AuditLogableBase logable = Injector.injectMembers(new AuditLogableBase(vds.getId()));
+        logable.addCustomValue("HostStatus", vds.getStatus().toString());
+        auditLog(logable, AuditLogType.VDS_DETECTED);
+    }
+}
+#end_block
+

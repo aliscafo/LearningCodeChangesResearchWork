@@ -1,0 +1,12 @@
+private static boolean METHOD_1 ( String query ) { return ( TYPE_1 . METHOD_2 ( query ) || TYPE_2 . METHOD_2 ( query ) || TYPE_3 . METHOD_2 ( query ) ) ; }
+public void METHOD_1 ( ) { VAR_1 . METHOD_2 ( ) ; db . close ( ) ; }
+private RevCommit METHOD_1 ( Repository repo ) throws Exception { return METHOD_1 ( repo , STRING_1 ) ; }
+protected RevCommit METHOD_1 ( Project . NameKey project , String branch ) throws Exception { try ( Repository repo = VAR_1 . METHOD_2 ( project ) ) { return METHOD_3 ( repo , STRING_1 + branch ) ; } }
+protected RevCommit METHOD_1 ( ) throws Exception { return METHOD_1 ( project , STRING_1 ) ; }
+protected List < RevCommit > METHOD_1 ( ) throws Exception { return METHOD_1 ( project , STRING_1 ) ; }
+private String METHOD_1 ( Repository repo ) throws Exception { ObjectId VAR_1 = repo . METHOD_2 ( STRING_1 ) ; ObjectId VAR_2 = repo . METHOD_2 ( STRING_2 ) ; return METHOD_1 ( repo , VAR_1 , VAR_2 ) ; }
+public void METHOD_1 ( TYPE_1 VAR_1 ) { table = new TYPE_2 ( ) ; METHOD_2 ( STRING_1 , VAR_1 ) ; table = null ; }
+private void METHOD_1 ( TYPE_1 VAR_1 ) { METHOD_2 ( VAR_1 ) ; table . METHOD_3 ( ) ; METHOD_4 ( STRING_1 , VAR_1 ) ; }
+private TYPE_1 put ( TYPE_1 input ) { TYPE_2 r = VAR_1 . put ( STRING_1 , input ) ; r . METHOD_1 ( ) ; return METHOD_2 ( ) . METHOD_3 ( r . METHOD_4 ( ) , VAR_2 class ) ; }
+protected void set ( int VAR_1 ) { if ( VAR_1 < 0 ) { throw new TYPE_1 ( STRING_1 + VAR_1 ) ; } VAR_2 = VAR_1 ; }
+public boolean METHOD_1 ( ) { return VAR_1 ; }

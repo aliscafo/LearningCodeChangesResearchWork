@@ -1,0 +1,664 @@
+Next cluster (size=16):
+(Removing exception from method declaration)
+
+    Example #0
+    Session id: 97
+
+        before:
+
+class MyMagicWrapper {
+public void METHOD_1 ( ) throws Exception { METHOD_2 ( STRING_1 , false , METHOD_3 ( ) ) ; }
+}
+        after:
+class MyMagicWrapper {
+public void METHOD_1 ( ) { METHOD_2 ( STRING_1 , false , true , METHOD_3 ( ) ) ; }
+}
+    Example #1
+    Session id: 69
+
+        before:
+
+class MyMagicWrapper {
+public void METHOD_1 ( ) throws Exception { METHOD_2 ( VAR_1 ) ; }
+}
+        after:
+class MyMagicWrapper {
+public void METHOD_1 ( ) { METHOD_2 ( VAR_1 ) ; }
+}
+    Example #2
+    Session id: 93
+
+        before:
+
+class MyMagicWrapper {
+public Map < String , TYPE_1 > files ( int VAR_1 ) throws RestApiException { throw new TYPE_2 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public Map < String , TYPE_1 > files ( int VAR_1 ) { throw new TYPE_2 ( ) ; }
+}
+    Example #3
+    Session id: 102
+
+        before:
+
+class MyMagicWrapper {
+protected void METHOD_1 ( String VAR_1 , TYPE_1 < TYPE_2 > event ) throws IOException { VAR_2 . index ( new TYPE_3 ( VAR_1 ) ) ; log . debug ( STRING_1 , VAR_1 ) ; }
+}
+        after:
+class MyMagicWrapper {
+protected void METHOD_1 ( String VAR_1 , TYPE_1 < TYPE_2 > event ) { VAR_2 . index ( new TYPE_3 ( VAR_1 ) ) ; log . debug ( STRING_1 , VAR_1 ) ; }
+}
+    Example #4
+    Session id: 12
+
+        before:
+
+class MyMagicWrapper {
+public void METHOD_1 ( String [ ] VAR_1 ) throws RemoteException { }
+}
+        after:
+class MyMagicWrapper {
+public void METHOD_1 ( String [ ] VAR_1 ) { }
+}
+
+
+
+
+
+
+Next cluster (size=10):
+(Changing modifiers of methods)
+
+    Example #0
+    Session id: 113
+
+        before:
+
+class MyMagicWrapper {
+private Object METHOD_1 ( TYPE_1 p ) { int VAR_1 ; byte [ ] response ; response = p . METHOD_2 ( ) ; return response ; }
+}
+        after:
+class MyMagicWrapper {
+protected Object METHOD_1 ( TYPE_1 p ) { int VAR_1 ; byte [ ] response ; response = p . METHOD_2 ( ) ; return response ; }
+}
+    Example #1
+    Session id: 8
+
+        before:
+
+class MyMagicWrapper {
+protected void METHOD_1 ( ) throws HyracksDataException { super . METHOD_1 ( ) ; VAR_1 . METHOD_2 ( ) ; VAR_1 . METHOD_3 ( ) ; VAR_1 . create ( ) ; VAR_1 . METHOD_4 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public void METHOD_1 ( ) throws HyracksDataException { super . METHOD_1 ( ) ; VAR_1 . METHOD_2 ( ) ; VAR_1 . METHOD_3 ( ) ; VAR_1 . create ( ) ; VAR_1 . METHOD_4 ( ) ; }
+}
+    Example #2
+    Session id: 38
+
+        before:
+
+class MyMagicWrapper {
+protected Object METHOD_1 ( TYPE_1 p ) { int VAR_1 ; String [ ] response ; response = p . METHOD_2 ( ) ; return response ; }
+}
+        after:
+class MyMagicWrapper {
+private Object METHOD_1 ( TYPE_1 p ) { int VAR_1 ; String [ ] response ; response = p . METHOD_2 ( ) ; return response ; }
+}
+    Example #3
+    Session id: 125
+
+        before:
+
+class MyMagicWrapper {
+protected TYPE_1 METHOD_1 ( ) throws HyracksDataException , TYPE_2 { TYPE_3 VAR_1 = VAR_2 . METHOD_2 ( ) ; return METHOD_3 ( VAR_3 , VAR_1 . METHOD_4 ( ) , VAR_1 . METHOD_5 ( ) , true ) ; }
+}
+        after:
+class MyMagicWrapper {
+public TYPE_1 METHOD_1 ( ) throws HyracksDataException { TYPE_3 VAR_1 = VAR_2 . METHOD_2 ( ) ; return METHOD_3 ( VAR_3 , VAR_1 . METHOD_4 ( ) , VAR_1 . METHOD_5 ( ) , true ) ; }
+}
+    Example #4
+    Session id: 116
+
+        before:
+
+class MyMagicWrapper {
+protected void METHOD_1 ( final TYPE_1 result ) { VAR_1 . METHOD_1 ( result ) ; VAR_1 . METHOD_2 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+private void METHOD_1 ( final TYPE_1 result ) { VAR_1 . METHOD_1 ( result ) ; VAR_1 . METHOD_2 ( ) ; }
+}
+
+
+
+
+
+
+Next cluster (size=8):
+(Removing statements)
+
+    Example #0
+    Session id: 72
+
+        before:
+
+class MyMagicWrapper {
+void METHOD_1 ( ) { getTable ( ) . METHOD_2 ( ) ; getTable ( ) . METHOD_3 ( VAR_1 . METHOD_4 ( ) ) ; }
+}
+        after:
+class MyMagicWrapper {
+void METHOD_1 ( ) { getTable ( ) . METHOD_2 ( ) ; }
+}
+    Example #1
+    Session id: 79
+
+        before:
+
+class MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 VAR_1 ) { super . METHOD_1 ( VAR_1 ) ; VAR_1 . METHOD_2 ( new ArrayList < TYPE_2 > ( ) ) ; VAR_1 . METHOD_3 ( false ) ; VAR_1 . METHOD_4 ( METHOD_5 ( ) ) ; }
+}
+        after:
+class MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 VAR_1 ) { super . METHOD_1 ( VAR_1 ) ; VAR_1 . METHOD_2 ( new ArrayList < TYPE_2 > ( ) ) ; VAR_1 . METHOD_3 ( false ) ; }
+}
+    Example #2
+    Session id: 63
+
+        before:
+
+class MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 msg ) { this . METHOD_2 ( VAR_1 ) . METHOD_3 ( msg ) ; for ( TYPE_3 listener : VAR_2 ) { listener . METHOD_4 ( VAR_1 , msg ) ; } }
+}
+        after:
+class MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 msg ) { this . METHOD_2 ( VAR_1 ) . METHOD_3 ( msg ) ; }
+}
+    Example #3
+    Session id: 31
+
+        before:
+
+class MyMagicWrapper {
+public void METHOD_1 ( ) { METHOD_2 ( ) ; METHOD_3 ( null ) ; Frontend . METHOD_4 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public void METHOD_1 ( ) { METHOD_3 ( null ) ; Frontend . METHOD_4 ( ) ; }
+}
+    Example #4
+    Session id: 9
+
+        before:
+
+class MyMagicWrapper {
+public TYPE_1 METHOD_1 ( ) { VAR_1 . println ( STRING_1 ) ; return VAR_2 ; }
+}
+        after:
+class MyMagicWrapper {
+public TYPE_1 METHOD_1 ( ) { return VAR_2 ; }
+}
+
+
+
+
+
+
+
+Next cluster (size=7):
+(Deleting final/static or swapping modifiers)
+
+    Example #0
+    Session id: 35
+
+        before:
+
+class MyMagicWrapper {
+public static void METHOD_1 ( AsyncQuery aQuery , Guid VAR_1 , Guid VAR_2 , Guid VAR_3 ) { TYPE_1 parameters = new TYPE_1 ( VAR_1 , VAR_2 , VAR_3 , true ) ; Frontend . METHOD_2 ( ) . runQuery ( VAR_4 , parameters , aQuery ) ; }
+}
+        after:
+class MyMagicWrapper {
+public void METHOD_1 ( AsyncQuery aQuery , Guid VAR_1 , Guid VAR_2 , Guid VAR_3 ) { TYPE_1 parameters = new TYPE_1 ( VAR_1 , VAR_2 , VAR_3 , true ) ; Frontend . METHOD_2 ( ) . runQuery ( VAR_4 , parameters , aQuery ) ; }
+}
+    Example #1
+    Session id: 7
+
+        before:
+
+class MyMagicWrapper {
+public static boolean METHOD_1 ( TYPE_1 version ) { return ( Boolean ) METHOD_2 ( VAR_1 , version . toString ( ) ) ; }
+}
+        after:
+class MyMagicWrapper {
+public boolean METHOD_1 ( TYPE_1 version ) { return ( Boolean ) METHOD_2 ( VAR_1 , version . toString ( ) ) ; }
+}
+    Example #2
+    Session id: 85
+
+        before:
+
+class MyMagicWrapper {
+public static void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 < ? extends TYPE_3 > VAR_2 , String VAR_3 ) { TYPE_3 VAR_4 = VAR_1 . METHOD_2 ( VAR_2 ) ; METHOD_3 ( VAR_4 , VAR_3 ) ; }
+}
+        after:
+class MyMagicWrapper {
+static void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 < ? extends TYPE_3 > VAR_2 , String VAR_3 ) { TYPE_3 VAR_4 = VAR_1 . METHOD_2 ( VAR_2 ) ; METHOD_3 ( VAR_4 , VAR_3 ) ; }
+}
+    Example #3
+    Session id: 122
+
+        before:
+
+class MyMagicWrapper {
+public static final TYPE_1 METHOD_1 ( ) { return VAR_1 ; }
+}
+        after:
+class MyMagicWrapper {
+public static TYPE_1 METHOD_1 ( ) { return VAR_1 ; }
+}
+    Example #4
+    Session id: 94
+
+        before:
+
+class MyMagicWrapper {
+final public int METHOD_1 ( ) { return TYPE_1 . hash ( name , parameters ) ; }
+}
+        after:
+class MyMagicWrapper {
+public final int METHOD_1 ( ) { return TYPE_1 . hash ( name , parameters ) ; }
+}
+
+
+
+
+
+
+
+Next cluster (size=6):
+(Unclear: replacing some returning method calls with 'failValidation' method (but there may be substitutions for other methods))
+
+    Example #0
+    Session id: 51
+
+        before:
+
+class MyMagicWrapper {
+protected boolean METHOD_1 ( ) { if ( getParameters ( ) . METHOD_2 ( ) == VAR_1 && getParameters ( ) . METHOD_3 ( ) . equals ( getParameters ( ) . METHOD_4 ( ) ) ) { return METHOD_5 ( VAR_2 ) ; } return true ; }
+}
+        after:
+class MyMagicWrapper {
+protected boolean METHOD_1 ( ) { if ( getParameters ( ) . METHOD_2 ( ) == VAR_1 && getParameters ( ) . METHOD_3 ( ) . equals ( getParameters ( ) . METHOD_4 ( ) ) ) { return failValidation ( VAR_2 ) ; } return true ; }
+}
+    Example #1
+    Session id: 82
+
+        before:
+
+class MyMagicWrapper {
+public Boolean METHOD_1 ( ) { return this . VAR_1 . METHOD_2 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public Boolean METHOD_1 ( ) { return this . VAR_1 . METHOD_1 ( ) ; }
+}
+    Example #2
+    Session id: 5
+
+        before:
+
+class MyMagicWrapper {
+protected boolean validate ( ) { if ( ! super . validate ( ) ) { return false ; } if ( METHOD_1 ( ) == null ) { return METHOD_2 ( VAR_1 ) ; } return true ; }
+}
+        after:
+class MyMagicWrapper {
+protected boolean validate ( ) { if ( ! super . validate ( ) ) { return false ; } if ( METHOD_1 ( ) == null ) { return failValidation ( VAR_1 ) ; } return true ; }
+}
+    Example #3
+    Session id: 70
+
+        before:
+
+class MyMagicWrapper {
+private boolean METHOD_1 ( TYPE_1 parameters ) { if ( parameters . METHOD_2 ( ) . equals ( parameters . METHOD_3 ( ) ) ) { return METHOD_4 ( VAR_1 ) ; } return true ; }
+}
+        after:
+class MyMagicWrapper {
+private boolean METHOD_1 ( TYPE_1 parameters ) { if ( parameters . METHOD_2 ( ) . equals ( parameters . METHOD_3 ( ) ) ) { return failValidation ( VAR_1 ) ; } return true ; }
+}
+    Example #4
+    Session id: 50
+
+        before:
+
+class MyMagicWrapper {
+protected boolean validate ( ) { if ( getVm ( ) == null ) { return METHOD_1 ( VAR_1 ) ; } return true ; }
+}
+        after:
+class MyMagicWrapper {
+protected boolean validate ( ) { if ( getVm ( ) == null ) { return failValidation ( VAR_1 ) ; } return true ; }
+}
+
+
+
+
+
+
+Next cluster (size=6):
+(Adding modifier)
+
+    Example #0
+    Session id: 124
+
+        before:
+
+class MyMagicWrapper {
+boolean METHOD_1 ( ) { return VAR_1 . isEmpty ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public boolean METHOD_1 ( ) { return VAR_1 . isEmpty ( ) ; }
+}
+    Example #1
+    Session id: 57
+
+        before:
+
+class MyMagicWrapper {
+private TYPE_1 METHOD_1 ( ) throws Exception { TYPE_2 context = TYPE_2 . METHOD_2 ( STRING_1 ) ; context . METHOD_3 ( null , null , null ) ; return context . METHOD_4 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+private static TYPE_1 METHOD_1 ( ) throws Exception { TYPE_2 context = TYPE_2 . METHOD_2 ( STRING_1 ) ; context . METHOD_3 ( null , null , null ) ; return context . METHOD_4 ( ) ; }
+}
+    Example #2
+    Session id: 127
+
+        before:
+
+class MyMagicWrapper {
+TYPE_1 METHOD_1 ( ) { return VAR_1 . METHOD_2 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public TYPE_1 METHOD_1 ( ) { return VAR_1 . METHOD_2 ( ) ; }
+}
+    Example #3
+    Session id: 129
+
+        before:
+
+class MyMagicWrapper {
+public boolean METHOD_1 ( TYPE_1 ... VAR_1 ) { for ( TYPE_1 VAR_2 : VAR_1 ) { VAR_3 . remove ( VAR_2 ) ; } return true ; }
+}
+        after:
+class MyMagicWrapper {
+public synchronized void METHOD_1 ( TYPE_1 ... VAR_1 ) { for ( TYPE_1 VAR_2 : VAR_1 ) { VAR_3 . remove ( VAR_2 ) ; } }
+}
+    Example #4
+    Session id: 96
+
+        before:
+
+class MyMagicWrapper {
+TYPE_1 METHOD_1 ( ) { return VAR_1 . METHOD_1 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public TYPE_1 METHOD_1 ( ) { return VAR_1 . METHOD_1 ( ) ; }
+}
+
+
+
+
+
+
+
+Next cluster (size=5):
+(Unclear: removing calling 'intValue'/'doubleValue' or 'checkNotNull')
+
+    Example #0
+    Session id: 17
+
+        before:
+
+class MyMagicWrapper {
+public void METHOD_1 ( Integer VAR_1 ) { this . VAR_1 = VAR_1 . METHOD_2 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public void METHOD_1 ( Integer VAR_1 ) { this . VAR_1 = VAR_1 ; }
+}
+    Example #1
+    Session id: 67
+
+        before:
+
+class MyMagicWrapper {
+public void METHOD_1 ( Integer [ ] VAR_1 ) { VAR_2 [ 0 ] = VAR_1 [ 0 ] . METHOD_2 ( ) ; VAR_2 [ 1 ] = VAR_1 [ 1 ] . METHOD_2 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public void METHOD_1 ( Integer [ ] VAR_1 ) { VAR_2 [ 0 ] = VAR_1 [ 0 ] ; VAR_2 [ 1 ] = VAR_1 [ 1 ] ; }
+}
+    Example #2
+    Session id: 56
+
+        before:
+
+class MyMagicWrapper {
+public void METHOD_1 ( Integer [ ] position ) { VAR_1 . position [ 0 ] = position [ 0 ] . METHOD_2 ( ) ; VAR_1 . position [ 1 ] = position [ 1 ] . METHOD_2 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public void METHOD_1 ( Integer [ ] position ) { VAR_1 . position [ 0 ] = position [ 0 ] ; VAR_1 . position [ 1 ] = position [ 1 ] ; }
+}
+    Example #3
+    Session id: 26
+
+        before:
+
+class MyMagicWrapper {
+public TYPE_1 id ( TYPE_2 id ) { this . id = METHOD_1 ( id ) ; return this ; }
+}
+        after:
+class MyMagicWrapper {
+public TYPE_1 id ( TYPE_2 id ) { this . id = id ; return this ; }
+}
+    Example #4
+    Session id: 18
+
+        before:
+
+class MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 [ ] VAR_1 ) { for ( int i = 0 ; i < VAR_2 ; i ++ ) { VAR_3 [ i ] = VAR_1 [ i ] . METHOD_2 ( ) ; } }
+}
+        after:
+class MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 [ ] VAR_1 ) { for ( int i = 0 ; i < VAR_2 ; i ++ ) { VAR_3 [ i ] = VAR_1 [ i ] ; } }
+}
+
+
+
+
+
+
+
+Next cluster (size=5):
+(Unclear: mostly replacing creating new variable (with certain value) and using it with just using value)
+
+    Example #0
+    Session id: 128
+
+        before:
+
+class MyMagicWrapper {
+public String METHOD_1 ( ) { String VAR_1 = STRING_1 + TYPE_1 . toString ( this . VAR_2 ) + STRING_2 ; return VAR_1 + METHOD_2 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public String METHOD_1 ( ) { return STRING_1 + TYPE_1 . toString ( this . VAR_2 ) + STRING_2 + METHOD_2 ( ) ; }
+}
+    Example #1
+    Session id: 104
+
+        before:
+
+class MyMagicWrapper {
+public TYPE_1 METHOD_1 ( String VAR_1 , String VAR_2 ) { Map < String , Object > VAR_3 = VAR_4 . METHOD_1 ( VAR_1 , VAR_2 ) ; TYPE_1 VAR_5 = new TYPE_1 ( VAR_3 ) ; return VAR_5 ; }
+}
+        after:
+class MyMagicWrapper {
+public TYPE_1 METHOD_1 ( String VAR_1 , String VAR_2 ) { Map < String , Object > VAR_3 = VAR_4 . METHOD_1 ( VAR_1 , VAR_2 ) ; return new TYPE_1 ( VAR_3 ) ; }
+}
+    Example #2
+    Session id: 119
+
+        before:
+
+class MyMagicWrapper {
+public void METHOD_1 ( ) throws Exception { TYPE_1 VAR_1 = METHOD_2 ( ) ; METHOD_3 ( VAR_1 , VAR_2 ) ; METHOD_4 ( VAR_1 ) ; METHOD_3 ( VAR_1 , VAR_3 ) ; METHOD_5 ( ) ; METHOD_3 ( VAR_1 , VAR_3 ) ; METHOD_6 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public void METHOD_1 ( ) throws Exception { METHOD_3 ( VAR_2 ) ; METHOD_4 ( ) ; METHOD_3 ( VAR_3 ) ; METHOD_5 ( ) ; METHOD_3 ( VAR_3 ) ; METHOD_6 ( ) ; }
+}
+    Example #3
+    Session id: 109
+
+        before:
+
+class MyMagicWrapper {
+private void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 key ) { TYPE_3 connection = METHOD_2 ( VAR_1 , key , VAR_2 ) ; synchronized ( VAR_3 ) { VAR_3 . METHOD_3 ( connection ) ; } }
+}
+        after:
+class MyMagicWrapper {
+private void METHOD_1 ( TYPE_3 connection ) { synchronized ( VAR_3 ) { VAR_3 . METHOD_3 ( connection ) ; } }
+}
+    Example #4
+    Session id: 108
+
+        before:
+
+class MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 VAR_1 ) { METHOD_2 ( VAR_1 , VAR_2 ) ; TYPE_2 event = VAR_3 . METHOD_1 ( VAR_1 ) ; }
+}
+        after:
+class MyMagicWrapper {
+public void METHOD_1 ( TYPE_1 VAR_1 ) { METHOD_2 ( VAR_1 , VAR_2 ) ; VAR_3 . METHOD_1 ( VAR_1 ) ; }
+}
+
+
+
+
+
+
+Next cluster (size=4):
+(Adding 'throws RestApiException')
+    Example #0
+    Session id: 13
+
+        before:
+
+class MyMagicWrapper {
+public ChangeInfo get ( ) { throw new TYPE_1 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public ChangeInfo get ( ) throws RestApiException { throw new TYPE_1 ( ) ; }
+}
+    Example #1
+    Session id: 68
+
+        before:
+
+class MyMagicWrapper {
+public void index ( ) { throw new TYPE_1 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public void index ( ) throws RestApiException { throw new TYPE_1 ( ) ; }
+}
+    Example #2
+    Session id: 0
+
+        before:
+
+class MyMagicWrapper {
+public TYPE_1 comment ( String id ) { throw new TYPE_2 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public TYPE_1 comment ( String id ) throws RestApiException { throw new TYPE_2 ( ) ; }
+}
+    Example #3
+    Session id: 110
+
+        before:
+
+class MyMagicWrapper {
+public void METHOD_1 ( String path , boolean VAR_1 ) { throw new TYPE_1 ( ) ; }
+}
+        after:
+class MyMagicWrapper {
+public void METHOD_1 ( String path , boolean VAR_1 ) throws RestApiException { throw new TYPE_1 ( ) ; }
+}
+
+
+
+
+
+
+Next cluster (size=4):
+(Adding argument to method call)
+
+    Example #0
+    Session id: 90
+
+        before:
+
+class MyMagicWrapper {
+protected TYPE_1 METHOD_1 ( TYPE_2 < TYPE_3 > repo ) throws Exception { return METHOD_1 ( repo , null , null , null , null ) ; }
+}
+        after:
+class MyMagicWrapper {
+protected TYPE_1 METHOD_1 ( TYPE_2 < TYPE_3 > repo ) throws Exception { return METHOD_1 ( repo , null , null , null , null , false ) ; }
+}
+    Example #1
+    Session id: 42
+
+        before:
+
+class MyMagicWrapper {
+public static String METHOD_1 ( String name ) { return TYPE_1 . METHOD_2 ( VAR_1 , name ) ; }
+}
+        after:
+class MyMagicWrapper {
+public static String METHOD_1 ( String name ) { return TYPE_1 . METHOD_2 ( VAR_1 , name , false ) ; }
+}
+    Example #2
+    Session id: 95
+
+        before:
+
+class MyMagicWrapper {
+private TYPE_1 METHOD_1 ( boolean VAR_1 , boolean VAR_2 ) throws Exception { return METHOD_1 ( STRING_1 , VAR_1 , VAR_2 , true ) ; }
+}
+        after:
+class MyMagicWrapper {
+private TYPE_1 METHOD_1 ( boolean VAR_1 , boolean VAR_2 ) throws Exception { return METHOD_1 ( STRING_1 , VAR_1 , VAR_2 , true , true ) ; }
+}
+    Example #3
+    Session id: 2
+
+        before:
+
+class MyMagicWrapper {
+protected TYPE_1 METHOD_1 ( TYPE_2 < TYPE_3 > repo , RevCommit commit ) throws Exception { return METHOD_2 ( repo , commit , null , null , null ) ; }
+}
+        after:
+class MyMagicWrapper {
+protected TYPE_1 METHOD_1 ( TYPE_2 < TYPE_3 > repo , RevCommit commit ) throws Exception { return METHOD_2 ( repo , commit , null , null , null , false ) ; }
+}
+

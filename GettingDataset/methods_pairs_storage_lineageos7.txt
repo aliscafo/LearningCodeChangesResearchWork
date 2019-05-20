@@ -1,0 +1,1847 @@
+36
+#method_before
+protected Object responseCallList(Parcel p) {
+    int num;
+    int voiceSettings;
+    ArrayList<DriverCall> response;
+    DriverCall dc;
+    num = p.readInt();
+    response = new ArrayList<DriverCall>(num);
+    if (RILJ_LOGV) {
+        riljLog("responseCallList: num=" + num + " mEmergencyCallbackModeRegistrant=" + mEmergencyCallbackModeRegistrant + " mTestingEmergencyCall=" + mTestingEmergencyCall.get());
+    }
+    for (int i = 0; i < num; i++) {
+        dc = new DriverCall();
+        dc.state = DriverCall.stateFromCLCC(p.readInt());
+        dc.index = p.readInt() & 0xff;
+        dc.TOA = p.readInt();
+        dc.isMpty = (0 != p.readInt());
+        dc.isMT = (0 != p.readInt());
+        dc.als = p.readInt();
+        voiceSettings = p.readInt();
+        if (isGSM)
+            dc.readInt();
+        dc.isVoice = (0 == voiceSettings) ? false : true;
+        dc.isVoicePrivacy = (0 != p.readInt());
+        if (isGSM) {
+            dc.readInt();
+            dc.readInt();
+            dc.readString();
+        }
+        dc.number = p.readString();
+        int np = p.readInt();
+        dc.numberPresentation = DriverCall.presentationFromCLIP(np);
+        dc.name = p.readString();
+        dc.namePresentation = p.readInt();
+        int uusInfoPresent = p.readInt();
+        if (uusInfoPresent == 1) {
+            dc.uusInfo = new UUSInfo();
+            dc.uusInfo.setType(p.readInt());
+            dc.uusInfo.setDcs(p.readInt());
+            byte[] userData = p.createByteArray();
+            dc.uusInfo.setUserData(userData);
+            riljLogv(String.format("Incoming UUS : type=%d, dcs=%d, length=%d", dc.uusInfo.getType(), dc.uusInfo.getDcs(), dc.uusInfo.getUserData().length));
+            riljLogv("Incoming UUS : data (string)=" + new String(dc.uusInfo.getUserData()));
+            riljLogv("Incoming UUS : data (hex): " + IccUtils.bytesToHexString(dc.uusInfo.getUserData()));
+        } else {
+            riljLogv("Incoming UUS : NOT present!");
+        }
+        // Make sure there's a leading + on addresses with a TOA of 145
+        dc.number = PhoneNumberUtils.stringFromStringAndTOA(dc.number, dc.TOA);
+        response.add(dc);
+        if (dc.isVoicePrivacy) {
+            mVoicePrivacyOnRegistrants.notifyRegistrants();
+            riljLog("InCall VoicePrivacy is enabled");
+        } else {
+            mVoicePrivacyOffRegistrants.notifyRegistrants();
+            riljLog("InCall VoicePrivacy is disabled");
+        }
+    }
+    Collections.sort(response);
+    if ((num == 0) && mTestingEmergencyCall.getAndSet(false)) {
+        if (mEmergencyCallbackModeRegistrant != null) {
+            riljLog("responseCallList: call ended, testing emergency call," + " notify ECM Registrants");
+            mEmergencyCallbackModeRegistrant.notifyRegistrant();
+        }
+    }
+    return response;
+}
+#method_after
+protected Object responseCallList(Parcel p) {
+    int num;
+    int voiceSettings;
+    ArrayList<DriverCall> response;
+    DriverCall dc;
+    num = p.readInt();
+    response = new ArrayList<DriverCall>(num);
+    if (RILJ_LOGV) {
+        riljLog("responseCallList: num=" + num + " mEmergencyCallbackModeRegistrant=" + mEmergencyCallbackModeRegistrant + " mTestingEmergencyCall=" + mTestingEmergencyCall.get());
+    }
+    for (int i = 0; i < num; i++) {
+        dc = new DriverCall();
+        dc.state = DriverCall.stateFromCLCC(p.readInt());
+        dc.index = p.readInt() & 0xff;
+        dc.TOA = p.readInt();
+        dc.isMpty = (0 != p.readInt());
+        dc.isMT = (0 != p.readInt());
+        dc.als = p.readInt();
+        voiceSettings = p.readInt();
+        if (isGSM)
+            p.readInt();
+        dc.isVoice = (0 == voiceSettings) ? false : true;
+        dc.isVoicePrivacy = (0 != p.readInt());
+        if (isGSM) {
+            p.readInt();
+            p.readInt();
+            p.readString();
+        }
+        dc.number = p.readString();
+        int np = p.readInt();
+        dc.numberPresentation = DriverCall.presentationFromCLIP(np);
+        dc.name = p.readString();
+        dc.namePresentation = p.readInt();
+        int uusInfoPresent = p.readInt();
+        if (uusInfoPresent == 1) {
+            dc.uusInfo = new UUSInfo();
+            dc.uusInfo.setType(p.readInt());
+            dc.uusInfo.setDcs(p.readInt());
+            byte[] userData = p.createByteArray();
+            dc.uusInfo.setUserData(userData);
+            riljLogv(String.format("Incoming UUS : type=%d, dcs=%d, length=%d", dc.uusInfo.getType(), dc.uusInfo.getDcs(), dc.uusInfo.getUserData().length));
+            riljLogv("Incoming UUS : data (string)=" + new String(dc.uusInfo.getUserData()));
+            riljLogv("Incoming UUS : data (hex): " + IccUtils.bytesToHexString(dc.uusInfo.getUserData()));
+        } else {
+            riljLogv("Incoming UUS : NOT present!");
+        }
+        // Make sure there's a leading + on addresses with a TOA of 145
+        dc.number = PhoneNumberUtils.stringFromStringAndTOA(dc.number, dc.TOA);
+        response.add(dc);
+        if (dc.isVoicePrivacy) {
+            mVoicePrivacyOnRegistrants.notifyRegistrants();
+            riljLog("InCall VoicePrivacy is enabled");
+        } else {
+            mVoicePrivacyOffRegistrants.notifyRegistrants();
+            riljLog("InCall VoicePrivacy is disabled");
+        }
+    }
+    Collections.sort(response);
+    if ((num == 0) && mTestingEmergencyCall.getAndSet(false)) {
+        if (mEmergencyCallbackModeRegistrant != null) {
+            riljLog("responseCallList: call ended, testing emergency call," + " notify ECM Registrants");
+            mEmergencyCallbackModeRegistrant.notifyRegistrant();
+        }
+    }
+    return response;
+}
+#end_block
+
+#method_before
+protected Object responseCallList(Parcel p) {
+    int num;
+    int voiceSettings;
+    ArrayList<DriverCall> response;
+    DriverCall dc;
+    num = p.readInt();
+    response = new ArrayList<DriverCall>(num);
+    if (RILJ_LOGV) {
+        riljLog("responseCallList: num=" + num + " mEmergencyCallbackModeRegistrant=" + mEmergencyCallbackModeRegistrant + " mTestingEmergencyCall=" + mTestingEmergencyCall.get());
+    }
+    for (int i = 0; i < num; i++) {
+        dc = new DriverCall();
+        dc.state = DriverCall.stateFromCLCC(p.readInt());
+        dc.index = p.readInt() & 0xff;
+        dc.TOA = p.readInt();
+        dc.isMpty = (0 != p.readInt());
+        dc.isMT = (0 != p.readInt());
+        dc.als = p.readInt();
+        voiceSettings = p.readInt();
+        dc.isVoice = (0 == voiceSettings) ? false : true;
+        dc.isVoicePrivacy = (0 != p.readInt());
+        if (newril) {
+            // new ril
+            // is video
+            p.readInt();
+            // samsung call detail
+            p.readInt();
+            // samsung call detail
+            p.readInt();
+            // samsung call detail
+            p.readString();
+        }
+        dc.number = p.readString();
+        int np = p.readInt();
+        dc.numberPresentation = DriverCall.presentationFromCLIP(np);
+        dc.name = p.readString();
+        dc.namePresentation = p.readInt();
+        int uusInfoPresent = p.readInt();
+        if (uusInfoPresent == 1) {
+            dc.uusInfo = new UUSInfo();
+            dc.uusInfo.setType(p.readInt());
+            dc.uusInfo.setDcs(p.readInt());
+            byte[] userData = p.createByteArray();
+            dc.uusInfo.setUserData(userData);
+            riljLogv(String.format("Incoming UUS : type=%d, dcs=%d, length=%d", dc.uusInfo.getType(), dc.uusInfo.getDcs(), dc.uusInfo.getUserData().length));
+            riljLogv("Incoming UUS : data (string)=" + new String(dc.uusInfo.getUserData()));
+            riljLogv("Incoming UUS : data (hex): " + IccUtils.bytesToHexString(dc.uusInfo.getUserData()));
+        } else {
+            riljLogv("Incoming UUS : NOT present!");
+        }
+        // Make sure there's a leading + on addresses with a TOA of 145
+        dc.number = PhoneNumberUtils.stringFromStringAndTOA(dc.number, dc.TOA);
+        response.add(dc);
+        if (dc.isVoicePrivacy) {
+            mVoicePrivacyOnRegistrants.notifyRegistrants();
+            riljLog("InCall VoicePrivacy is enabled");
+        } else {
+            mVoicePrivacyOffRegistrants.notifyRegistrants();
+            riljLog("InCall VoicePrivacy is disabled");
+        }
+    }
+    Collections.sort(response);
+    if ((num == 0) && mTestingEmergencyCall.getAndSet(false)) {
+        if (mEmergencyCallbackModeRegistrant != null) {
+            riljLog("responseCallList: call ended, testing emergency call," + " notify ECM Registrants");
+            mEmergencyCallbackModeRegistrant.notifyRegistrant();
+        }
+    }
+    return response;
+}
+#method_after
+protected Object responseCallList(Parcel p) {
+    int num;
+    int voiceSettings;
+    ArrayList<DriverCall> response;
+    DriverCall dc;
+    num = p.readInt();
+    response = new ArrayList<DriverCall>(num);
+    if (RILJ_LOGV) {
+        riljLog("responseCallList: num=" + num + " mEmergencyCallbackModeRegistrant=" + mEmergencyCallbackModeRegistrant + " mTestingEmergencyCall=" + mTestingEmergencyCall.get());
+    }
+    for (int i = 0; i < num; i++) {
+        dc = new DriverCall();
+        dc.state = DriverCall.stateFromCLCC(p.readInt());
+        dc.index = p.readInt() & 0xff;
+        dc.TOA = p.readInt();
+        dc.isMpty = (0 != p.readInt());
+        dc.isMT = (0 != p.readInt());
+        dc.als = p.readInt();
+        voiceSettings = p.readInt();
+        dc.isVoice = (0 == voiceSettings) ? false : true;
+        if (newril) {
+            // new ril
+            dc.isVoicePrivacy = (0 != p.readInt());
+            // is video
+            p.readInt();
+            // samsung call detail
+            p.readInt();
+            // samsung call detail
+            p.readInt();
+            // samsung call detail
+            p.readString();
+        }
+        dc.number = p.readString();
+        int np = p.readInt();
+        dc.numberPresentation = DriverCall.presentationFromCLIP(np);
+        dc.name = p.readString();
+        dc.namePresentation = p.readInt();
+        int uusInfoPresent = p.readInt();
+        if (uusInfoPresent == 1) {
+            dc.uusInfo = new UUSInfo();
+            dc.uusInfo.setType(p.readInt());
+            dc.uusInfo.setDcs(p.readInt());
+            byte[] userData = p.createByteArray();
+            dc.uusInfo.setUserData(userData);
+            riljLogv(String.format("Incoming UUS : type=%d, dcs=%d, length=%d", dc.uusInfo.getType(), dc.uusInfo.getDcs(), dc.uusInfo.getUserData().length));
+            riljLogv("Incoming UUS : data (string)=" + new String(dc.uusInfo.getUserData()));
+            riljLogv("Incoming UUS : data (hex): " + IccUtils.bytesToHexString(dc.uusInfo.getUserData()));
+        } else {
+            riljLogv("Incoming UUS : NOT present!");
+        }
+        // Make sure there's a leading + on addresses with a TOA of 145
+        dc.number = PhoneNumberUtils.stringFromStringAndTOA(dc.number, dc.TOA);
+        response.add(dc);
+        if (dc.isVoicePrivacy) {
+            mVoicePrivacyOnRegistrants.notifyRegistrants();
+            riljLog("InCall VoicePrivacy is enabled");
+        } else {
+            mVoicePrivacyOffRegistrants.notifyRegistrants();
+            riljLog("InCall VoicePrivacy is disabled");
+        }
+    }
+    Collections.sort(response);
+    if ((num == 0) && mTestingEmergencyCall.getAndSet(false)) {
+        if (mEmergencyCallbackModeRegistrant != null) {
+            riljLog("responseCallList: call ended, testing emergency call," + " notify ECM Registrants");
+            mEmergencyCallbackModeRegistrant.notifyRegistrant();
+        }
+    }
+    return response;
+}
+#end_block
+
+#method_before
+@Override
+protected RILRequest processSolicited(Parcel p) {
+    int serial, error;
+    boolean found = false;
+    // save off position within the Parcel
+    int dataPosition = p.dataPosition();
+    serial = p.readInt();
+    error = p.readInt();
+    RILRequest rr = null;
+    /* Pre-process the reply before popping it */
+    synchronized (mRequestList) {
+        RILRequest tr = mRequestList.get(serial);
+        if (tr != null && tr.mSerial == serial) {
+            if (error == 0 || p.dataAvail() > 0) {
+                try {
+                    switch(tr.mRequest) {
+                        /* Get those we're interested in */
+                        case RIL_REQUEST_VOICE_REGISTRATION_STATE:
+                        case RIL_REQUEST_DATA_REGISTRATION_STATE:
+                        case RIL_REQUEST_OPERATOR:
+                            rr = tr;
+                            break;
+                    }
+                } catch (Throwable thr) {
+                    // Exceptions here usually mean invalid RIL responses
+                    if (tr.mResult != null) {
+                        AsyncResult.forMessage(tr.mResult, null, thr);
+                        tr.mResult.sendToTarget();
+                    }
+                    return tr;
+                }
+            }
+        }
+    }
+    if (rr == null) {
+        /* Nothing we care about, go up */
+        p.setDataPosition(dataPosition);
+        // Forward responses that we are not overriding to the super class
+        return super.processSolicited(p);
+    }
+    rr = findAndRemoveRequestFromList(serial);
+    if (rr == null) {
+        return rr;
+    }
+    Object ret = null;
+    if (error == 0 || p.dataAvail() > 0) {
+        switch(rr.mRequest) {
+            case RIL_REQUEST_VOICE_REGISTRATION_STATE:
+                ret = responseVoiceDataRegistrationState(p);
+                break;
+            case RIL_REQUEST_DATA_REGISTRATION_STATE:
+                ret = responseVoiceDataRegistrationState(p);
+                break;
+            case RIL_REQUEST_OPERATOR:
+                ret = operatorCheck(p);
+                break;
+            default:
+                throw new RuntimeException("Unrecognized solicited response: " + rr.mRequest);
+        }
+    // break;
+    }
+    if (RILJ_LOGD)
+        riljLog(rr.serialString() + "< " + requestToString(rr.mRequest) + " " + retToString(rr.mRequest, ret));
+    if (rr.mResult != null) {
+        AsyncResult.forMessage(rr.mResult, ret, null);
+        rr.mResult.sendToTarget();
+    }
+    return rr;
+}
+#method_after
+@Override
+protected RILRequest processSolicited(Parcel p) {
+    int serial, error;
+    boolean found = false;
+    // save off position within the Parcel
+    int dataPosition = p.dataPosition();
+    serial = p.readInt();
+    error = p.readInt();
+    RILRequest rr = null;
+    /* Pre-process the reply before popping it */
+    synchronized (mRequestList) {
+        RILRequest tr = mRequestList.get(serial);
+        if (tr != null && tr.mSerial == serial) {
+            if (error == 0 || p.dataAvail() > 0) {
+                try {
+                    switch(tr.mRequest) {
+                        /* Get those we're interested in */
+                        case RIL_REQUEST_VOICE_REGISTRATION_STATE:
+                        case RIL_REQUEST_DATA_REGISTRATION_STATE:
+                        case RIL_REQUEST_OPERATOR:
+                            rr = tr;
+                            break;
+                    }
+                } catch (Throwable thr) {
+                    // Exceptions here usually mean invalid RIL responses
+                    if (tr.mResult != null) {
+                        AsyncResult.forMessage(tr.mResult, null, thr);
+                        tr.mResult.sendToTarget();
+                    }
+                    return tr;
+                }
+            }
+        }
+    }
+    if (rr == null) {
+        /* Nothing we care about, go up */
+        p.setDataPosition(dataPosition);
+        // Forward responses that we are not overriding to the super class
+        return super.processSolicited(p);
+    }
+    rr = findAndRemoveRequestFromList(serial);
+    if (rr == null) {
+        return rr;
+    }
+    Object ret = null;
+    if (error == 0 || p.dataAvail() > 0) {
+        switch(rr.mRequest) {
+            case RIL_REQUEST_VOICE_REGISTRATION_STATE:
+                ret = responseVoiceDataRegistrationState(p, false);
+                break;
+            case RIL_REQUEST_DATA_REGISTRATION_STATE:
+                ret = responseVoiceDataRegistrationState(p, true);
+                break;
+            case RIL_REQUEST_OPERATOR:
+                ret = operatorCheck(p);
+                break;
+            default:
+                throw new RuntimeException("Unrecognized solicited response: " + rr.mRequest);
+        }
+    // break;
+    }
+    if (RILJ_LOGD)
+        riljLog(rr.serialString() + "< " + requestToString(rr.mRequest) + " " + retToString(rr.mRequest, ret));
+    if (rr.mResult != null) {
+        AsyncResult.forMessage(rr.mResult, ret, null);
+        rr.mResult.sendToTarget();
+    }
+    return rr;
+}
+#end_block
+
+#method_before
+public static boolean isPreferenceEnabled(Context context, String key, boolean defaultValue) {
+    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+    return preferences.getBoolean(key, defaultValue);
+}
+#method_after
+public static boolean isPreferenceEnabled(Context context, String key) {
+    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+    return preferences.getBoolean(key, (Boolean) sNodeDefaultMap.get(key));
+}
+#end_block
+
+#method_before
+@Override
+public void onReceive(final Context context, final Intent intent) {
+    if (intent.getAction().equals(Intent.ACTION_PRE_BOOT_COMPLETED)) {
+        // Disable touchscreen gesture settings if needed
+        if (!hasTouchscreenGestures()) {
+            disableComponent(context, TouchscreenGestureSettings.class.getName());
+        } else {
+            enableComponent(context, TouchscreenGestureSettings.class.getName());
+            // Restore nodes to saved preference values
+            for (String pref : Constants.sNodePreferenceMap.keySet()) {
+                boolean defaultValue = Constants.sNodeDefaultMap.get(pref);
+                boolean value = Constants.isPreferenceEnabled(context, pref, defaultValue);
+                String node = Constants.sNodePreferenceMap.get(pref);
+                if (!FileUtils.writeLine(node, value ? "1" : "0")) {
+                    Log.w(TAG, "Write to node " + node + " failed while restoring saved preference values");
+                }
+            }
+        }
+        // Disable backtouch settings if needed
+        if (!context.getResources().getBoolean(com.android.internal.R.bool.config_enableGestureService)) {
+            disableComponent(context, GesturePadSettings.class.getName());
+        } else {
+            IBinder b = ServiceManager.getService("gesture");
+            IGestureService sInstance = IGestureService.Stub.asInterface(b);
+            // Set longPress event
+            toggleLongPress(context, sInstance, Constants.isPreferenceEnabled(context, Constants.TOUCHPAD_LONGPRESS_KEY, false));
+            // Set doubleTap event
+            toggleLongPress(context, sInstance, Constants.isPreferenceEnabled(context, Constants.TOUCHPAD_DOUBLETAP_KEY, false));
+        }
+        // Disable slider settings if needed
+        if (!hasSlider()) {
+            disableComponent(context, SliderSettings.class.getName());
+        } else {
+            enableComponent(context, SliderSettings.class.getName());
+            // Restore nodes to saved preference values
+            for (String pref : Constants.sNodePreferenceMap.keySet()) {
+                boolean defaultValue = Constants.sNodeDefaultMap.get(pref).booleanValue();
+                boolean value = Constants.isPreferenceEnabled(context, pref, defaultValue);
+                String node = Constants.sNodePreferenceMap.get(pref);
+                FileUtils.writeLine(node, value ? "1" : "0");
+            }
+            int sliderTop = Constants.getPreferenceInteger(context, "keycode_slider_top", 600);
+            int sliderMiddle = Constants.getPreferenceInteger(context, "keycode_slider_middle", 601);
+            int sliderBottom = Constants.getPreferenceInteger(context, "keycode_slider_bottom", 602);
+            FileUtils.writeLine(Constants.KEYCODE_SLIDER_TOP, String.valueOf(sliderTop));
+            FileUtils.writeLine(Constants.KEYCODE_SLIDER_MIDDLE, String.valueOf(sliderMiddle));
+            FileUtils.writeLine(Constants.KEYCODE_SLIDER_BOTTOM, String.valueOf(sliderBottom));
+        }
+        // Disable O-Click settings if needed
+        if (!hasOClick()) {
+            disableComponent(context, BluetoothInputSettings.class.getName());
+            disableComponent(context, OclickService.class.getName());
+        } else {
+            updateOClickServiceState(context);
+        }
+    } else if (intent.getAction().equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+        if (hasOClick()) {
+            updateOClickServiceState(context);
+        }
+    } else if (intent.getAction().equals("cyanogenmod.intent.action.GESTURE_CAMERA")) {
+        long now = SystemClock.uptimeMillis();
+        sendInputEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_CAMERA, 0, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, 0, InputDevice.SOURCE_KEYBOARD));
+        sendInputEvent(new KeyEvent(now, now, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_CAMERA, 0, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, 0, InputDevice.SOURCE_KEYBOARD));
+    }
+}
+#method_after
+@Override
+public void onReceive(final Context context, final Intent intent) {
+    final String action = intent.getAction();
+    if (cyanogenmod.content.Intent.ACTION_INITIALIZE_CM_HARDWARE.equals(action)) {
+        // Disable touchscreen gesture settings if needed
+        if (!hasTouchscreenGestures()) {
+            disableComponent(context, TouchscreenGestureSettings.class.getName());
+        } else {
+            enableComponent(context, TouchscreenGestureSettings.class.getName());
+            // Restore nodes to saved preference values
+            for (String pref : Constants.sGesturePrefKeys) {
+                boolean value = Constants.isPreferenceEnabled(context, pref);
+                String node = Constants.sBooleanNodePreferenceMap.get(pref);
+                if (!FileUtils.writeLine(node, value ? "1" : "0")) {
+                    Log.w(TAG, "Write to node " + node + " failed while restoring saved preference values");
+                }
+            }
+        }
+        // Disable backtouch settings if needed
+        if (!context.getResources().getBoolean(com.android.internal.R.bool.config_enableGestureService)) {
+            disableComponent(context, GesturePadSettings.class.getName());
+        } else {
+            IBinder b = ServiceManager.getService("gesture");
+            IGestureService sInstance = IGestureService.Stub.asInterface(b);
+            // Set longPress event
+            toggleLongPress(context, sInstance, Constants.isPreferenceEnabled(context, Constants.TOUCHPAD_LONGPRESS_KEY));
+            // Set doubleTap event
+            toggleLongPress(context, sInstance, Constants.isPreferenceEnabled(context, Constants.TOUCHPAD_DOUBLETAP_KEY));
+        }
+        // Disable button settings if needed
+        if (!hasButtonProcs()) {
+            disableComponent(context, ButtonSettings.class.getName());
+        } else {
+            enableComponent(context, ButtonSettings.class.getName());
+            // Restore nodes to saved preference values
+            for (String pref : Constants.sButtonPrefKeys) {
+                String value;
+                String node;
+                if (Constants.sStringNodePreferenceMap.containsKey(pref)) {
+                    value = Constants.getPreferenceString(context, pref);
+                    node = Constants.sStringNodePreferenceMap.get(pref);
+                } else {
+                    value = Constants.isPreferenceEnabled(context, pref) ? "1" : "0";
+                    node = Constants.sBooleanNodePreferenceMap.get(pref);
+                }
+                if (!FileUtils.writeLine(node, value)) {
+                    Log.w(TAG, "Write to node " + node + " failed while restoring saved preference values");
+                }
+            }
+        }
+        // Disable O-Click settings if needed
+        if (!hasOClick()) {
+            disableComponent(context, BluetoothInputSettings.class.getName());
+            disableComponent(context, OclickService.class.getName());
+        } else {
+            updateOClickServiceState(context);
+        }
+    } else if (intent.getAction().equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+        if (hasOClick()) {
+            updateOClickServiceState(context);
+        }
+    } else if (intent.getAction().equals("cyanogenmod.intent.action.GESTURE_CAMERA")) {
+        long now = SystemClock.uptimeMillis();
+        sendInputEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_CAMERA, 0, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, 0, InputDevice.SOURCE_KEYBOARD));
+        sendInputEvent(new KeyEvent(now, now, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_CAMERA, 0, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, 0, InputDevice.SOURCE_KEYBOARD));
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+    addPreferencesFromResource(R.xml.gesture_panel);
+    PreferenceCategory ambientDisplayCat = (PreferenceCategory) findPreference(CATEGORY_AMBIENT_DISPLAY);
+    if (ambientDisplayCat != null) {
+        ambientDisplayCat.setEnabled(CMActionsSettings.isDozeEnabled(getActivity().getContentResolver()));
+    }
+    if (Device.isSurnia()) {
+        // Check if we have to hide the chop chop entry
+        SwitchPreference chopChopPref = (SwitchPreference) findPreference("gesture_chop_chop");
+        PreferenceCategory mCategory = (PreferenceCategory) findPreference("actions_key");
+        mCategory.removePreference(chopChopPref);
+    }
+    mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    mFlipPref = (SwitchPreference) findPreference("gesture_flip_to_mute");
+    mFlipPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+
+        public boolean onPreferenceClick(Preference preference) {
+            if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+                mFlipPref.setChecked(false);
+                new AlertDialog.Builder(TouchscreenGestureSettings.this).setTitle(getString(R.string.flip_to_mute_title)).setMessage(getString(R.string.dnd_access)).setNegativeButton(android.R.string.cancel, null).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+
+                    public void onClick(DialogInterface dialog, int which) {
+                        mFlipClick = true;
+                        startActivity(new Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS));
+                    }
+                }).show();
+            }
+            return true;
+        }
+    });
+    // Users may deny DND access after giving it
+    if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+        mFlipPref.setChecked(false);
+    }
+}
+#method_after
+@Override
+public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+    addPreferencesFromResource(R.xml.gesture_panel);
+    PreferenceCategory ambientDisplayCat = (PreferenceCategory) findPreference(CATEGORY_AMBIENT_DISPLAY);
+    if (ambientDisplayCat != null) {
+        ambientDisplayCat.setEnabled(CMActionsSettings.isDozeEnabled(getActivity().getContentResolver()));
+    }
+    if (Device.isSurnia()) {
+        // Check if we have to hide the chop chop entry
+        SwitchPreference chopChopPref = (SwitchPreference) findPreference("gesture_chop_chop");
+        PreferenceCategory mCategory = (PreferenceCategory) findPreference("actions_key");
+        mCategory.removePreference(chopChopPref);
+    }
+    mNotificationManager = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+    mFlipPref = (SwitchPreference) findPreference("gesture_flip_to_mute");
+    mFlipPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+
+        public boolean onPreferenceClick(Preference preference) {
+            if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+                mFlipPref.setChecked(false);
+                new AlertDialog.Builder(getContext()).setTitle(getString(R.string.flip_to_mute_title)).setMessage(getString(R.string.dnd_access)).setNegativeButton(android.R.string.cancel, null).setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+
+                    public void onClick(DialogInterface dialog, int which) {
+                        mFlipClick = true;
+                        startActivity(new Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS));
+                    }
+                }).show();
+            }
+            return true;
+        }
+    });
+    // Users may deny DND access after giving it
+    if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+        mFlipPref.setChecked(false);
+    }
+}
+#end_block
+
+#method_before
+private boolean isDozeEnabled() {
+    return isDozeEnabled(mContext);
+}
+#method_after
+private boolean isDozeEnabled() {
+    return Settings.Secure.getInt(mContext.getContentResolver(), Settings.Secure.DOZE_ENABLED, 1) != 0;
+}
+#end_block
+
+#method_before
+private void loadPreferences(SharedPreferences sharedPreferences) {
+    mHandwaveGestureEnabled = sharedPreferences.getBoolean(GESTURE_HAND_WAVE_KEY, true);
+    mPocketGestureEnabled = sharedPreferences.getBoolean(GESTURE_POCKET_KEY, true);
+}
+#method_after
+private void loadPreferences(SharedPreferences sharedPreferences) {
+    mHandwaveGestureEnabled = sharedPreferences.getBoolean(GESTURE_HAND_WAVE_KEY, false);
+    mPocketGestureEnabled = sharedPreferences.getBoolean(GESTURE_POCKET_KEY, false);
+}
+#end_block
+
+#method_before
+public static boolean isEnabled() {
+    return mEnabled;
+}
+#method_after
+public static boolean isEnabled() {
+    return "AUTO".equals(FileUtils.readOneLine(CONTROL_PATH));
+}
+#end_block
+
+#method_before
+public static boolean setEnabled(boolean state) {
+    mEnabled = state;
+    return FileUtils.writeLine(CONTROL_PATH, (state ? "ON" : "OFF"));
+}
+#method_after
+public static boolean setEnabled(boolean state) {
+    return FileUtils.writeLine(CONTROL_PATH, (state ? "AUTO" : "OFF"));
+}
+#end_block
+
+#method_before
+@Override
+protected Object responseIccCardStatus(Parcel p) {
+    IccCardApplicationStatus appStatus;
+    IccCardStatus cardStatus = new IccCardStatus();
+    cardStatus.setCardState(p.readInt());
+    cardStatus.setUniversalPinState(p.readInt());
+    cardStatus.mGsmUmtsSubscriptionAppIndex = p.readInt();
+    cardStatus.mCdmaSubscriptionAppIndex = p.readInt();
+    cardStatus.mImsSubscriptionAppIndex = p.readInt();
+    int numApplications = p.readInt();
+    // limit to maximum allowed applications
+    if (numApplications > IccCardStatus.CARD_MAX_APPS) {
+        numApplications = IccCardStatus.CARD_MAX_APPS;
+    }
+    cardStatus.mApplications = new IccCardApplicationStatus[numApplications];
+    for (int i = 0; i < numApplications; i++) {
+        appStatus = new IccCardApplicationStatus();
+        appStatus.app_type = appStatus.AppTypeFromRILInt(p.readInt());
+        appStatus.app_state = appStatus.AppStateFromRILInt(p.readInt());
+        appStatus.perso_substate = appStatus.PersoSubstateFromRILInt(p.readInt());
+        appStatus.aid = p.readString();
+        appStatus.app_label = p.readString();
+        appStatus.pin1_replaced = p.readInt();
+        appStatus.pin1 = appStatus.PinStateFromRILInt(p.readInt());
+        appStatus.pin2 = appStatus.PinStateFromRILInt(p.readInt());
+        int remaining_count_pin1 = p.readInt();
+        int reamining_count_puk1 = p.readInt();
+        int reamining_count_pin2 = p.readInt();
+        int reamining_count_puk2 = p.readInt();
+        cardStatus.mApplications[i] = appStatus;
+    }
+    // For Sprint GSM(LTE) only SIM
+    if (numApplications == 1 && !isGSM && appStatus.app_type == appStatus.AppTypeFromRILInt(2)) {
+        status.mApplications = new IccCardApplicationStatus[numApplications + 2];
+        status.mGsmUmtsSubscriptionAppIndex = 0;
+        status.mApplications[status.mGsmUmtsSubscriptionAppIndex] = appStatus;
+        status.mCdmaSubscriptionAppIndex = 1;
+        status.mImsSubscriptionAppIndex = 2;
+        IccCardApplicationStatus appStatus2 = new IccCardApplicationStatus();
+        // CSIM State
+        appStatus2.app_type = appStatus2.AppTypeFromRILInt(4);
+        appStatus2.app_state = appStatus.app_state;
+        appStatus2.perso_substate = appStatus.perso_substate;
+        appStatus2.aid = appStatus.aid;
+        appStatus2.app_label = appStatus.app_label;
+        appStatus2.pin1_replaced = appStatus.pin1_replaced;
+        appStatus2.pin1 = appStatus.pin1;
+        appStatus2.pin2 = appStatus.pin2;
+        status.mApplications[status.mCdmaSubscriptionAppIndex] = appStatus2;
+        IccCardApplicationStatus appStatus3 = new IccCardApplicationStatus();
+        // IMS State
+        appStatus3.app_type = appStatus3.AppTypeFromRILInt(5);
+        appStatus3.app_state = appStatus.app_state;
+        appStatus3.perso_substate = appStatus.perso_substate;
+        appStatus3.aid = appStatus.aid;
+        appStatus3.app_label = appStatus.app_label;
+        appStatus3.pin1_replaced = appStatus.pin1_replaced;
+        appStatus3.pin1 = appStatus.pin1;
+        appStatus3.pin2 = appStatus.pin2;
+        status.mApplications[status.mImsSubscriptionAppIndex] = appStatus3;
+    }
+    return cardStatus;
+}
+#method_after
+@Override
+protected Object responseIccCardStatus(Parcel p) {
+    IccCardApplicationStatus appStatus = null;
+    IccCardStatus cardStatus = new IccCardStatus();
+    cardStatus.setCardState(p.readInt());
+    cardStatus.setUniversalPinState(p.readInt());
+    cardStatus.mGsmUmtsSubscriptionAppIndex = p.readInt();
+    cardStatus.mCdmaSubscriptionAppIndex = p.readInt();
+    cardStatus.mImsSubscriptionAppIndex = p.readInt();
+    int numApplications = p.readInt();
+    // limit to maximum allowed applications
+    if (numApplications > IccCardStatus.CARD_MAX_APPS) {
+        numApplications = IccCardStatus.CARD_MAX_APPS;
+    }
+    cardStatus.mApplications = new IccCardApplicationStatus[numApplications];
+    for (int i = 0; i < numApplications; i++) {
+        appStatus = new IccCardApplicationStatus();
+        appStatus.app_type = appStatus.AppTypeFromRILInt(p.readInt());
+        appStatus.app_state = appStatus.AppStateFromRILInt(p.readInt());
+        appStatus.perso_substate = appStatus.PersoSubstateFromRILInt(p.readInt());
+        appStatus.aid = p.readString();
+        appStatus.app_label = p.readString();
+        appStatus.pin1_replaced = p.readInt();
+        appStatus.pin1 = appStatus.PinStateFromRILInt(p.readInt());
+        appStatus.pin2 = appStatus.PinStateFromRILInt(p.readInt());
+        int remaining_count_pin1 = p.readInt();
+        int remaining_count_puk1 = p.readInt();
+        int remaining_count_pin2 = p.readInt();
+        int remaining_count_puk2 = p.readInt();
+        cardStatus.mApplications[i] = appStatus;
+    }
+    // For Sprint GSM(LTE) only SIM
+    if (numApplications == 1 && !isGSM && appStatus != null && appStatus.app_type == appStatus.AppTypeFromRILInt(2)) {
+        cardStatus.mApplications = new IccCardApplicationStatus[numApplications + 2];
+        cardStatus.mGsmUmtsSubscriptionAppIndex = 0;
+        cardStatus.mApplications[cardStatus.mGsmUmtsSubscriptionAppIndex] = appStatus;
+        cardStatus.mCdmaSubscriptionAppIndex = 1;
+        cardStatus.mImsSubscriptionAppIndex = 2;
+        IccCardApplicationStatus appStatus2 = new IccCardApplicationStatus();
+        // CSIM State
+        appStatus2.app_type = appStatus2.AppTypeFromRILInt(4);
+        appStatus2.app_state = appStatus.app_state;
+        appStatus2.perso_substate = appStatus.perso_substate;
+        appStatus2.aid = appStatus.aid;
+        appStatus2.app_label = appStatus.app_label;
+        appStatus2.pin1_replaced = appStatus.pin1_replaced;
+        appStatus2.pin1 = appStatus.pin1;
+        appStatus2.pin2 = appStatus.pin2;
+        cardStatus.mApplications[cardStatus.mCdmaSubscriptionAppIndex] = appStatus2;
+        IccCardApplicationStatus appStatus3 = new IccCardApplicationStatus();
+        // IMS State
+        appStatus3.app_type = appStatus3.AppTypeFromRILInt(5);
+        appStatus3.app_state = appStatus.app_state;
+        appStatus3.perso_substate = appStatus.perso_substate;
+        appStatus3.aid = appStatus.aid;
+        appStatus3.app_label = appStatus.app_label;
+        appStatus3.pin1_replaced = appStatus.pin1_replaced;
+        appStatus3.pin1 = appStatus.pin1;
+        appStatus3.pin2 = appStatus.pin2;
+        cardStatus.mApplications[cardStatus.mImsSubscriptionAppIndex] = appStatus3;
+    }
+    return cardStatus;
+}
+#end_block
+
+#method_before
+@Override
+protected Object responseIccCardStatus(Parcel p) {
+    IccCardApplicationStatus ca;
+    IccCardStatus status = new IccCardStatus();
+    int cardState = p.readInt();
+    /* Standard stack doesn't recognize REMOVED and SIM_DETECT_INSERTED,
+         * so convert them to ABSENT and PRESENT to trigger the hot-swapping 
+         * check */
+    if (cardState > 2) {
+        cardState -= 3;
+    }
+    status.setCardState(cardState);
+    status.setUniversalPinState(p.readInt());
+    status.mGsmUmtsSubscriptionAppIndex = p.readInt();
+    status.mCdmaSubscriptionAppIndex = p.readInt();
+    status.mImsSubscriptionAppIndex = p.readInt();
+    int numApplications = p.readInt();
+    // limit to maximum allowed applications
+    if (numApplications > IccCardStatus.CARD_MAX_APPS) {
+        numApplications = IccCardStatus.CARD_MAX_APPS;
+    }
+    status.mApplications = new IccCardApplicationStatus[numApplications];
+    ca = new IccCardApplicationStatus();
+    for (int i = 0; i < numApplications; i++) {
+        if (i != 0) {
+            ca = new IccCardApplicationStatus();
+        }
+        ca.app_type = ca.AppTypeFromRILInt(p.readInt());
+        ca.app_state = ca.AppStateFromRILInt(p.readInt());
+        ca.perso_substate = ca.PersoSubstateFromRILInt(p.readInt());
+        ca.aid = p.readString();
+        ca.app_label = p.readString();
+        ca.pin1_replaced = p.readInt();
+        ca.pin1 = ca.PinStateFromRILInt(p.readInt());
+        ca.pin2 = ca.PinStateFromRILInt(p.readInt());
+        if (!needsOldRilFeature("skippinpukcount")) {
+            // remaining_count_pin1
+            p.readInt();
+            // remaining_count_puk1
+            p.readInt();
+            // remaining_count_pin2
+            p.readInt();
+            // remaining_count_puk2
+            p.readInt();
+        }
+        status.mApplications[i] = ca;
+    }
+    // for sprint gsm(lte) only sim
+    if (numApplications == 1 && !isGSM && ca.app_type == ca.AppTypeFromRILInt(2)) {
+        status.mApplications = new IccCardApplicationStatus[numApplications + 2];
+        status.mGsmUmtsSubscriptionAppIndex = 0;
+        status.mApplications[status.mGsmUmtsSubscriptionAppIndex] = ca;
+        status.mCdmaSubscriptionAppIndex = 1;
+        status.mImsSubscriptionAppIndex = 2;
+        IccCardApplicationStatus appStatus2 = new IccCardApplicationStatus();
+        // csim state
+        appStatus2.app_type = appStatus2.AppTypeFromRILInt(4);
+        appStatus2.app_state = ca.app_state;
+        appStatus2.perso_substate = ca.perso_substate;
+        appStatus2.aid = ca.aid;
+        appStatus2.app_label = ca.app_label;
+        appStatus2.pin1_replaced = ca.pin1_replaced;
+        appStatus2.pin1 = ca.pin1;
+        appStatus2.pin2 = ca.pin2;
+        status.mApplications[status.mCdmaSubscriptionAppIndex] = appStatus2;
+        IccCardApplicationStatus appStatus3 = new IccCardApplicationStatus();
+        // ims state
+        appStatus3.app_type = appStatus3.AppTypeFromRILInt(5);
+        appStatus3.app_state = ca.app_state;
+        appStatus3.perso_substate = ca.perso_substate;
+        appStatus3.aid = ca.aid;
+        appStatus3.app_label = ca.app_label;
+        appStatus3.pin1_replaced = ca.pin1_replaced;
+        appStatus3.pin1 = ca.pin1;
+        appStatus3.pin2 = ca.pin2;
+        status.mApplications[status.mImsSubscriptionAppIndex] = appStatus3;
+    }
+    int appIndex = -1;
+    if (mPhoneType == RILConstants.CDMA_PHONE && status.mCdmaSubscriptionAppIndex >= 0) {
+        appIndex = status.mCdmaSubscriptionAppIndex;
+        Rlog.d(RILJ_LOG_TAG, "This is a CDMA PHONE " + appIndex);
+    } else {
+        appIndex = status.mGsmUmtsSubscriptionAppIndex;
+        Rlog.d(RILJ_LOG_TAG, "This is a GSM PHONE " + appIndex);
+    }
+    if (cardState == 0) {
+        // CardState.CARDSTATE_ABSENT
+        return status;
+    }
+    if (numApplications > 0) {
+        IccCardApplicationStatus application = status.mApplications[appIndex];
+        mAid = application.aid;
+        mUSIM = application.app_type == IccCardApplicationStatus.AppType.APPTYPE_USIM;
+        mSetPreferredNetworkType = mPreferredNetworkType;
+        if (TextUtils.isEmpty(mAid))
+            mAid = "";
+        Rlog.d(RILJ_LOG_TAG, "mAid " + mAid);
+    }
+    return status;
+}
+#method_after
+@Override
+protected Object responseIccCardStatus(Parcel p) {
+    IccCardApplicationStatus ca;
+    IccCardStatus status = new IccCardStatus();
+    int cardState = p.readInt();
+    /* Standard stack doesn't recognize REMOVED and SIM_DETECT_INSERTED,
+         * so convert them to ABSENT and PRESENT to trigger the hot-swapping 
+         * check */
+    if (cardState > 2) {
+        cardState -= 3;
+    }
+    status.setCardState(cardState);
+    status.setUniversalPinState(p.readInt());
+    status.mGsmUmtsSubscriptionAppIndex = p.readInt();
+    status.mCdmaSubscriptionAppIndex = p.readInt();
+    status.mImsSubscriptionAppIndex = p.readInt();
+    int numApplications = p.readInt();
+    // limit to maximum allowed applications
+    if (numApplications > IccCardStatus.CARD_MAX_APPS) {
+        numApplications = IccCardStatus.CARD_MAX_APPS;
+    }
+    status.mApplications = new IccCardApplicationStatus[numApplications];
+    ca = new IccCardApplicationStatus();
+    for (int i = 0; i < numApplications; i++) {
+        if (i != 0) {
+            ca = new IccCardApplicationStatus();
+        }
+        ca.app_type = ca.AppTypeFromRILInt(p.readInt());
+        ca.app_state = ca.AppStateFromRILInt(p.readInt());
+        ca.perso_substate = ca.PersoSubstateFromRILInt(p.readInt());
+        ca.aid = p.readString();
+        ca.app_label = p.readString();
+        ca.pin1_replaced = p.readInt();
+        ca.pin1 = ca.PinStateFromRILInt(p.readInt());
+        ca.pin2 = ca.PinStateFromRILInt(p.readInt());
+        if (!needsOldRilFeature("skippinpukcount")) {
+            // remaining_count_pin1
+            p.readInt();
+            // remaining_count_puk1
+            p.readInt();
+            // remaining_count_pin2
+            p.readInt();
+            // remaining_count_puk2
+            p.readInt();
+        }
+        status.mApplications[i] = ca;
+    }
+    // for sprint gsm(lte) only sim
+    if (numApplications == 1 && !isGSM && ca.app_type == ca.AppTypeFromRILInt(2)) {
+        status.mApplications = new IccCardApplicationStatus[numApplications + 2];
+        status.mGsmUmtsSubscriptionAppIndex = 0;
+        status.mApplications[status.mGsmUmtsSubscriptionAppIndex] = ca;
+        status.mCdmaSubscriptionAppIndex = 1;
+        status.mImsSubscriptionAppIndex = 2;
+        IccCardApplicationStatus ca2 = new IccCardApplicationStatus();
+        // csim state
+        ca2.app_type = ca2.AppTypeFromRILInt(4);
+        ca2.app_state = ca.app_state;
+        ca2.perso_substate = ca.perso_substate;
+        ca2.aid = ca.aid;
+        ca2.app_label = ca.app_label;
+        ca2.pin1_replaced = ca.pin1_replaced;
+        ca2.pin1 = ca.pin1;
+        ca2.pin2 = ca.pin2;
+        status.mApplications[status.mCdmaSubscriptionAppIndex] = ca2;
+        IccCardApplicationStatus ca3 = new IccCardApplicationStatus();
+        // ims state
+        ca3.app_type = ca3.AppTypeFromRILInt(5);
+        ca3.app_state = ca.app_state;
+        ca3.perso_substate = ca.perso_substate;
+        ca3.aid = ca.aid;
+        ca3.app_label = ca.app_label;
+        ca3.pin1_replaced = ca.pin1_replaced;
+        ca3.pin1 = ca.pin1;
+        ca3.pin2 = ca.pin2;
+        status.mApplications[status.mImsSubscriptionAppIndex] = ca3;
+    }
+    int appIndex = -1;
+    if (mPhoneType == RILConstants.CDMA_PHONE && status.mCdmaSubscriptionAppIndex >= 0) {
+        appIndex = status.mCdmaSubscriptionAppIndex;
+        Rlog.d(RILJ_LOG_TAG, "This is a CDMA PHONE " + appIndex);
+    } else {
+        appIndex = status.mGsmUmtsSubscriptionAppIndex;
+        Rlog.d(RILJ_LOG_TAG, "This is a GSM PHONE " + appIndex);
+    }
+    if (cardState == 0) {
+        // CardState.CARDSTATE_ABSENT
+        return status;
+    }
+    if (numApplications > 0) {
+        IccCardApplicationStatus application = status.mApplications[appIndex];
+        mAid = application.aid;
+        mUSIM = application.app_type == IccCardApplicationStatus.AppType.APPTYPE_USIM;
+        mSetPreferredNetworkType = mPreferredNetworkType;
+        if (TextUtils.isEmpty(mAid))
+            mAid = "";
+        Rlog.d(RILJ_LOG_TAG, "mAid " + mAid);
+    }
+    return status;
+}
+#end_block
+
+#method_before
+public static boolean isSupported() {
+    return new File(LEVEL_PATH).exists();
+}
+#method_after
+public static boolean isSupported() {
+    return new File(LEVEL_PATH_STRONG).exists();
+}
+#end_block
+
+#method_before
+/* angler kernel min/max and default are:
+     * #define QPNP_HAP_VMAX_MIN_MV            116
+     * #define QPNP_HAP_VMAX_MAX_MV            3596
+     * #define QPNP_HAP_VMAX_STRONG_MV         1800
+     */
+public static int getMaxIntensity() {
+    return 3000;
+}
+#method_after
+/* angler kernel min/max and defaults are:
+     * #define QPNP_HAP_VMAX_MIN_MV            116
+     * #define QPNP_HAP_VMAX_MAX_MV            3596
+     * #define QPNP_HAP_VMAX_LIGHT_MV          1500
+     * #define QPNP_HAP_VMAX_STRONG_MV         1800
+     */
+public static int getMaxIntensity() {
+    return 3000;
+}
+#end_block
+
+#method_before
+public static int getCurIntensity() {
+    return Integer.parseInt(FileUtils.readOneLine(LEVEL_PATH));
+}
+#method_after
+public static int getCurIntensity() {
+    return Integer.parseInt(FileUtils.readOneLine(LEVEL_PATH_STRONG));
+}
+#end_block
+
+#method_before
+public static boolean setIntensity(int intensity) {
+    return FileUtils.writeLine(LEVEL_PATH, String.valueOf(intensity));
+}
+#method_after
+public static boolean setIntensity(int intensity) {
+    return FileUtils.writeLine(LEVEL_PATH_STRONG, String.valueOf(intensity)) && FileUtils.writeLine(LEVEL_PATH_LIGHT, String.valueOf(intensity - 300));
+}
+#end_block
+
+#method_before
+private static String responseToStringHTC(int request) {
+    switch(request) {
+        case RIL_UNSOL_ENTER_LPM:
+            return "UNSOL_RIL_UNSOL_ENTER_LPM";
+        case RIL_UNSOL_CDMA_3G_INDICATOR:
+            return "UNSOL_UNSOL_CDMA_3G_INDICATOR";
+        case RIL_UNSOL_CDMA_ENHANCE_ROAMING_INDICATOR:
+            return "UNSOL_UNSOL_CDMA_ENHANCE_ROAMING_INDICATOR";
+        case RIL_UNSOL_CDMA_NETWORK_BASE_PLUSCODE_DIAL:
+            return "UNSOL_CDMA_NETWORK_BASE_PLUSCODE_DIAL";
+        case RIL_UNSOL_RESPONSE_PHONE_MODE_CHANGE:
+            return "UNSOL_RESPONSE_PHONE_MODE_CHANGE";
+        case RIL_UNSOL_RESPONSE_VOICE_RADIO_TECH_CHANGED:
+            return "UNSOL_RESPONSE_VOICE_RADIO_TECH_CHANGED";
+        case RIL_UNSOL_RESPONSE_IMS_NETWORK_STATE_CHANGED:
+            return "UNSOL_RESPONSE_IMS_NETWORK_STATE_CHANGED";
+        case RIL_UNSOL_RESPONSE_DATA_NETWORK_STATE_CHANGED:
+            return "UNSOL_RESPONSE_DATA_NETWORK_STATE_CHANGED";
+        default:
+            return "<unknown response>";
+    }
+}
+#method_after
+private static String responseToStringHTC(int request) {
+    switch(request) {
+        case RIL_UNSOL_ENTER_LPM:
+            return "UNSOL_ENTER_LPM";
+        case RIL_UNSOL_CDMA_3G_INDICATOR:
+            return "UNSOL_CDMA_3G_INDICATOR";
+        case RIL_UNSOL_CDMA_ENHANCE_ROAMING_INDICATOR:
+            return "UNSOL_CDMA_ENHANCE_ROAMING_INDICATOR";
+        case RIL_UNSOL_CDMA_NETWORK_BASE_PLUSCODE_DIAL:
+            return "UNSOL_CDMA_NETWORK_BASE_PLUSCODE_DIAL";
+        case RIL_UNSOL_RESPONSE_PHONE_MODE_CHANGE:
+            return "UNSOL_RESPONSE_PHONE_MODE_CHANGE";
+        case RIL_UNSOL_RESPONSE_VOICE_RADIO_TECH_CHANGED:
+            return "UNSOL_RESPONSE_VOICE_RADIO_TECH_CHANGED";
+        case RIL_UNSOL_RESPONSE_IMS_NETWORK_STATE_CHANGED:
+            return "UNSOL_RESPONSE_IMS_NETWORK_STATE_CHANGED";
+        case RIL_UNSOL_RESPONSE_DATA_NETWORK_STATE_CHANGED:
+            return "UNSOL_RESPONSE_DATA_NETWORK_STATE_CHANGED";
+        default:
+            return "<unknown response>";
+    }
+}
+#end_block
+
+#method_before
+@Override
+protected void send(RILRequest rr) {
+    if (rr.mRequest >= 109) {
+        Rlog.v(RILJ_LOG_TAG, "HTCQualcommRIL: received unsupported request " + rr.mRequest);
+        rr.onError(REQUEST_NOT_SUPPORTED, null);
+        rr.release();
+    } else {
+        super.send(rr);
+    }
+}
+#method_after
+@Override
+protected void send(RILRequest rr) {
+    if (rr.mRequest >= RIL_REQUEST_GET_CELL_INFO_LIST) {
+        if (RILJ_LOGD) {
+            riljLog("HTCQualcommRIL: received unsupported request " + rr.mRequest);
+        }
+        rr.onError(REQUEST_NOT_SUPPORTED, null);
+        rr.release();
+    } else {
+        super.send(rr);
+    }
+}
+#end_block
+
+#method_before
+static Paint getPaintFromNumber(int color) {
+    switch(color) {
+        case -1:
+            return pTrans;
+        case 0:
+            return pBlack;
+        case 1:
+            return pWhite;
+        case 2:
+            return pRed;
+        case 3:
+            return pGreen;
+        case 4:
+            return pBlue;
+        case 5:
+            return pOrange;
+        case 6:
+            return pPurple;
+        case 7:
+            return pYellow;
+        case 8:
+            return pGrey;
+        case 9:
+            return pCyan;
+        case 10:
+            return pDGreen;
+        case 11:
+            return pDRed;
+        case 12:
+            return pFYellow;
+        case 13:
+            return pTBlue;
+        case 14:
+            return pFbBlue;
+        default:
+            return pBlack;
+    }
+}
+#method_after
+static Paint getPaintFromNumber(int color) {
+    switch(color) {
+        case -1:
+            return pTrans;
+        case 0:
+            return pBlack;
+        case 1:
+            return pWhite;
+        case 2:
+            return pRed;
+        case 3:
+            return pGreen;
+        case 4:
+            return pBlue;
+        case 5:
+            return pOrange;
+        case 6:
+            return pPurple;
+        case 7:
+            return pYellow;
+        case 8:
+            return pGrey;
+        case 9:
+            return pCyan;
+        case 10:
+            return pDGreen;
+        case 11:
+            return pDRed;
+        case 12:
+            return pFYellow;
+        case 13:
+            return pTBlue;
+        case 14:
+            return pFbBlue;
+        case 15:
+            return pPink;
+        default:
+            return pBlack;
+    }
+}
+#end_block
+
+#method_before
+static int[][] getNotificationSprite(Notification notification) {
+    switch(notification) {
+        case EMAIL:
+            return emailSprite;
+        case GMAIL:
+            return gmailSprite;
+        case HANGOUTS:
+            return hangoutsSprite;
+        case TWITTER:
+            return twitterSprite;
+        case MISSED_CALL:
+            return missedCallSprite;
+        case MMS:
+            return mmsSprite;
+        case VOICEMAIL:
+            return voicemailSprite;
+        case SNAPCHAT:
+            return snapchatSprite;
+        case FACEBOOK:
+            return facebookSprite;
+        case DOTS:
+            return dotsSprite;
+        default:
+            return null;
+    }
+}
+#method_after
+static int[][] getNotificationSprite(Notification notification) {
+    switch(notification) {
+        case EMAIL:
+            return emailSprite;
+        case GMAIL:
+            return gmailSprite;
+        case HANGOUTS:
+            return hangoutsSprite;
+        case TWITTER:
+            return twitterSprite;
+        case MISSED_CALL:
+            return missedCallSprite;
+        case MMS:
+            return mmsSprite;
+        case VOICEMAIL:
+            return voicemailSprite;
+        case SNAPCHAT:
+            return snapchatSprite;
+        case FACEBOOK:
+            return facebookSprite;
+        case COUPLES:
+            return couplesSprite;
+        case DOTS:
+            return dotsSprite;
+        default:
+            return null;
+    }
+}
+#end_block
+
+#method_before
+synchronized void startRinging(String number, String name) {
+    phoneName = name;
+    startRinging(number);
+}
+#method_after
+synchronized void startRinging(String number, String name) {
+    callerName = name;
+    startRinging(number);
+}
+#end_block
+
+#method_before
+synchronized void startRinging(String number) {
+    ringing = true;
+    resetTimer = true;
+    ringCounter = 0;
+    phoneNumber = number;
+}
+#method_after
+synchronized void startRinging(String number) {
+    ringing = true;
+    resetTimer = true;
+    ringCounter = 0;
+    callerNumber = number;
+    callerTicker = -6;
+}
+#end_block
+
+#method_before
+synchronized void stopRinging() {
+    ringing = false;
+    phoneNumber = "";
+    phoneName = "";
+}
+#method_after
+synchronized void stopRinging() {
+    ringing = false;
+    callerNumber = "";
+    callerName = "";
+}
+#end_block
+
+#method_before
+private void drawName(Canvas canvas) {
+    int[][] sprite;
+    int x = 0, y = 2;
+    if (Dotcase.status.isRinging()) {
+        int nameOffset = phoneNameTicker % Dotcase.status.getPhoneName().length();
+        String correctedName = "";
+        if (Dotcase.status.getPhoneName().length() <= 7) {
+            // Name is short enough to be drawn completely
+            correctedName = Dotcase.status.getPhoneName();
+        } else if ((nameOffset + 7) > Dotcase.status.getPhoneName().length()) {
+            // At the end of a scroll; name will be looped
+            int overflow = (nameOffset + 7) % Dotcase.status.getPhoneName().length();
+            correctedName = Dotcase.status.getPhoneName().substring(nameOffset) + Dotcase.status.getPhoneName().substring(0, overflow);
+        } else if ((nameOffset + 7) <= Dotcase.status.getPhoneName().length()) {
+            // Draw a consecutive portion of the name
+            correctedName = Dotcase.status.getPhoneName().substring(nameOffset, nameOffset + 7);
+        }
+        for (int i = 0; i < correctedName.length(); i++) {
+            sprite = DotcaseConstants.getSmallNumSprite(correctedName.toLowerCase().charAt(i));
+            dotcaseDrawSprite(sprite, x + (i) * 4, y, canvas);
+        }
+        if (phoneNameTicker > 500) {
+            // reset after a while
+            phoneNameTicker = 0;
+        } else {
+            phoneNameTicker++;
+        }
+    }
+}
+#method_after
+private void drawName(Canvas canvas) {
+    int[][] sprite;
+    int x = 0, y = 2;
+    if (Dotcase.status.isRinging()) {
+        int nameOffset = Dotcase.status.callerTicker();
+        String name = Dotcase.status.getCallerName();
+        String correctedName = "";
+        // We can fit 7 characters, and the last two are spaces
+        if (name.length() <= 9) {
+            // Name is short enough to be drawn completely, cut off spaces at end
+            correctedName = name.substring(0, name.length() - 2);
+        } else if ((nameOffset + 7) > name.length()) {
+            // Looping: end and beginning of the name are visible together
+            int overflow = (nameOffset + 7) % name.length();
+            correctedName = name.substring(nameOffset) + name.substring(0, overflow);
+        } else if ((nameOffset + 7) <= name.length()) {
+            // Draw a consecutive portion of the name
+            correctedName = name.substring(nameOffset, nameOffset + 7);
+        }
+        for (int i = 0; i < correctedName.length(); i++) {
+            sprite = DotcaseConstants.getSmallNumSprite(correctedName.charAt(i));
+            dotcaseDrawSprite(sprite, x + i * 4, y, canvas);
+        }
+        Dotcase.status.incrementCallerTicker();
+    }
+}
+#end_block
+
+#method_before
+private void drawNumber(Canvas canvas) {
+    int[][] sprite;
+    int x = 0, y = 8;
+    if (Dotcase.status.isRinging()) {
+        for (int i = 3; i < Dotcase.status.getPhoneNumber().length() && i < 10; i++) {
+            sprite = DotcaseConstants.getSmallNumSprite(Dotcase.status.getPhoneNumber().toLowerCase().charAt(i));
+            dotcaseDrawSprite(sprite, x + (i - 3) * 4, y, canvas);
+        }
+    }
+}
+#method_after
+private void drawNumber(Canvas canvas) {
+    int[][] sprite;
+    int x = 0, y = 8;
+    if (Dotcase.status.isRinging()) {
+        for (int i = 3; i < Dotcase.status.getCallerNumber().length() && i < 10; i++) {
+            sprite = DotcaseConstants.getSmallNumSprite(Dotcase.status.getCallerNumber().charAt(i));
+            dotcaseDrawSprite(sprite, x + (i - 3) * 4, y, canvas);
+        }
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void onReceive(Context context, Intent intent) {
+    Settings.Secure.putString(context.getContentResolver(), Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS, "org.cyanogenmod.dotcase");
+    CoverObserver coverObserver = new CoverObserver(context);
+    coverObserver.init();
+}
+#method_after
+@Override
+public void onReceive(Context context, Intent intent) {
+    Settings.Secure.putString(context.getContentResolver(), Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS, "org.cyanogenmod.dotcase");
+    new CoverObserver(context).init();
+}
+#end_block
+
+#method_before
+public synchronized final void init() {
+    char[] buffer = new char[1024];
+    try {
+        BufferedReader closed = new BufferedReader(new FileReader(COVER_STATE_PATH));
+        String value = closed.readLine();
+        closed.close();
+    } catch (Exception e) {
+    }
+    filter.addAction(Intent.ACTION_SCREEN_ON);
+    filter.addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED);
+    manager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+    startObserving(COVER_UEVENT_MATCH);
+}
+#method_after
+public synchronized final void init() {
+    filter.addAction(Intent.ACTION_SCREEN_ON);
+    filter.addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED);
+    filter.addAction("com.android.deskclock.ALARM_ALERT");
+    // add other alarm apps here
+    manager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+    startObserving(COVER_UEVENT_MATCH);
+}
+#end_block
+
+#method_before
+@Override
+public void onUEvent(UEventObserver.UEvent event) {
+    try {
+        int state = Integer.parseInt(event.get("SWITCH_STATE"));
+        boolean screenOn = manager.isScreenOn();
+        if (state == 1) {
+            if (screenOn) {
+                manager.goToSleep(SystemClock.uptimeMillis());
+            }
+        } else {
+            killActivity();
+            if (!screenOn) {
+                manager.wakeUp(SystemClock.uptimeMillis());
+            }
+        }
+        mWakeLock.acquire();
+        mHandler.sendMessageDelayed(mHandler.obtainMessage(state), 0);
+    } catch (Exception e) {
+    }
+}
+#method_after
+@Override
+public void onUEvent(UEventObserver.UEvent event) {
+    try {
+        int state = Integer.parseInt(event.get("SWITCH_STATE"));
+        boolean screenOn = manager.isScreenOn();
+        topActivityKeeper = false;
+        if (state == 1) {
+            if (screenOn) {
+                manager.goToSleep(SystemClock.uptimeMillis());
+            }
+        } else {
+            killActivity();
+            if (!screenOn) {
+                manager.wakeUp(SystemClock.uptimeMillis());
+            }
+        }
+        mWakeLock.acquire();
+        mHandler.sendMessageDelayed(mHandler.obtainMessage(state), 0);
+    } catch (Exception e) {
+    }
+}
+#end_block
+
+#method_before
+public void killActivity() {
+    if (oldBrightnessMode != -1 && oldBrightness != -1 && needStoreOldBrightness == false) {
+        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS_MODE, oldBrightnessMode);
+        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, oldBrightness);
+        needStoreOldBrightness = true;
+    }
+    try {
+        Intent i = new Intent();
+        i.setAction("org.cyanogenmod.dotcase.KILL_ACTIVITY");
+        mContext.sendBroadcast(i);
+    } catch (Exception ex) {
+    }
+}
+#method_after
+public void killActivity() {
+    Dotcase.ringing = false;
+    Dotcase.alarm_clock = false;
+    topActivityKeeper = false;
+    if (oldBrightnessMode != -1 && oldBrightness != -1 && !needStoreOldBrightness) {
+        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS_MODE, oldBrightnessMode);
+        Settings.System.putInt(mContext.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, oldBrightness);
+        needStoreOldBrightness = true;
+    }
+    try {
+        Intent i = new Intent();
+        i.setAction(DotcaseConstants.ACTION_KILL_ACTIVITY);
+        mContext.sendBroadcast(i);
+    } catch (Exception ex) {
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void onDraw(Canvas canvas) {
+    drawTime(canvas);
+    if (!ringing) {
+        drawBattery(canvas);
+    // TODO
+    // drawGmail(canvas);
+    // drawHangouts(canvas);
+    // drawWeather(canvas);
+    } else {
+        drawRinger(canvas);
+    }
+    filter.addAction("org.cyanogenmod.dotcase.REDRAW");
+    filter.addAction("org.cyanogenmod.dotcase.PHONE_RINGING");
+    filter.addAction("org.cyanogenmod.dotcase.DONE_RINGING");
+    mContext.getApplicationContext().registerReceiver(receiver, filter);
+}
+#method_after
+@Override
+public void onDraw(Canvas canvas) {
+    if (Dotcase.alarm_clock) {
+        drawAlarm(canvas);
+    } else if (Dotcase.ringing) {
+        drawNumber(canvas);
+        drawRinger(canvas);
+    } else {
+        if (Dotcase.torchStatus) {
+            dotcaseDrawSprite(DotcaseConstants.torchSprite, 19, 22, canvas);
+        }
+        drawTime(canvas);
+        Dotcase.checkNotifications();
+        if (Dotcase.gmail || Dotcase.hangouts || Dotcase.mms || Dotcase.missed_call || Dotcase.twitter || Dotcase.voicemail) {
+            if (heartbeat < 3) {
+                drawNotifications(canvas);
+            } else {
+                drawBattery(canvas);
+            }
+            heartbeat++;
+            if (heartbeat > 5) {
+                heartbeat = 0;
+            }
+        } else {
+            drawBattery(canvas);
+            heartbeat = 0;
+        }
+    }
+    filter.addAction(DotcaseConstants.ACTION_REDRAW);
+    mContext.getApplicationContext().registerReceiver(receiver, filter);
+}
+#end_block
+
+#method_before
+private void drawRinger(Canvas canvas) {
+    int light = 3;
+    int dark = 10;
+    int[][] handsetSprite = { { 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3 }, { 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3 }, { 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3 }, { 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0 }, { 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0 } };
+    int[][] ringerSprite = { { 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0 }, { 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0 }, { 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0 }, { 0, 1, 1, 1, 0, 0, 2, 0, 0, 1, 1, 1, 0 }, { 1, 1, 1, 0, 0, 2, 2, 2, 0, 0, 1, 1, 1 }, { 0, 1, 0, 0, 2, 2, 2, 2, 2, 0, 0, 1, 0 }, { 0, 0, 0, 2, 2, 2, 0, 2, 2, 2, 0, 0, 0 }, { 0, 0, 2, 2, 2, 0, 0, 0, 2, 2, 2, 0, 0 }, { 0, 2, 2, 2, 0, 0, 3, 0, 0, 2, 2, 2, 0 }, { 2, 2, 2, 0, 0, 3, 3, 3, 0, 0, 2, 2, 2 }, { 0, 2, 0, 0, 3, 3, 3, 3, 3, 0, 0, 2, 0 }, { 0, 0, 0, 3, 3, 3, 0, 3, 3, 3, 0, 0, 0 }, { 0, 0, 3, 3, 3, 0, 0, 0, 3, 3, 3, 0, 0 }, { 0, 3, 3, 3, 0, 0, 0, 0, 0, 3, 3, 3, 0 }, { 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3 }, { 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0 } };
+    if (ringerSwitcher) {
+        Collections.reverse(Arrays.asList(ringerSprite));
+        Collections.reverse(Arrays.asList(handsetSprite));
+        light = 2;
+        dark = 11;
+        for (int i = 0; i < handsetSprite.length; i++) {
+            for (int j = 0; j < handsetSprite[0].length; j++) {
+                handsetSprite[i][j] = handsetSprite[i][j] > 0 ? light : 0;
+            }
+        }
+    }
+    for (int i = 0; i < ringerSprite.length; i++) {
+        for (int j = 0; j < ringerSprite[0].length; j++) {
+            ringerSprite[i][j] = ringerSprite[i][j] == 3 - ringCounter ? light : ringerSprite[i][j] > 0 ? dark : 0;
+        }
+    }
+    dotcaseDrawSprite(handsetSprite, 6, 21, canvas);
+    dotcaseDrawSprite(ringerSprite, 7, 28, canvas);
+    ringCounter++;
+    if (ringCounter > 2) {
+        ringerSwitcher = ringerSwitcher ? false : true;
+        ringCounter = 0;
+    }
+    return;
+}
+#method_after
+private void drawRinger(Canvas canvas) {
+    int light, dark;
+    int handsetLength = DotcaseConstants.handsetSprite.length;
+    int handsetElementLength = DotcaseConstants.handsetSprite[0].length;
+    int ringerLength = DotcaseConstants.ringerSprite.length;
+    int ringerElementLength = DotcaseConstants.ringerSprite[0].length;
+    int[][] mHandsetSprite = new int[handsetLength][handsetElementLength];
+    int[][] mRingerSprite = new int[ringerLength][ringerElementLength];
+    if (ringCounter / 3 > 0) {
+        light = 2;
+        dark = 11;
+    } else {
+        light = 3;
+        dark = 10;
+    }
+    for (int i = 0; i < ringerLength; i++) {
+        for (int j = 0; j < ringerElementLength; j++) {
+            if (DotcaseConstants.ringerSprite[i][j] > 0) {
+                mRingerSprite[i][j] = DotcaseConstants.ringerSprite[i][j] == 3 - (ringCounter % 3) ? light : dark;
+            }
+        }
+    }
+    for (int i = 0; i < handsetLength; i++) {
+        for (int j = 0; j < handsetElementLength; j++) {
+            mHandsetSprite[i][j] = DotcaseConstants.handsetSprite[i][j] > 0 ? light : 0;
+        }
+    }
+    if (ringCounter / 3 > 0) {
+        Collections.reverse(Arrays.asList(mRingerSprite));
+        Collections.reverse(Arrays.asList(mHandsetSprite));
+    }
+    dotcaseDrawSprite(mHandsetSprite, 6, 21, canvas);
+    dotcaseDrawSprite(mRingerSprite, 7, 28, canvas);
+    if (ringCounter > 4) {
+        ringCounter = 0;
+    } else {
+        ringCounter++;
+    }
+}
+#end_block
+
+#method_before
+private void drawBattery(Canvas canvas) {
+    Intent batteryIntent = mContext.getApplicationContext().registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+    int rawlevel = batteryIntent.getIntExtra("level", -1);
+    double scale = batteryIntent.getIntExtra("scale", -1);
+    int plugged = batteryIntent.getIntExtra("plugged", -1);
+    double level = -1;
+    if (rawlevel >= 0 && scale > 0) {
+        level = rawlevel / scale;
+    }
+    // top line
+    dotcaseDrawRect(1, 35, 25, 36, 1, canvas);
+    // upper right line
+    dotcaseDrawRect(24, 35, 25, 39, 1, canvas);
+    // nub right
+    dotcaseDrawRect(25, 38, 26, 44, 1, canvas);
+    // lower right line
+    dotcaseDrawRect(24, 43, 25, 47, 1, canvas);
+    // bottom line
+    dotcaseDrawRect(1, 46, 25, 47, 1, canvas);
+    // left line
+    dotcaseDrawRect(1, 35, 2, 47, 1, canvas);
+    // 4.34 percents per dot
+    int fillDots = (int) Math.round((level * 100) / 4.34);
+    int color;
+    if (level >= .50) {
+        color = 3;
+    } else if (level >= .25) {
+        color = 5;
+    } else {
+        color = 2;
+    }
+    for (int i = 0; i < fillDots; i++) {
+        if (i == 22) {
+            dotcaseDrawRect(2 + i, 39, 3 + i, 43, color, canvas);
+        } else {
+            dotcaseDrawRect(2 + i, 36, 3 + i, 46, color, canvas);
+        }
+    }
+    if (plugged > 0) {
+        int[][] blackSprite = { { -1, -1, -1, -1, 0, 0, -1, -1 }, { -1, -1, -1, 0, -1, 0, -1, -1 }, { -1, -1, 0, -1, -1, 0, -1, -1 }, { -1, 0, -1, -1, -1, 0, -1, -1 }, { 0, -1, -1, -1, -1, 0, 0, 0 }, { 0, 0, 0, -1, -1, -1, -1, 0 }, { -1, -1, 0, -1, -1, -1, 0, -1 }, { -1, -1, 0, -1, -1, 0, -1, -1 }, { -1, -1, 0, -1, 0, -1, -1, -1 }, { -1, -1, 0, 0, -1, -1, -1, -1 } };
+        dotcaseDrawSprite(blackSprite, 9, 36, canvas);
+        int[][] lightningSprite = { { -1, -1, -1, 7, -1, -1 }, { -1, -1, 7, 7, -1, -1 }, { -1, 7, 7, 7, -1, -1 }, { 7, 7, 7, 7, -1, -1 }, { -1, -1, 7, 7, 7, 7 }, { -1, -1, 7, 7, 7, -1 }, { -1, -1, 7, 7, -1, -1 }, { -1, -1, 7, -1, -1, -1 } };
+        dotcaseDrawSprite(lightningSprite, 10, 37, canvas);
+    }
+}
+#method_after
+private void drawBattery(Canvas canvas) {
+    Intent batteryIntent = mContext.getApplicationContext().registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+    int rawlevel = batteryIntent.getIntExtra("level", -1);
+    double scale = batteryIntent.getIntExtra("scale", -1);
+    int plugged = batteryIntent.getIntExtra("plugged", -1);
+    double level = -1;
+    if (rawlevel >= 0 && scale > 0) {
+        level = rawlevel / scale;
+    }
+    dotcaseDrawSprite(DotcaseConstants.batteryOutlineSprite, 1, 35, canvas);
+    // 4.34 percents per dot
+    int fillDots = (int) Math.round((level * 100) / 4.34);
+    int color;
+    if (level >= .50) {
+        color = 3;
+    } else if (level >= .25) {
+        color = 5;
+    } else {
+        color = 2;
+    }
+    for (int i = 0; i < fillDots; i++) {
+        if (i == 22) {
+            dotcaseDrawRect(2 + i, 39, 3 + i, 43, color, canvas);
+        } else {
+            dotcaseDrawRect(2 + i, 36, 3 + i, 46, color, canvas);
+        }
+    }
+    if (plugged > 0) {
+        dotcaseDrawSprite(DotcaseConstants.lightningSprite, 9, 36, canvas);
+    }
+}
+#end_block
+
+#method_before
+private void drawTime(Canvas canvas) {
+    int hour_of_day = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+    String hours = "  ";
+    String minutes = ((Calendar.getInstance().get(Calendar.MINUTE) < 10) ? "0" + Integer.toString(Calendar.getInstance().get(Calendar.MINUTE)) : Integer.toString(Calendar.getInstance().get(Calendar.MINUTE)));
+    if (hour_of_day > 12) {
+        hour_of_day = hour_of_day - 12;
+    } else if (hour_of_day == 0) {
+        hour_of_day = 12;
+    }
+    if (hour_of_day < 10) {
+        hours = " " + Integer.toString(hour_of_day);
+    } else {
+        hours = Integer.toString(hour_of_day);
+    }
+    String time = hours + minutes;
+    int[][] sprite;
+    int x, y;
+    int starter;
+    if (hour_of_day > 9) {
+        starter = 3;
+    } else {
+        starter = 0;
+    }
+    dotcaseDrawPixel(starter + 10, 9, 9, canvas);
+    dotcaseDrawPixel(starter + 10, 12, 9, canvas);
+    for (int i = 0; i < time.length(); i++) {
+        sprite = getSprite(time.charAt(i));
+        y = 5;
+        if (i == 0) {
+            x = starter + 0;
+        } else if (i == 1) {
+            x = starter + 5;
+        } else if (i == 2) {
+            x = starter + 12;
+        } else {
+            x = starter + 17;
+        }
+        dotcaseDrawSprite(sprite, x, y, canvas);
+    }
+}
+#method_after
+private void drawTime(Canvas canvas) {
+    timeObject time = getTimeObject();
+    int starter;
+    if (time.hour < 10) {
+        starter = 0;
+    } else {
+        starter = 3;
+    }
+    if (time.am) {
+        dotcaseDrawSprite(DotcaseConstants.amSprite, 3, 18, canvas);
+    } else {
+        dotcaseDrawSprite(DotcaseConstants.pmSprite, 3, 18, canvas);
+    }
+    dotcaseDrawSprite(DotcaseConstants.timeColon, starter + 10, 5 + 4, canvas);
+    dotcaseDrawSprite(DotcaseConstants.getSprite(time.timeString.charAt(0)), starter, 5, canvas);
+    dotcaseDrawSprite(DotcaseConstants.getSprite(time.timeString.charAt(1)), starter + 5, 5, canvas);
+    dotcaseDrawSprite(DotcaseConstants.getSprite(time.timeString.charAt(2)), starter + 12, 5, canvas);
+    dotcaseDrawSprite(DotcaseConstants.getSprite(time.timeString.charAt(3)), starter + 17, 5, canvas);
+}
+#end_block
+
+#method_before
+private void dotcaseDrawPixel(int x, int y, Paint paint, Canvas canvas) {
+    canvas.drawRect((float) (x * dotratio + 5), (float) (y * dotratio + 5), (float) ((x + 1) * dotratio - 5), (float) ((y + 1) * dotratio - 5), paint);
+}
+#method_after
+private void dotcaseDrawPixel(int x, int y, Paint paint, Canvas canvas) {
+    canvas.drawRect((x * DotcaseConstants.dotratio + 5), (y * DotcaseConstants.dotratio + 5), ((x + 1) * DotcaseConstants.dotratio - 5), ((y + 1) * DotcaseConstants.dotratio - 5), paint);
+}
+#end_block
+
+#method_before
+private void dotcaseDrawRect(int left, int top, int right, int bottom, int color, Canvas canvas) {
+    for (int x = left; x < right; x++) {
+        for (int y = top; y < bottom; y++) {
+            dotcaseDrawPixel(x, y, getPaintFromNumber(color), canvas);
+        }
+    }
+}
+#method_after
+private void dotcaseDrawRect(int left, int top, int right, int bottom, int color, Canvas canvas) {
+    for (int x = left; x < right; x++) {
+        for (int y = top; y < bottom; y++) {
+            dotcaseDrawPixel(x, y, DotcaseConstants.getPaintFromNumber(color), canvas);
+        }
+    }
+}
+#end_block
+
+#method_before
+private void dotcaseDrawSprite(int[][] sprite, int x, int y, Canvas canvas) {
+    for (int i = 0; i < sprite.length; i++) {
+        for (int j = 0; j < sprite[0].length; j++) {
+            dotcaseDrawPixel(x + j, y + i, getPaintFromNumber(sprite[i][j]), canvas);
+        }
+    }
+}
+#method_after
+private void dotcaseDrawSprite(int[][] sprite, int x, int y, Canvas canvas) {
+    for (int i = 0; i < sprite.length; i++) {
+        for (int j = 0; j < sprite[0].length; j++) {
+            dotcaseDrawPixel(x + j, y + i, DotcaseConstants.getPaintFromNumber(sprite[i][j]), canvas);
+        }
+    }
+}
+#end_block
+

@@ -1,0 +1,918 @@
+7
+#method_before
+Surface createSurfaceLocked() {
+    if ((mSurface == null) || ((SystemProperties.OMAP_ENHANCEMENT) && (mSurface != null) && (mAttrs.memoryType == MEMORY_TYPE_PUSH_BUFFERS) && ((mAttrs.flags & WindowManager.LayoutParams.FLAG_DISPLAY_CHANGED) != 0))) {
+        mReportDestroySurface = false;
+        mSurfacePendingDestroy = false;
+        mDrawPending = true;
+        mCommitDrawPending = false;
+        mReadyToShow = false;
+        if (mAppToken != null) {
+            mAppToken.allDrawn = false;
+        }
+        int flags = 0;
+        if (mAttrs.memoryType == MEMORY_TYPE_PUSH_BUFFERS) {
+            flags |= Surface.PUSH_BUFFERS;
+        }
+        if ((mAttrs.flags & WindowManager.LayoutParams.FLAG_SECURE) != 0) {
+            flags |= Surface.SECURE;
+        }
+        if (DEBUG_VISIBILITY)
+            Slog.v(TAG, "Creating surface in session " + mSession.mSurfaceSession + " window " + this + " w=" + mFrame.width() + " h=" + mFrame.height() + " format=" + mAttrs.format + " flags=" + flags);
+        int w = mFrame.width();
+        int h = mFrame.height();
+        if ((mAttrs.flags & LayoutParams.FLAG_SCALED) != 0) {
+            // for a scaled surface, we always want the requested
+            // size.
+            w = mRequestedWidth;
+            h = mRequestedHeight;
+        }
+        // try to revert to sane values
+        if (w <= 0)
+            w = 1;
+        if (h <= 0)
+            h = 1;
+        mSurfaceShown = false;
+        mSurfaceLayer = 0;
+        mSurfaceAlpha = 1;
+        mSurfaceX = 0;
+        mSurfaceY = 0;
+        mSurfaceW = w;
+        mSurfaceH = h;
+        try {
+            if (SystemProperties.OMAP_ENHANCEMENT) {
+                mSurface = new Surface(mSession.mSurfaceSession, mSession.mPid, mAttrs.getTitle().toString(), mDisplayId, w, h, mAttrs.format, flags);
+            } else {
+                mSurface = new Surface(mSession.mSurfaceSession, mSession.mPid, mAttrs.getTitle().toString(), 0, w, h, mAttrs.format, flags);
+            }
+            if (SHOW_TRANSACTIONS)
+                Slog.i(TAG, "  CREATE SURFACE " + mSurface + " IN SESSION " + mSession.mSurfaceSession + ": pid=" + mSession.mPid + " format=" + mAttrs.format + " flags=0x" + Integer.toHexString(flags) + " / " + this);
+        } catch (Surface.OutOfResourcesException e) {
+            Slog.w(TAG, "OutOfResourcesException creating surface");
+            reclaimSomeSurfaceMemoryLocked(this, "create");
+            return null;
+        } catch (Exception e) {
+            Slog.e(TAG, "Exception creating surface", e);
+            return null;
+        }
+        if (localLOGV)
+            Slog.v(TAG, "Got surface: " + mSurface + ", set left=" + mFrame.left + " top=" + mFrame.top + ", animLayer=" + mAnimLayer);
+        if (SHOW_TRANSACTIONS) {
+            Slog.i(TAG, ">>> OPEN TRANSACTION");
+            if (SHOW_TRANSACTIONS)
+                logSurface(this, "CREATE pos=(" + mFrame.left + "," + mFrame.top + ") (" + mFrame.width() + "x" + mFrame.height() + "), layer=" + mAnimLayer + " HIDE", null);
+        }
+        Surface.openTransaction();
+        try {
+            try {
+                mSurfaceX = mFrame.left + mXOffset;
+                mSurfaceY = mFrame.top + mYOffset;
+                mSurface.setPosition(mSurfaceX, mSurfaceY);
+                mSurfaceLayer = mAnimLayer;
+                mSurface.setLayer(mAnimLayer);
+                mSurfaceShown = false;
+                mSurface.hide();
+                if ((mAttrs.flags & WindowManager.LayoutParams.FLAG_DITHER) != 0) {
+                    if (SHOW_TRANSACTIONS)
+                        logSurface(this, "DITHER", null);
+                    mSurface.setFlags(Surface.SURFACE_DITHER, Surface.SURFACE_DITHER);
+                }
+            } catch (RuntimeException e) {
+                Slog.w(TAG, "Error creating surface in " + w, e);
+                reclaimSomeSurfaceMemoryLocked(this, "create-init");
+            }
+            mLastHidden = true;
+        } finally {
+            if (SHOW_TRANSACTIONS)
+                Slog.i(TAG, "<<< CLOSE TRANSACTION");
+            Surface.closeTransaction();
+        }
+        if (localLOGV)
+            Slog.v(TAG, "Created surface " + this);
+    }
+    return mSurface;
+}
+#method_after
+Surface createSurfaceLocked() {
+    if (mSurface == null) {
+        mReportDestroySurface = false;
+        mSurfacePendingDestroy = false;
+        mDrawPending = true;
+        mCommitDrawPending = false;
+        mReadyToShow = false;
+        if (mAppToken != null) {
+            mAppToken.allDrawn = false;
+        }
+        int flags = 0;
+        if (mAttrs.memoryType == MEMORY_TYPE_PUSH_BUFFERS) {
+            flags |= Surface.PUSH_BUFFERS;
+        }
+        if ((mAttrs.flags & WindowManager.LayoutParams.FLAG_SECURE) != 0) {
+            flags |= Surface.SECURE;
+        }
+        if (DEBUG_VISIBILITY)
+            Slog.v(TAG, "Creating surface in session " + mSession.mSurfaceSession + " window " + this + " w=" + mFrame.width() + " h=" + mFrame.height() + " format=" + mAttrs.format + " flags=" + flags);
+        int w = mFrame.width();
+        int h = mFrame.height();
+        if ((mAttrs.flags & LayoutParams.FLAG_SCALED) != 0) {
+            // for a scaled surface, we always want the requested
+            // size.
+            w = mRequestedWidth;
+            h = mRequestedHeight;
+        }
+        // try to revert to sane values
+        if (w <= 0)
+            w = 1;
+        if (h <= 0)
+            h = 1;
+        mSurfaceShown = false;
+        mSurfaceLayer = 0;
+        mSurfaceAlpha = 1;
+        mSurfaceX = 0;
+        mSurfaceY = 0;
+        mSurfaceW = w;
+        mSurfaceH = h;
+        try {
+            if (SystemProperties.OMAP_ENHANCEMENT) {
+                mSurface = new Surface(mSession.mSurfaceSession, mSession.mPid, mAttrs.getTitle().toString(), mDisplayId, w, h, mAttrs.format, flags);
+            } else {
+                mSurface = new Surface(mSession.mSurfaceSession, mSession.mPid, mAttrs.getTitle().toString(), 0, w, h, mAttrs.format, flags);
+            }
+            if (SHOW_TRANSACTIONS)
+                Slog.i(TAG, "  CREATE SURFACE " + mSurface + " IN SESSION " + mSession.mSurfaceSession + ": pid=" + mSession.mPid + " format=" + mAttrs.format + " flags=0x" + Integer.toHexString(flags) + " / " + this);
+        } catch (Surface.OutOfResourcesException e) {
+            Slog.w(TAG, "OutOfResourcesException creating surface");
+            reclaimSomeSurfaceMemoryLocked(this, "create");
+            return null;
+        } catch (Exception e) {
+            Slog.e(TAG, "Exception creating surface", e);
+            return null;
+        }
+        if (localLOGV)
+            Slog.v(TAG, "Got surface: " + mSurface + ", set left=" + mFrame.left + " top=" + mFrame.top + ", animLayer=" + mAnimLayer);
+        if (SHOW_TRANSACTIONS) {
+            Slog.i(TAG, ">>> OPEN TRANSACTION");
+            if (SHOW_TRANSACTIONS)
+                logSurface(this, "CREATE pos=(" + mFrame.left + "," + mFrame.top + ") (" + mFrame.width() + "x" + mFrame.height() + "), layer=" + mAnimLayer + " HIDE", null);
+        }
+        Surface.openTransaction();
+        try {
+            try {
+                mSurfaceX = mFrame.left + mXOffset;
+                mSurfaceY = mFrame.top + mYOffset;
+                mSurface.setPosition(mSurfaceX, mSurfaceY);
+                mSurfaceLayer = mAnimLayer;
+                mSurface.setLayer(mAnimLayer);
+                mSurfaceShown = false;
+                mSurface.hide();
+                if ((mAttrs.flags & WindowManager.LayoutParams.FLAG_DITHER) != 0) {
+                    if (SHOW_TRANSACTIONS)
+                        logSurface(this, "DITHER", null);
+                    mSurface.setFlags(Surface.SURFACE_DITHER, Surface.SURFACE_DITHER);
+                }
+            } catch (RuntimeException e) {
+                Slog.w(TAG, "Error creating surface in " + w, e);
+                reclaimSomeSurfaceMemoryLocked(this, "create-init");
+            }
+            mLastHidden = true;
+        } finally {
+            if (SHOW_TRANSACTIONS)
+                Slog.i(TAG, "<<< CLOSE TRANSACTION");
+            Surface.closeTransaction();
+        }
+        if (localLOGV)
+            Slog.v(TAG, "Created surface " + this);
+    }
+    if ((SystemProperties.OMAP_ENHANCEMENT) && (mSurface != null) && ((mAttrs.flags & WindowManager.LayoutParams.FLAG_DISPLAY_CHANGED) != 0) && (mAttrs.memoryType == MEMORY_TYPE_PUSH_BUFFERS)) {
+        int flags = 0;
+        flags |= Surface.PUSH_BUFFERS;
+        try {
+            mSurface = new Surface(mSession.mSurfaceSession, mSession.mPid, mAttrs.getTitle().toString(), mDisplayId, mSurfaceW, mSurfaceH, mAttrs.format, flags);
+            if (SHOW_TRANSACTIONS)
+                Slog.i(TAG, "  CHANGED DISPLAY-ID FOR SURFACE " + mSurface + " IN SESSION " + mSession.mSurfaceSession + ": pid=" + mSession.mPid + " format=" + mAttrs.format + " flags=0x" + Integer.toHexString(flags) + " / " + this);
+        } catch (Surface.OutOfResourcesException e) {
+            Slog.w(TAG, "OutOfResourcesException while changing DisplayId");
+            reclaimSomeSurfaceMemoryLocked(this, "create");
+            return null;
+        } catch (Exception e) {
+            Slog.e(TAG, "Exception while changing DisplayId", e);
+            return null;
+        }
+    }
+    return mSurface;
+}
+#end_block
+
+#method_before
+@Override
+public boolean onKeyDown(int keyCode, KeyEvent event) {
+    boolean isKeyCodeSupported = keyCode != KeyEvent.KEYCODE_BACK && keyCode != KeyEvent.KEYCODE_VOLUME_UP && keyCode != KeyEvent.KEYCODE_VOLUME_DOWN && keyCode != KeyEvent.KEYCODE_MENU && keyCode != KeyEvent.KEYCODE_CALL && keyCode != KeyEvent.KEYCODE_ENDCALL;
+    if (isInPlaybackState() && isKeyCodeSupported && mMediaController != null) {
+        if (keyCode == KeyEvent.KEYCODE_HEADSETHOOK || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
+            if (mMediaPlayer.isPlaying()) {
+                pause();
+                mMediaController.show();
+            } else {
+                start();
+                mMediaController.hide();
+            }
+            return true;
+        } else if (keyCode == KeyEvent.KEYCODE_MEDIA_STOP && mMediaPlayer.isPlaying()) {
+            pause();
+            mMediaController.show();
+        } else if (SystemProperties.OMAP_ENHANCEMENT) {
+            if (keyCode == KeyEvent.KEYCODE_E) {
+                Log.d(TAG, "VideoView::onKeyDown() : Switching to LCD-Primary");
+                getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS | DISPLAY_TYPE_LCD_PRIMARY);
+            } else if (keyCode == KeyEvent.KEYCODE_R) {
+                Log.d(TAG, "VideoView::onKeyDown() : Switching to LCD-Secondary");
+                getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS | DISPLAY_TYPE_LCD_SECONDARY);
+            } else if (keyCode == KeyEvent.KEYCODE_T) {
+                Log.d(TAG, "VideoView::onKeyDown() : Switching to HDMI_TV");
+                getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS | DISPLAY_TYPE_HDMI_TV);
+            } else if (keyCode == KeyEvent.KEYCODE_D) {
+                Log.d(TAG, "VideoView::onKeyDown() : Switching to PICO_DLP");
+                getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS | DISPLAY_TYPE_PICO_DLP);
+            }
+        } else {
+            toggleMediaControlsVisiblity();
+        }
+    }
+    return super.onKeyDown(keyCode, event);
+}
+#method_after
+@Override
+public boolean onKeyDown(int keyCode, KeyEvent event) {
+    boolean isKeyCodeSupported = keyCode != KeyEvent.KEYCODE_BACK && keyCode != KeyEvent.KEYCODE_VOLUME_UP && keyCode != KeyEvent.KEYCODE_VOLUME_DOWN && keyCode != KeyEvent.KEYCODE_MENU && keyCode != KeyEvent.KEYCODE_CALL && keyCode != KeyEvent.KEYCODE_ENDCALL;
+    if (isInPlaybackState() && isKeyCodeSupported && mMediaController != null) {
+        if (keyCode == KeyEvent.KEYCODE_HEADSETHOOK || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
+            if (mMediaPlayer.isPlaying()) {
+                pause();
+                mMediaController.show();
+            } else {
+                start();
+                mMediaController.hide();
+            }
+            return true;
+        } else if (keyCode == KeyEvent.KEYCODE_MEDIA_STOP && mMediaPlayer.isPlaying()) {
+            pause();
+            mMediaController.show();
+        } else {
+            toggleMediaControlsVisiblity();
+        }
+    }
+    return super.onKeyDown(keyCode, event);
+}
+#end_block
+
+#method_before
+public void decCount() {
+    synchronized (mScoClients) {
+        if (mStartcount == 0) {
+            Log.w(TAG, "ScoClient.decCount() already 0");
+        } else {
+            mStartcount--;
+            if (mStartcount == 0) {
+                mCb.unlinkToDeath(this, 0);
+            }
+            requestScoState(BluetoothHeadset.AUDIO_STATE_DISCONNECTED);
+        }
+    }
+}
+#method_after
+public void decCount() {
+    synchronized (mScoClients) {
+        if (mStartcount == 0) {
+            Log.w(TAG, "ScoClient.decCount() already 0");
+        } else {
+            mStartcount--;
+            if (mStartcount == 0) {
+                try {
+                    mCb.unlinkToDeath(this, 0);
+                } catch (NoSuchElementException e) {
+                    Log.w(TAG, "decCount() going to 0 but not registered to binder");
+                }
+            }
+            requestScoState(BluetoothHeadset.AUDIO_STATE_DISCONNECTED);
+        }
+    }
+}
+#end_block
+
+#method_before
+public void clearCount(boolean stopSco) {
+    synchronized (mScoClients) {
+        mStartcount = 0;
+        mCb.unlinkToDeath(this, 0);
+        if (stopSco) {
+            requestScoState(BluetoothHeadset.AUDIO_STATE_DISCONNECTED);
+        }
+    }
+}
+#method_after
+public void clearCount(boolean stopSco) {
+    synchronized (mScoClients) {
+        if (mStartcount != 0) {
+            try {
+                mCb.unlinkToDeath(this, 0);
+            } catch (NoSuchElementException e) {
+                Log.w(TAG, "clearCount() mStartcount: " + mStartcount + " != 0 but not registered to binder");
+            }
+        }
+        mStartcount = 0;
+        if (stopSco) {
+            requestScoState(BluetoothHeadset.AUDIO_STATE_DISCONNECTED);
+        }
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void onReceive(Context context, Intent intent) {
+    String action = intent.getAction();
+    if (action.equals(Intent.ACTION_DOCK_EVENT)) {
+        int dockState = intent.getIntExtra(Intent.EXTRA_DOCK_STATE, Intent.EXTRA_DOCK_STATE_UNDOCKED);
+        int config;
+        switch(dockState) {
+            case Intent.EXTRA_DOCK_STATE_DESK:
+                config = AudioSystem.FORCE_BT_DESK_DOCK;
+                break;
+            case Intent.EXTRA_DOCK_STATE_CAR:
+                config = AudioSystem.FORCE_BT_CAR_DOCK;
+                break;
+            case Intent.EXTRA_DOCK_STATE_UNDOCKED:
+            default:
+                config = AudioSystem.FORCE_NONE;
+        }
+        AudioSystem.setForceUse(AudioSystem.FOR_DOCK, config);
+    } else if (action.equals(BluetoothA2dp.ACTION_SINK_STATE_CHANGED)) {
+        int state = intent.getIntExtra(BluetoothA2dp.EXTRA_SINK_STATE, BluetoothA2dp.STATE_DISCONNECTED);
+        BluetoothDevice btDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+        String address = btDevice.getAddress();
+        boolean isConnected = (mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP) && ((String) mConnectedDevices.get(AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP)).equals(address));
+        if (isConnected && state != BluetoothA2dp.STATE_CONNECTED && state != BluetoothA2dp.STATE_PLAYING) {
+            if (btDevice.isBluetoothDock()) {
+                if (state == BluetoothA2dp.STATE_DISCONNECTED) {
+                    // introduction of a delay for transient disconnections of docks when
+                    // power is rapidly turned off/on, this message will be canceled if
+                    // we reconnect the dock under a preset delay
+                    makeA2dpDeviceUnavailableLater(address);
+                // the next time isConnected is evaluated, it will be false for the dock
+                }
+            } else {
+                makeA2dpDeviceUnavailableNow(address);
+            }
+        } else if (!isConnected && (state == BluetoothA2dp.STATE_CONNECTED || state == BluetoothA2dp.STATE_PLAYING)) {
+            if (btDevice.isBluetoothDock()) {
+                // this could be a reconnection after a transient disconnection
+                cancelA2dpDeviceTimeout();
+                mDockAddress = address;
+            } else {
+                // a dock: cancel the dock timeout, and make the dock unavailable now
+                if (hasScheduledA2dpDockTimeout()) {
+                    cancelA2dpDeviceTimeout();
+                    makeA2dpDeviceUnavailableNow(mDockAddress);
+                }
+            }
+            makeA2dpDeviceAvailable(address);
+        }
+    } else if (action.equals(BluetoothHeadset.ACTION_STATE_CHANGED)) {
+        int state = intent.getIntExtra(BluetoothHeadset.EXTRA_STATE, BluetoothHeadset.STATE_ERROR);
+        int device = AudioSystem.DEVICE_OUT_BLUETOOTH_SCO;
+        BluetoothDevice btDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+        String address = null;
+        if (btDevice != null) {
+            address = btDevice.getAddress();
+            BluetoothClass btClass = btDevice.getBluetoothClass();
+            if (btClass != null) {
+                switch(btClass.getDeviceClass()) {
+                    case BluetoothClass.Device.AUDIO_VIDEO_WEARABLE_HEADSET:
+                    case BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE:
+                        device = AudioSystem.DEVICE_OUT_BLUETOOTH_SCO_HEADSET;
+                        break;
+                    case BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO:
+                        device = AudioSystem.DEVICE_OUT_BLUETOOTH_SCO_CARKIT;
+                        break;
+                }
+            }
+        }
+        boolean isConnected = (mConnectedDevices.containsKey(device) && ((String) mConnectedDevices.get(device)).equals(address));
+        if (isConnected && state != BluetoothHeadset.STATE_CONNECTED) {
+            AudioSystem.setDeviceConnectionState(device, AudioSystem.DEVICE_STATE_UNAVAILABLE, address);
+            mConnectedDevices.remove(device);
+            mBluetoothHeadsetConnected = false;
+            clearAllScoClients();
+        } else if (!isConnected && state == BluetoothHeadset.STATE_CONNECTED) {
+            AudioSystem.setDeviceConnectionState(device, AudioSystem.DEVICE_STATE_AVAILABLE, address);
+            mConnectedDevices.put(new Integer(device), address);
+            mBluetoothHeadsetConnected = true;
+        }
+    } else if (action.equals(Intent.ACTION_HEADSET_PLUG)) {
+        int state = intent.getIntExtra("state", 0);
+        int microphone = intent.getIntExtra("microphone", 0);
+        if (microphone != 0) {
+            boolean isConnected = mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_WIRED_HEADSET);
+            if (state == 0 && isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADSET, AudioSystem.DEVICE_STATE_UNAVAILABLE, "");
+                mConnectedDevices.remove(AudioSystem.DEVICE_OUT_WIRED_HEADSET);
+            } else if (state == 1 && !isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADSET, AudioSystem.DEVICE_STATE_AVAILABLE, "");
+                mConnectedDevices.put(new Integer(AudioSystem.DEVICE_OUT_WIRED_HEADSET), "");
+            }
+        } else {
+            boolean isConnected = mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE);
+            if (state == 0 && isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE, AudioSystem.DEVICE_STATE_UNAVAILABLE, "");
+                mConnectedDevices.remove(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE);
+            } else if (state == 1 && !isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE, AudioSystem.DEVICE_STATE_AVAILABLE, "");
+                mConnectedDevices.put(new Integer(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE), "");
+            }
+        }
+    } else if (action.equals(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED)) {
+        int state = intent.getIntExtra(BluetoothHeadset.EXTRA_AUDIO_STATE, BluetoothHeadset.STATE_ERROR);
+        synchronized (mScoClients) {
+            if (!mScoClients.isEmpty()) {
+                switch(state) {
+                    case BluetoothHeadset.AUDIO_STATE_CONNECTED:
+                        state = AudioManager.SCO_AUDIO_STATE_CONNECTED;
+                        break;
+                    case BluetoothHeadset.AUDIO_STATE_DISCONNECTED:
+                        state = AudioManager.SCO_AUDIO_STATE_DISCONNECTED;
+                        break;
+                    default:
+                        state = AudioManager.SCO_AUDIO_STATE_ERROR;
+                        break;
+                }
+                if (state != AudioManager.SCO_AUDIO_STATE_ERROR) {
+                    Intent newIntent = new Intent(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED);
+                    newIntent.putExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, state);
+                    mContext.sendStickyBroadcast(newIntent);
+                }
+            }
+        }
+    } else if (action.equals(Intent.ACTION_FM_PLUG)) {
+        // Log.v(TAG,"FMRx Analog");
+        int state = intent.getIntExtra("state", 0);
+        boolean isConnected = mConnectedDevices.containsKey(AudioSystem.DEVICE_IN_FM_ANALOG);
+        if (state == 0 && isConnected) {
+            Log.e(TAG, "calling setDeviceConnectionState Off");
+            AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_IN_FM_ANALOG, AudioSystem.DEVICE_STATE_UNAVAILABLE, "");
+            mConnectedDevices.remove(AudioSystem.DEVICE_IN_FM_ANALOG);
+        } else if (state == 1 && !isConnected) {
+            Log.e(TAG, "calling setDeviceConnectionState On");
+            AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_IN_FM_ANALOG, AudioSystem.DEVICE_STATE_AVAILABLE, "");
+            mConnectedDevices.put(new Integer(AudioSystem.DEVICE_IN_FM_ANALOG), "");
+        }
+    }
+}
+#method_after
+@Override
+public void onReceive(Context context, Intent intent) {
+    String action = intent.getAction();
+    if (action.equals(Intent.ACTION_DOCK_EVENT)) {
+        int dockState = intent.getIntExtra(Intent.EXTRA_DOCK_STATE, Intent.EXTRA_DOCK_STATE_UNDOCKED);
+        int config;
+        switch(dockState) {
+            case Intent.EXTRA_DOCK_STATE_DESK:
+                config = AudioSystem.FORCE_BT_DESK_DOCK;
+                break;
+            case Intent.EXTRA_DOCK_STATE_CAR:
+                config = AudioSystem.FORCE_BT_CAR_DOCK;
+                break;
+            case Intent.EXTRA_DOCK_STATE_UNDOCKED:
+            default:
+                config = AudioSystem.FORCE_NONE;
+        }
+        AudioSystem.setForceUse(AudioSystem.FOR_DOCK, config);
+    } else if (action.equals(BluetoothA2dp.ACTION_SINK_STATE_CHANGED)) {
+        int state = intent.getIntExtra(BluetoothA2dp.EXTRA_SINK_STATE, BluetoothA2dp.STATE_DISCONNECTED);
+        BluetoothDevice btDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+        String address = btDevice.getAddress();
+        boolean isConnected = (mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP) && ((String) mConnectedDevices.get(AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP)).equals(address));
+        if (isConnected && state != BluetoothA2dp.STATE_CONNECTED && state != BluetoothA2dp.STATE_PLAYING) {
+            if (btDevice.isBluetoothDock()) {
+                if (state == BluetoothA2dp.STATE_DISCONNECTED) {
+                    // introduction of a delay for transient disconnections of docks when
+                    // power is rapidly turned off/on, this message will be canceled if
+                    // we reconnect the dock under a preset delay
+                    makeA2dpDeviceUnavailableLater(address);
+                // the next time isConnected is evaluated, it will be false for the dock
+                }
+            } else {
+                makeA2dpDeviceUnavailableNow(address);
+            }
+        } else if (!isConnected && (state == BluetoothA2dp.STATE_CONNECTED || state == BluetoothA2dp.STATE_PLAYING)) {
+            if (btDevice.isBluetoothDock()) {
+                // this could be a reconnection after a transient disconnection
+                cancelA2dpDeviceTimeout();
+                mDockAddress = address;
+            } else {
+                // a dock: cancel the dock timeout, and make the dock unavailable now
+                if (hasScheduledA2dpDockTimeout()) {
+                    cancelA2dpDeviceTimeout();
+                    makeA2dpDeviceUnavailableNow(mDockAddress);
+                }
+            }
+            makeA2dpDeviceAvailable(address);
+        }
+    } else if (action.equals(BluetoothHeadset.ACTION_STATE_CHANGED)) {
+        int state = intent.getIntExtra(BluetoothHeadset.EXTRA_STATE, BluetoothHeadset.STATE_ERROR);
+        int device = AudioSystem.DEVICE_OUT_BLUETOOTH_SCO;
+        BluetoothDevice btDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+        String address = null;
+        if (btDevice != null) {
+            address = btDevice.getAddress();
+            BluetoothClass btClass = btDevice.getBluetoothClass();
+            if (btClass != null) {
+                switch(btClass.getDeviceClass()) {
+                    case BluetoothClass.Device.AUDIO_VIDEO_WEARABLE_HEADSET:
+                    case BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE:
+                        device = AudioSystem.DEVICE_OUT_BLUETOOTH_SCO_HEADSET;
+                        break;
+                    case BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO:
+                        device = AudioSystem.DEVICE_OUT_BLUETOOTH_SCO_CARKIT;
+                        break;
+                }
+            }
+        }
+        boolean isConnected = (mConnectedDevices.containsKey(device) && ((String) mConnectedDevices.get(device)).equals(address));
+        if (isConnected && state != BluetoothHeadset.STATE_CONNECTED) {
+            AudioSystem.setDeviceConnectionState(device, AudioSystem.DEVICE_STATE_UNAVAILABLE, address);
+            mConnectedDevices.remove(device);
+            mBluetoothHeadsetConnected = false;
+            clearAllScoClients();
+        } else if (!isConnected && state == BluetoothHeadset.STATE_CONNECTED) {
+            AudioSystem.setDeviceConnectionState(device, AudioSystem.DEVICE_STATE_AVAILABLE, address);
+            mConnectedDevices.put(new Integer(device), address);
+            mBluetoothHeadsetConnected = true;
+        }
+    } else if (action.equals(Intent.ACTION_HEADSET_PLUG)) {
+        int state = intent.getIntExtra("state", 0);
+        int microphone = intent.getIntExtra("microphone", 0);
+        if (microphone != 0) {
+            boolean isConnected = mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_WIRED_HEADSET);
+            if (state == 0 && isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADSET, AudioSystem.DEVICE_STATE_UNAVAILABLE, "");
+                mConnectedDevices.remove(AudioSystem.DEVICE_OUT_WIRED_HEADSET);
+            } else if (state == 1 && !isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADSET, AudioSystem.DEVICE_STATE_AVAILABLE, "");
+                mConnectedDevices.put(new Integer(AudioSystem.DEVICE_OUT_WIRED_HEADSET), "");
+            }
+        } else {
+            boolean isConnected = mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE);
+            if (state == 0 && isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE, AudioSystem.DEVICE_STATE_UNAVAILABLE, "");
+                mConnectedDevices.remove(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE);
+            } else if (state == 1 && !isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE, AudioSystem.DEVICE_STATE_AVAILABLE, "");
+                mConnectedDevices.put(new Integer(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE), "");
+            }
+        }
+    } else if (SystemProperties.OMAP_ENHANCEMENT && action.equals(ACTION_HDMI_PLUG)) {
+        int state = intent.getIntExtra("state", 0);
+        boolean isConnected = mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_AUX_DIGITAL);
+        if (state == 0 && isConnected) {
+            AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_AUX_DIGITAL, AudioSystem.DEVICE_STATE_UNAVAILABLE, "");
+            mConnectedDevices.remove(AudioSystem.DEVICE_OUT_AUX_DIGITAL);
+        } else if (state == 1 && !isConnected) {
+            AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_AUX_DIGITAL, AudioSystem.DEVICE_STATE_AVAILABLE, "");
+            mConnectedDevices.put(new Integer(AudioSystem.DEVICE_OUT_AUX_DIGITAL), "");
+        }
+    } else if (action.equals(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED)) {
+        int state = intent.getIntExtra(BluetoothHeadset.EXTRA_AUDIO_STATE, BluetoothHeadset.STATE_ERROR);
+        synchronized (mScoClients) {
+            if (!mScoClients.isEmpty()) {
+                switch(state) {
+                    case BluetoothHeadset.AUDIO_STATE_CONNECTED:
+                        state = AudioManager.SCO_AUDIO_STATE_CONNECTED;
+                        break;
+                    case BluetoothHeadset.AUDIO_STATE_DISCONNECTED:
+                        state = AudioManager.SCO_AUDIO_STATE_DISCONNECTED;
+                        break;
+                    default:
+                        state = AudioManager.SCO_AUDIO_STATE_ERROR;
+                        break;
+                }
+                if (state != AudioManager.SCO_AUDIO_STATE_ERROR) {
+                    Intent newIntent = new Intent(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED);
+                    newIntent.putExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, state);
+                    mContext.sendStickyBroadcast(newIntent);
+                }
+            }
+        }
+    } else if (SystemProperties.OMAP_ENHANCEMENT && action.equals(ACTION_FM_PLUG)) {
+        int state = intent.getIntExtra("state", 0);
+        boolean isConnected = mConnectedDevices.containsKey(AudioSystem.DEVICE_IN_FM_ANALOG);
+        if (state == 0 && isConnected) {
+            Log.v(TAG, "calling FM Rx Analog  Off");
+            AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_IN_FM_ANALOG, AudioSystem.DEVICE_STATE_UNAVAILABLE, "");
+            mConnectedDevices.remove(AudioSystem.DEVICE_IN_FM_ANALOG);
+        } else if (state == 1 && !isConnected) {
+            Log.v(TAG, "calling FM Rx Analog On");
+            AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_IN_FM_ANALOG, AudioSystem.DEVICE_STATE_AVAILABLE, "");
+            mConnectedDevices.put(new Integer(AudioSystem.DEVICE_IN_FM_ANALOG), "");
+        }
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void onReceive(Context context, Intent intent) {
+    String action = intent.getAction();
+    if (action.equals(Intent.ACTION_DOCK_EVENT)) {
+        int dockState = intent.getIntExtra(Intent.EXTRA_DOCK_STATE, Intent.EXTRA_DOCK_STATE_UNDOCKED);
+        int config;
+        switch(dockState) {
+            case Intent.EXTRA_DOCK_STATE_DESK:
+                config = AudioSystem.FORCE_BT_DESK_DOCK;
+                break;
+            case Intent.EXTRA_DOCK_STATE_CAR:
+                config = AudioSystem.FORCE_BT_CAR_DOCK;
+                break;
+            case Intent.EXTRA_DOCK_STATE_UNDOCKED:
+            default:
+                config = AudioSystem.FORCE_NONE;
+        }
+        AudioSystem.setForceUse(AudioSystem.FOR_DOCK, config);
+    } else if (action.equals(BluetoothA2dp.ACTION_SINK_STATE_CHANGED)) {
+        int state = intent.getIntExtra(BluetoothA2dp.EXTRA_SINK_STATE, BluetoothA2dp.STATE_DISCONNECTED);
+        BluetoothDevice btDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+        String address = btDevice.getAddress();
+        boolean isConnected = (mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP) && ((String) mConnectedDevices.get(AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP)).equals(address));
+        if (isConnected && state != BluetoothA2dp.STATE_CONNECTED && state != BluetoothA2dp.STATE_PLAYING) {
+            if (btDevice.isBluetoothDock()) {
+                if (state == BluetoothA2dp.STATE_DISCONNECTED) {
+                    // introduction of a delay for transient disconnections of docks when
+                    // power is rapidly turned off/on, this message will be canceled if
+                    // we reconnect the dock under a preset delay
+                    makeA2dpDeviceUnavailableLater(address);
+                // the next time isConnected is evaluated, it will be false for the dock
+                }
+            } else {
+                makeA2dpDeviceUnavailableNow(address);
+            }
+        } else if (!isConnected && (state == BluetoothA2dp.STATE_CONNECTED || state == BluetoothA2dp.STATE_PLAYING)) {
+            if (btDevice.isBluetoothDock()) {
+                // this could be a reconnection after a transient disconnection
+                cancelA2dpDeviceTimeout();
+                mDockAddress = address;
+            } else {
+                // a dock: cancel the dock timeout, and make the dock unavailable now
+                if (hasScheduledA2dpDockTimeout()) {
+                    cancelA2dpDeviceTimeout();
+                    makeA2dpDeviceUnavailableNow(mDockAddress);
+                }
+            }
+            makeA2dpDeviceAvailable(address);
+        }
+    } else if (action.equals(BluetoothHeadset.ACTION_STATE_CHANGED)) {
+        int state = intent.getIntExtra(BluetoothHeadset.EXTRA_STATE, BluetoothHeadset.STATE_ERROR);
+        int device = AudioSystem.DEVICE_OUT_BLUETOOTH_SCO;
+        BluetoothDevice btDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+        String address = null;
+        if (btDevice != null) {
+            address = btDevice.getAddress();
+            BluetoothClass btClass = btDevice.getBluetoothClass();
+            if (btClass != null) {
+                switch(btClass.getDeviceClass()) {
+                    case BluetoothClass.Device.AUDIO_VIDEO_WEARABLE_HEADSET:
+                    case BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE:
+                        device = AudioSystem.DEVICE_OUT_BLUETOOTH_SCO_HEADSET;
+                        break;
+                    case BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO:
+                        device = AudioSystem.DEVICE_OUT_BLUETOOTH_SCO_CARKIT;
+                        break;
+                }
+            }
+        }
+        boolean isConnected = (mConnectedDevices.containsKey(device) && ((String) mConnectedDevices.get(device)).equals(address));
+        if (isConnected && state != BluetoothHeadset.STATE_CONNECTED) {
+            AudioSystem.setDeviceConnectionState(device, AudioSystem.DEVICE_STATE_UNAVAILABLE, address);
+            mConnectedDevices.remove(device);
+            mBluetoothHeadsetConnected = false;
+            clearAllScoClients();
+        } else if (!isConnected && state == BluetoothHeadset.STATE_CONNECTED) {
+            AudioSystem.setDeviceConnectionState(device, AudioSystem.DEVICE_STATE_AVAILABLE, address);
+            mConnectedDevices.put(new Integer(device), address);
+            mBluetoothHeadsetConnected = true;
+        }
+    } else if (action.equals(Intent.ACTION_HEADSET_PLUG)) {
+        int state = intent.getIntExtra("state", 0);
+        int microphone = intent.getIntExtra("microphone", 0);
+        if (microphone != 0) {
+            boolean isConnected = mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_WIRED_HEADSET);
+            if (state == 0 && isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADSET, AudioSystem.DEVICE_STATE_UNAVAILABLE, "");
+                mConnectedDevices.remove(AudioSystem.DEVICE_OUT_WIRED_HEADSET);
+            } else if (state == 1 && !isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADSET, AudioSystem.DEVICE_STATE_AVAILABLE, "");
+                mConnectedDevices.put(new Integer(AudioSystem.DEVICE_OUT_WIRED_HEADSET), "");
+            }
+        } else {
+            boolean isConnected = mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE);
+            if (state == 0 && isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE, AudioSystem.DEVICE_STATE_UNAVAILABLE, "");
+                mConnectedDevices.remove(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE);
+            } else if (state == 1 && !isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE, AudioSystem.DEVICE_STATE_AVAILABLE, "");
+                mConnectedDevices.put(new Integer(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE), "");
+            }
+        }
+    } else if (action.equals(ACTION_HDMI_PLUG)) {
+        int state = intent.getIntExtra("state", 0);
+        boolean isConnected = mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_AUX_DIGITAL);
+        if (state == 0 && isConnected) {
+            AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_AUX_DIGITAL, AudioSystem.DEVICE_STATE_UNAVAILABLE, "");
+            mConnectedDevices.remove(AudioSystem.DEVICE_OUT_AUX_DIGITAL);
+        } else if (state == 1 && !isConnected) {
+            AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_AUX_DIGITAL, AudioSystem.DEVICE_STATE_AVAILABLE, "");
+            mConnectedDevices.put(new Integer(AudioSystem.DEVICE_OUT_AUX_DIGITAL), "");
+        }
+    } else if (action.equals(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED)) {
+        int state = intent.getIntExtra(BluetoothHeadset.EXTRA_AUDIO_STATE, BluetoothHeadset.STATE_ERROR);
+        synchronized (mScoClients) {
+            if (!mScoClients.isEmpty()) {
+                switch(state) {
+                    case BluetoothHeadset.AUDIO_STATE_CONNECTED:
+                        state = AudioManager.SCO_AUDIO_STATE_CONNECTED;
+                        break;
+                    case BluetoothHeadset.AUDIO_STATE_DISCONNECTED:
+                        state = AudioManager.SCO_AUDIO_STATE_DISCONNECTED;
+                        break;
+                    default:
+                        state = AudioManager.SCO_AUDIO_STATE_ERROR;
+                        break;
+                }
+                if (state != AudioManager.SCO_AUDIO_STATE_ERROR) {
+                    Intent newIntent = new Intent(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED);
+                    newIntent.putExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, state);
+                    mContext.sendStickyBroadcast(newIntent);
+                }
+            }
+        }
+    }
+}
+#method_after
+@Override
+public void onReceive(Context context, Intent intent) {
+    String action = intent.getAction();
+    if (action.equals(Intent.ACTION_DOCK_EVENT)) {
+        int dockState = intent.getIntExtra(Intent.EXTRA_DOCK_STATE, Intent.EXTRA_DOCK_STATE_UNDOCKED);
+        int config;
+        switch(dockState) {
+            case Intent.EXTRA_DOCK_STATE_DESK:
+                config = AudioSystem.FORCE_BT_DESK_DOCK;
+                break;
+            case Intent.EXTRA_DOCK_STATE_CAR:
+                config = AudioSystem.FORCE_BT_CAR_DOCK;
+                break;
+            case Intent.EXTRA_DOCK_STATE_UNDOCKED:
+            default:
+                config = AudioSystem.FORCE_NONE;
+        }
+        AudioSystem.setForceUse(AudioSystem.FOR_DOCK, config);
+    } else if (action.equals(BluetoothA2dp.ACTION_SINK_STATE_CHANGED)) {
+        int state = intent.getIntExtra(BluetoothA2dp.EXTRA_SINK_STATE, BluetoothA2dp.STATE_DISCONNECTED);
+        BluetoothDevice btDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+        String address = btDevice.getAddress();
+        boolean isConnected = (mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP) && ((String) mConnectedDevices.get(AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP)).equals(address));
+        if (isConnected && state != BluetoothA2dp.STATE_CONNECTED && state != BluetoothA2dp.STATE_PLAYING) {
+            if (btDevice.isBluetoothDock()) {
+                if (state == BluetoothA2dp.STATE_DISCONNECTED) {
+                    // introduction of a delay for transient disconnections of docks when
+                    // power is rapidly turned off/on, this message will be canceled if
+                    // we reconnect the dock under a preset delay
+                    makeA2dpDeviceUnavailableLater(address);
+                // the next time isConnected is evaluated, it will be false for the dock
+                }
+            } else {
+                makeA2dpDeviceUnavailableNow(address);
+            }
+        } else if (!isConnected && (state == BluetoothA2dp.STATE_CONNECTED || state == BluetoothA2dp.STATE_PLAYING)) {
+            if (btDevice.isBluetoothDock()) {
+                // this could be a reconnection after a transient disconnection
+                cancelA2dpDeviceTimeout();
+                mDockAddress = address;
+            } else {
+                // a dock: cancel the dock timeout, and make the dock unavailable now
+                if (hasScheduledA2dpDockTimeout()) {
+                    cancelA2dpDeviceTimeout();
+                    makeA2dpDeviceUnavailableNow(mDockAddress);
+                }
+            }
+            makeA2dpDeviceAvailable(address);
+        }
+    } else if (action.equals(BluetoothHeadset.ACTION_STATE_CHANGED)) {
+        int state = intent.getIntExtra(BluetoothHeadset.EXTRA_STATE, BluetoothHeadset.STATE_ERROR);
+        int device = AudioSystem.DEVICE_OUT_BLUETOOTH_SCO;
+        BluetoothDevice btDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+        String address = null;
+        if (btDevice != null) {
+            address = btDevice.getAddress();
+            BluetoothClass btClass = btDevice.getBluetoothClass();
+            if (btClass != null) {
+                switch(btClass.getDeviceClass()) {
+                    case BluetoothClass.Device.AUDIO_VIDEO_WEARABLE_HEADSET:
+                    case BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE:
+                        device = AudioSystem.DEVICE_OUT_BLUETOOTH_SCO_HEADSET;
+                        break;
+                    case BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO:
+                        device = AudioSystem.DEVICE_OUT_BLUETOOTH_SCO_CARKIT;
+                        break;
+                }
+            }
+        }
+        boolean isConnected = (mConnectedDevices.containsKey(device) && ((String) mConnectedDevices.get(device)).equals(address));
+        if (isConnected && state != BluetoothHeadset.STATE_CONNECTED) {
+            AudioSystem.setDeviceConnectionState(device, AudioSystem.DEVICE_STATE_UNAVAILABLE, address);
+            mConnectedDevices.remove(device);
+            mBluetoothHeadsetConnected = false;
+            clearAllScoClients();
+        } else if (!isConnected && state == BluetoothHeadset.STATE_CONNECTED) {
+            AudioSystem.setDeviceConnectionState(device, AudioSystem.DEVICE_STATE_AVAILABLE, address);
+            mConnectedDevices.put(new Integer(device), address);
+            mBluetoothHeadsetConnected = true;
+        }
+    } else if (action.equals(Intent.ACTION_HEADSET_PLUG)) {
+        int state = intent.getIntExtra("state", 0);
+        int microphone = intent.getIntExtra("microphone", 0);
+        if (microphone != 0) {
+            boolean isConnected = mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_WIRED_HEADSET);
+            if (state == 0 && isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADSET, AudioSystem.DEVICE_STATE_UNAVAILABLE, "");
+                mConnectedDevices.remove(AudioSystem.DEVICE_OUT_WIRED_HEADSET);
+            } else if (state == 1 && !isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADSET, AudioSystem.DEVICE_STATE_AVAILABLE, "");
+                mConnectedDevices.put(new Integer(AudioSystem.DEVICE_OUT_WIRED_HEADSET), "");
+            }
+        } else {
+            boolean isConnected = mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE);
+            if (state == 0 && isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE, AudioSystem.DEVICE_STATE_UNAVAILABLE, "");
+                mConnectedDevices.remove(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE);
+            } else if (state == 1 && !isConnected) {
+                AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE, AudioSystem.DEVICE_STATE_AVAILABLE, "");
+                mConnectedDevices.put(new Integer(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE), "");
+            }
+        }
+    } else if (SystemProperties.OMAP_ENHANCEMENT && action.equals(ACTION_HDMI_PLUG)) {
+        int state = intent.getIntExtra("state", 0);
+        boolean isConnected = mConnectedDevices.containsKey(AudioSystem.DEVICE_OUT_AUX_DIGITAL);
+        if (state == 0 && isConnected) {
+            AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_AUX_DIGITAL, AudioSystem.DEVICE_STATE_UNAVAILABLE, "");
+            mConnectedDevices.remove(AudioSystem.DEVICE_OUT_AUX_DIGITAL);
+        } else if (state == 1 && !isConnected) {
+            AudioSystem.setDeviceConnectionState(AudioSystem.DEVICE_OUT_AUX_DIGITAL, AudioSystem.DEVICE_STATE_AVAILABLE, "");
+            mConnectedDevices.put(new Integer(AudioSystem.DEVICE_OUT_AUX_DIGITAL), "");
+        }
+    } else if (action.equals(BluetoothHeadset.ACTION_AUDIO_STATE_CHANGED)) {
+        int state = intent.getIntExtra(BluetoothHeadset.EXTRA_AUDIO_STATE, BluetoothHeadset.STATE_ERROR);
+        synchronized (mScoClients) {
+            if (!mScoClients.isEmpty()) {
+                switch(state) {
+                    case BluetoothHeadset.AUDIO_STATE_CONNECTED:
+                        state = AudioManager.SCO_AUDIO_STATE_CONNECTED;
+                        break;
+                    case BluetoothHeadset.AUDIO_STATE_DISCONNECTED:
+                        state = AudioManager.SCO_AUDIO_STATE_DISCONNECTED;
+                        break;
+                    default:
+                        state = AudioManager.SCO_AUDIO_STATE_ERROR;
+                        break;
+                }
+                if (state != AudioManager.SCO_AUDIO_STATE_ERROR) {
+                    Intent newIntent = new Intent(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED);
+                    newIntent.putExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, state);
+                    mContext.sendStickyBroadcast(newIntent);
+                }
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+public void setVideoEncodingBitRate(int bitRate) {
+    if (bitRate < 0) {
+        throw new IllegalArgumentException("Video encoding bit rate is not positive");
+    }
+    setParameter(String.format("video-param-encoding-bitrate=%d", bitRate));
+}
+#method_after
+public void setVideoEncodingBitRate(int bitRate) {
+    if (SystemProperties.OMAP_ENHANCEMENT) {
+        if (bitRate < 0) {
+            throw new IllegalArgumentException("Video encoding bit rate is not positive");
+        }
+    } else {
+        if (bitRate <= 0) {
+            throw new IllegalArgumentException("Video encoding bit rate is not positive");
+        }
+    }
+    setParameter(String.format("video-param-encoding-bitrate=%d", bitRate));
+}
+#end_block
+

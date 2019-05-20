@@ -1,0 +1,53 @@
+4
+#method_before
+public void setRetryPolicy(RetryPolicy policy) {
+    this.client.setRetryPolicy(policy);
+}
+#method_after
+public void setRetryPolicy(RetryPolicy policy) {
+    this.policy = policy;
+}
+#end_block
+
+#method_before
+private void retryCall(final JsonRpcRequest request, final JsonRpcCall call) throws ClientConnectionException {
+    RetryPolicy policy = this.client.getRetryPolicy();
+    ResponseTracking tracking = new ResponseTracking(request, call, new RetryContext(policy), getTimeout(policy.getRetryTimeOut(), policy.getTimeUnit()), this.client);
+    this.tracker.registerTrackingRequest(request, tracking);
+}
+#method_after
+private void retryCall(final JsonRpcRequest request, final JsonRpcCall call) throws ClientConnectionException {
+    ResponseTracking tracking = new ResponseTracking(request, call, new RetryContext(policy), getTimeout(this.policy.getRetryTimeOut(), this.policy.getTimeUnit()), client);
+    this.tracker.registerTrackingRequest(request, tracking);
+}
+#end_block
+
+#method_before
+public void setRetryPolicy(RetryPolicy policy) {
+    this.policy = policy;
+    if (isOpen()) {
+        disconnect();
+    }
+}
+#method_after
+public void setRetryPolicy(RetryPolicy policy) {
+    this.policy = policy;
+}
+#end_block
+
+#method_before
+private void processHeartbeat() {
+    if (!this.isInInit() && this.policy.isHeartbeat() && this.lastHeartbeat + this.policy.getHeartbeat() < System.currentTimeMillis()) {
+        log.debug("Heartbeat exeeded. Closing channel");
+        this.closeChannel();
+    }
+}
+#method_after
+private void processHeartbeat() {
+    if (!this.isInInit() && this.isHeartbeat.get() && this.lastHeartbeat + this.policy.getHeartbeat() < System.currentTimeMillis()) {
+        log.debug("Heartbeat exeeded. Closing channel");
+        this.closeChannel();
+    }
+}
+#end_block
+

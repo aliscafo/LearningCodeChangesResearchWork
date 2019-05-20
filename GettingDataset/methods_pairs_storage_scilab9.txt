@@ -1,0 +1,558 @@
+7
+#method_before
+private void initComponents(final XcosDiagram diagram) {
+    final Window window = ScilabWindow.createWindow();
+    final ConfigurationManager manager = ConfigurationManager.getInstance();
+    final PositionType p = manager.getSettings().getWindows().getDiagram();
+    window.setDims(new Size(p.getWidth(), p.getHeight()));
+    window.setPosition(new Position(p.getX(), p.getY()));
+    /* Create the menu bar */
+    menuBar = createMenuBar(diagram);
+    addMenuBar(menuBar);
+    /* Create the toolbar */
+    final ToolBar toolBar = createToolBar(diagram);
+    addToolBar(toolBar);
+    /* Create the infoBar */
+    addInfoBar(ScilabTextBox.createTextBox());
+    window.addTab(this);
+    BarUpdater.updateBars(getParentWindowId(), getMenuBar(), getToolBar(), getInfoBar(), getName());
+}
+#method_after
+/*
+     * Specific implementation
+     */
+private void initComponents(final XcosDiagram diagram) {
+    /* Create the menu bar */
+    menuBar = createMenuBar(diagram);
+    setMenuBar(menuBar);
+    /* Create the toolbar */
+    final ToolBar toolBar = createToolBar(diagram);
+    setToolBar(toolBar);
+    // No SimpleTab.addMember(ScilabComponent ...) so perform a raw
+    // association.
+    setContentPane(diagram.getAsComponent());
+    /* Create the infoBar */
+    setInfoBar(ScilabTextBox.createTextBox());
+}
+#end_block
+
+#method_before
+/**
+ * Create the windows menu bar
+ *
+ * @param diagram
+ *            the diagram
+ * @return the Xcos diagram menu bar
+ */
+private MenuBar createMenuBar(final XcosDiagram diagram) {
+    menuBar = ScilabMenuBar.createMenuBar();
+    /**
+     * FILE MENU
+     */
+    fileMenu = ScilabMenu.createMenu();
+    fileMenu.setText(XcosMessages.FILE);
+    fileMenu.setMnemonic('F');
+    fileMenu.add(NewDiagramAction.createMenu(diagram));
+    fileMenu.add(OpenAction.createMenu(diagram));
+    fileMenu.add(OpenInSciAction.createMenu(diagram));
+    fileMenu.addSeparator();
+    fileMenu.add(SaveAction.createMenu(diagram));
+    fileMenu.add(SaveAsAction.createMenu(diagram));
+    fileMenu.add(ExportAction.createMenu(diagram));
+    recentsMenu = createRecentMenu();
+    fileMenu.add(recentsMenu);
+    fileMenu.add(PrintAction.createMenu(diagram));
+    fileMenu.addSeparator();
+    fileMenu.add(CloseAction.createMenu(diagram));
+    fileMenu.addSeparator();
+    fileMenu.add(QuitAction.createMenu(diagram));
+    menuBar.add(fileMenu);
+    /**
+     * Edit menu
+     */
+    edit = ScilabMenu.createMenu();
+    edit.setText(XcosMessages.EDIT);
+    edit.setMnemonic('E');
+    menuBar.add(edit);
+    edit.add(UndoAction.undoMenu(diagram));
+    edit.add(RedoAction.redoMenu(diagram));
+    edit.addSeparator();
+    edit.add(CutAction.cutMenu(diagram));
+    edit.add(CopyAction.copyMenu(diagram));
+    edit.add(PasteAction.pasteMenu(diagram));
+    edit.add(DeleteAction.createMenu(diagram));
+    edit.addSeparator();
+    edit.add(SelectAllAction.createMenu(diagram));
+    edit.add(InvertSelectionAction.createMenu(diagram));
+    edit.addSeparator();
+    edit.add(BlockParametersAction.createMenu(diagram));
+    edit.addSeparator();
+    edit.add(RegionToSuperblockAction.createMenu(diagram));
+    /**
+     * View menu
+     */
+    view = ScilabMenu.createMenu();
+    view.setText(XcosMessages.VIEW);
+    view.setMnemonic('V');
+    menuBar.add(view);
+    view.add(ZoomInAction.zoominMenu(diagram));
+    view.add(ZoomOutAction.zoomoutMenu(diagram));
+    view.add(FitDiagramToViewAction.createMenu(diagram));
+    view.add(NormalViewAction.createMenu(diagram));
+    view.addSeparator();
+    view.add(ViewPaletteBrowserAction.createCheckBoxMenu(diagram));
+    view.add(ViewDiagramBrowserAction.createMenu(diagram));
+    final CheckBoxMenuItem menu = ViewViewportAction.createCheckBoxMenu(diagram);
+    view.add(menu);
+    (diagram).setViewPortMenuItem(menu);
+    view.add(ViewDetailsAction.createMenu(diagram));
+    /**
+     * Simulation menu
+     */
+    simulate = ScilabMenu.createMenu();
+    simulate.setText(XcosMessages.SIMULATION);
+    simulate.setMnemonic('S');
+    menuBar.add(simulate);
+    final MenuItem startMenu = StartAction.createMenu(diagram);
+    final MenuItem stopMenu = StopAction.createMenu(diagram);
+    simulate.add(SetupAction.createMenu(diagram));
+    simulate.add(DebugLevelAction.createMenu(diagram));
+    simulate.add(SetContextAction.createMenu(diagram));
+    simulate.add(CompileAction.createMenu(diagram));
+    simulate.add(InitModelicaAction.createMenu(diagram));
+    simulate.add(startMenu);
+    simulate.add(stopMenu);
+    /**
+     * Format menu
+     */
+    format = ScilabMenu.createMenu();
+    format.setText(XcosMessages.FORMAT);
+    format.setMnemonic('O');
+    menuBar.add(format);
+    format.add(RotateAction.createMenu(diagram));
+    format.add(FlipAction.createMenu(diagram));
+    format.add(MirrorAction.createMenu(diagram));
+    format.add(ShowHideShadowAction.createMenu(diagram));
+    format.addSeparator();
+    alignMenu = ScilabMenu.createMenu();
+    alignMenu.setText(XcosMessages.ALIGN_BLOCKS);
+    alignMenu.add(AlignBlockActionLeft.createMenu(diagram));
+    alignMenu.add(AlignBlockActionCenter.createMenu(diagram));
+    alignMenu.add(AlignBlockActionRight.createMenu(diagram));
+    alignMenu.addSeparator();
+    alignMenu.add(AlignBlockActionTop.createMenu(diagram));
+    alignMenu.add(AlignBlockActionMiddle.createMenu(diagram));
+    alignMenu.add(AlignBlockActionBottom.createMenu(diagram));
+    format.add(alignMenu);
+    format.addSeparator();
+    format.add(BorderColorAction.createMenu(diagram));
+    format.add(FilledColorAction.createMenu(diagram));
+    format.addSeparator();
+    linkStyle = ScilabMenu.createMenu();
+    linkStyle.setText(XcosMessages.LINK_STYLE);
+    linkStyle.add(StyleHorizontalAction.createMenu(diagram));
+    linkStyle.add(StyleStraightAction.createMenu(diagram));
+    linkStyle.add(StyleVerticalAction.createMenu(diagram));
+    format.add(linkStyle);
+    format.addSeparator();
+    format.add(DiagramBackgroundAction.createMenu(diagram));
+    final CheckBoxMenuItem gridMenu = ViewGridAction.createCheckBoxMenu(diagram);
+    format.add(gridMenu);
+    /**
+     * Tools menu
+     */
+    tools = ScilabMenu.createMenu();
+    tools.setText(XcosMessages.TOOLS);
+    tools.setMnemonic('T');
+    menuBar.add(tools);
+    tools.add(CodeGenerationAction.createMenu(diagram));
+    /**
+     * Help menu
+     */
+    help = ScilabMenu.createMenu();
+    help.setText(XcosMessages.HELP);
+    help.setMnemonic('?');
+    menuBar.add(help);
+    help.add(XcosDocumentationAction.createMenu(diagram));
+    help.add(BlockDocumentationAction.createMenu(diagram));
+    help.addSeparator();
+    help.add(XcosDemonstrationsAction.createMenu(diagram));
+    help.addSeparator();
+    help.add(AboutXcosAction.createMenu(diagram));
+    return menuBar;
+}
+#method_after
+/**
+ * Create the windows menu bar
+ *
+ * @param diagram
+ *            the diagram
+ * @return the Xcos diagram menu bar
+ */
+private MenuBar createMenuBar(final XcosDiagram diagram) {
+    menuBar = ScilabMenuBar.createMenuBar();
+    /**
+     * FILE MENU
+     */
+    fileMenu = ScilabMenu.createMenu();
+    fileMenu.setText(XcosMessages.FILE);
+    fileMenu.setMnemonic('F');
+    fileMenu.add(NewDiagramAction.createMenu(diagram));
+    fileMenu.add(OpenAction.createMenu(diagram));
+    fileMenu.add(OpenInSciAction.createMenu(diagram));
+    fileMenu.addSeparator();
+    fileMenu.add(SaveAction.createMenu(diagram));
+    fileMenu.add(SaveAsAction.createMenu(diagram));
+    fileMenu.add(ExportAction.createMenu(diagram));
+    recentsMenu = createRecentMenu();
+    fileMenu.add(recentsMenu);
+    fileMenu.add(PrintAction.createMenu(diagram));
+    fileMenu.addSeparator();
+    fileMenu.add(CloseAction.createMenu(diagram));
+    fileMenu.addSeparator();
+    fileMenu.add(QuitAction.createMenu(diagram));
+    menuBar.add(fileMenu);
+    /**
+     * Edit menu
+     */
+    edit = ScilabMenu.createMenu();
+    edit.setText(XcosMessages.EDIT);
+    edit.setMnemonic('E');
+    menuBar.add(edit);
+    edit.add(UndoAction.undoMenu(diagram));
+    edit.add(RedoAction.redoMenu(diagram));
+    edit.addSeparator();
+    edit.add(CutAction.cutMenu(diagram));
+    edit.add(CopyAction.copyMenu(diagram));
+    edit.add(PasteAction.pasteMenu(diagram));
+    edit.add(DeleteAction.createMenu(diagram));
+    edit.addSeparator();
+    edit.add(SelectAllAction.createMenu(diagram));
+    edit.add(InvertSelectionAction.createMenu(diagram));
+    edit.addSeparator();
+    edit.add(BlockParametersAction.createMenu(diagram));
+    edit.addSeparator();
+    edit.add(RegionToSuperblockAction.createMenu(diagram));
+    /**
+     * View menu
+     */
+    view = ScilabMenu.createMenu();
+    view.setText(XcosMessages.VIEW);
+    view.setMnemonic('V');
+    menuBar.add(view);
+    view.add(ZoomInAction.zoominMenu(diagram));
+    view.add(ZoomOutAction.zoomoutMenu(diagram));
+    view.add(FitDiagramToViewAction.createMenu(diagram));
+    view.add(NormalViewAction.createMenu(diagram));
+    view.addSeparator();
+    view.add(ViewPaletteBrowserAction.createCheckBoxMenu(diagram));
+    view.add(ViewDiagramBrowserAction.createMenu(diagram));
+    final CheckBoxMenuItem menuItem = ViewViewportAction.createCheckBoxMenu(diagram);
+    viewport = (JCheckBoxMenuItem) menuItem.getAsSimpleCheckBoxMenuItem();
+    view.add(menuItem);
+    view.add(ViewDetailsAction.createMenu(diagram));
+    /**
+     * Simulation menu
+     */
+    simulate = ScilabMenu.createMenu();
+    simulate.setText(XcosMessages.SIMULATION);
+    simulate.setMnemonic('S');
+    menuBar.add(simulate);
+    final MenuItem startMenu = StartAction.createMenu(diagram);
+    final MenuItem stopMenu = StopAction.createMenu(diagram);
+    simulate.add(SetupAction.createMenu(diagram));
+    simulate.add(DebugLevelAction.createMenu(diagram));
+    simulate.add(SetContextAction.createMenu(diagram));
+    simulate.add(CompileAction.createMenu(diagram));
+    simulate.add(InitModelicaAction.createMenu(diagram));
+    simulate.add(startMenu);
+    simulate.add(stopMenu);
+    /**
+     * Format menu
+     */
+    format = ScilabMenu.createMenu();
+    format.setText(XcosMessages.FORMAT);
+    format.setMnemonic('O');
+    menuBar.add(format);
+    format.add(RotateAction.createMenu(diagram));
+    format.add(FlipAction.createMenu(diagram));
+    format.add(MirrorAction.createMenu(diagram));
+    format.add(ShowHideShadowAction.createMenu(diagram));
+    format.addSeparator();
+    alignMenu = ScilabMenu.createMenu();
+    alignMenu.setText(XcosMessages.ALIGN_BLOCKS);
+    alignMenu.add(AlignBlockActionLeft.createMenu(diagram));
+    alignMenu.add(AlignBlockActionCenter.createMenu(diagram));
+    alignMenu.add(AlignBlockActionRight.createMenu(diagram));
+    alignMenu.addSeparator();
+    alignMenu.add(AlignBlockActionTop.createMenu(diagram));
+    alignMenu.add(AlignBlockActionMiddle.createMenu(diagram));
+    alignMenu.add(AlignBlockActionBottom.createMenu(diagram));
+    format.add(alignMenu);
+    format.addSeparator();
+    format.add(BorderColorAction.createMenu(diagram));
+    format.add(FilledColorAction.createMenu(diagram));
+    format.addSeparator();
+    linkStyle = ScilabMenu.createMenu();
+    linkStyle.setText(XcosMessages.LINK_STYLE);
+    linkStyle.add(StyleHorizontalAction.createMenu(diagram));
+    linkStyle.add(StyleStraightAction.createMenu(diagram));
+    linkStyle.add(StyleVerticalAction.createMenu(diagram));
+    format.add(linkStyle);
+    format.addSeparator();
+    format.add(DiagramBackgroundAction.createMenu(diagram));
+    final CheckBoxMenuItem gridMenu = ViewGridAction.createCheckBoxMenu(diagram);
+    format.add(gridMenu);
+    /**
+     * Tools menu
+     */
+    tools = ScilabMenu.createMenu();
+    tools.setText(XcosMessages.TOOLS);
+    tools.setMnemonic('T');
+    menuBar.add(tools);
+    tools.add(CodeGenerationAction.createMenu(diagram));
+    /**
+     * Help menu
+     */
+    help = ScilabMenu.createMenu();
+    help.setText(XcosMessages.HELP);
+    help.setMnemonic('?');
+    menuBar.add(help);
+    help.add(XcosDocumentationAction.createMenu(diagram));
+    help.add(BlockDocumentationAction.createMenu(diagram));
+    help.addSeparator();
+    help.add(XcosDemonstrationsAction.createMenu(diagram));
+    help.addSeparator();
+    help.add(AboutXcosAction.createMenu(diagram));
+    return menuBar;
+}
+#end_block
+
+#method_before
+// CSON: JavaNCSS
+private Menu createRecentMenu() {
+    final Menu recent;
+    recent = ScilabMenu.createMenu();
+    recent.setText(XcosMessages.RECENT_FILES);
+    final ConfigurationManager manager = ConfigurationManager.getInstance();
+    final List<DocumentType> recentFiles = manager.getSettings().getRecentFiles().getDocument();
+    for (int i = 0; i < recentFiles.size(); i++) {
+        URL url;
+        try {
+            url = new URL(recentFiles.get(i).getUrl());
+        } catch (final MalformedURLException e) {
+            LogFactory.getLog(XcosTab.class).error(e);
+            break;
+        }
+        recent.add(RecentFileAction.createMenu(url));
+    }
+    ConfigurationManager.getInstance().addPropertyChangeListener(ConfigurationConstants.RECENT_FILES_CHANGED, new PropertyChangeListener() {
+
+        @Override
+        public void propertyChange(final PropertyChangeEvent evt) {
+            assert evt.getPropertyName().equals(ConfigurationConstants.RECENT_FILES_CHANGED);
+            /*
+                 * We only handle menu creation there. Return when this is not
+                 * the case.
+                 */
+            if (evt.getOldValue() != null) {
+                return;
+            }
+            URL url;
+            try {
+                url = new URL(((DocumentType) evt.getNewValue()).getUrl());
+            } catch (final MalformedURLException e) {
+                LogFactory.getLog(XcosTab.class).error(e);
+                return;
+            }
+            ((SwingScilabMenu) recent.getAsSimpleMenu()).add((SwingScilabMenu) RecentFileAction.createMenu(url).getAsSimpleMenu(), 0);
+        }
+    });
+    return recent;
+}
+#method_after
+// CSON: JavaNCSS
+private Menu createRecentMenu() {
+    final Menu recent;
+    recent = ScilabMenu.createMenu();
+    recent.setText(XcosMessages.RECENT_FILES);
+    final ConfigurationManager manager = ConfigurationManager.getInstance();
+    final List<DocumentType> recentFiles = manager.getSettings().getRecent();
+    for (int i = 0; i < recentFiles.size(); i++) {
+        URL url;
+        try {
+            url = new URL(recentFiles.get(i).getUrl());
+        } catch (final MalformedURLException e) {
+            LogFactory.getLog(XcosTab.class).error(e);
+            break;
+        }
+        recent.add(RecentFileAction.createMenu(url));
+    }
+    ConfigurationManager.getInstance().addPropertyChangeListener(ConfigurationConstants.RECENT_FILES_CHANGED, new PropertyChangeListener() {
+
+        @Override
+        public void propertyChange(final PropertyChangeEvent evt) {
+            assert evt.getPropertyName().equals(ConfigurationConstants.RECENT_FILES_CHANGED);
+            /*
+                         * We only handle menu creation there. Return when this
+                         * is not the case.
+                         */
+            if (evt.getOldValue() != null) {
+                return;
+            }
+            URL url;
+            try {
+                url = new URL(((DocumentType) evt.getNewValue()).getUrl());
+            } catch (final MalformedURLException e) {
+                LogFactory.getLog(XcosTab.class).error(e);
+                return;
+            }
+            ((SwingScilabMenu) recent.getAsSimpleMenu()).add((SwingScilabMenu) RecentFileAction.createMenu(url).getAsSimpleMenu(), 0);
+        }
+    });
+    return recent;
+}
+#end_block
+
+#method_before
+@Override
+public void actionPerformed(ActionEvent e) {
+    SwingScilabFileChooser fc = ((SwingScilabFileChooser) ScilabFileChooser.createFileChooser().getAsSimpleFileChooser());
+    fc.setTitle(XcosMessages.OPEN);
+    fc.setUiDialogType(JFileChooser.OPEN_DIALOG);
+    fc.setMultipleSelection(true);
+    /* Configure the file chooser */
+    configureFileFilters(fc);
+    int status = fc.showOpenDialog(getGraph(e).getAsComponent());
+    if (status != JFileChooser.APPROVE_OPTION) {
+        return;
+    }
+    final File onlySelected = fc.getSelectedFile();
+    if (onlySelected != null) {
+        Xcos.getInstance().open(onlySelected);
+    }
+    final File[] multiSelected = fc.getSelectedFiles();
+    for (File file : multiSelected) {
+        Xcos.getInstance().open(file);
+    }
+}
+#method_after
+@Override
+public void actionPerformed(ActionEvent e) {
+    SwingScilabFileChooser fc = ((SwingScilabFileChooser) ScilabFileChooser.createFileChooser().getAsSimpleFileChooser());
+    fc.setTitle(XcosMessages.OPEN);
+    fc.setUiDialogType(JFileChooser.OPEN_DIALOG);
+    fc.setMultipleSelection(true);
+    /* Configure the file chooser */
+    configureFileFilters(fc);
+    fc.setCurrentDirectory(new File(CommonFileUtils.getCWD()));
+    int status = fc.showOpenDialog(getGraph(e).getAsComponent());
+    if (status != JFileChooser.APPROVE_OPTION) {
+        return;
+    }
+    final File onlySelected = fc.getSelectedFile();
+    if (onlySelected != null) {
+        Xcos.getInstance().open(onlySelected);
+    }
+    final File[] multiSelected = fc.getSelectedFiles();
+    for (File file : multiSelected) {
+        Xcos.getInstance().open(file);
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void updateDependencies(List<SwingScilabTab> list, ListIterator<SwingScilabTab> it) {
+    final PaletteManagerView palette = PaletteManagerView.get();
+    /*
+             * If it already contains the palette, then break.
+             */
+    if (palette != null && list.contains(palette)) {
+        return;
+    }
+    final boolean wasLastOpened = Xcos.getInstance().wasLastOpened(list);
+    /*
+             * Append the palette if all the xcos files will be closed
+             */
+    if (wasLastOpened) {
+        it.add(palette);
+    }
+}
+#method_after
+@Override
+public void updateDependencies(List<SwingScilabTab> list, ListIterator<SwingScilabTab> it) {
+    final PaletteManagerView palette = PaletteManagerView.get();
+    /*
+             * if palette is not visible, then break
+             */
+    if (palette == null) {
+        return;
+    }
+    /*
+             * If it already contains the palette, then break.
+             */
+    if (list.contains(palette)) {
+        return;
+    }
+    final boolean wasLastOpened = Xcos.getInstance().wasLastOpened(list);
+    /*
+             * Append the palette if all the xcos files will be closed
+             */
+    if (wasLastOpened) {
+        it.add(palette);
+    }
+}
+#end_block
+
+#method_before
+public static void setVisible(final boolean status) {
+    final PaletteManagerView tab = PaletteManagerView.get();
+    if (status && tab == null) {
+        final boolean view = WindowsConfigurationManager.restoreUUID(PaletteManagerView.DEFAULT_TAB_UUID);
+        if (!view) {
+            PaletteManagerView.restore(null, true);
+        }
+    } else {
+        ClosingOperationsManager.startClosingOperation((SwingScilabTab) PaletteManagerView.get());
+    }
+    getInstance().pcs.firePropertyChange("visible", !status, status);
+}
+#method_after
+public static void setVisible(final boolean status) {
+    final PaletteManagerView tab = PaletteManagerView.get();
+    if (status && tab == null) {
+        final boolean view = WindowsConfigurationManager.restoreUUID(PaletteManagerView.DEFAULT_TAB_UUID);
+        if (!view) {
+            PaletteManagerView.restore(null, true);
+        }
+    } else {
+        ClosingOperationsManager.startClosingOperation((SwingScilabTab) PaletteManagerView.get());
+    }
+    getInstance().firePropertyChange("visible", !status, status);
+}
+#end_block
+
+#method_before
+public static void restore(Void v, final boolean visible) {
+    PaletteManagerView tab = new PaletteManagerView(PaletteManager.getInstance());
+    if (visible) {
+        tab.createDefaultWindow().setVisible(true);
+    }
+    ClosingOperationsManager.addDependencyWithRoot((SwingScilabTab) tab);
+    ClosingOperationsManager.registerClosingOperation((SwingScilabTab) tab, new ClosingOperation());
+    ScilabTabFactory.getInstance().addToCache(tab);
+}
+#method_after
+public static void restore(Void v, final boolean visible) {
+    PaletteManagerView tab = new PaletteManagerView(PaletteManager.getInstance());
+    if (visible) {
+        tab.createDefaultWindow().setVisible(true);
+        PaletteManager.getInstance().firePropertyChange("visible", false, true);
+    }
+    ClosingOperationsManager.addDependencyWithRoot((SwingScilabTab) tab);
+    ClosingOperationsManager.registerClosingOperation((SwingScilabTab) tab, new ClosingOperation());
+    ScilabTabFactory.getInstance().addToCache(tab);
+}
+#end_block
+

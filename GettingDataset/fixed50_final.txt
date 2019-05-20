@@ -1,0 +1,364 @@
+private void METHOD_1 ( ) { cmd = new ReceiveCommand ( ObjectId . METHOD_2 ( ) , VAR_1 , TYPE_1 . METHOD_3 ( user . getAccountId ( ) , notes . getChangeId ( ) , psId ) ) ; }
+void METHOD_1 ( TYPE_1 VAR_1 ) { synchronized ( VAR_2 ) { VAR_3 . METHOD_2 ( VAR_1 . METHOD_3 ( ) ) ; } }
+private static boolean METHOD_1 ( String VAR_1 ) { return ! TYPE_1 . METHOD_2 ( VAR_1 ) && VAR_1 . METHOD_3 ( STRING_1 ) ; }
+public static String METHOD_1 ( String VAR_1 ) { int i = VAR_1 . METHOD_2 ( CHAR_1 ) ; if ( i > TYPE_1 . length ( ) - 1 ) { return VAR_1 . METHOD_3 ( 0 , i ) ; } return TYPE_1 ; }
+public static String METHOD_1 ( Change . Id changeId , Account . Id VAR_1 ) { StringBuilder r = METHOD_2 ( VAR_2 , changeId . get ( ) ) ; r . append ( VAR_1 . get ( ) ) ; return r . toString ( ) ; }
+public static String METHOD_1 ( Change . Id changeId ) { return METHOD_2 ( VAR_2 , changeId . get ( ) ) . toString ( ) ; }
+private static boolean METHOD_1 ( String query ) { return TYPE_1 . METHOD_2 ( query ) || TYPE_2 . METHOD_2 ( query ) || TYPE_3 . METHOD_2 ( query ) ; }
+public void METHOD_1 ( ) { db . close ( ) ; }
+private RevCommit METHOD_1 ( Repository repo ) throws IOException { return METHOD_1 ( repo , STRING_1 ) ; }
+protected RevCommit METHOD_1 ( Project . NameKey project , String branch ) throws IOException { try ( Repository repo = VAR_1 . METHOD_2 ( project ) ) { return METHOD_3 ( repo , STRING_1 + branch ) ; } }
+protected RevCommit METHOD_1 ( ) throws IOException { return METHOD_1 ( project , STRING_1 ) ; }
+protected List < RevCommit > METHOD_1 ( ) throws IOException { return METHOD_1 ( project , STRING_1 ) ; }
+private String METHOD_1 ( Repository repo ) throws IOException { ObjectId VAR_1 = repo . METHOD_2 ( STRING_1 ) ; ObjectId VAR_2 = repo . METHOD_2 ( STRING_2 ) ; return METHOD_1 ( repo , VAR_1 , VAR_2 ) ; }
+public void METHOD_1 ( TYPE_1 VAR_1 ) { METHOD_2 ( STRING_1 , VAR_1 ) ; }
+private void METHOD_1 ( TYPE_1 VAR_1 ) { METHOD_4 ( STRING_1 , VAR_1 ) ; }
+private TYPE_1 put ( TYPE_1 input ) throws Exception { TYPE_2 r = VAR_1 . put ( STRING_1 , input ) ; r . METHOD_1 ( ) ; return METHOD_2 ( ) . METHOD_3 ( r . METHOD_4 ( ) , VAR_2 class ) ; }
+protected void set ( int VAR_1 ) { VAR_2 = VAR_1 ; }
+public boolean METHOD_1 ( ) { return VAR_1 && id . METHOD_1 ( ) ; }
+protected void METHOD_1 ( ) { for ( TYPE_1 i : VAR_1 . METHOD_2 ( ) ) { if ( i instanceof TYPE_2 ) { VAR_1 . METHOD_3 ( ( ( TYPE_2 ) i ) . METHOD_4 ( ) ) ; } } }
+public static void METHOD_1 ( TYPE_1 in , TYPE_2 < TYPE_1 > VAR_1 ) { METHOD_2 ( ) . view ( STRING_1 ) . put ( in , VAR_1 ) ; }
+public TYPE_1 < String , String > METHOD_1 ( ) { return TYPE_2 . METHOD_2 ( VAR_1 ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_2 ( true ) ; METHOD_3 ( ) ; VAR_1 . config ( ) . server ( ) . METHOD_4 ( ) ; }
+protected VAR_1 VAR_2 ( String path , String VAR_3 , int VAR_4 ) throws Exception { return VAR_2 ( path , VAR_3 , VAR_4 ,
+private void METHOD_1 ( Account . Id id ) { TYPE_1 VAR_1 = VAR_2 . get ( ) ; VAR_1 . METHOD_2 ( id ) ; VAR_1 . METHOD_3 ( VAR_3 , true ) ; VAR_1 . METHOD_3 ( VAR_4 , true ) ; }
+protected Project . NameKey METHOD_1 ( String VAR_1 , Project . NameKey VAR_2 ) throws TYPE_1 { return METHOD_1 ( VAR_1 , VAR_2 , true , null ) ; }
+public boolean equals ( TYPE_1 VAR_1 ) { if ( super . equals ( VAR_1 ) ) { TYPE_2 VAR_2 = ( TYPE_2 ) VAR_1 ; return TYPE_3 . equals ( VAR_3 , VAR_4 ) ; } return false ; }
+public TYPE_1 apply ( TYPE_2 revision , TYPE_3 input ) throws TYPE_4 , TYPE_5 , OrmException , IOException { return apply ( revision , input , TYPE_6 . METHOD_1 ( ) ) ; }
+public TYPE_1 METHOD_1 ( Repository repo , ChangeData cd , PatchSet patch ) { return METHOD_2 ( this , repo , cd , patch , VAR_2 ) ; }
+public TYPE_1 METHOD_1 ( Repository repo , ChangeData cd , PatchSet patch ) { return METHOD_2 ( this , repo , cd , patch , VAR_2 ) ; }
+protected void METHOD_1 ( ) { listener ( ) . to ( VAR_2 class ) ; }
+public final void METHOD_1 ( TYPE_1 b ) { METHOD_2 ( b != null ? b . toString ( ) : null ) ; }
+TYPE_1 create ( TYPE_2 config ) { return new TYPE_1 ( VAR_1 , config , VAR_2 , VAR_3 , VAR_4 , VAR_5 , VAR_6 , VAR_7 ) ; }
+void METHOD_1 ( ) { if ( VAR_1 != null ) { VAR_2 . METHOD_2 ( VAR_1 ) ; VAR_1 = null ; } user = null ; VAR_3 = null ; VAR_4 = null ; }
+private void METHOD_1 ( int id ) { for ( TYPE_1 listener : VAR_1 ) { try { listener . METHOD_2 ( id ) ; } catch ( Exception e ) { METHOD_3 ( listener , e ) ; } } }
+private void METHOD_1 ( int id ) { for ( TYPE_1 listener : VAR_1 ) { try { listener . METHOD_2 ( id ) ; } catch ( Exception e ) { METHOD_3 ( listener , e ) ; } } }
+public List < TYPE_1 > METHOD_1 ( ) throws TYPE_2 { try { return VAR_1 . apply ( change ) . value ( ) ; } catch ( Exception e ) { throw new TYPE_2 ( STRING_1 , e ) ; } }
+public static TYPE_1 METHOD_1 ( TYPE_2 VAR_1 ) throws IOException { return TYPE_3 . METHOD_2 ( TYPE_4 . create ( STRING_1 + VAR_1 . METHOD_3 ( ) ) , VAR_2 < String , String > METHOD_4 ( ) ) ; }
+private TYPE_1 < ChangeData > METHOD_1 ( Account . Id VAR_1 ) { return new TYPE_2 ( VAR_1 ) ; }
+private void METHOD_1 ( ) { VAR_1 . METHOD_2 ( ! TYPE_1 . METHOD_3 ( VAR_1 . METHOD_2 ( ) ) ) ; METHOD_4 ( VAR_1 . METHOD_2 ( ) ) ; VAR_2 . update ( ) ; }
+private TYPE_1 METHOD_1 ( TYPE_2 VAR_1 ) { return new TYPE_1 ( TYPE_3 . of ( new TYPE_4 ( VAR_1 ) , new TYPE_6 ( VAR_1 , VAR_3 ) , new TYPE_7 ( VAR_1 , VAR_3 ) ) ) ; }
+public Map < String , TYPE_1 > METHOD_1 ( String VAR_1 ) { return METHOD_2 ( ) . get ( VAR_1 ) ; }
+public void run ( ) { METHOD_1 ( reviewers , change ) ; }
+public boolean METHOD_1 ( ) { return METHOD_2 ( ) . METHOD_4 ( ) . METHOD_5 ( ) ; }
+private void METHOD_1 ( boolean on ) { on &= Gerrit . METHOD_2 ( ) . METHOD_3 ( ) != null ; VAR_1 . METHOD_4 ( on ) ; }
+private boolean METHOD_1 ( TYPE_1 config , String VAR_1 ) { return METHOD_2 ( config , STRING_1 , VAR_1 , false ) ; }
+private static boolean METHOD_1 ( TYPE_1 input ) { return input != null && ! TYPE_2 . METHOD_2 ( VAR_1 ) ; }
+private static boolean METHOD_1 ( TYPE_1 input ) { return input != null && ! TYPE_2 . METHOD_2 ( VAR_1 ) && ! TYPE_2 . METHOD_2 ( VAR_2 ) ; }
+public static Id METHOD_1 ( String VAR_1 ) { Id r = new Id ( ) ; r . METHOD_2 ( VAR_1 ) ; return r ; }
+public void METHOD_1 ( String name ) { if ( name != null && ! name . METHOD_2 ( ) . isEmpty ( ) ) { VAR_1 = name . METHOD_2 ( ) ; } else { VAR_1 = null ; } }
+public void METHOD_1 ( String VAR_1 ) { VAR_2 = VAR_1 ; }
+public void METHOD_1 ( String status ) { this . status = status ; }
+public void METHOD_1 ( String VAR_1 ) { this . VAR_1 = VAR_1 ; }
+public ObjectId METHOD_1 ( Repository VAR_1 ) throws IOException { TYPE_1 VAR_2 = METHOD_2 ( VAR_1 ) ; return METHOD_3 ( VAR_1 , VAR_2 ) ; }
+private static void METHOD_1 ( TYPE_1 VAR_1 , List < TYPE_2 > VAR_2 ) { TYPE_3 TYPE_4 = VAR_1 . METHOD_2 ( ) ; VAR_2 . METHOD_3 ( TYPE_4 : : add ) ; TYPE_4 . METHOD_4 ( ) ; }
+private static ObjectId METHOD_1 ( Repository VAR_2 , TYPE_1 VAR_1 ) throws IOException { try ( TYPE_2 VAR_3 = VAR_2 . METHOD_2 ( ) ) { ObjectId VAR_4 = VAR_1 . METHOD_3 ( VAR_3 ) ; VAR_3 . METHOD_4 ( ) ; return VAR_4 ; } }
+protected TYPE_1 METHOD_1 ( String name , TYPE_2 ... VAR_1 ) throws Exception { return METHOD_2 ( name , null , VAR_1 ) ; }
+protected TYPE_1 METHOD_1 ( String name , TYPE_1 VAR_1 ) throws Exception { TYPE_3 in = new TYPE_3 ( ) ; in . name = name ; VAR_2 = VAR_1 . id ; return VAR_3 . METHOD_2 ( ) . create ( in ) . get ( ) ; }
+protected TYPE_1 METHOD_1 ( String name ) throws Exception { TYPE_3 in = new TYPE_3 ( ) ; in . name = name ; VAR_1 = true ; return VAR_2 . METHOD_2 ( ) . create ( in ) . get ( ) ; }
+protected TYPE_1 METHOD_1 ( TYPE_2 VAR_1 ) throws Exception { return VAR_2 . METHOD_2 ( ) . id ( VAR_1 . get ( ) ) . get ( ) ; }
+protected TYPE_1 METHOD_1 ( String name , TYPE_2 ... VAR_1 ) throws Exception { return METHOD_2 ( name , null , VAR_1 ) ; }
+protected TYPE_1 METHOD_1 ( TYPE_2 VAR_1 ) throws Exception { return VAR_2 . METHOD_2 ( ) . id ( VAR_1 . get ( ) ) . get ( ) ; }
+protected TYPE_1 METHOD_1 ( TYPE_2 VAR_1 ) throws Exception { return VAR_2 . METHOD_2 ( ) . id ( VAR_1 . get ( ) ) . get ( ) ; }
+private static TYPE_1 METHOD_1 ( AccountGroup group ) { return METHOD_1 ( group . METHOD_2 ( ) ) ; }
+public void METHOD_1 ( AccountGroup group ) throws IOException { try { METHOD_1 ( METHOD_2 ( group ) , METHOD_3 ( group , null ) ) . get ( ) ; } catch ( TYPE_1 | TYPE_2 e ) { throw new IOException ( e ) ; } }
+public void METHOD_1 ( Account . Id VAR_1 ) throws IOException { if ( VAR_1 != null ) { VAR_2 . METHOD_2 ( VAR_1 ) ; index ( VAR_1 ) ; } }
+public void METHOD_1 ( TYPE_1 input ) throws TYPE_2 { try { VAR_1 . apply ( change , input ) ; } catch ( TYPE_3 | TYPE_4 e ) { throw new TYPE_2 ( STRING_1 , e ) ; } }
+public TYPE_1 METHOD_1 ( TYPE_2 input ) throws TYPE_3 { try { return VAR_1 . apply ( change , input ) ; } catch ( TYPE_4 | IOException | OrmException | TYPE_5 e ) { throw new TYPE_3 ( STRING_1 , e ) ; } }
+public List < TYPE_1 > METHOD_1 ( ) throws TYPE_2 { try { return VAR_1 . apply ( change ) . value ( ) ; } catch ( OrmException e ) { throw new TYPE_2 ( STRING_1 , e ) ; } }
+public List < TYPE_1 > METHOD_1 ( ) throws TYPE_2 { try { return VAR_1 . apply ( account ) ; } catch ( IOException | OrmException e ) { throw new TYPE_2 ( STRING_1 , e ) ; } }
+private boolean METHOD_1 ( TYPE_1 VAR_1 ) { return ! label ( VAR_1 . METHOD_2 ( ) . get ( ) ) . isEmpty ( ) ; }
+private static void METHOD_1 ( TYPE_1 line , String path ) throws TYPE_2 { if ( line != null && line < 0 ) { throw new TYPE_2 ( String . format ( STRING_1 , line , path ) ) ; } }
+private static void METHOD_1 ( String VAR_1 , String VAR_2 ) throws TYPE_1 { if ( VAR_1 == null ) { throw new TYPE_1 ( String . format ( STRING_1 , VAR_2 ) ) ; } }
+private static void METHOD_1 ( String VAR_1 , String VAR_2 ) throws TYPE_1 { if ( VAR_1 == null ) { throw new TYPE_1 ( String . format ( STRING_1 , VAR_2 ) ) ; } }
+private static void METHOD_1 ( String VAR_1 , String VAR_2 ) throws TYPE_1 { if ( VAR_2 == null ) { throw new TYPE_1 ( String . format ( STRING_1 , VAR_1 ) ) ; } }
+private static void METHOD_1 ( String VAR_1 , List < TYPE_1 > VAR_2 ) throws TYPE_2 { if ( VAR_2 == null || VAR_2 . isEmpty ( ) ) { throw new TYPE_2 ( String . format ( STRING_1 + STRING_2 , VAR_1 ) ) ; } }
+private static void METHOD_1 ( String VAR_1 , String VAR_2 ) throws TYPE_1 { if ( VAR_2 == null ) { throw new TYPE_1 ( String . format ( STRING_1 , VAR_1 ) ) ; } }
+private static void METHOD_1 ( String VAR_1 , String VAR_2 ) throws TYPE_1 { if ( VAR_2 == null ) { throw new TYPE_1 ( String . format ( STRING_1 + STRING_2 , VAR_1 ) ) ; } }
+private List < TYPE_1 > METHOD_1 ( List < TYPE_2 > VAR_1 ) { return VAR_1 . METHOD_2 ( ) . map ( this : : METHOD_3 ) . collect ( METHOD_4 ( ) ) ; }
+public static Map < Change . Id , ChangeData > METHOD_1 ( List < ChangeData > changes ) { return changes . METHOD_2 ( ) . collect ( METHOD_3 ( ChangeData : : getId , cd - > cd ) ) ; }
+TYPE_1 < ? > insert ( final TYPE_2 VAR_1 ) { return submit ( ( ) - > VAR_2 . METHOD_1 ( VAR_1 ) ) ; }
+TYPE_1 < ? > METHOD_1 ( final TYPE_2 VAR_1 , final TYPE_3 VAR_2 ) { return submit ( ( ) - > VAR_3 . METHOD_2 ( VAR_1 , VAR_2 ) ) ; }
+TYPE_1 < ? > delete ( final TYPE_2 VAR_1 ) { return submit ( ( ) - > VAR_2 . METHOD_1 ( VAR_1 ) ) ; }
+public boolean METHOD_1 ( ) { return METHOD_2 ( VAR_1 ) ; }
+public void METHOD_1 ( TYPE_1 in ) throws TYPE_2 { try { VAR_1 . apply ( change , in ) ; } catch ( OrmException | TYPE_3 e ) { throw new TYPE_2 ( STRING_1 , e ) ; } }
+public void METHOD_1 ( TYPE_1 in ) throws TYPE_2 { try { VAR_1 . apply ( change , in ) ; } catch ( OrmException | TYPE_3 e ) { throw new TYPE_2 ( STRING_1 , e ) ; } }
+public void METHOD_1 ( TYPE_1 input ) throws TYPE_2 { try { VAR_1 . apply ( change , input ) ; } catch ( TYPE_3 | TYPE_4 e ) { throw new TYPE_2 ( STRING_1 , e ) ; } }
+public TYPE_1 METHOD_1 ( TYPE_2 input ) throws TYPE_3 { try { return VAR_1 . apply ( change , input ) ; } catch ( TYPE_4 | IOException | OrmException | TYPE_5 e ) { throw new TYPE_3 ( STRING_1 , e ) ; } }
+public List < TYPE_1 > METHOD_1 ( ) throws TYPE_2 { try { return VAR_1 . apply ( change ) . value ( ) ; } catch ( OrmException e ) { throw new TYPE_2 ( STRING_1 , e ) ; } }
+public boolean METHOD_1 ( TYPE_1 db ) throws OrmException { return ( METHOD_2 ( ) || METHOD_3 ( ) . METHOD_4 ( METHOD_2 ( ) ) || METHOD_3 ( ) . METHOD_1 ( ) ) && ! METHOD_5 ( db ) ; }
+public boolean METHOD_1 ( TYPE_1 db ) throws OrmException { return METHOD_2 ( db ) && METHOD_3 ( ) . METHOD_4 ( ) ; }
+private boolean METHOD_1 ( TYPE_1 VAR_1 ) { return ! label ( VAR_1 . METHOD_2 ( ) . get ( ) ) . isEmpty ( ) ; }
+private boolean METHOD_1 ( ) { return METHOD_2 ( ) || METHOD_3 ( ) . METHOD_2 ( ) || METHOD_4 ( ) . METHOD_1 ( ) || METHOD_5 ( ) ; }
+private boolean METHOD_1 ( ) { return METHOD_2 ( ) || METHOD_3 ( ) . METHOD_2 ( ) || METHOD_4 ( ) . METHOD_2 ( ) || METHOD_5 ( ) . METHOD_6 ( ) . METHOD_7 ( ) || METHOD_3 ( ) . METHOD_1 ( ) ; }
+private boolean METHOD_1 ( TYPE_1 VAR_1 ) { return ! label ( VAR_1 . METHOD_2 ( ) . get ( ) ) . isEmpty ( ) ; }
+boolean METHOD_1 ( ) { return METHOD_2 ( VAR_1 ) ; }
+boolean METHOD_1 ( ) { return METHOD_2 ( VAR_1 ) ; }
+boolean METHOD_1 ( ) { return METHOD_2 ( VAR_1 ) ; }
+boolean METHOD_1 ( ) { return METHOD_2 ( VAR_1 ) ; }
+private boolean METHOD_1 ( TYPE_1 VAR_1 ) { return ! label ( VAR_1 . METHOD_2 ( ) . get ( ) ) . isEmpty ( ) ; }
+boolean METHOD_1 ( ) { return METHOD_2 ( VAR_1 ) ; }
+private String METHOD_1 ( ) throws IOException { client ( ) . METHOD_2 ( ) ; final String result = STRING_1 + METHOD_3 ( ) + STRING_2 ; log . METHOD_4 ( STRING_3 , result ) ; return result ; }
+private static String METHOD_1 ( String name ) { TYPE_1 m = TYPE_1 . METHOD_2 ( STRING_1 ) ; METHOD_3 ( name != null && m . METHOD_4 ( name ) , STRING_2 , name ) ; return name ; }
+protected void METHOD_1 ( ) { bind ( VAR_1 class ) . METHOD_2 ( config ) ; bind ( VAR_2 class ) . METHOD_3 ( VAR_3 class ) . in ( VAR_4 ) ; }
+protected String METHOD_1 ( ) throws Exception { return METHOD_1 ( admin ) ; }
+public static boolean METHOD_1 ( String VAR_1 ) { return VAR_1 != null && VAR_1 . METHOD_2 ( VAR_2 ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+public void METHOD_1 ( ) throws Exception { METHOD_6 ( METHOD_7 ( ) ) ; }
+void METHOD_1 ( String token ) { message = token . METHOD_2 ( STRING_1 , STRING_2 ) ; }
+void METHOD_1 ( String token ) { message = token . METHOD_2 ( STRING_1 , STRING_2 ) ; }
+public void METHOD_1 ( TYPE_1 < Account . Id > VAR_1 ) { reviewers . METHOD_2 ( VAR_1 ) ; }
+public void METHOD_1 ( TYPE_1 < Account . Id > VAR_1 ) { VAR_2 . METHOD_2 ( VAR_1 ) ; }
+private boolean METHOD_1 ( ) { return ( METHOD_2 ( VAR_1 ) || METHOD_3 ( ) ) ; }
+public void METHOD_1 ( Change . Status VAR_1 , String VAR_2 , TYPE_1 ... VAR_3 ) throws OrmException { METHOD_1 ( VAR_1 , VAR_2 , TYPE_2 . METHOD_2 ( VAR_3 ) , TYPE_3 . of ( ) ) ; }
+public TYPE_1 < ChangeData > METHOD_1 ( String VAR_1 ) throws TYPE_2 , OrmException { return METHOD_2 ( VAR_1 , VAR_2 , false ) ; }
+private static void METHOD_1 ( int size , TYPE_1 < ? > VAR_1 ) { List < ? > VAR_2 = TYPE_2 . METHOD_2 ( VAR_1 ) ; assertThat ( VAR_2 ) . METHOD_3 ( size ) ; }
+private String METHOD_1 ( String VAR_1 , String key ) { return null != VAR_1 ? key . METHOD_2 ( VAR_1 . length ( ) + 1 ) : key ; }
+default void VAR_1 ( ) throws VAR_2 { VAR_1 ( null ) ; }
+default void VAR_1 ( ) throws VAR_2 { VAR_1 ( null ) ; }
+TYPE_1 METHOD_1 ( TYPE_2 VAR_2 ) throws TYPE_3 { return VAR_5 . get ( ) . METHOD_2 ( VAR_2 , null , VAR_6 , VAR_7 ) ; }
+TYPE_1 delete ( String VAR_1 ) throws IOException { return VAR_2 . METHOD_2 ( new TYPE_3 ( METHOD_1 ( ) . METHOD_3 ( ) + VAR_1 ) , new TYPE_4 ( ) ) ; }
+public TYPE_1 METHOD_1 ( TYPE_2 in ) throws TYPE_3 { try { return VAR_1 . apply ( METHOD_2 ( ) , in ) ; } catch ( Exception e ) { throw METHOD_3 ( STRING_1 , e ) ; } }
+protected ChangeInfo get ( String id , TYPE_1 ... VAR_1 ) throws TYPE_2 { return VAR_2 . changes ( ) . id ( id ) . get ( VAR_1 ) ; }
+private TYPE_1 < TYPE_2 > METHOD_1 ( TYPE_3 notes ) throws TYPE_4 , IOException { return VAR_1 . METHOD_2 ( notes ) ; }
+private TYPE_1 METHOD_1 ( TYPE_2 notes ) throws Exception { return VAR_1 . METHOD_2 ( notes , VAR_2 . create ( admin . id ) ) ; }
+public static TYPE_1 < AccountGroup > METHOD_1 ( TYPE_3 VAR_1 ) { return new TYPE_4 ( VAR_2 , VAR_3 , VAR_1 . get ( ) ) ; }
+public static TYPE_1 < AccountGroup > METHOD_1 ( String VAR_1 ) { return new TYPE_3 ( VAR_2 , VAR_3 , VAR_1 ) ; }
+public static TYPE_1 < AccountGroup > METHOD_1 ( String name ) { return new TYPE_3 ( VAR_1 , VAR_2 , name . METHOD_2 ( VAR_3 ) ) ; }
+public static TYPE_1 < AccountGroup > name ( String name ) { return new TYPE_3 ( VAR_1 , VAR_2 , name ) ; }
+public static TYPE_1 < AccountGroup > owner ( TYPE_3 VAR_1 ) { return new TYPE_4 ( VAR_2 , VAR_3 , VAR_1 . get ( ) ) ; }
+public static TYPE_1 < AccountGroup > METHOD_1 ( ) { return new TYPE_3 ( VAR_1 , STRING_1 ) ; }
+private static String METHOD_1 ( TYPE_1 VAR_1 ) { return format ( VAR_1 , TYPE_2 . METHOD_2 ( ) - VAR_1 . METHOD_3 ( ) ) ; }
+public void METHOD_1 ( TYPE_1 in ) { this . in = in ; }
+public void METHOD_1 ( TYPE_1 out ) { this . out = out ; }
+public void METHOD_1 ( TYPE_1 err ) { this . err = err ; }
+public void METHOD_1 ( TYPE_1 VAR_1 ) { this . VAR_2 = VAR_1 ; }
+void METHOD_1 ( String VAR_1 ) { this . VAR_2 = VAR_1 ; }
+public void METHOD_1 ( String [ ] VAR_1 ) { this . VAR_1 = VAR_1 ; }
+protected void METHOD_1 ( TYPE_1 cmd ) { cmd . METHOD_2 ( in ) ; cmd . METHOD_3 ( out ) ; cmd . METHOD_4 ( err ) ; cmd . METHOD_5 ( VAR_1 ) ; }
+protected void METHOD_1 ( int VAR_1 ) { VAR_2 . METHOD_1 ( VAR_1 ) ; if ( VAR_3 != null ) { VAR_3 . run ( ) ; } }
+protected static TYPE_1 METHOD_1 ( TYPE_2 VAR_1 ) { return new TYPE_1 ( new TYPE_3 ( new TYPE_4 ( VAR_1 , VAR_2 ) ) ) ; }
+public List < TYPE_1 < ? > > METHOD_1 ( ) { final List < TYPE_1 < ? > > r = new ArrayList < > ( ) ; for ( TYPE_2 e : VAR_1 ) { e . METHOD_2 ( r ) ; } return r ; }
+protected < TYPE_1 > TYPE_2 < TYPE_1 > METHOD_1 ( TYPE_3 < TYPE_1 > VAR_1 , TYPE_2 < TYPE_1 > VAR_2 ) { throw new TYPE_4 ( STRING_1 ) ; }
+void METHOD_1 ( TYPE_1 < ? > VAR_1 ) { VAR_2 . METHOD_1 ( VAR_1 . METHOD_2 ( ) , VAR_1 ) ; }
+TYPE_1 < ? > METHOD_1 ( int id ) { return VAR_1 . get ( id ) ; }
+void METHOD_1 ( List < TYPE_1 < ? > > VAR_1 ) { VAR_1 . METHOD_2 ( VAR_2 . values ( ) ) ; }
+protected void METHOD_1 ( int VAR_1 ) { VAR_2 . METHOD_2 ( ) ; synchronized ( VAR_3 ) { VAR_4 = true ; } super . METHOD_1 ( VAR_1 ) ; }
+public TYPE_1 apply ( TYPE_1 VAR_1 , TYPE_2 VAR_2 ) { return new TYPE_1 ( ) { public void METHOD_1 ( ) throws TYPE_3 { try { METHOD_2 ( ) ; VAR_1 . METHOD_1 ( ) ; } finally { METHOD_3 ( ) ; } } } ; }
+public TYPE_1 < String , TYPE_2 > METHOD_1 ( ) throws IOException { return get ( ) . METHOD_3 ( ) ; }
+public void METHOD_1 ( Id VAR_1 ) { this . VAR_1 = VAR_1 ; }
+private void METHOD_1 ( Project . NameKey project , TYPE_1 VAR_1 , boolean VAR_2 ) throws Exception { METHOD_2 ( STRING_1 , - 2 , 2 , project , STRING_2 , false , VAR_1 , VAR_2 ) ; }
+private void METHOD_1 ( Project . NameKey project ) throws Exception { METHOD_2 ( STRING_1 , - 2 , 2 , VAR_2 , STRING_2 , project ) ; }
+private static TYPE_1 METHOD_1 ( Account account ) { return new TYPE_1 ( new TYPE_2 ( VAR_1 ) , account , TYPE_3 . of ( ) , new TYPE_4 < > ( ) ) ; }
+protected TYPE_1 METHOD_1 ( String branch ) throws Exception { return METHOD_1 ( new Branch . NameKey ( project , branch ) ) ; }
+protected void METHOD_1 ( String changeId ) throws Exception { assertThat ( info ( changeId ) . status ) . isEqualTo ( VAR_1 ) ; }
+protected static TYPE_1 assertThat ( TYPE_2 VAR_1 ) { return METHOD_1 ( TYPE_1 : : new ) . METHOD_2 ( VAR_1 ) ; }
+public static TYPE_1 assertThat ( TYPE_2 VAR_1 ) { return METHOD_1 ( TYPE_1 : : new ) . METHOD_2 ( VAR_1 ) ; }
+public static TYPE_1 assertThat ( TYPE_2 VAR_1 ) { return METHOD_1 ( TYPE_1 : : new ) . METHOD_2 ( VAR_1 ) ; }
+public static TYPE_1 assertThat ( TYPE_2 VAR_1 ) { return METHOD_1 ( TYPE_1 : : new ) . METHOD_2 ( VAR_1 ) ; }
+public static TYPE_1 assertThat ( TYPE_2 VAR_1 ) { return METHOD_1 ( TYPE_1 : : new ) . METHOD_2 ( VAR_1 ) ; }
+public static TYPE_1 assertThat ( TYPE_2 VAR_1 ) { return METHOD_1 ( TYPE_1 : : new ) . METHOD_2 ( VAR_1 ) ; }
+public static TYPE_1 assertThat ( TYPE_2 VAR_1 ) { return METHOD_1 ( TYPE_1 : : new ) . METHOD_2 ( VAR_1 ) ; }
+public static TYPE_1 assertThat ( TYPE_2 path ) { return METHOD_1 ( TYPE_1 : : new ) . METHOD_2 ( path ) ; }
+public static TYPE_1 assertThat ( TYPE_2 VAR_1 ) { return METHOD_1 ( TYPE_1 : : new ) . METHOD_2 ( VAR_1 ) ; }
+public static TYPE_1 assertThat ( TYPE_2 VAR_1 ) { return METHOD_1 ( TYPE_1 : : new ) . METHOD_2 ( VAR_1 ) ; }
+public static TYPE_1 assertThat ( TYPE_2 VAR_1 ) { return METHOD_1 ( TYPE_1 : : new ) . METHOD_2 ( VAR_1 ) ; }
+public static TYPE_1 assertThat ( TYPE_2 VAR_1 ) { return METHOD_1 ( TYPE_1 : : new ) . METHOD_2 ( VAR_1 ) ; }
+public static TYPE_1 assertThat ( TYPE_2 VAR_1 ) { return METHOD_1 ( TYPE_1 : : new ) . METHOD_2 ( VAR_1 ) ; }
+TYPE_1 METHOD_1 ( TYPE_2 VAR_1 ) { TYPE_1 r = VAR_2 . METHOD_2 ( VAR_1 ) ; VAR_3 = VAR_4 ; return r ; }
+TYPE_1 METHOD_1 ( TYPE_2 db , Change change ) throws OrmException { return VAR_1 . create ( METHOD_2 ( change . METHOD_3 ( ) ) , db , change . getProject ( ) , change.getId ( ) ) ; }
+TYPE_1 METHOD_1 ( TYPE_2 notes ) { return VAR_1 . create ( METHOD_2 ( notes . getChange ( ) . METHOD_3 ( ) ) , notes ) ; }
+TYPE_1 METHOD_1 ( Branch . NameKey ref ) { return METHOD_1 ( ref . get ( ) ) ; }
+TYPE_1 METHOD_1 ( ) { return user ; }
+TYPE_1 METHOD_1 ( ) { return VAR_1 ; }
+Project getProject ( ) { return VAR_1 . getProject ( ) ; }
+boolean METHOD_1 ( ) { return ( METHOD_2 ( ) && ! METHOD_3 ( STRING_1 ) . METHOD_4 ( VAR_1 ) ) || METHOD_5 ( ) ; }
+private boolean METHOD_1 ( ) { for ( TYPE_1 group : VAR_1 ) { if ( METHOD_2 ( group ) ) { return true ; } } return false ; }
+private boolean METHOD_1 ( ) { for ( TYPE_1 group : VAR_1 ) { if ( METHOD_2 ( group ) ) { return true ; } } return false ; }
+private boolean METHOD_1 ( Set < String > VAR_1 ) { return user . METHOD_2 ( ) || METHOD_3 ( VAR_2 , VAR_1 ) ; }
+private Repository METHOD_1 ( Project . NameKey project ) throws IOException { if ( METHOD_2 ( VAR_1 ) || METHOD_2 ( VAR_2 ) || METHOD_2 ( VAR_3 ) ) { return VAR_4 . METHOD_3 ( project ) ; } return null ; }
+public TYPE_1 METHOD_1 ( ) { return user ; }
+public static TYPE_1 METHOD_1 ( TYPE_2 group ) { TYPE_1 VAR_1 = new TYPE_1 ( ) ; if ( group instanceof TYPE_3 && ( ( TYPE_3 ) group ) . METHOD_3 ( ) ) { VAR_2 = true ; } return VAR_1 ; }
+private void METHOD_1 ( ) { METHOD_2 ( STRING_1 , METHOD_3 ( STRING_2 ) ) ; }
+protected void METHOD_1 ( ) { bind ( VAR_1 class ) ; factory ( VAR_2 class ) ; bind ( VAR_4 . Factory class ) ; }
+private static String METHOD_1 ( String project , String input ) { return input == null ? input : input . METHOD_1 ( STRING_1 , project ) ; }
+String getRefName ( ) { return VAR_1 ; }
+TYPE_1 METHOD_1 ( ) { return VAR_1 ; }
+TYPE_1 METHOD_1 ( ) { return VAR_1 . METHOD_1 ( ) ; }
+boolean METHOD_1 ( ) { if ( owner == null ) { if ( METHOD_2 ( VAR_1 ) ) { owner = true ; } else { owner = VAR_2 . METHOD_1 ( ) ; } } return owner ; }
+boolean METHOD_1 ( String VAR_1 ) { return ! METHOD_2 ( VAR_1 , false , true ) ; }
+protected TYPE_1 < ChangeData > METHOD_1 ( TYPE_1 < ChangeData > VAR_1 ) { return new TYPE_2 ( VAR_1 , new TYPE_3 ( db , VAR_2 , VAR_4 . get ( ) , VAR_5 ) , start ) ; }
+public Result METHOD_1 ( TYPE_1 notes , TYPE_2 < PatchSetApproval > approvals ) throws OrmException , IOException { TYPE_4 user = VAR_1 . create ( notes . getChange ( ) . METHOD_2 ( ) ) ; return METHOD_1 ( notes , user , approvals ) ; }
+static TYPE_1 < ChangeData > METHOD_1 ( TYPE_3 VAR_1 , TYPE_4 VAR_2 ) { METHOD_2 ( VAR_2 != VAR_3 , STRING_1 ) ; return new TYPE_5 ( VAR_2 , VAR_1 ) ; }
+TYPE_1 METHOD_1 ( TYPE_2 VAR_1 ) { if ( METHOD_2 ( ) . equals ( VAR_1 ) ) { return this ; } return new TYPE_1 ( VAR_2 , VAR_3 , METHOD_3 ( ) . METHOD_1 ( VAR_1 ) , notes , VAR_4 ) ; }
+private TYPE_1 METHOD_1 ( ) { return VAR_1 ; }
+private TYPE_1 METHOD_1 ( ) { return METHOD_2 ( ) . METHOD_1 ( ) ; }
+private TYPE_1 METHOD_1 ( ) { return METHOD_2 ( ) . METHOD_1 ( ) ; }
+private Change getChange ( ) { return notes . getChange ( ) ; }
+private TYPE_1 METHOD_1 ( ) { return notes ; }
+private TYPE_1 METHOD_1 ( ) throws TYPE_2 , IOException , TYPE_3 , TYPE_4 { return VAR_1 . METHOD_2 ( project , TYPE_5 . METHOD_3 ( id ) ) ; }
+public void METHOD_1 ( Project project ) throws IOException { VAR_1 . METHOD_1 ( project ) ; VAR_2 . METHOD_2 ( project . METHOD_3 ( ) ) ; }
+protected static TYPE_1 < ChangeData > METHOD_1 ( Account . Id id , TYPE_3 VAR_1 ) { METHOD_2 ( VAR_1 != VAR_2 , STRING_1 ) ; return new TYPE_4 ( VAR_1 , id ) ; }
+protected static TYPE_1 < ChangeData > METHOD_1 ( Account . Id id ) { return new TYPE_3 ( VAR_1 , id ) ; }
+public TYPE_1 METHOD_1 ( TYPE_2 rsrc ) { return new TYPE_3 ( ) . METHOD_2 ( STRING_1 ) . METHOD_3 ( STRING_2 ) . METHOD_4 ( METHOD_6 ( rsrc ) ) ; }
+public static TYPE_1 assertThat ( TYPE_2 VAR_1 ) { return METHOD_1 ( TYPE_1 : : new ) . METHOD_2 ( VAR_1 ) ; }
+public static TYPE_1 assertThat ( TYPE_2 VAR_1 ) { return METHOD_1 ( TYPE_1 : : new ) . METHOD_2 ( VAR_1 ) ; }
+public Set < String > METHOD_1 ( ) { return VAR_1 ; }
+public TYPE_1 < String > apply ( TYPE_2 rsrc , TYPE_3 input ) throws TYPE_4 , OrmException , IOException , TYPE_5 { return VAR_1 . METHOD_1 ( rsrc . METHOD_2 ( ) . getAccountId ( ) ) ; }
+public static TYPE_1 METHOD_1 ( ) { return builder ( ) . METHOD_4 ( false ) . METHOD_5 ( false ) . METHOD_6 ( null ) ; }
+public TYPE_1 METHOD_1 ( ) { return builder ( ) . METHOD_4 ( METHOD_4 ( ) ) . METHOD_5 ( METHOD_5 ( ) ) . METHOD_6 ( METHOD_6 ( ) ) ; }
+public void METHOD_1 ( Project p ) throws IOException { METHOD_1 ( p . METHOD_3 ( ) ) ; }
+public TYPE_1 < ChangeData > status ( String VAR_1 ) { if ( STRING_1 . METHOD_1 ( VAR_1 ) ) { return TYPE_3 . create ( ) ; } return TYPE_4 . METHOD_2 ( VAR_1 ) ; }
+public TYPE_1 < ChangeData > METHOD_1 ( TYPE_2 user ) { return new TYPE_3 ( args . db , VAR_1 , user , VAR_3 ) ; }
+public ChangeData create ( TYPE_1 db , Project . NameKey project , Change . Id id ) { return VAR_1 . create ( db , project , id , null , null ) ; }
+public ChangeData create ( TYPE_1 db , Change change ) { return VAR_1 . create ( db , change . getProject ( ) , change.getId ( ) , change , null ) ; }
+public ChangeData create ( TYPE_1 db , TYPE_2 notes ) { return VAR_1 . create ( db , notes . getChange ( ) . getProject ( ) , notes . getChangeId ( ) , notes . getChange ( ) , notes ) ; }
+public TYPE_1 < TYPE_2 > METHOD_1 ( ) throws OrmException , IOException { if ( VAR_1 == null ) { if ( ! VAR_2 ) { return TYPE_1 . METHOD_2 ( ) ; } VAR_1 = METHOD_3 ( ) ; } return VAR_1 ; }
+public void run ( ) { ui . METHOD_1 ( STRING_1 ) ; if ( ! ui . METHOD_2 ( false , STRING_2 ) ) { return ; } METHOD_4 ( ) ; }
+private static String METHOD_1 ( String VAR_1 ) { if ( VAR_1 . length ( ) < INT_1 ) { return VAR_1 ; } else { return VAR_1 . METHOD_2 ( 0 , INT_2 ) + STRING_1 ; } }
+public Project . NameKey project ( ) { return project ; }
+public void METHOD_1 ( Project p ) throws IOException { METHOD_1 ( p . METHOD_3 ( ) ) ; }
+public static TYPE_1 < TYPE_2 > name ( Project . NameKey VAR_1 ) { return new TYPE_3 ( VAR_2 , VAR_1 . get ( ) ) ; }
+protected void METHOD_1 ( ) { METHOD_2 ( ) . METHOD_1 ( ) ; }
+public void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 VAR_2 ) { this . VAR_1 = TYPE_3 . of ( VAR_1 ) ; this . VAR_2 = VAR_2 ; }
+public void METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 VAR_2 ) { this . VAR_1 = TYPE_3 . of ( VAR_1 ) ; this . VAR_2 = VAR_2 ; }
+public String METHOD_1 ( ) { String VAR_1 ; VAR_1 = METHOD_2 ( STRING_1 ) ; if ( VAR_1 == null ) { VAR_1 = VAR_2 ; } return VAR_1 ; }
+public TYPE_1 < TYPE_2 > METHOD_1 ( ) { return TYPE_1 . METHOD_2 ( METHOD_3 ( STRING_1 ) ) . map ( TYPE_2 : : METHOD_4 ) ; }
+private String METHOD_1 ( String key ) { return METHOD_2 ( ) . METHOD_3 ( key , VAR_3 . METHOD_3 ( VAR_4 , VAR_5 , key ) ) ; }
+public void METHOD_1 ( TYPE_1 notes , TYPE_2 VAR_1 , PatchSetApproval VAR_2 ) throws TYPE_3 , TYPE_4 { METHOD_1 ( notes , VAR_1 , VAR_2 . getAccountId ( ) , VAR_2 . getValue ( ) ) ; }
+public void METHOD_1 ( TYPE_1 notes , TYPE_2 VAR_1 , Account . Id VAR_2 ) throws TYPE_3 , TYPE_4 { METHOD_1 ( notes , VAR_1 , VAR_2 , 0 ) ; }
+public void METHOD_1 ( TYPE_1 ctx ) { VAR_1 . METHOD_2 ( change , ctx . METHOD_3 ( ) , ctx . METHOD_4 ( ) ) ; }
+public VAR_1 VAR_2 ( try { return VAR_2 . get ( VAR_4 ( ) , VAR_5 ) ; } catch ( Exception e ) { throw VAR_6 ( STRING_1 , e ) ; } }
+private boolean METHOD_1 ( ) { return METHOD_2 ( VAR_1 ) ; }
+private boolean METHOD_1 ( ) { return METHOD_2 ( VAR_1 ) ; }
+void METHOD_1 ( ) { this . VAR_1 = true ; }
+protected boolean METHOD_1 ( Account . Id to ) throws TYPE_1 { return VAR_1 . METHOD_2 ( ) && VAR_2 . METHOD_3 ( to ) . change ( VAR_3 ) . METHOD_4 ( args . db ) . METHOD_5 ( VAR_5 ) ; }
+protected static String METHOD_1 ( String projectName ) { int VAR_1 = projectName . METHOD_2 ( STRING_1 ) ; if ( VAR_1 == 0 ) { return projectName . METHOD_3 ( 1 ) ; } return STRING_2 + projectName . METHOD_3 ( VAR_1 + 1 ) ; }
+public TYPE_1 METHOD_1 ( TYPE_2 notes ) { return METHOD_1 ( notes . getChange ( ) . METHOD_2 ( ) ) ; }
+private boolean METHOD_1 ( Branch . NameKey VAR_1 , String VAR_2 ) { return TYPE_2 . METHOD_2 ( VAR_2 ) . METHOD_1 ( VAR_1 . get ( ) , null ) ; }
+private void METHOD_1 ( TYPE_1 owner , TYPE_1 VAR_1 ) throws Exception { METHOD_1 ( project , owner , VAR_1 ) ; }
+public static boolean METHOD_1 ( ) { return TYPE_2 . METHOD_3 ( TYPE_1 . METHOD_2 ( VAR_2 ) ) ; }
+public void METHOD_1 ( ) throws Exception { VAR_1 . METHOD_2 ( VAR_2 class ) ; VAR_1 . METHOD_3 ( STRING_1 ) ; METHOD_4 ( ) ; }
+public void METHOD_1 ( ) throws Exception { VAR_1 . METHOD_2 ( VAR_2 , null , VAR_3 , TYPE_1 . METHOD_3 ( STRING_1 , STRING_2 ) ) ; VAR_4 . METHOD_4 ( VAR_5 class ) ; VAR_4 . METHOD_5 ( STRING_3 ) ; METHOD_6 ( ) ; }
+public void VAR_1 ( ) throws Exception { VAR_2 ( VAR_3 , null , VAR_4 , STRING_1 VAR_5 VAR_6 VAR_7 VAR_8 - VAR_9
+public void VAR_1 ( ) throws Exception { VAR_2 ( VAR_3 , null , VAR_4 , STRING_1 VAR_5 VAR_6 VAR_7 VAR_8
+public void VAR_1 ( ) throws Exception { VAR_2 ( VAR_3 ( ) . VAR_4 ( ) ) . VAR_5 ( STRING_1 http : }
+public void METHOD_1 ( final TYPE_1 VAR_1 , TYPE_2 < TYPE_1 > VAR_2 , final Map < String , TYPE_3 > VAR_3 , String VAR_4 ) throws TYPE_4 { METHOD_1 ( VAR_1 , VAR_2 , VAR_3 , VAR_4 , null ) ; }
+public void METHOD_1 ( String VAR_2 ) { this . VAR_2 = VAR_2 ; }
+public void METHOD_1 ( String VAR_2 ) { this . VAR_2 = VAR_2 ; }
+public void METHOD_1 ( ) throws Exception { METHOD_2 ( ) ; }
+public String METHOD_1 ( String VAR_1 ) throws Exception { return METHOD_1 ( VAR_1 , null ) ; }
+private TYPE_1 METHOD_1 ( TYPE_2 account ) { return VAR_1 . METHOD_2 ( VAR_2 , new TYPE_3 ( VAR_3 , server , account ) , VAR_4 . create ( account . getId ( ) ) ) ; }
+protected TYPE_1 METHOD_1 ( ) { return VAR_1 . set ( METHOD_2 ( VAR_1 . get ( ) . METHOD_3 ( ) . METHOD_4 ( ) ) ) ; }
+protected TYPE_1 METHOD_1 ( TYPE_2 account ) { return VAR_1 . set ( METHOD_2 ( account ) ) ; }
+public void METHOD_1 ( ) throws Exception { VAR_1 . create ( VAR_2 ) ; assertThat ( VAR_1 . get ( VAR_2 ) ) . METHOD_2 ( ) ; }
+private List < TYPE_1 > METHOD_1 ( String changeId , String query ) throws Exception { return VAR_1 . changes ( ) . id ( changeId ) . METHOD_1 ( query ) . get ( ) ; }
+public int METHOD_1 ( ) { return TYPE_1 . METHOD_1 ( VAR_2 ) ; }
+private TYPE_1 METHOD_1 ( TYPE_2 VAR_1 ) throws Exception { try ( Repository VAR_2 = VAR_3 . METHOD_2 ( VAR_4 ) ) { return VAR_5 . METHOD_3 ( VAR_4 , VAR_2 , VAR_1 ) ; } }
+private TYPE_1 < TYPE_2 > METHOD_1 ( TYPE_3 VAR_1 ) throws Exception { try ( Repository VAR_2 = VAR_3 . METHOD_2 ( VAR_4 ) ) { return TYPE_4 . METHOD_3 ( VAR_4 , VAR_2 , VAR_1 ) . METHOD_4 ( ) ; } }
+private static void reject ( ReceiveCommand cmd , String VAR_1 ) { cmd . METHOD_1 ( VAR_2 , VAR_1 ) ; }
+public void METHOD_1 ( String projectName ) { VAR_1 . submit ( ( ) - > VAR_2 . METHOD_2 ( projectName ) ) ; }
+public void start ( ) { METHOD_1 ( ) ; VAR_1 . METHOD_3 ( VAR_2 ) ; }
+public TYPE_1 METHOD_1 ( ) { return VAR_1 != null ? new TYPE_1 ( VAR_1 ) : null ; }
+public void METHOD_1 ( TYPE_1 VAR_1 ) { VAR_2 = VAR_1 != null ? VAR_1 . get ( ) : null ; }
+public TYPE_1 apply ( TYPE_2 rsrc , TYPE_3 input ) throws IOException , TYPE_4 { VAR_1 . METHOD_1 ( rsrc ) ; VAR_1 . METHOD_2 ( rsrc , input ) ; METHOD_3 ( rsrc , input ) ; return TYPE_5 . METHOD_4 ( ) ; }
+private TYPE_1 METHOD_1 ( RevCommit c , Change . Key key ) throws OrmException { return new TYPE_1 ( c , key , VAR_1 . get ( ) . METHOD_2 ( VAR_2 , key ) ) ; }
+private TYPE_1 METHOD_1 ( RevCommit c ) throws OrmException { return new TYPE_1 ( c , null , VAR_1 . get ( ) . METHOD_2 ( VAR_2 , c . getName ( ) ) ) ; }
+public TYPE_1 < TYPE_2 > METHOD_1 ( Change . Id id ) { return METHOD_2 ( ) ; }
+public TYPE_1 < TYPE_2 > METHOD_1 ( PatchSet . Id id ) { return METHOD_2 ( ) ; }
+public TYPE_1 < TYPE_2 > METHOD_1 ( ) { return METHOD_2 ( ) ; }
+public void VAR_1 ( this . VAR_3 = VAR_3 ; }
+protected void METHOD_1 ( ) { METHOD_2 ( VAR_1 ) ; }
+protected String METHOD_1 ( String name ) throws Exception { VAR_1 . METHOD_2 ( ) . name ( name ) . create ( ) ; return name ; }
+public ChangeInfo format ( ChangeData cd ) throws OrmException { return format ( cd , ChangeInfo : : new ) ; }
+private TYPE_1 METHOD_1 ( RevCommit c , Change . Key key ) throws OrmException { return new TYPE_1 ( c , key , VAR_1 . get ( ) . METHOD_2 ( VAR_2 , key ) ) ; }
+private TYPE_1 METHOD_1 ( RevCommit c ) throws OrmException { return new TYPE_1 ( c , null , VAR_1 . get ( ) . METHOD_2 ( VAR_2 , c . getName ( ) ) ) ; }
+public boolean equals ( TYPE_1 VAR_1 ) { return VAR_1 instanceof Account && ( ( Account ) VAR_1 ) . getId ( ) . equals ( getId ( ) ) ; }
+private static boolean METHOD_1 ( TYPE_1 id ) { return STRING_2 . METHOD_2 ( id . get ( ) ) ; }
+private static boolean METHOD_1 ( TYPE_1 id ) { return STRING_2 . METHOD_2 ( id . get ( ) ) ; }
+public static boolean METHOD_1 ( String VAR_1 ) { return VAR_1 != null && VAR_1 . METHOD_2 ( VAR_2 ) ; }
+private TYPE_1 entry ( ) { TYPE_1 e = new TYPE_1 ( ) ; VAR_1 . add ( e ) ; return e ; }
+private void METHOD_1 ( String projectName , int id , boolean VAR_1 ) { if ( ! TYPE_1 . METHOD_2 ( ) ) { if ( VAR_1 ) { METHOD_3 ( projectName , id ) ; } else { METHOD_4 ( projectName , id ) ; } } }
+private void METHOD_1 ( String projectName , int id ) { TYPE_1 VAR_1 = new TYPE_1 ( projectName , id , true , new TYPE_2 ( ) ) ; if ( VAR_2 . add ( VAR_1 ) ) { VAR_3 . METHOD_2 ( VAR_1 ) ; } }
+private static TYPE_1 METHOD_1 ( TYPE_1 VAR_1 ) throws IOException { return TYPE_2 . METHOD_4 ( VAR_1 . METHOD_2 ( VAR_3 ) ) ; }
+protected ObjectId METHOD_1 ( TYPE_1 < ? > repo , String branch ) throws Exception { return METHOD_1 ( repo , STRING_1 + branch , STRING_2 , STRING_3 ) ; }
+public TYPE_1 METHOD_1 ( Change change ) { return new TYPE_1 ( args , change ) ; }
+private TYPE_1 METHOD_1 ( Change change ) throws OrmException { METHOD_2 ( ! VAR_1 . METHOD_3 ( ) , STRING_1 + STRING_2 ) ; return new TYPE_1 ( args , change ) . METHOD_4 ( ) ; }
+public Project . NameKey METHOD_1 ( ) { return change . getProject ( ) ; }
+private static TYPE_1 METHOD_1 ( String path , int VAR_1 , int line , String message ) { TYPE_1 c = new TYPE_1 ( ) ; return METHOD_2 ( c , path , VAR_2 , TYPE_2 . METHOD_3 ( VAR_1 ) , line , message , false ) ; }
+private TYPE_1 METHOD_1 ( String path , TYPE_2 VAR_1 , int line , String message ) { TYPE_1 d = new TYPE_1 ( ) ; return METHOD_2 ( d , path , VAR_1 , null , line , message , false ) ; }
+private TYPE_1 METHOD_1 ( String path , int VAR_1 , int line , String message ) { TYPE_1 d = new TYPE_1 ( ) ; return METHOD_2 ( d , path , VAR_2 , TYPE_2 . METHOD_3 ( VAR_1 ) , line , message , false ) ; }
+private void METHOD_1 ( TYPE_1 VAR_1 ) { VAR_3 = new TYPE_3 ( ) ; VAR_3 . METHOD_2 ( METHOD_3 ( VAR_1 , VAR_4 , null , VAR_5 , VAR_2 , false ) ) ; }
+private Result METHOD_1 ( String input , List < TYPE_1 > VAR_1 ) { return new Result ( input , VAR_1 , TYPE_3 . of ( ) ) ; }
+private Result METHOD_1 ( String input , List < TYPE_2 > VAR_1 ) { return new Result ( input , VAR_1 , TYPE_1 . of ( ) ) ; }
+private Result METHOD_1 ( String input , List < TYPE_1 > VAR_1 ) { return new Result ( input , VAR_1 , TYPE_3 . of ( ) ) ; }
+public void METHOD_1 ( ) { assertThat ( METHOD_2 ( ) ) . isEqualTo ( VAR_1 ) ; }
+private String METHOD_1 ( String projectName , int changeId ) { String VAR_1 = TYPE_1 . METHOD_2 ( projectName ) ; return VAR_1 + CHAR_1 + changeId ; }
+private static String METHOD_1 ( ) { return TYPE_1 . on ( STRING_1 ) . METHOD_2 ( STRING_2 , VAR_2 ) ; }
+protected void METHOD_1 ( Project . NameKey projectName , TYPE_1 < TYPE_2 > VAR_1 ) throws IOException { VAR_2 . index ( projectName ) ; log . METHOD_2 ( STRING_1 , projectName ) ; }
+public void METHOD_1 ( ) throws Exception { TYPE_1 . METHOD_2 ( new TYPE_2 ( VAR_1 , VAR_2 ) ) ; METHOD_3 ( VAR_3 ) ; }
+private boolean METHOD_1 ( TYPE_1 VAR_1 , TYPE_2 VAR_2 ) { return VAR_2 . project ( VAR_1 . METHOD_2 ( ) ) . METHOD_3 ( VAR_1 . METHOD_4 ( ) ? VAR_3 : VAR_4 ) ; }
+public TYPE_1 < TYPE_2 > METHOD_1 ( ) throws OrmException { try ( TYPE_3 ctx = VAR_1 . METHOD_2 ( ) ) { VAR_2 = TYPE_1 . METHOD_3 ( VAR_3 . METHOD_4 ( changeId ) ) ; return VAR_2 ; } }
+public TYPE_1 < TYPE_2 > METHOD_1 ( ) throws OrmException { try ( TYPE_3 ctx = VAR_1 . METHOD_2 ( ) ) { VAR_2 = TYPE_1 . METHOD_3 ( VAR_3 . METHOD_4 ( changeId ) ) ; return VAR_2 ; } }
+public synchronized void METHOD_1 ( String VAR_1 , int VAR_2 ) { METHOD_2 ( ) ; if ( VAR_2 == VAR_3 ) { VAR_4 = new TYPE_1 ( VAR_1 ) ; } else { VAR_4 = new TYPE_2 ( VAR_1 , VAR_2 ) ; } }
+public synchronized boolean METHOD_1 ( ) { boolean VAR_1 = VAR_2 . METHOD_2 ( ) ; if ( VAR_1 ) { VAR_3 . METHOD_3 ( ) ; } return VAR_1 ; }
+public TYPE_1 < TYPE_2 > METHOD_1 ( ) { if ( ! VAR_1 . METHOD_2 ( ) ) { VAR_1 = METHOD_3 ( ) ; } return VAR_1 ; }
+public String toString ( ) { return STRING_1 + changeId +
+protected void METHOD_1 ( String VAR_1 , TYPE_1 < TYPE_2 > event ) { VAR_2 . index ( new TYPE_3 ( VAR_1 ) ) ; log . METHOD_2 ( STRING_1 , VAR_1 ) ; }
+protected void METHOD_1 ( String id , TYPE_1 < TYPE_2 > VAR_1 ) { METHOD_1 ( id , VAR_1 , 0 ) ; }
+private void METHOD_1 ( TYPE_1 notes ) { try ( TYPE_2 ctx = VAR_1 . METHOD_2 ( ) ) { notes . METHOD_3 ( ) ; VAR_2 . index ( notes . getChange ( ) ) ; } }
+protected void METHOD_1 ( String id , TYPE_1 < TYPE_2 > VAR_1 ) { VAR_2 . delete ( METHOD_2 ( id ) ) ; log . METHOD_3 ( STRING_1 , id ) ; }
+public boolean METHOD_1 ( Change . Id changeId , Account . Id VAR_1 ) { return METHOD_2 ( VAR_1 , changeId ) . contains ( VAR_2 ) ; }
+public boolean METHOD_1 ( TYPE_1 rsrc ) { return METHOD_2 ( rsrc . getChange ( ) . getId ( ) , rsrc . METHOD_3 ( ) . METHOD_4 ( ) . getAccountId ( ) ) ; }
+public TYPE_1 METHOD_1 ( ) throws IOException { return METHOD_1 ( false ) ; }
+void METHOD_1 ( ) throws IOException { VAR_1 this . VAR_2 = VAR_3 . METHOD_1 ( VAR_4 ) ; }
+protected List < TYPE_1 > METHOD_1 ( List < TYPE_1 > VAR_1 ) { return VAR_1 ; }
+public TYPE_1 METHOD_1 ( ReceiveCommand cmd ) { return VAR_1 . METHOD_1 ( cmd ) ; }
+public TYPE_1 METHOD_1 ( ReceiveCommand ... cmd ) { return VAR_1 . METHOD_1 ( cmd ) ; }
+public boolean METHOD_1 ( String project , TYPE_1 VAR_1 ) throws IOException { return METHOD_3 ( project , VAR_1 , VAR_2 ) ; }
+public boolean METHOD_1 ( String project , TYPE_1 VAR_1 ) throws IOException { return METHOD_2 ( VAR_1 ) || METHOD_3 ( project , VAR_1 , VAR_2 ) ; }
+default boolean VAR_1 ( VAR_2 ref ) { String VAR_3 = ref . getName ( ) ; return VAR_3 == null || VAR_4 ( STRING_1 ) || ( VAR_4 ( STRING_2 ) && ! VAR_5 ( STRING_3 ) ) ; }
+public TYPE_1 METHOD_1 ( ) { return VAR_1 . get ( ) ; }
+public TYPE_1 METHOD_1 ( ) { return VAR_1 . get ( ) ; }
+public TYPE_1 METHOD_1 ( ) { return VAR_1 . get ( ) ; }
+public TYPE_1 METHOD_1 ( ) { return VAR_1 . get ( ) ; }
+public TYPE_1 event ( ) { return event . get ( ) ; }
+public TYPE_1 index ( ) { return index . get ( ) ; }
+public TYPE_1 METHOD_1 ( ) { return VAR_1 . get ( ) ; }
+public void METHOD_1 ( ) { VAR_1 = new TYPE_1 ( ) ; }
+public TYPE_1 METHOD_1 ( String name ) throws IOException { return VAR_1 . METHOD_1 ( name ) ; }
+TYPE_1 METHOD_1 ( TYPE_1 VAR_1 ) { return VAR_2 . create ( projectName , VAR_1 ) ; }
+private String METHOD_1 ( ) { return VAR_1 . map ( TYPE_1 : : get ) . METHOD_2 ( ref ) ; }
+public static TYPE_1 create ( return new TYPE_1 ( name , type ) ; }
+public static TYPE_1 METHOD_1 ( TYPE_2 type ) { return create ( null , type ) ; }
+public String toString ( ) { return METHOD_1 ( this ) . add ( STRING_1 , name ( ) ) . add ( STRING_2 , type ) . toString ( ) ; }
+public int METHOD_1 ( ) { return TYPE_1 . METHOD_2 ( name , type ) ; }
+public boolean equals ( TYPE_1 VAR_1 ) { if ( VAR_1 instanceof TYPE_2 ) { TYPE_2 VAR_2 = ( TYPE_2 ) VAR_1 ; return TYPE_3 . equals ( name , VAR_2 . name ) && type == VAR_2 . type ; } return false ; }
+public void METHOD_1 ( ) throws IOException { VAR_1 = new TYPE_1 ( VAR_2 ) ; VAR_1 . METHOD_2 ( VAR_3 ) ; METHOD_3 ( VAR_2 ) . METHOD_1 ( server ) ; }
+public void METHOD_1 ( ) throws IOException { VAR_1 = new TYPE_1 ( VAR_2 ) ; VAR_1 . METHOD_2 ( VAR_3 ) ; METHOD_3 ( VAR_2 ) . METHOD_4 ( server ) ; }
+public void METHOD_1 ( ) throws IOException { VAR_1 = new TYPE_1 ( VAR_2 ) ; VAR_1 . METHOD_1 ( VAR_3 , VAR_4 ) ; METHOD_2 ( VAR_2 ) . METHOD_1 ( server , VAR_3 , VAR_4 ) ; }
+public void METHOD_1 ( ) throws IOException { VAR_1 = new TYPE_1 ( VAR_2 ) ; VAR_1 . METHOD_1 ( VAR_3 , VAR_4 , VAR_5 ) ; METHOD_2 ( VAR_2 ) . METHOD_1 ( server , VAR_3 , VAR_4 , VAR_5 ) ; }
+public void METHOD_1 ( ) throws IOException , TYPE_1 { VAR_1 = new TYPE_2 ( VAR_2 ) ; VAR_1 . METHOD_1 ( VAR_3 , VAR_4 ) ; METHOD_2 ( VAR_2 ) . METHOD_3 ( server , VAR_3 , VAR_4 ) ; }
+public void METHOD_1 ( ) throws IOException { VAR_1 = new TYPE_1 ( VAR_2 ) ; VAR_1 . METHOD_1 ( VAR_3 , STRING_1 ) ; METHOD_2 ( VAR_2 ) . METHOD_1 ( server , VAR_3 , STRING_1 ) ; }
+public void METHOD_1 ( ) throws IOException { VAR_1 = new TYPE_1 ( VAR_2 ) ; VAR_1 . METHOD_1 ( VAR_3 ) ; METHOD_2 ( VAR_2 ) . METHOD_3 ( server , VAR_3 ) ; }
+public void METHOD_1 ( ) { VAR_1 = new TYPE_1 ( cfg , VAR_2 , VAR_3 , VAR_4 , VAR_5 , VAR_6 ) ; }

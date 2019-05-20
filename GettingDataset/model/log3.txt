@@ -1,0 +1,3926 @@
+nohup: ignoring input
+INFO:tensorflow:Loading config from /home/ubuntu/NeuralCodeTranslator/seq2seq/configs/small_10.yml
+INFO:tensorflow:Loading config from /home/ubuntu/NeuralCodeTranslator/seq2seq/example_configs/train_seq2seq_optimized.yml
+INFO:tensorflow:Loading config from /home/ubuntu/NeuralCodeTranslator/seq2seq/example_configs/text_metrics.yml
+INFO:tensorflow:Final Config:
+buckets: 10,20,30,40
+default_params:
+- {separator: ' '}
+- {postproc_fn: seq2seq.data.postproc.strip_bpe}
+hooks:
+- {class: PrintModelAnalysisHook}
+- {class: MetadataCaptureHook}
+- {class: SyncReplicasOptimizerHook}
+- class: TrainSampleHook
+  params: {every_n_steps: 10000}
+metrics:
+- {class: LogPerplexityMetricSpec}
+- class: BleuMetricSpec
+  params: {postproc_fn: seq2seq.data.postproc.strip_bpe, separator: ' '}
+model: AttentionSeq2Seq
+model_params:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  optimizer.learning_rate: 0.0001
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+
+WARNING:tensorflow:Ignoring config flag: default_params
+INFO:tensorflow:Creating ParallelTextInputPipeline in mode=train
+INFO:tensorflow:
+ParallelTextInputPipeline:
+  num_epochs: null
+  shuffle: true
+  source_delimiter: ' '
+  source_files: [../dataset/dataset//train/buggy.txt]
+  target_delimiter: ' '
+  target_files: [../dataset/dataset//train/fixed.txt]
+
+INFO:tensorflow:Creating ParallelTextInputPipeline in mode=eval
+INFO:tensorflow:
+ParallelTextInputPipeline:
+  num_epochs: 1
+  shuffle: false
+  source_delimiter: ' '
+  source_files: [../dataset/dataset//eval/buggy.txt]
+  target_delimiter: ' '
+  target_files: [../dataset/dataset//eval/fixed.txt]
+
+INFO:tensorflow:Using config: {'_task_type': None, '_task_id': 0, '_cluster_spec': <tensorflow.python.training.server_lib.ClusterSpec object at 0x7fa0f664d0b8>, '_master': '', '_num_ps_replicas': 0, '_environment': 'local', '_is_chief': True, '_evaluation_master': '', '_tf_config': gpu_options {
+  per_process_gpu_memory_fraction: 1.0
+}
+, '_tf_random_seed': None, '_save_summary_steps': 100, '_save_checkpoints_secs': None, '_save_checkpoints_steps': 10000, '_keep_checkpoint_max': 2, '_keep_checkpoint_every_n_hours': 4}
+INFO:tensorflow:Creating PrintModelAnalysisHook in mode=train
+INFO:tensorflow:
+PrintModelAnalysisHook: {}
+
+INFO:tensorflow:Creating MetadataCaptureHook in mode=train
+INFO:tensorflow:
+MetadataCaptureHook: {step: 10}
+
+INFO:tensorflow:Creating SyncReplicasOptimizerHook in mode=train
+INFO:tensorflow:
+SyncReplicasOptimizerHook: {}
+
+INFO:tensorflow:Creating TrainSampleHook in mode=train
+INFO:tensorflow:
+TrainSampleHook: {every_n_secs: null, every_n_steps: 10000, source_delimiter: ' ',
+  target_delimiter: ' '}
+
+INFO:tensorflow:Creating LogPerplexityMetricSpec in mode=eval
+INFO:tensorflow:
+LogPerplexityMetricSpec: {}
+
+INFO:tensorflow:Creating BleuMetricSpec in mode=eval
+INFO:tensorflow:
+BleuMetricSpec: {eos_token: SEQUENCE_END, postproc_fn: seq2seq.data.postproc.strip_bpe,
+  separator: ' ', sos_token: SEQUENCE_START}
+
+INFO:tensorflow:Training model for 1000 steps
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=train
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=train
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=train
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=train
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=train
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Create CheckpointSaverHook.
+4 ops no flops stats due to incomplete shapes. Consider passing run_meta to use run_time shapes.
+INFO:tensorflow:b'_TFProfRoot (--/4.64m params)\n  model/att_seq2seq/Variable (0/0 params)\n  model/att_seq2seq/decode/attention/att_keys/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_keys/weights (512x512, 262.14k/262.14k params)\n  model/att_seq2seq/decode/attention/att_query/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_query/weights (256x512, 131.07k/131.07k params)\n  model/att_seq2seq/decode/attention/v_att (512, 512/512 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/biases (256, 256/256 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/weights (768x256, 196.61k/196.61k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/weights (1280x1024, 1.31m/1.31m params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/weights (512x1024, 524.29k/524.29k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/biases (495, 495/495 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/weights (256x495, 126.72k/126.72k params)\n  model/att_seq2seq/decode/target_embedding/W (495x512, 253.44k/253.44k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/source_embedding/W (497x512, 254.46k/254.46k params)\n'
+INFO:tensorflow:Saving checkpoints for 41006 into ../model/dataset/model.ckpt.
+INFO:tensorflow:loss = 0.005886319, step = 41006
+INFO:tensorflow:Prediction followed by Target @ Step 41006
+====================================================================================================
+protected TYPE_1 METHOD_1 ( ) { TYPE_1 options = new TYPE_1 ( ) ; options . METHOD_2 ( VAR_1 ) ; options . METHOD_3 ( true ) ; options . METHOD_4 ( 0 ) ; return options ; } SEQUENCE_END
+protected TYPE_1 METHOD_1 ( ) { TYPE_1 options = new TYPE_1 ( ) ; options . METHOD_2 ( VAR_1 ) ; options . METHOD_3 ( true ) ; options . METHOD_4 ( 0 ) ; return options ; } SEQUENCE_END
+
+private static boolean METHOD_1 ( TYPE_1 params ) { Boolean VAR_1 = params . METHOD_1 ( ) ; return ( VAR_1 != null ) ? VAR_1 : METHOD_1 ( params . getVmStaticData ( ) . getId ( ) ) ; } SEQUENCE_END
+private static boolean METHOD_1 ( TYPE_1 params ) { Boolean VAR_1 = params . METHOD_1 ( ) ; return ( VAR_1 != null ) ? VAR_1 : METHOD_1 ( params . getVmStaticData ( ) . getId ( ) ) ; } SEQUENCE_END
+
+public boolean METHOD_1 ( TYPE_1 VAR_1 , String VAR_2 ) { Message VAR_3 = VAR_1 . METHOD_2 ( VAR_4 , VAR_2 ) ; boolean result = ( VAR_5 == VAR_6 ) ; VAR_3 . METHOD_3 ( ) ; return result ; } SEQUENCE_END
+public boolean METHOD_1 ( TYPE_1 VAR_1 , String VAR_2 ) { Message VAR_3 = VAR_1 . METHOD_2 ( VAR_4 , VAR_2 ) ; boolean result = ( VAR_5 == VAR_6 ) ; VAR_3 . METHOD_3 ( ) ; return result ; } SEQUENCE_END
+
+public void METHOD_1 ( String name , String VAR_1 ) { VAR_3 . METHOD_2 ( VAR_4 , new TYPE_2 ( METHOD_3 ( ) , name , VAR_1 ) ) ; } SEQUENCE_END
+public void METHOD_1 ( String name , String VAR_1 ) { VAR_3 . METHOD_2 ( VAR_4 , new TYPE_2 ( METHOD_3 ( ) , name , VAR_1 ) ) ; } SEQUENCE_END
+
+public void METHOD_1 ( TYPE_1 VAR_1 ) throws HyracksDataException { try { ( ( TYPE_2 ) VAR_1 ) . METHOD_1 ( ) ; } catch ( IOException e ) { throw new HyracksDataException ( e ) ; } } SEQUENCE_END
+public void METHOD_1 ( TYPE_1 VAR_1 ) throws HyracksDataException { try { ( ( TYPE_2 ) VAR_1 ) . METHOD_1 ( ) ; } catch ( IOException e ) { throw new HyracksDataException ( e ) ; } } SEQUENCE_END
+
+public void METHOD_1 ( TYPE_1 VAR_1 , boolean VAR_2 ) { if ( VAR_2 ) { TYPE_2 . METHOD_2 ( ) . METHOD_3 ( VAR_1 ) ; } else { TYPE_2 . METHOD_2 ( ) . METHOD_4 ( VAR_1 ) ; } } SEQUENCE_END
+public void METHOD_1 ( TYPE_1 VAR_1 , boolean VAR_2 ) { if ( VAR_2 ) { TYPE_2 . METHOD_2 ( ) . METHOD_3 ( VAR_1 ) ; } else { TYPE_2 . METHOD_2 ( ) . METHOD_4 ( VAR_1 ) ; } } SEQUENCE_END
+
+public static String METHOD_1 ( File VAR_1 ) throws IOException { try ( TYPE_1 VAR_2 = new TYPE_1 ( VAR_1 ) ) { return VAR_2 . METHOD_2 ( ) . METHOD_3 ( ) . METHOD_4 ( STRING_1 ) ; } } SEQUENCE_END
+public static String METHOD_1 ( File VAR_1 ) throws IOException { try ( TYPE_1 VAR_2 = new TYPE_1 ( VAR_1 ) ) { return VAR_2 . METHOD_2 ( ) . METHOD_3 ( ) . METHOD_4 ( STRING_1 ) ; } } SEQUENCE_END
+
+public void METHOD_1 ( ) { List < TYPE_1 > result = VAR_1 . METHOD_2 ( Guid . METHOD_3 ( ) ) ; METHOD_4 ( result ) ; assertTrue ( result . isEmpty ( ) ) ; } SEQUENCE_END
+public void METHOD_1 ( ) { List < TYPE_1 > result = VAR_1 . METHOD_2 ( Guid . METHOD_3 ( ) ) ; METHOD_4 ( result ) ; assertTrue ( result . isEmpty ( ) ) ; } SEQUENCE_END
+
+private static TYPE_1 METHOD_1 ( Account account ) { return new TYPE_1 ( new TYPE_2 ( VAR_1 ) , account , TYPE_3 . of ( ) , new HashMap < > ( ) ) ; } SEQUENCE_END
+private static TYPE_1 METHOD_1 ( Account account ) { return new TYPE_1 ( new TYPE_2 ( VAR_1 ) , account , TYPE_3 . of ( ) , new HashMap < > ( ) ) ; } SEQUENCE_END
+
+public boolean METHOD_1 ( Account . Id VAR_1 ) { return METHOD_1 ( new TYPE_1 ( ) { Account . Id getId ( ) { return VAR_1 ; } TYPE_2 METHOD_2 ( ) { return VAR_2 . create ( VAR_1 ) ; } } ) ; } SEQUENCE_END
+public boolean METHOD_1 ( Account . Id VAR_1 ) { return METHOD_1 ( new TYPE_1 ( ) { Account . Id getId ( ) { return VAR_1 ; } TYPE_2 METHOD_2 ( ) { return VAR_2 . create ( VAR_1 ) ; } } ) ; } SEQUENCE_END
+
+public TYPE_1 METHOD_1 ( Guid id ) { return METHOD_1 ( id , null , false ) ; } SEQUENCE_END
+public TYPE_1 METHOD_1 ( Guid id ) { return METHOD_1 ( id , null , false ) ; } SEQUENCE_END
+
+public void METHOD_1 ( ) throws TYPE_1 , IOException { String changeId = METHOD_2 ( ) ; METHOD_3 ( changeId , STRING_1 ) ; ChangeInfo c = METHOD_4 ( changeId ) ; METHOD_5 ( c . messages ) ; } SEQUENCE_END
+public void METHOD_1 ( ) throws TYPE_1 , IOException { String changeId = METHOD_2 ( ) ; METHOD_3 ( changeId , STRING_1 ) ; ChangeInfo c = METHOD_4 ( changeId ) ; METHOD_5 ( c . messages ) ; } SEQUENCE_END
+
+public boolean METHOD_1 ( TYPE_1 VAR_1 ) throws IOException { VAR_2 . METHOD_2 ( new TYPE_2 ( VAR_1 ) ) ; return true ; } SEQUENCE_END
+public boolean METHOD_1 ( TYPE_1 VAR_1 ) throws IOException { VAR_2 . METHOD_2 ( new TYPE_2 ( VAR_1 ) ) ; return true ; } SEQUENCE_END
+
+private String METHOD_1 ( String projectName , int changeId ) { String VAR_1 = TYPE_1 . METHOD_2 ( projectName ) ; return VAR_1 + CHAR_1 + changeId ; } SEQUENCE_END
+private String METHOD_1 ( String projectName , int changeId ) { String VAR_1 = TYPE_1 . METHOD_2 ( projectName ) ; return VAR_1 + CHAR_1 + changeId ; } SEQUENCE_END
+
+protected boolean validate ( ) { if ( METHOD_1 ( ) != null && ! METHOD_1 ( ) . equals ( VAR_1 ) ) { return true ; } else { addValidationMessage ( VAR_2 ) ; return false ; } } SEQUENCE_END
+protected boolean validate ( ) { if ( METHOD_1 ( ) != null && ! METHOD_1 ( ) . equals ( VAR_1 ) ) { return true ; } else { addValidationMessage ( VAR_2 ) ; return false ; } } SEQUENCE_END
+
+public void METHOD_1 ( TYPE_1 node ) { METHOD_2 ( node ) ; if ( METHOD_3 ( node ) ) { METHOD_4 ( node ) ; } VAR_1 . remove ( node ) ; } SEQUENCE_END
+public void METHOD_1 ( TYPE_1 node ) { METHOD_2 ( node ) ; if ( METHOD_3 ( node ) ) { METHOD_4 ( node ) ; } VAR_1 . remove ( node ) ; } SEQUENCE_END
+
+private void METHOD_1 ( List < TYPE_1 > list ) { if ( list . size ( ) ) { return ; } VAR_1 . put ( list . get ( 0 ) . METHOD_2 ( ) , list ) ; } SEQUENCE_END
+private void METHOD_1 ( List < TYPE_1 > list ) { if ( list . isEmpty ( ) ) { return ; } VAR_1 . put ( list . get ( 0 ) . METHOD_2 ( ) , list ) ; } SEQUENCE_END
+
+private void METHOD_1 ( Account . Id id ) { TYPE_1 VAR_1 = session . get ( ) ; VAR_1 . METHOD_2 ( id ) ; VAR_1 . METHOD_3 ( VAR_2 , true ) ; VAR_1 . METHOD_3 ( VAR_3 , true ) ; } SEQUENCE_END
+private void METHOD_1 ( Account . Id id ) { TYPE_1 VAR_1 = session . get ( ) ; VAR_1 . METHOD_2 ( id ) ; VAR_1 . METHOD_3 ( VAR_2 , true ) ; VAR_1 . METHOD_3 ( VAR_3 , true ) ; } SEQUENCE_END
+
+public TYPE_1 METHOD_1 ( ) { TYPE_2 VAR_1 = METHOD_2 ( ) . METHOD_3 ( ) ; if ( VAR_1 == null ) { return null ; } return VAR_1 . METHOD_4 ( ) ; } SEQUENCE_END
+public TYPE_1 METHOD_1 ( ) { TYPE_2 VAR_1 = METHOD_2 ( ) . METHOD_3 ( ) ; if ( VAR_1 == null ) { return null ; } return VAR_1 . METHOD_4 ( ) ; } SEQUENCE_END
+
+private synchronized boolean METHOD_1 ( TYPE_1 device , TYPE_2 VAR_1 ) { if ( VAR_2 ) { Log.d ( VAR_3 , STRING_1 + VAR_1 ) ; } return VAR_4 . METHOD_1 ( device , VAR_1 ) ; } SEQUENCE_END
+private synchronized boolean METHOD_1 ( TYPE_1 device , TYPE_2 VAR_1 ) { if ( VAR_2 ) { Log.d ( VAR_3 , STRING_1 + VAR_1 ) ; } return VAR_4 . METHOD_1 ( device , VAR_1 ) ; } SEQUENCE_END
+
+public String METHOD_1 ( ) { if ( VAR_1 != null ) { final String VAR_2 = VAR_1 . getMessage ( ) ; if ( VAR_2 != null ) { return VAR_2 . METHOD_2 ( ) ; } } return STRING_1 ; } SEQUENCE_END
+public String METHOD_1 ( ) { if ( VAR_1 != null ) { final String VAR_2 = VAR_1 . getMessage ( ) ; if ( VAR_2 != null ) { return VAR_2 . METHOD_2 ( ) ; } } return STRING_1 ; } SEQUENCE_END
+
+void METHOD_1 ( ) { TYPE_1 . METHOD_2 ( changeId . get ( ) , new TYPE_2 < ChangeInfo > ( ) { public void onSuccess ( ChangeInfo result ) { METHOD_3 ( result ) ; } } ) ; } SEQUENCE_END
+void METHOD_1 ( ) { TYPE_1 . METHOD_2 ( changeId . get ( ) , new TYPE_2 < ChangeInfo > ( ) { public void onSuccess ( ChangeInfo result ) { METHOD_3 ( result ) ; } } ) ; } SEQUENCE_END
+
+public String toString ( ) { return TYPE_1 . METHOD_1 ( this ) . add ( STRING_1 , psId ) . add ( STRING_2 , user ) . add ( STRING_3 , VAR_2 ) . add ( STRING_4 , VAR_3 ) . toString ( ) ; } SEQUENCE_END
+public String toString ( ) { return TYPE_1 . METHOD_1 ( this ) . add ( STRING_1 , psId ) . add ( STRING_2 , user ) . add ( STRING_3 , VAR_2 ) . add ( STRING_4 , VAR_3 ) . toString ( ) ; } SEQUENCE_END
+
+public void METHOD_1 ( ) { int VAR_1 = ( VAR_2 | VAR_3 ) ; int expected = ( VAR_5 | VAR_6 ) ; assertEquals ( expected , VAR_7 . METHOD_2 ( VAR_1 ) ) ; } SEQUENCE_END
+public void METHOD_1 ( ) { int VAR_1 = ( VAR_2 | VAR_3 ) ; int expected = ( VAR_5 | VAR_6 ) ; assertEquals ( expected , VAR_7 . METHOD_2 ( VAR_1 ) ) ; } SEQUENCE_END
+
+public TYPE_1 METHOD_1 ( String VAR_1 ) { TYPE_2 service = get ( VAR_2 class ) ; service . METHOD_2 ( VAR_1 ) ; return ok ( VAR_3 ) . build ( ) ; } SEQUENCE_END
+public TYPE_1 METHOD_1 ( String VAR_1 ) { TYPE_2 service = get ( VAR_2 class ) ; service . METHOD_2 ( VAR_1 ) ; return ok ( VAR_3 ) . build ( ) ; } SEQUENCE_END
+
+public void METHOD_1 ( Account . Id accountId ) throws IOException { if ( accountId != null ) { VAR_1 . METHOD_2 ( accountId ) ; index ( accountId ) ; } } SEQUENCE_END
+public void METHOD_1 ( Account . Id accountId ) throws IOException { if ( accountId != null ) { VAR_1 . METHOD_2 ( accountId ) ; index ( accountId ) ; } } SEQUENCE_END
+
+public TYPE_1 METHOD_1 ( ) { TYPE_1 result = ( TYPE_1 ) VAR_1 [ ( VAR_2 - 1 ) & ( VAR_3 - 1 ) ] ; if ( result == null ) throw new TYPE_2 ( ) ; return result ; } SEQUENCE_END
+public TYPE_1 METHOD_1 ( ) { TYPE_1 result = ( TYPE_1 ) VAR_1 [ ( VAR_2 - 1 ) & ( VAR_3 - 1 ) ] ; if ( result == null ) throw new TYPE_2 ( ) ; return result ; } SEQUENCE_END
+
+protected boolean METHOD_1 ( ) { if ( METHOD_2 ( ) || METHOD_3 ( ) ) { return true ; } return validate ( TYPE_1 . METHOD_1 ( METHOD_4 ( ) , METHOD_4 ( ) . METHOD_6 ( ) ) ) ; } SEQUENCE_END
+protected boolean METHOD_1 ( ) { if ( METHOD_2 ( ) || METHOD_3 ( ) ) { return true ; } return validate ( TYPE_1 . METHOD_1 ( METHOD_4 ( ) , METHOD_4 ( ) . METHOD_6 ( ) ) ) ; } SEQUENCE_END
+
+public final void METHOD_1 ( ARecordType VAR_1 , int VAR_2 , TYPE_1 VAR_3 ) throws IOException { VAR_3 . METHOD_2 ( VAR_4 ) ; VAR_3 . METHOD_3 ( VAR_5 , METHOD_4 ( VAR_1 , VAR_2 ) , METHOD_5 ( VAR_1 , VAR_2 ) ) ; } SEQUENCE_END
+public final void METHOD_1 ( ARecordType VAR_1 , int VAR_2 , TYPE_1 VAR_3 ) throws IOException { VAR_3 . METHOD_2 ( VAR_4 ) ; VAR_3 . METHOD_3 ( VAR_5 , METHOD_4 ( VAR_1 , VAR_2 ) , METHOD_5 ( VAR_1 , VAR_2 ) ) ; } SEQUENCE_END
+
+public TYPE_1 METHOD_1 ( ) { if ( METHOD_2 ( ) ) { return getParameters ( ) ; } return getParameters ( ) . METHOD_1 ( ) ; } SEQUENCE_END
+public TYPE_1 METHOD_1 ( ) { if ( METHOD_2 ( ) ) { return getParameters ( ) ; } return getParameters ( ) . METHOD_1 ( ) ; } SEQUENCE_END
+
+public TYPE_1 < TYPE_2 > apply ( TYPE_3 VAR_1 , TYPE_4 input ) throws RestApiException , IOException { return install . get ( ) . METHOD_1 ( VAR_1 . getName ( ) ) . apply ( VAR_2 , input ) ; } SEQUENCE_END
+public TYPE_1 < TYPE_2 > apply ( TYPE_3 VAR_1 , TYPE_4 input ) throws RestApiException , IOException { return install . get ( ) . METHOD_1 ( VAR_1 . getName ( ) ) . apply ( VAR_2 , input ) ; } SEQUENCE_END
+
+private TYPE_1 METHOD_1 ( final Project.NameKey name ) { try { return VAR_1 . METHOD_1 ( name ) ; } catch ( TYPE_2 err ) { log.warn ( STRING_1 + name . get ( ) , err ) ; return null ; } } SEQUENCE_END
+private TYPE_1 METHOD_1 ( final Project.NameKey name ) { try { return VAR_1 . METHOD_1 ( name ) ; } catch ( TYPE_2 err ) { log.warn ( STRING_1 + name . get ( ) , err ) ; return null ; } } SEQUENCE_END
+
+====================================================================================================
+
+
+INFO:tensorflow:Performing full trace on next step.
+INFO:tensorflow:Captured full trace at step 41007
+INFO:tensorflow:Saved run_metadata to /home/ubuntu/NeuralCodeTranslator/model/dataset/run_meta
+INFO:tensorflow:Saved timeline to /home/ubuntu/NeuralCodeTranslator/model/dataset/timeline.json
+INFO:tensorflow:Saved op log to /home/ubuntu/NeuralCodeTranslator/model/dataset
+INFO:tensorflow:global_step/sec: 0.145035
+INFO:tensorflow:loss = 0.0053407755, step = 41106
+INFO:tensorflow:global_step/sec: 0.161722
+INFO:tensorflow:loss = 0.005013173, step = 41206
+INFO:tensorflow:global_step/sec: 0.162814
+INFO:tensorflow:loss = 0.0067113796, step = 41306
+INFO:tensorflow:global_step/sec: 0.162823
+INFO:tensorflow:loss = 0.0060354965, step = 41406
+INFO:tensorflow:global_step/sec: 0.159943
+INFO:tensorflow:loss = 0.0064142025, step = 41506
+INFO:tensorflow:global_step/sec: 0.16404
+INFO:tensorflow:loss = 0.0037846763, step = 41606
+INFO:tensorflow:global_step/sec: 0.163555
+INFO:tensorflow:loss = 0.007940516, step = 41706
+INFO:tensorflow:global_step/sec: 0.159454
+INFO:tensorflow:loss = 0.021628004, step = 41806
+INFO:tensorflow:global_step/sec: 0.167765
+INFO:tensorflow:loss = 0.014508045, step = 41906
+INFO:tensorflow:Saving checkpoints for 42005 into ../model/dataset/model.ckpt.
+INFO:tensorflow:Loss for final step: 0.005813967.
+INFO:tensorflow:Evaluating model now.
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=eval
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=eval
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=eval
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=eval
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=eval
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Starting evaluation at 2019-05-09-08:28:30
+INFO:tensorflow:Finished evaluation at 2019-05-09-08:29:16
+INFO:tensorflow:Saving dict for global step 42005: bleu = 79.2, global_step = 42005, log_perplexity = 0.8189968, loss = 0.76559645
+WARNING:tensorflow:Skipping summary for global_step, must be a float or np.float32.
+INFO:tensorflow:Training model for 1000 steps
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=train
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=train
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=train
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=train
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=train
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Create CheckpointSaverHook.
+4 ops no flops stats due to incomplete shapes. Consider passing run_meta to use run_time shapes.
+INFO:tensorflow:b'_TFProfRoot (--/4.64m params)\n  model/att_seq2seq/Variable (0/0 params)\n  model/att_seq2seq/decode/attention/att_keys/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_keys/weights (512x512, 262.14k/262.14k params)\n  model/att_seq2seq/decode/attention/att_query/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_query/weights (256x512, 131.07k/131.07k params)\n  model/att_seq2seq/decode/attention/v_att (512, 512/512 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/biases (256, 256/256 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/weights (768x256, 196.61k/196.61k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/weights (1280x1024, 1.31m/1.31m params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/weights (512x1024, 524.29k/524.29k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/biases (495, 495/495 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/weights (256x495, 126.72k/126.72k params)\n  model/att_seq2seq/decode/target_embedding/W (495x512, 253.44k/253.44k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/source_embedding/W (497x512, 254.46k/254.46k params)\n'
+INFO:tensorflow:Saving checkpoints for 42006 into ../model/dataset/model.ckpt.
+INFO:tensorflow:loss = 0.007874721, step = 42006
+INFO:tensorflow:global_step/sec: 0.148982
+INFO:tensorflow:loss = 0.0063075507, step = 42106
+INFO:tensorflow:global_step/sec: 0.166748
+INFO:tensorflow:loss = 0.0043492503, step = 42206
+INFO:tensorflow:global_step/sec: 0.168582
+INFO:tensorflow:loss = 0.008418952, step = 42306
+INFO:tensorflow:global_step/sec: 0.163858
+INFO:tensorflow:loss = 0.0119515965, step = 42406
+INFO:tensorflow:global_step/sec: 0.167316
+INFO:tensorflow:loss = 0.008598657, step = 42506
+INFO:tensorflow:global_step/sec: 0.16352
+INFO:tensorflow:loss = 0.0063972278, step = 42606
+INFO:tensorflow:global_step/sec: 0.164137
+INFO:tensorflow:loss = 0.003787987, step = 42706
+INFO:tensorflow:global_step/sec: 0.167622
+INFO:tensorflow:loss = 0.003965057, step = 42806
+INFO:tensorflow:global_step/sec: 0.16452
+INFO:tensorflow:loss = 0.005449129, step = 42906
+INFO:tensorflow:Saving checkpoints for 43005 into ../model/dataset/model.ckpt.
+INFO:tensorflow:Loss for final step: 0.009362588.
+INFO:tensorflow:Evaluating model now.
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=eval
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=eval
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=eval
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=eval
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=eval
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Starting evaluation at 2019-05-09-10:10:50
+INFO:tensorflow:Finished evaluation at 2019-05-09-10:11:36
+INFO:tensorflow:Saving dict for global step 43005: bleu = 78.79, global_step = 43005, log_perplexity = 0.82606936, loss = 0.77306354
+WARNING:tensorflow:Skipping summary for global_step, must be a float or np.float32.
+INFO:tensorflow:Training model for 1000 steps
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=train
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=train
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=train
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=train
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=train
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Create CheckpointSaverHook.
+4 ops no flops stats due to incomplete shapes. Consider passing run_meta to use run_time shapes.
+INFO:tensorflow:b'_TFProfRoot (--/4.64m params)\n  model/att_seq2seq/Variable (0/0 params)\n  model/att_seq2seq/decode/attention/att_keys/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_keys/weights (512x512, 262.14k/262.14k params)\n  model/att_seq2seq/decode/attention/att_query/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_query/weights (256x512, 131.07k/131.07k params)\n  model/att_seq2seq/decode/attention/v_att (512, 512/512 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/biases (256, 256/256 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/weights (768x256, 196.61k/196.61k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/weights (1280x1024, 1.31m/1.31m params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/weights (512x1024, 524.29k/524.29k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/biases (495, 495/495 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/weights (256x495, 126.72k/126.72k params)\n  model/att_seq2seq/decode/target_embedding/W (495x512, 253.44k/253.44k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/source_embedding/W (497x512, 254.46k/254.46k params)\n'
+INFO:tensorflow:Saving checkpoints for 43006 into ../model/dataset/model.ckpt.
+INFO:tensorflow:loss = 0.011035603, step = 43006
+INFO:tensorflow:global_step/sec: 0.150086
+INFO:tensorflow:loss = 0.007796978, step = 43106
+INFO:tensorflow:global_step/sec: 0.165659
+INFO:tensorflow:loss = 0.016699212, step = 43206
+INFO:tensorflow:global_step/sec: 0.166045
+INFO:tensorflow:loss = 0.010319775, step = 43306
+INFO:tensorflow:global_step/sec: 0.165516
+INFO:tensorflow:loss = 0.0078027057, step = 43406
+INFO:tensorflow:global_step/sec: 0.166597
+INFO:tensorflow:loss = 0.0043184482, step = 43506
+INFO:tensorflow:global_step/sec: 0.167159
+INFO:tensorflow:loss = 0.0050583603, step = 43606
+INFO:tensorflow:global_step/sec: 0.164942
+INFO:tensorflow:loss = 0.0046274425, step = 43706
+INFO:tensorflow:global_step/sec: 0.165007
+INFO:tensorflow:loss = 0.0069979145, step = 43806
+INFO:tensorflow:global_step/sec: 0.163938
+INFO:tensorflow:loss = 0.009491855, step = 43906
+INFO:tensorflow:Saving checkpoints for 44005 into ../model/dataset/model.ckpt.
+INFO:tensorflow:Loss for final step: 0.0059528514.
+INFO:tensorflow:Evaluating model now.
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=eval
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=eval
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=eval
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=eval
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=eval
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Starting evaluation at 2019-05-09-11:53:30
+INFO:tensorflow:Finished evaluation at 2019-05-09-11:54:17
+INFO:tensorflow:Saving dict for global step 44005: bleu = 79.42, global_step = 44005, log_perplexity = 0.8345387, loss = 0.7799517
+WARNING:tensorflow:Skipping summary for global_step, must be a float or np.float32.
+INFO:tensorflow:Training model for 1000 steps
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=train
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=train
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=train
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=train
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=train
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Create CheckpointSaverHook.
+4 ops no flops stats due to incomplete shapes. Consider passing run_meta to use run_time shapes.
+INFO:tensorflow:b'_TFProfRoot (--/4.64m params)\n  model/att_seq2seq/Variable (0/0 params)\n  model/att_seq2seq/decode/attention/att_keys/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_keys/weights (512x512, 262.14k/262.14k params)\n  model/att_seq2seq/decode/attention/att_query/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_query/weights (256x512, 131.07k/131.07k params)\n  model/att_seq2seq/decode/attention/v_att (512, 512/512 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/biases (256, 256/256 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/weights (768x256, 196.61k/196.61k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/weights (1280x1024, 1.31m/1.31m params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/weights (512x1024, 524.29k/524.29k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/biases (495, 495/495 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/weights (256x495, 126.72k/126.72k params)\n  model/att_seq2seq/decode/target_embedding/W (495x512, 253.44k/253.44k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/source_embedding/W (497x512, 254.46k/254.46k params)\n'
+INFO:tensorflow:Saving checkpoints for 44006 into ../model/dataset/model.ckpt.
+INFO:tensorflow:loss = 0.007597335, step = 44006
+INFO:tensorflow:global_step/sec: 0.149591
+INFO:tensorflow:loss = 0.0045905067, step = 44106
+INFO:tensorflow:global_step/sec: 0.166381
+INFO:tensorflow:loss = 0.0070759803, step = 44206
+INFO:tensorflow:global_step/sec: 0.163588
+INFO:tensorflow:loss = 0.0044587147, step = 44306
+INFO:tensorflow:global_step/sec: 0.165773
+INFO:tensorflow:loss = 0.0049420814, step = 44406
+INFO:tensorflow:global_step/sec: 0.168108
+INFO:tensorflow:loss = 0.010783219, step = 44506
+INFO:tensorflow:global_step/sec: 0.166804
+INFO:tensorflow:loss = 0.0045408956, step = 44606
+INFO:tensorflow:global_step/sec: 0.163684
+INFO:tensorflow:loss = 0.012685271, step = 44706
+INFO:tensorflow:global_step/sec: 0.166403
+INFO:tensorflow:loss = 0.0081913695, step = 44806
+INFO:tensorflow:global_step/sec: 0.168787
+INFO:tensorflow:loss = 0.009272104, step = 44906
+INFO:tensorflow:Saving checkpoints for 45005 into ../model/dataset/model.ckpt.
+INFO:tensorflow:Loss for final step: 0.008403287.
+INFO:tensorflow:Evaluating model now.
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=eval
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=eval
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=eval
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=eval
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=eval
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Starting evaluation at 2019-05-09-13:35:41
+INFO:tensorflow:Finished evaluation at 2019-05-09-13:36:27
+INFO:tensorflow:Saving dict for global step 45005: bleu = 79.33, global_step = 45005, log_perplexity = 0.8401568, loss = 0.78494745
+WARNING:tensorflow:Skipping summary for global_step, must be a float or np.float32.
+INFO:tensorflow:Training model for 1000 steps
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=train
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=train
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=train
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=train
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=train
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Create CheckpointSaverHook.
+4 ops no flops stats due to incomplete shapes. Consider passing run_meta to use run_time shapes.
+INFO:tensorflow:b'_TFProfRoot (--/4.64m params)\n  model/att_seq2seq/Variable (0/0 params)\n  model/att_seq2seq/decode/attention/att_keys/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_keys/weights (512x512, 262.14k/262.14k params)\n  model/att_seq2seq/decode/attention/att_query/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_query/weights (256x512, 131.07k/131.07k params)\n  model/att_seq2seq/decode/attention/v_att (512, 512/512 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/biases (256, 256/256 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/weights (768x256, 196.61k/196.61k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/weights (1280x1024, 1.31m/1.31m params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/weights (512x1024, 524.29k/524.29k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/biases (495, 495/495 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/weights (256x495, 126.72k/126.72k params)\n  model/att_seq2seq/decode/target_embedding/W (495x512, 253.44k/253.44k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/source_embedding/W (497x512, 254.46k/254.46k params)\n'
+INFO:tensorflow:Saving checkpoints for 45006 into ../model/dataset/model.ckpt.
+INFO:tensorflow:loss = 0.009716582, step = 45006
+INFO:tensorflow:global_step/sec: 0.150394
+INFO:tensorflow:loss = 0.016544772, step = 45106
+INFO:tensorflow:global_step/sec: 0.167237
+INFO:tensorflow:loss = 0.0037532523, step = 45206
+INFO:tensorflow:global_step/sec: 0.166922
+INFO:tensorflow:loss = 0.010764522, step = 45306
+INFO:tensorflow:global_step/sec: 0.166386
+INFO:tensorflow:loss = 0.0043936153, step = 45406
+INFO:tensorflow:global_step/sec: 0.167525
+INFO:tensorflow:loss = 0.009802619, step = 45506
+INFO:tensorflow:global_step/sec: 0.165722
+INFO:tensorflow:loss = 0.019271988, step = 45606
+INFO:tensorflow:global_step/sec: 0.168202
+INFO:tensorflow:loss = 0.0098918555, step = 45706
+INFO:tensorflow:global_step/sec: 0.166828
+INFO:tensorflow:loss = 0.0050460715, step = 45806
+INFO:tensorflow:global_step/sec: 0.167941
+INFO:tensorflow:loss = 0.0073845526, step = 45906
+INFO:tensorflow:Saving checkpoints for 46005 into ../model/dataset/model.ckpt.
+INFO:tensorflow:Loss for final step: 0.008050425.
+INFO:tensorflow:Evaluating model now.
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=eval
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=eval
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=eval
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=eval
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=eval
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Starting evaluation at 2019-05-09-15:17:24
+INFO:tensorflow:Finished evaluation at 2019-05-09-15:18:10
+INFO:tensorflow:Saving dict for global step 46005: bleu = 78.98, global_step = 46005, log_perplexity = 0.8467685, loss = 0.7916257
+WARNING:tensorflow:Skipping summary for global_step, must be a float or np.float32.
+INFO:tensorflow:Training model for 1000 steps
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=train
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=train
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=train
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=train
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=train
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Create CheckpointSaverHook.
+4 ops no flops stats due to incomplete shapes. Consider passing run_meta to use run_time shapes.
+INFO:tensorflow:b'_TFProfRoot (--/4.64m params)\n  model/att_seq2seq/Variable (0/0 params)\n  model/att_seq2seq/decode/attention/att_keys/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_keys/weights (512x512, 262.14k/262.14k params)\n  model/att_seq2seq/decode/attention/att_query/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_query/weights (256x512, 131.07k/131.07k params)\n  model/att_seq2seq/decode/attention/v_att (512, 512/512 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/biases (256, 256/256 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/weights (768x256, 196.61k/196.61k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/weights (1280x1024, 1.31m/1.31m params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/weights (512x1024, 524.29k/524.29k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/biases (495, 495/495 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/weights (256x495, 126.72k/126.72k params)\n  model/att_seq2seq/decode/target_embedding/W (495x512, 253.44k/253.44k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/source_embedding/W (497x512, 254.46k/254.46k params)\n'
+INFO:tensorflow:Saving checkpoints for 46006 into ../model/dataset/model.ckpt.
+INFO:tensorflow:loss = 0.009535644, step = 46006
+INFO:tensorflow:global_step/sec: 0.150887
+INFO:tensorflow:loss = 0.0063125663, step = 46106
+INFO:tensorflow:global_step/sec: 0.16329
+INFO:tensorflow:loss = 0.013313201, step = 46206
+INFO:tensorflow:global_step/sec: 0.169523
+INFO:tensorflow:loss = 0.0034860224, step = 46306
+INFO:tensorflow:global_step/sec: 0.16601
+INFO:tensorflow:loss = 0.006737217, step = 46406
+INFO:tensorflow:global_step/sec: 0.168376
+INFO:tensorflow:loss = 0.0042786472, step = 46506
+INFO:tensorflow:global_step/sec: 0.165957
+INFO:tensorflow:loss = 0.006213727, step = 46606
+INFO:tensorflow:global_step/sec: 0.166367
+INFO:tensorflow:loss = 0.004988336, step = 46706
+INFO:tensorflow:global_step/sec: 0.165422
+INFO:tensorflow:loss = 0.009886982, step = 46806
+INFO:tensorflow:global_step/sec: 0.169913
+INFO:tensorflow:loss = 0.0056778807, step = 46906
+INFO:tensorflow:Saving checkpoints for 47005 into ../model/dataset/model.ckpt.
+INFO:tensorflow:Loss for final step: 0.005112221.
+INFO:tensorflow:Evaluating model now.
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=eval
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=eval
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=eval
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=eval
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=eval
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Starting evaluation at 2019-05-09-16:59:06
+INFO:tensorflow:Finished evaluation at 2019-05-09-16:59:52
+INFO:tensorflow:Saving dict for global step 47005: bleu = 78.86, global_step = 47005, log_perplexity = 0.83448786, loss = 0.7806609
+WARNING:tensorflow:Skipping summary for global_step, must be a float or np.float32.
+INFO:tensorflow:Training model for 1000 steps
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=train
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=train
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=train
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=train
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=train
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Create CheckpointSaverHook.
+4 ops no flops stats due to incomplete shapes. Consider passing run_meta to use run_time shapes.
+INFO:tensorflow:b'_TFProfRoot (--/4.64m params)\n  model/att_seq2seq/Variable (0/0 params)\n  model/att_seq2seq/decode/attention/att_keys/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_keys/weights (512x512, 262.14k/262.14k params)\n  model/att_seq2seq/decode/attention/att_query/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_query/weights (256x512, 131.07k/131.07k params)\n  model/att_seq2seq/decode/attention/v_att (512, 512/512 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/biases (256, 256/256 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/weights (768x256, 196.61k/196.61k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/weights (1280x1024, 1.31m/1.31m params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/weights (512x1024, 524.29k/524.29k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/biases (495, 495/495 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/weights (256x495, 126.72k/126.72k params)\n  model/att_seq2seq/decode/target_embedding/W (495x512, 253.44k/253.44k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/source_embedding/W (497x512, 254.46k/254.46k params)\n'
+INFO:tensorflow:Saving checkpoints for 47006 into ../model/dataset/model.ckpt.
+INFO:tensorflow:loss = 0.0037061896, step = 47006
+INFO:tensorflow:global_step/sec: 0.149953
+INFO:tensorflow:loss = 0.0033723852, step = 47106
+INFO:tensorflow:global_step/sec: 0.164781
+INFO:tensorflow:loss = 0.0021673741, step = 47206
+INFO:tensorflow:global_step/sec: 0.166423
+INFO:tensorflow:loss = 0.00429201, step = 47306
+INFO:tensorflow:global_step/sec: 0.167759
+INFO:tensorflow:loss = 0.0031277142, step = 47406
+INFO:tensorflow:global_step/sec: 0.16561
+INFO:tensorflow:loss = 0.0022822244, step = 47506
+INFO:tensorflow:global_step/sec: 0.165422
+INFO:tensorflow:loss = 0.0019740902, step = 47606
+INFO:tensorflow:global_step/sec: 0.165425
+INFO:tensorflow:loss = 0.0066614808, step = 47706
+INFO:tensorflow:global_step/sec: 0.165281
+INFO:tensorflow:loss = 0.003958255, step = 47806
+INFO:tensorflow:global_step/sec: 0.161701
+INFO:tensorflow:loss = 0.0047619096, step = 47906
+INFO:tensorflow:Saving checkpoints for 48005 into ../model/dataset/model.ckpt.
+INFO:tensorflow:Loss for final step: 0.0020034367.
+INFO:tensorflow:Evaluating model now.
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=eval
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=eval
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=eval
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=eval
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=eval
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Starting evaluation at 2019-05-09-18:41:58
+INFO:tensorflow:Finished evaluation at 2019-05-09-18:42:46
+INFO:tensorflow:Saving dict for global step 48005: bleu = 79.06, global_step = 48005, log_perplexity = 0.8554668, loss = 0.7996486
+WARNING:tensorflow:Skipping summary for global_step, must be a float or np.float32.
+INFO:tensorflow:Training model for 1000 steps
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=train
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=train
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=train
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=train
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=train
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Create CheckpointSaverHook.
+4 ops no flops stats due to incomplete shapes. Consider passing run_meta to use run_time shapes.
+INFO:tensorflow:b'_TFProfRoot (--/4.64m params)\n  model/att_seq2seq/Variable (0/0 params)\n  model/att_seq2seq/decode/attention/att_keys/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_keys/weights (512x512, 262.14k/262.14k params)\n  model/att_seq2seq/decode/attention/att_query/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_query/weights (256x512, 131.07k/131.07k params)\n  model/att_seq2seq/decode/attention/v_att (512, 512/512 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/biases (256, 256/256 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/weights (768x256, 196.61k/196.61k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/weights (1280x1024, 1.31m/1.31m params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/weights (512x1024, 524.29k/524.29k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/biases (495, 495/495 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/weights (256x495, 126.72k/126.72k params)\n  model/att_seq2seq/decode/target_embedding/W (495x512, 253.44k/253.44k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/source_embedding/W (497x512, 254.46k/254.46k params)\n'
+INFO:tensorflow:Saving checkpoints for 48006 into ../model/dataset/model.ckpt.
+INFO:tensorflow:loss = 0.004722827, step = 48006
+INFO:tensorflow:global_step/sec: 0.14782
+INFO:tensorflow:loss = 0.004516736, step = 48106
+INFO:tensorflow:global_step/sec: 0.160951
+INFO:tensorflow:loss = 0.0038917544, step = 48206
+INFO:tensorflow:global_step/sec: 0.168156
+INFO:tensorflow:loss = 0.010649618, step = 48306
+INFO:tensorflow:global_step/sec: 0.166195
+INFO:tensorflow:loss = 0.0026134036, step = 48406
+INFO:tensorflow:global_step/sec: 0.162577
+INFO:tensorflow:loss = 0.012549409, step = 48506
+INFO:tensorflow:global_step/sec: 0.163872
+INFO:tensorflow:loss = 0.008362402, step = 48606
+INFO:tensorflow:global_step/sec: 0.163088
+INFO:tensorflow:loss = 0.0038619316, step = 48706
+INFO:tensorflow:global_step/sec: 0.167296
+INFO:tensorflow:loss = 0.0060631037, step = 48806
+INFO:tensorflow:global_step/sec: 0.166234
+INFO:tensorflow:loss = 0.0037076068, step = 48906
+INFO:tensorflow:Saving checkpoints for 49005 into ../model/dataset/model.ckpt.
+INFO:tensorflow:Loss for final step: 0.0044175503.
+INFO:tensorflow:Evaluating model now.
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=eval
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=eval
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=eval
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=eval
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=eval
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Starting evaluation at 2019-05-09-20:25:15
+INFO:tensorflow:Finished evaluation at 2019-05-09-20:26:02
+INFO:tensorflow:Saving dict for global step 49005: bleu = 79.25, global_step = 49005, log_perplexity = 0.8716306, loss = 0.8143812
+WARNING:tensorflow:Skipping summary for global_step, must be a float or np.float32.
+INFO:tensorflow:Training model for 1000 steps
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=train
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=train
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=train
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=train
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=train
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Create CheckpointSaverHook.
+4 ops no flops stats due to incomplete shapes. Consider passing run_meta to use run_time shapes.
+INFO:tensorflow:b'_TFProfRoot (--/4.64m params)\n  model/att_seq2seq/Variable (0/0 params)\n  model/att_seq2seq/decode/attention/att_keys/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_keys/weights (512x512, 262.14k/262.14k params)\n  model/att_seq2seq/decode/attention/att_query/biases (512, 512/512 params)\n  model/att_seq2seq/decode/attention/att_query/weights (256x512, 131.07k/131.07k params)\n  model/att_seq2seq/decode/attention/v_att (512, 512/512 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/biases (256, 256/256 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/attention_mix/weights (768x256, 196.61k/196.61k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_0/lstm_cell/weights (1280x1024, 1.31m/1.31m params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/extended_multi_rnn_cell/cell_1/lstm_cell/weights (512x1024, 524.29k/524.29k params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/biases (495, 495/495 params)\n  model/att_seq2seq/decode/attention_decoder/decoder/logits/weights (256x495, 126.72k/126.72k params)\n  model/att_seq2seq/decode/target_embedding/W (495x512, 253.44k/253.44k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/bw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/biases (1024, 1.02k/1.02k params)\n  model/att_seq2seq/encode/bidi_rnn_encoder/bidirectional_rnn/fw/lstm_cell/weights (768x1024, 786.43k/786.43k params)\n  model/att_seq2seq/encode/source_embedding/W (497x512, 254.46k/254.46k params)\n'
+INFO:tensorflow:Saving checkpoints for 49006 into ../model/dataset/model.ckpt.
+INFO:tensorflow:loss = 0.003879092, step = 49006
+INFO:tensorflow:global_step/sec: 0.149586
+INFO:tensorflow:loss = 0.0038756568, step = 49106
+INFO:tensorflow:global_step/sec: 0.166131
+INFO:tensorflow:loss = 0.0016213995, step = 49206
+INFO:tensorflow:global_step/sec: 0.162869
+INFO:tensorflow:loss = 0.004041825, step = 49306
+INFO:tensorflow:global_step/sec: 0.167041
+INFO:tensorflow:loss = 0.0033692499, step = 49406
+INFO:tensorflow:global_step/sec: 0.161286
+INFO:tensorflow:loss = 0.0053173415, step = 49506
+INFO:tensorflow:global_step/sec: 0.167849
+INFO:tensorflow:loss = 0.005272007, step = 49606
+INFO:tensorflow:global_step/sec: 0.162651
+INFO:tensorflow:loss = 0.004898652, step = 49706
+INFO:tensorflow:global_step/sec: 0.164836
+INFO:tensorflow:loss = 0.003449995, step = 49806
+INFO:tensorflow:global_step/sec: 0.164412
+INFO:tensorflow:loss = 0.003033807, step = 49906
+INFO:tensorflow:Saving checkpoints for 50005 into ../model/dataset/model.ckpt.
+INFO:tensorflow:Loss for final step: 0.015606642.
+INFO:tensorflow:Evaluating model now.
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=eval
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=eval
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=eval
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=eval
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=eval
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Starting evaluation at 2019-05-09-22:08:28
+INFO:tensorflow:Finished evaluation at 2019-05-09-22:09:16
+INFO:tensorflow:Saving dict for global step 50005: bleu = 79.41, global_step = 50005, log_perplexity = 0.85478616, loss = 0.798733
+WARNING:tensorflow:Skipping summary for global_step, must be a float or np.float32.
+INFO:tensorflow:Stop training model as max steps reached
+Parsing GraphDef...
+Parsing RunMetadata...
+Parsing OpLog...
+Preparing Views...
+Parsing GraphDef...
+Parsing RunMetadata...
+Parsing OpLog...
+Preparing Views...
+Parsing GraphDef...
+Parsing RunMetadata...
+Parsing OpLog...
+Preparing Views...
+Parsing GraphDef...
+Parsing RunMetadata...
+Parsing OpLog...
+Preparing Views...
+Parsing GraphDef...
+Parsing RunMetadata...
+Parsing OpLog...
+Preparing Views...
+Parsing GraphDef...
+Parsing RunMetadata...
+Parsing OpLog...
+Preparing Views...
+Parsing GraphDef...
+Parsing RunMetadata...
+Parsing OpLog...
+Preparing Views...
+Parsing GraphDef...
+Parsing RunMetadata...
+Parsing OpLog...
+Preparing Views...
+Parsing GraphDef...
+Parsing RunMetadata...
+Parsing OpLog...
+Preparing Views...
+--------------- TRAINING ENDED ---------------------
+------------------- TESTING GREEDY ------------------------
+INFO:tensorflow:Creating ParallelTextInputPipeline in mode=infer
+INFO:tensorflow:
+ParallelTextInputPipeline:
+  num_epochs: 1
+  shuffle: false
+  source_delimiter: ' '
+  source_files: [../dataset/dataset//test/buggy.txt]
+  target_delimiter: ' '
+  target_files: []
+
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=infer
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 0
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating DecodeText in mode=infer
+INFO:tensorflow:
+DecodeText: {delimiter: ' ', postproc_fn: '', unk_mapping: null, unk_replace: false}
+
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=infer
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=infer
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=infer
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=infer
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Restored model from ../model/dataset/model.ckpt-50005
+------------------- BLEU ------------------------
+buggy vs fixed
+BLEU = 79.71, 86.4/82.1/77.8/73.2 (BP=1.000, ratio=1.104, hyp_len=14424, ref_len=13070)
+prediction vs fixed
+BLEU = 77.70, 87.9/81.0/74.7/68.5 (BP=1.000, ratio=1.005, hyp_len=13134, ref_len=13070)
+------------------- CLASSIFICATION ------------------------
+Test Set: 470
+Predictions
+Perf: 74 (15.74%)
+Pot : 303
+Bad : 93
+------------------- TESTING BEAM SEARCH ------------------------
+Beam width: 5
+INFO:tensorflow:Creating ParallelTextInputPipeline in mode=infer
+INFO:tensorflow:
+ParallelTextInputPipeline:
+  num_epochs: 1
+  shuffle: false
+  source_delimiter: ' '
+  source_files: [../dataset/dataset//test/buggy.txt]
+  target_delimiter: ' '
+  target_files: []
+
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=infer
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 5
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating DecodeText in mode=infer
+INFO:tensorflow:
+DecodeText: {delimiter: ' ', postproc_fn: '', unk_mapping: null, unk_replace: false}
+
+INFO:tensorflow:Creating DumpBeams in mode=infer
+INFO:tensorflow:
+DumpBeams: {file: ../model/dataset//pred_5/beams.npz}
+
+INFO:tensorflow:Setting batch size to 1 for beam search.
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=infer
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=infer
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=infer
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating BeamSearchDecoder in mode=infer
+INFO:tensorflow:
+BeamSearchDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 1.0
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=infer
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Restored model from ../model/dataset/model.ckpt-50005
+---------- TIME REPORT ----------
+Beam width: 5
+Total seconds: 135
+Total bugs: 470
+Total patches: 2350
+Avg patch/sec: .057446
+Avg bug/sec: .287234
+---------------------------------
+Test Set: 470
+Predictions: 470
+---------- PREDICTIONS REPORT ----------
+Beam width: 5
+Perf: 118 (25.10%)
+Pot : 2076
+Bad : 156
+Avg_Pot : 4.417021276595745
+Min Bad : 0
+--------------------------------------
+Beam width: 10
+INFO:tensorflow:Creating ParallelTextInputPipeline in mode=infer
+INFO:tensorflow:
+ParallelTextInputPipeline:
+  num_epochs: 1
+  shuffle: false
+  source_delimiter: ' '
+  source_files: [../dataset/dataset//test/buggy.txt]
+  target_delimiter: ' '
+  target_files: []
+
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=infer
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 10
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating DecodeText in mode=infer
+INFO:tensorflow:
+DecodeText: {delimiter: ' ', postproc_fn: '', unk_mapping: null, unk_replace: false}
+
+INFO:tensorflow:Creating DumpBeams in mode=infer
+INFO:tensorflow:
+DumpBeams: {file: ../model/dataset//pred_10/beams.npz}
+
+INFO:tensorflow:Setting batch size to 1 for beam search.
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=infer
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=infer
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=infer
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating BeamSearchDecoder in mode=infer
+INFO:tensorflow:
+BeamSearchDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 1.0
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=infer
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Restored model from ../model/dataset/model.ckpt-50005
+---------- TIME REPORT ----------
+Beam width: 10
+Total seconds: 220
+Total bugs: 470
+Total patches: 4700
+Avg patch/sec: .046808
+Avg bug/sec: .468085
+---------------------------------
+Test Set: 470
+Predictions: 470
+---------- PREDICTIONS REPORT ----------
+Beam width: 10
+Perf: 136 (28.93%)
+Pot : 4382
+Bad : 182
+Avg_Pot : 9.323404255319149
+Min Bad : 0
+--------------------------------------
+Beam width: 15
+INFO:tensorflow:Creating ParallelTextInputPipeline in mode=infer
+INFO:tensorflow:
+ParallelTextInputPipeline:
+  num_epochs: 1
+  shuffle: false
+  source_delimiter: ' '
+  source_files: [../dataset/dataset//test/buggy.txt]
+  target_delimiter: ' '
+  target_files: []
+
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=infer
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 15
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating DecodeText in mode=infer
+INFO:tensorflow:
+DecodeText: {delimiter: ' ', postproc_fn: '', unk_mapping: null, unk_replace: false}
+
+INFO:tensorflow:Creating DumpBeams in mode=infer
+INFO:tensorflow:
+DumpBeams: {file: ../model/dataset//pred_15/beams.npz}
+
+INFO:tensorflow:Setting batch size to 1 for beam search.
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=infer
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=infer
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=infer
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating BeamSearchDecoder in mode=infer
+INFO:tensorflow:
+BeamSearchDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 1.0
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=infer
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Restored model from ../model/dataset/model.ckpt-50005
+---------- TIME REPORT ----------
+Beam width: 15
+Total seconds: 309
+Total bugs: 470
+Total patches: 7050
+Avg patch/sec: .043829
+Avg bug/sec: .657446
+---------------------------------
+Test Set: 470
+Predictions: 470
+---------- PREDICTIONS REPORT ----------
+Beam width: 15
+Perf: 138 (29.36%)
+Pot : 6713
+Bad : 199
+Avg_Pot : 14.282978723404256
+Min Bad : 0
+--------------------------------------
+Beam width: 20
+INFO:tensorflow:Creating ParallelTextInputPipeline in mode=infer
+INFO:tensorflow:
+ParallelTextInputPipeline:
+  num_epochs: 1
+  shuffle: false
+  source_delimiter: ' '
+  source_files: [../dataset/dataset//test/buggy.txt]
+  target_delimiter: ' '
+  target_files: []
+
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=infer
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 20
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating DecodeText in mode=infer
+INFO:tensorflow:
+DecodeText: {delimiter: ' ', postproc_fn: '', unk_mapping: null, unk_replace: false}
+
+INFO:tensorflow:Creating DumpBeams in mode=infer
+INFO:tensorflow:
+DumpBeams: {file: ../model/dataset//pred_20/beams.npz}
+
+INFO:tensorflow:Setting batch size to 1 for beam search.
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=infer
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=infer
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=infer
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating BeamSearchDecoder in mode=infer
+INFO:tensorflow:
+BeamSearchDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 1.0
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=infer
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Restored model from ../model/dataset/model.ckpt-50005
+---------- TIME REPORT ----------
+Beam width: 20
+Total seconds: 394
+Total bugs: 470
+Total patches: 9400
+Avg patch/sec: .041914
+Avg bug/sec: .838297
+---------------------------------
+Test Set: 470
+Predictions: 470
+---------- PREDICTIONS REPORT ----------
+Beam width: 20
+Perf: 143 (30.42%)
+Pot : 9042
+Bad : 215
+Avg_Pot : 19.238297872340425
+Min Bad : 0
+--------------------------------------
+Beam width: 25
+INFO:tensorflow:Creating ParallelTextInputPipeline in mode=infer
+INFO:tensorflow:
+ParallelTextInputPipeline:
+  num_epochs: 1
+  shuffle: false
+  source_delimiter: ' '
+  source_files: [../dataset/dataset//test/buggy.txt]
+  target_delimiter: ' '
+  target_files: []
+
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=infer
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 25
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating DecodeText in mode=infer
+INFO:tensorflow:
+DecodeText: {delimiter: ' ', postproc_fn: '', unk_mapping: null, unk_replace: false}
+
+INFO:tensorflow:Creating DumpBeams in mode=infer
+INFO:tensorflow:
+DumpBeams: {file: ../model/dataset//pred_25/beams.npz}
+
+INFO:tensorflow:Setting batch size to 1 for beam search.
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=infer
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=infer
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=infer
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating BeamSearchDecoder in mode=infer
+INFO:tensorflow:
+BeamSearchDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 1.0
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=infer
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Restored model from ../model/dataset/model.ckpt-50005
+---------- TIME REPORT ----------
+Beam width: 25
+Total seconds: 490
+Total bugs: 470
+Total patches: 11750
+Avg patch/sec: .041702
+Avg bug/sec: 1.042553
+---------------------------------
+Test Set: 470
+Predictions: 470
+---------- PREDICTIONS REPORT ----------
+Beam width: 25
+Perf: 146 (31.06%)
+Pot : 11381
+Bad : 223
+Avg_Pot : 24.214893617021275
+Min Bad : 0
+--------------------------------------
+Beam width: 30
+INFO:tensorflow:Creating ParallelTextInputPipeline in mode=infer
+INFO:tensorflow:
+ParallelTextInputPipeline:
+  num_epochs: 1
+  shuffle: false
+  source_delimiter: ' '
+  source_files: [../dataset/dataset//test/buggy.txt]
+  target_delimiter: ' '
+  target_files: []
+
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=infer
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 30
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating DecodeText in mode=infer
+INFO:tensorflow:
+DecodeText: {delimiter: ' ', postproc_fn: '', unk_mapping: null, unk_replace: false}
+
+INFO:tensorflow:Creating DumpBeams in mode=infer
+INFO:tensorflow:
+DumpBeams: {file: ../model/dataset//pred_30/beams.npz}
+
+INFO:tensorflow:Setting batch size to 1 for beam search.
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=infer
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=infer
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=infer
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating BeamSearchDecoder in mode=infer
+INFO:tensorflow:
+BeamSearchDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 1.0
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=infer
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Restored model from ../model/dataset/model.ckpt-50005
+---------- TIME REPORT ----------
+Beam width: 30
+Total seconds: 569
+Total bugs: 470
+Total patches: 14100
+Avg patch/sec: .040354
+Avg bug/sec: 1.210638
+---------------------------------
+Test Set: 470
+Predictions: 470
+---------- PREDICTIONS REPORT ----------
+Beam width: 30
+Perf: 151 (32.12%)
+Pot : 13739
+Bad : 210
+Avg_Pot : 29.23191489361702
+Min Bad : 0
+--------------------------------------
+Beam width: 35
+INFO:tensorflow:Creating ParallelTextInputPipeline in mode=infer
+INFO:tensorflow:
+ParallelTextInputPipeline:
+  num_epochs: 1
+  shuffle: false
+  source_delimiter: ' '
+  source_files: [../dataset/dataset//test/buggy.txt]
+  target_delimiter: ' '
+  target_files: []
+
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=infer
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 35
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating DecodeText in mode=infer
+INFO:tensorflow:
+DecodeText: {delimiter: ' ', postproc_fn: '', unk_mapping: null, unk_replace: false}
+
+INFO:tensorflow:Creating DumpBeams in mode=infer
+INFO:tensorflow:
+DumpBeams: {file: ../model/dataset//pred_35/beams.npz}
+
+INFO:tensorflow:Setting batch size to 1 for beam search.
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=infer
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=infer
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=infer
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating BeamSearchDecoder in mode=infer
+INFO:tensorflow:
+BeamSearchDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 1.0
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=infer
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Restored model from ../model/dataset/model.ckpt-50005
+---------- TIME REPORT ----------
+Beam width: 35
+Total seconds: 650
+Total bugs: 470
+Total patches: 16450
+Avg patch/sec: .039513
+Avg bug/sec: 1.382978
+---------------------------------
+Test Set: 470
+Predictions: 470
+---------- PREDICTIONS REPORT ----------
+Beam width: 35
+Perf: 153 (32.55%)
+Pot : 16080
+Bad : 217
+Avg_Pot : 34.212765957446805
+Min Bad : 0
+--------------------------------------
+Beam width: 40
+INFO:tensorflow:Creating ParallelTextInputPipeline in mode=infer
+INFO:tensorflow:
+ParallelTextInputPipeline:
+  num_epochs: 1
+  shuffle: false
+  source_delimiter: ' '
+  source_files: [../dataset/dataset//test/buggy.txt]
+  target_delimiter: ' '
+  target_files: []
+
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=infer
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 40
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating DecodeText in mode=infer
+INFO:tensorflow:
+DecodeText: {delimiter: ' ', postproc_fn: '', unk_mapping: null, unk_replace: false}
+
+INFO:tensorflow:Creating DumpBeams in mode=infer
+INFO:tensorflow:
+DumpBeams: {file: ../model/dataset//pred_40/beams.npz}
+
+INFO:tensorflow:Setting batch size to 1 for beam search.
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=infer
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=infer
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=infer
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating BeamSearchDecoder in mode=infer
+INFO:tensorflow:
+BeamSearchDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 1.0
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=infer
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Restored model from ../model/dataset/model.ckpt-50005
+---------- TIME REPORT ----------
+Beam width: 40
+Total seconds: 739
+Total bugs: 470
+Total patches: 18800
+Avg patch/sec: .039308
+Avg bug/sec: 1.572340
+---------------------------------
+Test Set: 470
+Predictions: 470
+---------- PREDICTIONS REPORT ----------
+Beam width: 40
+Perf: 157 (33.40%)
+Pot : 18418
+Bad : 225
+Avg_Pot : 39.18723404255319
+Min Bad : 0
+--------------------------------------
+Beam width: 45
+INFO:tensorflow:Creating ParallelTextInputPipeline in mode=infer
+INFO:tensorflow:
+ParallelTextInputPipeline:
+  num_epochs: 1
+  shuffle: false
+  source_delimiter: ' '
+  source_files: [../dataset/dataset//test/buggy.txt]
+  target_delimiter: ' '
+  target_files: []
+
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=infer
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 45
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating DecodeText in mode=infer
+INFO:tensorflow:
+DecodeText: {delimiter: ' ', postproc_fn: '', unk_mapping: null, unk_replace: false}
+
+INFO:tensorflow:Creating DumpBeams in mode=infer
+INFO:tensorflow:
+DumpBeams: {file: ../model/dataset//pred_45/beams.npz}
+
+INFO:tensorflow:Setting batch size to 1 for beam search.
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=infer
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=infer
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=infer
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating BeamSearchDecoder in mode=infer
+INFO:tensorflow:
+BeamSearchDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 1.0
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=infer
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Restored model from ../model/dataset/model.ckpt-50005
+---------- TIME REPORT ----------
+Beam width: 45
+Total seconds: 818
+Total bugs: 470
+Total patches: 21150
+Avg patch/sec: .038676
+Avg bug/sec: 1.740425
+---------------------------------
+Test Set: 470
+Predictions: 470
+---------- PREDICTIONS REPORT ----------
+Beam width: 45
+Perf: 159 (33.82%)
+Pot : 20755
+Bad : 236
+Avg_Pot : 44.159574468085104
+Min Bad : 0
+--------------------------------------
+Beam width: 50
+INFO:tensorflow:Creating ParallelTextInputPipeline in mode=infer
+INFO:tensorflow:
+ParallelTextInputPipeline:
+  num_epochs: 1
+  shuffle: false
+  source_delimiter: ' '
+  source_files: [../dataset/dataset//test/buggy.txt]
+  target_delimiter: ' '
+  target_files: []
+
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=infer
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 50
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating DecodeText in mode=infer
+INFO:tensorflow:
+DecodeText: {delimiter: ' ', postproc_fn: '', unk_mapping: null, unk_replace: false}
+
+INFO:tensorflow:Creating DumpBeams in mode=infer
+INFO:tensorflow:
+DumpBeams: {file: ../model/dataset//pred_50/beams.npz}
+
+INFO:tensorflow:Setting batch size to 1 for beam search.
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=infer
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=infer
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=infer
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating BeamSearchDecoder in mode=infer
+INFO:tensorflow:
+BeamSearchDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 1.0
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=infer
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Restored model from ../model/dataset/model.ckpt-50005
+---------- TIME REPORT ----------
+Beam width: 50
+Total seconds: 904
+Total bugs: 470
+Total patches: 23500
+Avg patch/sec: .038468
+Avg bug/sec: 1.923404
+---------------------------------
+Test Set: 470
+Predictions: 470
+---------- PREDICTIONS REPORT ----------
+Beam width: 50
+Perf: 159 (33.82%)
+Pot : 23099
+Bad : 242
+Avg_Pot : 49.146808510638294
+Min Bad : 0
+--------------------------------------
+Beam width: 100
+INFO:tensorflow:Creating ParallelTextInputPipeline in mode=infer
+INFO:tensorflow:
+ParallelTextInputPipeline:
+  num_epochs: 1
+  shuffle: false
+  source_delimiter: ' '
+  source_files: [../dataset/dataset//test/buggy.txt]
+  target_delimiter: ' '
+  target_files: []
+
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=infer
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 100
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating DecodeText in mode=infer
+INFO:tensorflow:
+DecodeText: {delimiter: ' ', postproc_fn: '', unk_mapping: null, unk_replace: false}
+
+INFO:tensorflow:Creating DumpBeams in mode=infer
+INFO:tensorflow:
+DumpBeams: {file: ../model/dataset//pred_100/beams.npz}
+
+INFO:tensorflow:Setting batch size to 1 for beam search.
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=infer
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=infer
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=infer
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating BeamSearchDecoder in mode=infer
+INFO:tensorflow:
+BeamSearchDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 1.0
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=infer
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Restored model from ../model/dataset/model.ckpt-50005
+---------- TIME REPORT ----------
+Beam width: 100
+Total seconds: 2822
+Total bugs: 470
+Total patches: 47000
+Avg patch/sec: .060042
+Avg bug/sec: 6.004255
+---------------------------------
+Test Set: 470
+Predictions: 470
+---------- PREDICTIONS REPORT ----------
+Beam width: 100
+Perf: 172 (36.59%)
+Pot : 46531
+Bad : 297
+Avg_Pot : 99.00212765957447
+Min Bad : 0
+--------------------------------------
+Beam width: 200
+INFO:tensorflow:Creating ParallelTextInputPipeline in mode=infer
+INFO:tensorflow:
+ParallelTextInputPipeline:
+  num_epochs: 1
+  shuffle: false
+  source_delimiter: ' '
+  source_files: [../dataset/dataset//test/buggy.txt]
+  target_delimiter: ' '
+  target_files: []
+
+INFO:tensorflow:Creating AttentionSeq2Seq in mode=infer
+INFO:tensorflow:
+AttentionSeq2Seq:
+  attention.class: seq2seq.decoders.attention.AttentionLayerBahdanau
+  attention.params: {num_units: 512}
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  bridge.params: {}
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 2
+  embedding.dim: 512
+  embedding.init_scale: 0.04
+  embedding.share: false
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params: {num_units: 256}
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  inference.beam_search.beam_width: 200
+  inference.beam_search.choose_successors_fn: choose_top_k
+  inference.beam_search.length_penalty_weight: 0.0
+  optimizer.clip_embed_gradients: 0.1
+  optimizer.clip_gradients: 5.0
+  optimizer.learning_rate: 0.0001
+  optimizer.lr_decay_rate: 0.99
+  optimizer.lr_decay_steps: 100
+  optimizer.lr_decay_type: ''
+  optimizer.lr_min_learning_rate: 1.0e-12
+  optimizer.lr_staircase: false
+  optimizer.lr_start_decay_at: 0
+  optimizer.lr_stop_decay_at: 2147483647
+  optimizer.name: Adam
+  optimizer.params: {epsilon: 8.0e-07}
+  optimizer.sync_replicas: 0
+  optimizer.sync_replicas_to_aggregate: 0
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: ../dataset/dataset//train/vocab.buggy.txt
+  vocab_target: ../dataset/dataset//train/vocab.fixed.txt
+
+INFO:tensorflow:Creating DecodeText in mode=infer
+INFO:tensorflow:
+DecodeText: {delimiter: ' ', postproc_fn: '', unk_mapping: null, unk_replace: false}
+
+INFO:tensorflow:Creating DumpBeams in mode=infer
+INFO:tensorflow:
+DumpBeams: {file: ../model/dataset//pred_200/beams.npz}
+
+INFO:tensorflow:Setting batch size to 1 for beam search.
+INFO:tensorflow:Creating vocabulary lookup table of size 497
+INFO:tensorflow:Creating vocabulary lookup table of size 495
+INFO:tensorflow:Creating BidirectionalRNNEncoder in mode=infer
+INFO:tensorflow:
+BidirectionalRNNEncoder:
+  init_scale: 0.04
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 1
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating AttentionLayerBahdanau in mode=infer
+INFO:tensorflow:
+AttentionLayerBahdanau: {num_units: 512}
+
+INFO:tensorflow:Creating AttentionDecoder in mode=infer
+INFO:tensorflow:
+AttentionDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 0.8
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating BeamSearchDecoder in mode=infer
+INFO:tensorflow:
+BeamSearchDecoder:
+  init_scale: 0.04
+  max_decode_length: 100
+  rnn_cell:
+    cell_class: LSTMCell
+    cell_params: {num_units: 256}
+    dropout_input_keep_prob: 1.0
+    dropout_output_keep_prob: 1.0
+    num_layers: 2
+    residual_combiner: add
+    residual_connections: false
+    residual_dense: false
+
+INFO:tensorflow:Creating ZeroBridge in mode=infer
+INFO:tensorflow:
+ZeroBridge: {}
+
+INFO:tensorflow:Restored model from ../model/dataset/model.ckpt-50005
+---------- TIME REPORT ----------
+Beam width: 200
+Total seconds: 6941
+Total bugs: 470
+Total patches: 94000
+Avg patch/sec: .073840
+Avg bug/sec: 14.768085
+---------------------------------
+Test Set: 470
+Predictions: 470
+---------- PREDICTIONS REPORT ----------
+Beam width: 200
+Perf: 184 (39.14%)
+Pot : 93478
+Bad : 338
+Avg_Pot : 198.88936170212767
+Min Bad : 0
+--------------------------------------

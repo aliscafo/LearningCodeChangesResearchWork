@@ -1,0 +1,195 @@
+4
+#method_before
+private List<Map<String, Object>> executeMetricNamesQuery(String tenantId, Map<String, String> dimensions, String offset, int limit) {
+    String offsetPart = "";
+    if (offset != null && !offset.isEmpty()) {
+        offsetPart = " and def.name > '" + offset + "' ";
+    }
+    // Can't bind limit in a nested sub query. So, just tack on as String.
+    String limitPart = " limit " + Integer.toString(limit + 1);
+    try (Handle h = db.open()) {
+        String sql = String.format(FIND_METRIC_NAMES_SQL, this.dbHint, offsetPart, MetricQueries.buildDimensionAndClause(dimensions, TABLE_TO_JOIN_ON), limitPart);
+        logger.warn("***** sql = {}", sql);
+        Query<Map<String, Object>> query = h.createQuery(sql).bind("tenantId", tenantId);
+        MetricQueries.bindDimensionsToQuery(query, dimensions);
+        return query.list();
+    }
+}
+#method_after
+private List<Map<String, Object>> executeMetricNamesQuery(String tenantId, Map<String, String> dimensions, String offset, int limit) {
+    String offsetPart = "";
+    if (offset != null && !offset.isEmpty()) {
+        offsetPart = " and def.name > '" + offset + "' ";
+    }
+    // Can't bind limit in a nested sub query. So, just tack on as String.
+    String limitPart = " limit " + Integer.toString(limit + 1);
+    try (Handle h = db.open()) {
+        String sql = String.format(FIND_METRIC_NAMES_SQL, this.dbHint, offsetPart, MetricQueries.buildDimensionAndClause(dimensions, TABLE_TO_JOIN_ON), limitPart);
+        Query<Map<String, Object>> query = h.createQuery(sql).bind("tenantId", tenantId);
+        MetricQueries.bindDimensionsToQuery(query, dimensions);
+        return query.list();
+    }
+}
+#end_block
+
+#method_before
+@Override
+public NotificationMethod create(String tenantId, String name, NotificationMethodType type, String address, int period) {
+    try (Handle h = db.open()) {
+        h.begin();
+        if (getNotificationIdForTenantIdAndName(h, tenantId, name) != null)
+            throw new EntityExistsException("Notification method %s \"%s\" already exists.", tenantId, name);
+        String id = UUID.randomUUID().toString();
+        h.insert("insert into notification_method (id, tenant_id, name, type, address, period, created_at, updated_at) values (?, ?, ?, ?, ?, ?, NOW(), NOW())", id, tenantId, name, type.toString(), address, period);
+        LOG.debug("Creating notification method {} for {}", name, tenantId);
+        h.commit();
+        return new NotificationMethod(id, name, type, address, period);
+    }
+}
+#method_after
+@Override
+public NotificationMethod create(String tenantId, String name, String notificationMethodType, String address, int period) {
+    Handle h = db.open();
+    try {
+        h.begin();
+        if (getNotificationIdForTenantIdAndName(h, tenantId, name) != null)
+            throw new EntityExistsException("Notification method %s \"%s\" already exists.", tenantId, name);
+        if (!isValidNotificationMethodType(h, notificationMethodType)) {
+            throw new EntityNotFoundException("Not a valid notification method type %s ", notificationMethodType);
+        }
+        String id = UUID.randomUUID().toString();
+        h.insert("insert into notification_method (id, tenant_id, name, type, address, period, created_at, updated_at) values (?, ?, ?, ?, ?, ?, NOW(), NOW())", id, tenantId, name, notificationMethodType, address, period);
+        LOG.debug("Creating notification method {} for {}", name, tenantId);
+        h.commit();
+        return new NotificationMethod(id, name, notificationMethodType, address, period);
+    } catch (RuntimeException e) {
+        h.rollback();
+        throw e;
+    } finally {
+        h.close();
+    }
+}
+#end_block
+
+#method_before
+@Override
+public List<NotificationMethod> find(String tenantId, List<String> sortBy, String offset, int limit) {
+    try (Handle h = db.open()) {
+        String rawQuery = "  SELECT nm.id, nm.tenant_id, nm.name, nm.type, nm.address, nm.period, nm.created_at, nm.updated_at " + "FROM notification_method as nm " + "WHERE tenant_id = :tenantId %1$s %2$s %3$s";
+        String offsetPart = "";
+        if (offset != null) {
+            boolean reverseOffset = false;
+            if (sortBy != null && !sortBy.isEmpty()) {
+                for (String field : sortBy) {
+                    if (field.startsWith("id") && field.endsWith("desc")) {
+                        reverseOffset = true;
+                    }
+                }
+            }
+            if (reverseOffset)
+                offsetPart = "and nm.id < :offset";
+            else
+                offsetPart = "and nm.id > :offset";
+        }
+        String orderByPart = "";
+        if (sortBy != null && !sortBy.isEmpty()) {
+            orderByPart = " order by " + COMMA_JOINER.join(sortBy);
+            if (!orderByPart.contains("id")) {
+                orderByPart = orderByPart + ",id";
+            }
+        } else {
+            orderByPart = " order by id ";
+        }
+        String limitPart = "";
+        if (limit > 0) {
+            limitPart = " limit :limit";
+        }
+        String query = String.format(rawQuery, offsetPart, orderByPart, limitPart);
+        Query<?> q = h.createQuery(query);
+        q.bind("tenantId", tenantId);
+        if (offset != null) {
+            q.bind("offset", offset);
+        }
+        if (limit > 0) {
+            q.bind("limit", limit + 1);
+        }
+        return q.map(new BeanMapper<>(NotificationMethod.class)).list();
+    }
+}
+#method_after
+@Override
+public List<NotificationMethod> find(String tenantId, List<String> sortBy, String offset, int limit) {
+    try (Handle h = db.open()) {
+        String rawQuery = "  SELECT nm.id, nm.tenant_id, nm.name, nm.type, nm.address, nm.period, nm.created_at, nm.updated_at " + "FROM notification_method as nm " + "WHERE tenant_id = :tenantId %1$s %2$s %3$s";
+        String orderByPart = "";
+        if (sortBy != null && !sortBy.isEmpty()) {
+            orderByPart = " order by " + COMMA_JOINER.join(sortBy);
+            if (!orderByPart.contains("id")) {
+                orderByPart = orderByPart + ",id";
+            }
+        } else {
+            orderByPart = " order by id ";
+        }
+        String limitPart = "";
+        if (limit > 0) {
+            limitPart = " limit :limit";
+        }
+        String offsetPart = "";
+        if (offset != null && !offset.isEmpty()) {
+            offsetPart = " offset :offset ";
+        }
+        String query = String.format(rawQuery, orderByPart, limitPart, offsetPart);
+        Query<?> q = h.createQuery(query);
+        q.bind("tenantId", tenantId);
+        if (limit > 0) {
+            q.bind("limit", limit + 1);
+        }
+        if (offset != null && !offset.isEmpty()) {
+            q.bind("offset", Integer.parseInt(offset));
+        }
+        return q.map(new BeanMapper<>(NotificationMethod.class)).list();
+    }
+}
+#end_block
+
+#method_before
+@Override
+public NotificationMethod update(String tenantId, String notificationMethodId, String name, NotificationMethodType type, String address, int period) {
+    try (Handle h = db.open()) {
+        h.begin();
+        String notificationID = getNotificationIdForTenantIdAndName(h, tenantId, name);
+        if (notificationID != null && !notificationID.equalsIgnoreCase(notificationMethodId)) {
+            throw new EntityExistsException("Notification method %s \"%s\" already exists.", tenantId, name);
+        }
+        if (h.update("update notification_method set name = ?, type = ?, address = ?, period = ?, updated_at = NOW() " + "where tenant_id = ? and id = ?", name, type.name(), address, period, tenantId, notificationMethodId) == 0)
+            throw new EntityNotFoundException("No notification method exists for %s", notificationMethodId);
+        h.commit();
+        return new NotificationMethod(notificationMethodId, name, type, address, period);
+    }
+}
+#method_after
+@Override
+public NotificationMethod update(String tenantId, String notificationMethodId, String name, String notificationMethodType, String address, int period) {
+    Handle h = db.open();
+    try {
+        h.begin();
+        String notificationID = getNotificationIdForTenantIdAndName(h, tenantId, name);
+        if (notificationID != null && !notificationID.equalsIgnoreCase(notificationMethodId)) {
+            throw new EntityExistsException("Notification method %s \"%s\" already exists.", tenantId, name);
+        }
+        if (!isValidNotificationMethodType(h, notificationMethodType)) {
+            throw new EntityNotFoundException("Not a valid notification method type %s ", notificationMethodType);
+        }
+        if (h.update("update notification_method set name = ?, type = ?, address = ?, period = ?, updated_at = NOW() " + "where tenant_id = ? and id = ?", name, notificationMethodType, address, period, tenantId, notificationMethodId) == 0)
+            throw new EntityNotFoundException("No notification method exists for %s", notificationMethodId);
+        h.commit();
+        return new NotificationMethod(notificationMethodId, name, notificationMethodType, address, period);
+    } catch (RuntimeException e) {
+        h.rollback();
+        throw e;
+    } finally {
+        h.close();
+    }
+}
+#end_block
+

@@ -1,0 +1,238 @@
+7
+#method_before
+@Override
+protected boolean canDoAction() {
+    addCanDoActionMessage(VdcBllMessages.VAR__ACTION__REMOVE);
+    addCanDoActionMessage(VdcBllMessages.VAR__TYPE__VM);
+    storage_domains storage = DbFacade.getInstance().getStorageDomainDAO().getForStoragePool(getParameters().getStorageDomainId(), getParameters().getStoragePoolId());
+    if (storage == null) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_STORAGE_DOMAIN_NOT_EXIST);
+        return false;
+    }
+    if (storage.getstatus() == null || storage.getstatus() != StorageDomainStatus.Active) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_STORAGE_DOMAIN_STATUS_ILLEGAL);
+        return false;
+    }
+    if (storage.getstorage_domain_type() != StorageDomainType.ImportExport) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_STORAGE_DOMAIN_TYPE_ILLEGAL);
+        return false;
+    }
+    GetAllFromExportDomainQueryParamenters tempVar = new GetAllFromExportDomainQueryParamenters(getParameters().getStoragePoolId(), getParameters().getStorageDomainId());
+    tempVar.setGetAll(true);
+    tempVar.setIds(new java.util.ArrayList<Guid>(java.util.Arrays.asList(new Guid[] { getVmId() })));
+    VdcQueryReturnValue qretVal = Backend.getInstance().runInternalQuery(VdcQueryType.GetVmsFromExportDomain, tempVar);
+    if (!qretVal.getSucceeded() || qretVal.getReturnValue() == null) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_VM_NOT_FOUND_ON_EXPORT_DOMAIN);
+        return false;
+    }
+    java.util.ArrayList<VM> vms = (java.util.ArrayList<VM>) qretVal.getReturnValue();
+    if (vms.size() != 1) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_VM_NOT_FOUND_ON_EXPORT_DOMAIN);
+        return false;
+    }
+    setVm(vms.get(0));
+    VM vm = getVmDAO().getById(vms.get(0).getvm_guid());
+    if (vm != null && vm.getstatus() == VMStatus.ImageLocked) {
+        if (AsyncTaskManager.getInstance().hasTasksForIdAndAction(vm.getvm_guid(), VdcActionType.ExportVm)) {
+            addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_VM_DURING_EXPORT);
+            return false;
+        }
+    }
+    return true;
+}
+#method_after
+@Override
+protected boolean canDoAction() {
+    addCanDoActionMessage(VdcBllMessages.VAR__ACTION__REMOVE);
+    addCanDoActionMessage(VdcBllMessages.VAR__TYPE__VM);
+    storage_domains storage = DbFacade.getInstance().getStorageDomainDAO().getForStoragePool(getParameters().getStorageDomainId(), getParameters().getStoragePoolId());
+    if (storage == null) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_STORAGE_DOMAIN_NOT_EXIST);
+        return false;
+    }
+    if (storage.getstatus() == null || storage.getstatus() != StorageDomainStatus.Active) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_STORAGE_DOMAIN_STATUS_ILLEGAL);
+        return false;
+    }
+    if (storage.getstorage_domain_type() != StorageDomainType.ImportExport) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_STORAGE_DOMAIN_TYPE_ILLEGAL);
+        return false;
+    }
+    GetAllFromExportDomainQueryParamenters tempVar = new GetAllFromExportDomainQueryParamenters(getParameters().getStoragePoolId(), getParameters().getStorageDomainId());
+    tempVar.setGetAll(true);
+    tempVar.setIds(new java.util.ArrayList<Guid>(java.util.Arrays.asList(new Guid[] { getVmId() })));
+    VdcQueryReturnValue qretVal = Backend.getInstance().runInternalQuery(VdcQueryType.GetVmsFromExportDomain, tempVar);
+    if (!qretVal.getSucceeded() || qretVal.getReturnValue() == null) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_VM_NOT_FOUND_ON_EXPORT_DOMAIN);
+        return false;
+    }
+    java.util.ArrayList<VM> vms = (java.util.ArrayList<VM>) qretVal.getReturnValue();
+    if (vms.size() != 1) {
+        addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_VM_NOT_FOUND_ON_EXPORT_DOMAIN);
+        return false;
+    }
+    setVm(vms.get(0));
+    VM vm = getVmDAO().getById(vms.get(0).getvm_guid());
+    if (vm != null && vm.getstatus() == VMStatus.ImageLocked) {
+        if (AsyncTaskManager.getInstance().hasTasksForEntityIdAndAction(vm.getvm_guid(), VdcActionType.ExportVm)) {
+            addCanDoActionMessage(VdcBllMessages.ACTION_TYPE_FAILED_VM_DURING_EXPORT);
+            return false;
+        }
+    }
+    return true;
+}
+#end_block
+
+#method_before
+public boolean HasTasksByStoragePoolId(Guid storagePoolID) {
+    boolean retVal = false;
+    if (_tasks != null) {
+        for (SPMAsyncTask task : _tasks.values()) {
+            if (task.getStoragePoolID().equals(storagePoolID)) {
+                retVal = true;
+                break;
+            }
+        }
+    }
+    return retVal;
+}
+#method_after
+public synchronized boolean HasTasksByStoragePoolId(Guid storagePoolID) {
+    boolean retVal = false;
+    if (_tasks != null) {
+        for (SPMAsyncTask task : _tasks.values()) {
+            if (task.getStoragePoolID().equals(storagePoolID)) {
+                retVal = true;
+                break;
+            }
+        }
+    }
+    return retVal;
+}
+#end_block
+
+#method_before
+public synchronized boolean EntityHasTasks(Guid id) {
+    java.util.ArrayList<EntityAsyncTask> entityAsyncTasks = GetEntityTasks(id);
+    for (EntityAsyncTask task : entityAsyncTasks) {
+        if (task.getState() != AsyncTaskState.Cleared && task.getState() != AsyncTaskState.ClearFailed) {
+            return true;
+        }
+    }
+    return false;
+}
+#method_after
+public synchronized boolean EntityHasTasks(Guid id) {
+    for (SPMAsyncTask task : _tasks.values()) {
+        if (isCurrentTaskLookedFor(id, task)) {
+            return true;
+        }
+    }
+    return false;
+}
+#end_block
+
+#method_before
+@Test
+public void testDiskStats() {
+    Map<String, Object> disksStats = new HashMap<String, Object>();
+    Map<String, Object> disk = new HashMap<String, Object>();
+    disk.put(VdsProperties.DISK_STATS_FREE, SIZE_FOR_DISK_STATS);
+    disksStats.put("a", disk);
+    disksStats.put("b", disk);
+    XmlRpcStruct xml = setDisksStatsInXmlRpc(disksStats);
+    validateDisksStatsList(getVds(), xml);
+}
+#method_after
+@Test
+public void testDiskStats() {
+    Map<String, Object> disksStats = new HashMap<String, Object>();
+    Map<String, Object> disk = new HashMap<String, Object>();
+    disk.put(VdsProperties.DISK_STATS_FREE, SIZE_FOR_DISK_STATS);
+    disksStats.put("a", disk);
+    disksStats.put("b", disk);
+    XmlRpcStruct xml = setDisksStatsInXmlRpc(disksStats);
+    validateDisksStatsList(getVds(), xml, false);
+}
+#end_block
+
+#method_before
+@Test
+public void testEmptyDiskStats() {
+    Map<String, Object> disksStats = new HashMap<String, Object>();
+    XmlRpcStruct xml = setDisksStatsInXmlRpc(disksStats);
+    validateDisksStatsList(getVds(), xml);
+}
+#method_after
+@Test
+public void testEmptyDiskStats() {
+    Map<String, Object> disksStats = new HashMap<String, Object>();
+    XmlRpcStruct xml = setDisksStatsInXmlRpc(disksStats);
+    validateDisksStatsList(getVds(), xml, false);
+}
+#end_block
+
+#method_before
+private void validateDisksStatsList(VDS vds, XmlRpcStruct xml) {
+    VdsBrokerObjectsBuilder.updateLocalDisksUsage(vds, xml);
+    assertNotNull(vds.getLocalDisksUsage());
+    for (Long usage : vds.getLocalDisksUsage().values()) {
+        assertEquals(SIZE_FOR_DISK_STATS, usage.longValue());
+    }
+}
+#method_after
+private void validateDisksStatsList(VDS vds, XmlRpcStruct xml, boolean assertNullValues) {
+    VdsBrokerObjectsBuilder.updateLocalDisksUsage(vds, xml);
+    assertNotNull(vds.getLocalDisksUsage());
+    for (Long usage : vds.getLocalDisksUsage().values()) {
+        if (assertNullValues) {
+            assertNull(usage);
+        } else {
+            assertEquals(SIZE_FOR_DISK_STATS, usage.longValue());
+        }
+    }
+}
+#end_block
+
+#method_before
+private void alertIfLowDiskSpaceOnHost() {
+    Map<String, Long> disksUsage = _vds.getLocalDisksUsage();
+    if (disksUsage == null || disksUsage.isEmpty()) {
+        return;
+    }
+    List<String> disksWithLowSpace = new ArrayList<String>();
+    List<String> disksWithCriticallyLowSpace = new ArrayList<String>();
+    final Integer lowSpace = Config.<Integer>GetValue(ConfigValues.VdsLowFreeSpace);
+    final Integer criticallyLowSpace = Config.<Integer>GetValue(ConfigValues.VdsCriticallyLowFreeSpace);
+    for (Entry<String, Long> diskUsage : disksUsage.entrySet()) {
+        if (diskUsage.getValue() <= criticallyLowSpace) {
+            disksWithCriticallyLowSpace.add(diskUsage.getKey());
+        } else if (diskUsage.getValue() <= lowSpace) {
+            disksWithLowSpace.add(diskUsage.getKey());
+        }
+    }
+    logLowDiskSpaceOnHostDisks(disksWithLowSpace, lowSpace, AuditLogType.VDS_LOW_DISK_SPACE);
+    logLowDiskSpaceOnHostDisks(disksWithCriticallyLowSpace, criticallyLowSpace, AuditLogType.VDS_LOW_DISK_SPACE_ERROR);
+}
+#method_after
+private void alertIfLowDiskSpaceOnHost() {
+    Map<String, Long> disksUsage = _vds.getLocalDisksUsage();
+    if (disksUsage == null || disksUsage.isEmpty()) {
+        return;
+    }
+    List<String> disksWithLowSpace = new ArrayList<String>();
+    List<String> disksWithCriticallyLowSpace = new ArrayList<String>();
+    for (Entry<String, Long> diskUsage : disksUsage.entrySet()) {
+        if (diskUsage.getValue() != null) {
+            if (diskUsage.getValue() <= LOW_SPACE_CRITICAL_THRESHOLD) {
+                disksWithCriticallyLowSpace.add(diskUsage.getKey());
+            } else if (diskUsage.getValue() <= LOW_SPACE_THRESHOLD) {
+                disksWithLowSpace.add(diskUsage.getKey());
+            }
+        }
+    }
+    logLowDiskSpaceOnHostDisks(disksWithLowSpace, LOW_SPACE_THRESHOLD, AuditLogType.VDS_LOW_DISK_SPACE);
+    logLowDiskSpaceOnHostDisks(disksWithCriticallyLowSpace, LOW_SPACE_CRITICAL_THRESHOLD, AuditLogType.VDS_LOW_DISK_SPACE_ERROR);
+}
+#end_block
+

@@ -1,0 +1,50 @@
+public TYPE_1 METHOD_1 ( Repository repo , ChangeData cd , PatchSet patch ) { return METHOD_2 ( this , repo , cd , patch , VAR_2 ) ; }
+public TYPE_1 METHOD_1 ( Repository repo , ChangeData cd , PatchSet patch ) { return METHOD_2 ( this , repo , cd , patch , VAR_2 ) ; }
+protected TYPE_1 < TYPE_2 > METHOD_1 ( String query ) throws TYPE_3 { return account ( query ) ; }
+private void METHOD_1 ( ) { cmd = new ReceiveCommand ( ObjectId . METHOD_2 ( ) , VAR_1 , TYPE_1 . METHOD_3 ( user . getAccountId ( ) , notes . getChangeId ( ) , psId ) ) ; }
+private static String VAR_1 ( String VAR_2 ) { if ( VAR_2 != null ) { return VAR_3 . is ( CHAR_1 ) . VAR_4 ( VAR_2 ) ; } return
+public void METHOD_1 ( TYPE_1 VAR_1 ) { VAR_2 = VAR_1 != null ? VAR_1 : new TYPE_2 ( ) ; }
+private void reject ( ReceiveCommand cmd ) { reject ( cmd , STRING_1 ) ; }
+private void reject ( ReceiveCommand cmd , String VAR_1 ) { cmd . METHOD_1 ( VAR_2 , VAR_1 ) ; VAR_3 . update ( 1 ) ; }
+private static boolean METHOD_1 ( ReceiveCommand cmd ) { return cmd . getRefName ( ) . METHOD_2 ( VAR_1 ) ; }
+private static boolean METHOD_1 ( ReceiveCommand cmd ) { return cmd . getRefName ( ) . equals ( VAR_1 ) ; }
+private static void METHOD_1 ( TYPE_1 label , TYPE_2 VAR_1 ) { if ( VAR_2 == null ) { VAR_2 = new ArrayList < > ( ) ; } VAR_2 . add ( VAR_1 ) ; }
+void METHOD_1 ( TYPE_1 VAR_1 ) { synchronized ( VAR_2 ) { VAR_3 . METHOD_2 ( VAR_1 . METHOD_3 ( ) ) ; } }
+private static boolean METHOD_1 ( String VAR_1 ) { return ! TYPE_1 . METHOD_2 ( VAR_1 ) && VAR_1 . METHOD_3 ( STRING_1 ) ; }
+public List < ChangeInfo > METHOD_1 ( ) throws TYPE_1 { try { return ( List < ChangeInfo > ) VAR_1 . apply ( change ) ; } catch ( IOException | OrmException e ) { throw new TYPE_1 ( STRING_1 , e ) ; } }
+public void close ( ) { TYPE_1 . METHOD_1 ( VAR_1 , VAR_2 , VAR_3 ) ; try { VAR_4 . close ( ) ; } finally { VAR_5 . close ( ) ; } }
+public void METHOD_1 ( TYPE_1 VAR_1 ) { VAR_2 = VAR_1 != null ? VAR_1 : new TYPE_2 ( ) ; }
+private void reject ( ReceiveCommand cmd ) { reject ( cmd , STRING_1 ) ; }
+private void reject ( ReceiveCommand cmd , String VAR_1 ) { cmd . METHOD_1 ( VAR_2 , VAR_1 ) ; VAR_3 . update ( 1 ) ; }
+private static boolean METHOD_1 ( ReceiveCommand cmd ) { return cmd . getRefName ( ) . METHOD_2 ( VAR_1 ) ; }
+private static boolean METHOD_1 ( ReceiveCommand cmd ) { return cmd . getRefName ( ) . equals ( VAR_1 ) ; }
+public static String METHOD_1 ( String VAR_1 ) { int i = VAR_1 . METHOD_2 ( CHAR_1 ) ; if ( i > TYPE_1 . length ( ) - 1 ) { return VAR_1 . METHOD_3 ( 0 , i ) ; } return TYPE_1 ; }
+public static String METHOD_1 ( Change . Id changeId , Account . Id VAR_1 ) { StringBuilder r = METHOD_2 ( VAR_2 , changeId . get ( ) ) ; r . append ( VAR_1 . get ( ) ) ; return r . toString ( ) ; }
+public static String METHOD_1 ( Change . Id changeId ) { return METHOD_2 ( VAR_2 , changeId . get ( ) ) . toString ( ) ; }
+private static boolean METHOD_1 ( String query ) { return TYPE_1 . METHOD_2 ( query ) || TYPE_2 . METHOD_2 ( query ) || TYPE_3 . METHOD_2 ( query ) ; }
+public void METHOD_1 ( TYPE_1 VAR_1 ) { VAR_2 = VAR_1 != null ? VAR_1 : new TYPE_2 ( ) ; }
+PatchSet . Id METHOD_1 ( ) { if ( cmd . METHOD_2 ( ) == VAR_1 ) { cmd . METHOD_3 ( rp ) ; } return psId ; }
+private void reject ( ReceiveCommand cmd ) { reject ( cmd , STRING_1 ) ; }
+private void reject ( ReceiveCommand cmd , String VAR_1 ) { cmd . METHOD_1 ( VAR_2 , VAR_1 ) ; VAR_3 . update ( 1 ) ; }
+private static boolean METHOD_1 ( ReceiveCommand cmd ) { return cmd . getRefName ( ) . METHOD_2 ( VAR_1 ) ; }
+private static boolean METHOD_1 ( ReceiveCommand cmd ) { return cmd . getRefName ( ) . equals ( VAR_1 ) ; }
+public boolean METHOD_1 ( TYPE_1 ctx ) throws Exception { return false ; }
+public void METHOD_1 ( ) { db . close ( ) ; }
+private RevCommit METHOD_1 ( Repository repo ) throws IOException { return METHOD_1 ( repo , STRING_1 ) ; }
+protected RevCommit METHOD_1 ( Project . NameKey project , String branch ) throws IOException { try ( Repository repo = VAR_1 . METHOD_2 ( project ) ) { return METHOD_3 ( repo , STRING_1 + branch ) ; } }
+protected RevCommit METHOD_1 ( ) throws IOException { return METHOD_1 ( project , STRING_1 ) ; }
+protected List < RevCommit > METHOD_1 ( ) throws IOException { return METHOD_1 ( project , STRING_1 ) ; }
+private String METHOD_1 ( Repository repo ) throws IOException { ObjectId VAR_1 = repo . METHOD_2 ( STRING_1 ) ; ObjectId VAR_2 = repo . METHOD_2 ( STRING_2 ) ; return METHOD_1 ( repo , VAR_1 , VAR_2 ) ; }
+public void METHOD_1 ( TYPE_1 VAR_1 ) { METHOD_2 ( STRING_1 , VAR_1 ) ; }
+private void METHOD_1 ( TYPE_1 VAR_1 ) { METHOD_4 ( STRING_1 , VAR_1 ) ; }
+void METHOD_1 ( TYPE_1 VAR_1 , int line , TYPE_2 group ) { super . METHOD_1 ( VAR_1 , line , group ) ; }
+public void VAR_1 ( String message ) throws IOException { VAR_1 ( new VAR_3 ( STRING_1 ,
+public TYPE_1 create ( String VAR_1 , String group ) throws Exception { return create ( VAR_1 , null , VAR_1 , group ) ; }
+public TYPE_1 create ( String VAR_1 ) throws Exception { return create ( VAR_1 , null , VAR_1 , ( String [ ] ) null ) ; }
+public VAR_1 admin ( ) throws Exception { return create ( STRING_1 ,
+public VAR_1 VAR_2 ( ) throws Exception { return create ( STRING_1 ,
+public VAR_1 user ( ) throws Exception { return create ( STRING_1 ,
+public VAR_1 VAR_2 ( ) throws Exception { return create ( STRING_1 ,
+public String METHOD_1 ( int size ) throws TYPE_1 { VAR_2 . METHOD_2 ( size ) ; return VAR_2 . apply ( account ) . METHOD_3 ( ) ; }
+protected void set ( int VAR_1 ) { VAR_2 = VAR_1 ; }
+public boolean METHOD_1 ( ) { return VAR_1 && id . METHOD_1 ( ) ; }

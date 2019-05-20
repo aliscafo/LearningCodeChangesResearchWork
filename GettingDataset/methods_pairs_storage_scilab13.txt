@@ -1,0 +1,1012 @@
+20
+#method_before
+@Override
+public Figure clone() {
+    Figure copy = null;
+    copy = (Figure) super.clone();
+    copy.dimensions = new FigureDimensions(this.dimensions);
+    copy.canvas = new Canvas(this.canvas);
+    copy.figureName = new FigureName(this.figureName);
+    copy.colorMap = new ColorMap(this.colorMap);
+    copy.renderingMode = new RenderingMode(this.renderingMode);
+    copy.eventHandler = new EventHandler(this.eventHandler);
+    copy.setValid(true);
+    return copy;
+}
+#method_after
+@Override
+public Figure clone() {
+    Figure copy = null;
+    copy = (Figure) super.clone();
+    copy.dimensions = new FigureDimensions(this.dimensions);
+    copy.canvas = new Canvas(this.canvas);
+    copy.figureName = new FigureName(this.figureName);
+    copy.colorMap = new ColorMap(this.colorMap);
+    copy.renderingMode = new RenderingMode(this.renderingMode);
+    copy.eventHandler = new EventHandler(this.eventHandler);
+    copy.gridOptGrid = new Integer[] { 0, 0 };
+    copy.gridOptPadding = new Integer[] { 0, 0 };
+    copy.borderOptPadding = new Integer[] { 0, 0 };
+    copy.setValid(true);
+    return copy;
+}
+#end_block
+
+#method_before
+public Object getPropertyFromName(int propertyName) {
+    switch(propertyName) {
+        case __GO_POSITION__:
+            return FigureDimensionsProperty.POSITION;
+        case __GO_SIZE__:
+            return FigureDimensionsProperty.SIZE;
+        case __GO_AUTORESIZE__:
+            return CanvasProperty.AUTORESIZE;
+        case __GO_VIEWPORT__:
+            return CanvasProperty.VIEWPORT;
+        case __GO_AXES_SIZE__:
+            return CanvasProperty.AXESSIZE;
+        case __GO_NAME__:
+            return FigureNameProperty.NAME;
+        case __GO_ID__:
+            return FigureNameProperty.ID;
+        case __GO_INFO_MESSAGE__:
+            return FigureProperty.INFOMESSAGE;
+        case __GO_COLORMAP__:
+            return FigureProperty.COLORMAP;
+        case __GO_COLORMAP_SIZE__:
+            return FigureProperty.COLORMAPSIZE;
+        case __GO_PIXEL_DRAWING_MODE__:
+            return RenderingModeProperty.PIXELDRAWINGMODE;
+        case __GO_ANTIALIASING__:
+            return RenderingModeProperty.ANTIALIASING;
+        case __GO_IMMEDIATE_DRAWING__:
+            return RenderingModeProperty.IMMEDIATEDRAWING;
+        case __GO_BACKGROUND__:
+            return FigureProperty.BACKGROUND;
+        case __GO_EVENTHANDLER_NAME__:
+            return EventHandlerProperty.EVENTHANDLER;
+        case __GO_EVENTHANDLER_ENABLE__:
+            return EventHandlerProperty.EVENTHANDLERENABLE;
+        case __GO_ROTATION_TYPE__:
+            return FigureProperty.ROTATIONTYPE;
+        case __GO_RESIZEFCN__:
+            return FigureProperty.RESIZEFCN;
+        case __GO_CLOSEREQUESTFCN__:
+            return FigureProperty.CLOSEREQUESTFCN;
+        default:
+            return super.getPropertyFromName(propertyName);
+    }
+}
+#method_after
+public Object getPropertyFromName(int propertyName) {
+    switch(propertyName) {
+        case __GO_POSITION__:
+            return FigureDimensionsProperty.POSITION;
+        case __GO_SIZE__:
+            return FigureDimensionsProperty.SIZE;
+        case __GO_AUTORESIZE__:
+            return CanvasProperty.AUTORESIZE;
+        case __GO_VIEWPORT__:
+            return CanvasProperty.VIEWPORT;
+        case __GO_AXES_SIZE__:
+            return CanvasProperty.AXESSIZE;
+        case __GO_NAME__:
+            return FigureNameProperty.NAME;
+        case __GO_ID__:
+            return FigureNameProperty.ID;
+        case __GO_INFO_MESSAGE__:
+            return FigureProperty.INFOMESSAGE;
+        case __GO_COLORMAP__:
+            return FigureProperty.COLORMAP;
+        case __GO_COLORMAP_SIZE__:
+            return FigureProperty.COLORMAPSIZE;
+        case __GO_PIXEL_DRAWING_MODE__:
+            return RenderingModeProperty.PIXELDRAWINGMODE;
+        case __GO_ANTIALIASING__:
+            return RenderingModeProperty.ANTIALIASING;
+        case __GO_IMMEDIATE_DRAWING__:
+            return RenderingModeProperty.IMMEDIATEDRAWING;
+        case __GO_BACKGROUND__:
+            return FigureProperty.BACKGROUND;
+        case __GO_EVENTHANDLER_NAME__:
+            return EventHandlerProperty.EVENTHANDLER;
+        case __GO_EVENTHANDLER_ENABLE__:
+            return EventHandlerProperty.EVENTHANDLERENABLE;
+        case __GO_ROTATION_TYPE__:
+            return FigureProperty.ROTATIONTYPE;
+        case __GO_RESIZEFCN__:
+            return FigureProperty.RESIZEFCN;
+        case __GO_CLOSEREQUESTFCN__:
+            return FigureProperty.CLOSEREQUESTFCN;
+        case __GO_RESIZE__:
+            return FigureProperty.RESIZE;
+        case __GO_TOOLBAR__:
+            return FigureProperty.TOOLBAR;
+        case __GO_TOOLBAR_VISIBLE__:
+            return FigureProperty.TOOLBAR_VISIBLE;
+        case __GO_MENUBAR__:
+            return FigureProperty.MENUBAR;
+        case __GO_MENUBAR_VISIBLE__:
+            return FigureProperty.MENUBAR_VISIBLE;
+        case __GO_INFOBAR_VISIBLE__:
+            return FigureProperty.INFOBAR_VISIBLE;
+        case __GO_DOCKABLE__:
+            return FigureProperty.DOCKABLE;
+        case __GO_LAYOUT__:
+            return FigureProperty.LAYOUT;
+        case __GO_LAYOUT_SET__:
+            return FigureProperty.LAYOUT_SET;
+        case __GO_GRID_OPT_GRID__:
+            return FigureProperty.GRIDOPT_GRID;
+        case __GO_GRID_OPT_PADDING__:
+            return FigureProperty.GRIDOPT_PADDING;
+        case __GO_BORDER_OPT_PADDING__:
+            return FigureProperty.BORDEROPT_PADDING;
+        case __GO_DEFAULT_AXES__:
+            return FigureProperty.DEFAULT_AXES;
+        case __GO_UI_ICON__:
+            return FigureProperty.ICON;
+        default:
+            return super.getPropertyFromName(propertyName);
+    }
+}
+#end_block
+
+#method_before
+public Object getProperty(Object property) {
+    if (property == FigureDimensionsProperty.POSITION) {
+        return getPosition();
+    } else if (property == FigureDimensionsProperty.SIZE) {
+        return getSize();
+    } else if (property == CanvasProperty.AUTORESIZE) {
+        return getAutoResize();
+    } else if (property == CanvasProperty.VIEWPORT) {
+        return getViewport();
+    } else if (property == CanvasProperty.AXESSIZE) {
+        return getAxesSize();
+    } else if (property == FigureNameProperty.NAME) {
+        return getName();
+    } else if (property == FigureNameProperty.ID) {
+        return getId();
+    } else if (property == FigureProperty.INFOMESSAGE) {
+        return getInfoMessage();
+    } else if (property == FigureProperty.COLORMAP) {
+        return getColorMap().getData();
+    } else if (property == FigureProperty.COLORMAPSIZE) {
+        return getColorMap().getSize();
+    } else if (property == RenderingModeProperty.PIXELDRAWINGMODE) {
+        return getPixelDrawingMode();
+    } else if (property == RenderingModeProperty.ANTIALIASING) {
+        return getAntialiasing();
+    } else if (property == RenderingModeProperty.IMMEDIATEDRAWING) {
+        return getImmediateDrawing();
+    } else if (property == FigureProperty.BACKGROUND) {
+        return getBackground();
+    } else if (property == EventHandlerProperty.EVENTHANDLER) {
+        return getEventHandlerString();
+    } else if (property == EventHandlerProperty.EVENTHANDLERENABLE) {
+        return getEventHandlerEnable();
+    } else if (property == FigureProperty.ROTATIONTYPE) {
+        return getRotation();
+    } else if (property == FigureProperty.RESIZEFCN) {
+        return getResizeFcn();
+    } else if (property == FigureProperty.CLOSEREQUESTFCN) {
+        return getCloseRequestFcn();
+    } else {
+        return super.getProperty(property);
+    }
+}
+#method_after
+public Object getProperty(Object property) {
+    if (property == FigureDimensionsProperty.POSITION) {
+        return getPosition();
+    } else if (property == FigureDimensionsProperty.SIZE) {
+        return getSize();
+    } else if (property == CanvasProperty.AUTORESIZE) {
+        return getAutoResize();
+    } else if (property == CanvasProperty.VIEWPORT) {
+        return getViewport();
+    } else if (property == CanvasProperty.AXESSIZE) {
+        return getAxesSize();
+    } else if (property == FigureNameProperty.NAME) {
+        return getName();
+    } else if (property == FigureNameProperty.ID) {
+        return getId();
+    } else if (property == FigureProperty.INFOMESSAGE) {
+        return getInfoMessage();
+    } else if (property == FigureProperty.COLORMAP) {
+        return getColorMap().getData();
+    } else if (property == FigureProperty.COLORMAPSIZE) {
+        return getColorMap().getSize();
+    } else if (property == RenderingModeProperty.PIXELDRAWINGMODE) {
+        return getPixelDrawingMode();
+    } else if (property == RenderingModeProperty.ANTIALIASING) {
+        return getAntialiasing();
+    } else if (property == RenderingModeProperty.IMMEDIATEDRAWING) {
+        return getImmediateDrawing();
+    } else if (property == FigureProperty.BACKGROUND) {
+        return getBackground();
+    } else if (property == EventHandlerProperty.EVENTHANDLER) {
+        return getEventHandlerString();
+    } else if (property == EventHandlerProperty.EVENTHANDLERENABLE) {
+        return getEventHandlerEnable();
+    } else if (property == FigureProperty.ROTATIONTYPE) {
+        return getRotation();
+    } else if (property == FigureProperty.RESIZEFCN) {
+        return getResizeFcn();
+    } else if (property == FigureProperty.CLOSEREQUESTFCN) {
+        return getCloseRequestFcn();
+    } else if (property == FigureProperty.RESIZE) {
+        return getResize();
+    } else if (property == FigureProperty.TOOLBAR) {
+        return getToolbar();
+    } else if (property == FigureProperty.TOOLBAR_VISIBLE) {
+        return getToolbarVisible();
+    } else if (property == FigureProperty.MENUBAR) {
+        return getMenubar();
+    } else if (property == FigureProperty.MENUBAR_VISIBLE) {
+        return getMenubarVisible();
+    } else if (property == FigureProperty.INFOBAR_VISIBLE) {
+        return getInfobarVisible();
+    } else if (property == FigureProperty.DOCKABLE) {
+        return getDockable();
+    } else if (property == FigureProperty.LAYOUT) {
+        return getLayout();
+    } else if (property == FigureProperty.LAYOUT_SET) {
+        return isLayoutSettable();
+    } else if (property == FigureProperty.GRIDOPT_GRID) {
+        return getGridOptGrid();
+    } else if (property == FigureProperty.GRIDOPT_PADDING) {
+        return getGridOptPadding();
+    } else if (property == FigureProperty.BORDEROPT_PADDING) {
+        return getBorderOptPadding();
+    } else if (property == FigureProperty.DEFAULT_AXES) {
+        return hasDefaultAxes();
+    } else if (property == FigureProperty.ICON) {
+        return getIcon();
+    } else {
+        return super.getProperty(property);
+    }
+}
+#end_block
+
+#method_before
+public UpdateStatus setProperty(Object property, Object value) {
+    if (property instanceof FigureProperty) {
+        switch((FigureProperty) property) {
+            case BACKGROUND:
+                return setBackground((Integer) value);
+            case CLOSEREQUESTFCN:
+                return setCloseRequestFcn((String) value);
+            case COLORMAP:
+                return getColorMap().setData((Double[]) value);
+            case COLORMAPSIZE:
+                return UpdateStatus.NoChange;
+            case INFOMESSAGE:
+                return setInfoMessage((String) value);
+            case RESIZEFCN:
+                return setResizeFcn((String) value);
+            case ROTATIONTYPE:
+                return setRotation((Integer) value);
+        }
+    } else if (property instanceof CanvasProperty) {
+        switch((CanvasProperty) property) {
+            case AUTORESIZE:
+                return setAutoResize((Boolean) value);
+            case AXESSIZE:
+                return setAxesSize((Integer[]) value);
+            case VIEWPORT:
+                return setViewport((Integer[]) value);
+        }
+    } else if (property instanceof FigureDimensionsProperty) {
+        switch((FigureDimensionsProperty) property) {
+            case POSITION:
+                return setPosition((Integer[]) value);
+            case SIZE:
+                return setSize((Integer[]) value);
+        }
+    } else if (property instanceof FigureNameProperty) {
+        switch((FigureNameProperty) property) {
+            case ID:
+                return setId((Integer) value);
+            case NAME:
+                return setName((String) value);
+        }
+    } else if (property instanceof RenderingModeProperty) {
+        switch((RenderingModeProperty) property) {
+            case ANTIALIASING:
+                return setAntialiasing((Integer) value);
+            case IMMEDIATEDRAWING:
+                return setImmediateDrawing((Boolean) value);
+            case PIXELDRAWINGMODE:
+                return setPixelDrawingMode((Integer) value);
+        }
+    } else if (property instanceof EventHandlerProperty) {
+        switch((EventHandlerProperty) property) {
+            case EVENTHANDLER:
+                return setEventHandlerString((String) value);
+            case EVENTHANDLERENABLE:
+                return setEventHandlerEnable((Boolean) value);
+        }
+    } else {
+        return super.setProperty(property, value);
+    }
+    return UpdateStatus.Success;
+}
+#method_after
+public UpdateStatus setProperty(Object property, Object value) {
+    if (property instanceof FigureProperty) {
+        switch((FigureProperty) property) {
+            case BACKGROUND:
+                return setBackground((Integer) value);
+            case CLOSEREQUESTFCN:
+                return setCloseRequestFcn((String) value);
+            case COLORMAP:
+                return getColorMap().setData((Double[]) value);
+            case COLORMAPSIZE:
+                return UpdateStatus.NoChange;
+            case INFOMESSAGE:
+                return setInfoMessage((String) value);
+            case RESIZEFCN:
+                return setResizeFcn((String) value);
+            case ROTATIONTYPE:
+                return setRotation((Integer) value);
+            case RESIZE:
+                return setResize((Boolean) value);
+            case TOOLBAR:
+                return setToolbar((Integer) value);
+            case TOOLBAR_VISIBLE:
+                return setToolbarVisible((Boolean) value);
+            case MENUBAR:
+                return setMenubar((Integer) value);
+            case MENUBAR_VISIBLE:
+                return setMenubarVisible((Boolean) value);
+            case INFOBAR_VISIBLE:
+                return setInfobarVisible((Boolean) value);
+            case DOCKABLE:
+                return setDockable((Boolean) value);
+            case LAYOUT:
+                return setLayout((Integer) value);
+            case GRIDOPT_GRID:
+                return setGridOptGrid((Integer[]) value);
+            case GRIDOPT_PADDING:
+                return setGridOptPadding((Integer[]) value);
+            case BORDEROPT_PADDING:
+                return setBorderOptPadding((Integer[]) value);
+            case DEFAULT_AXES:
+                return setDefaultAxes((Boolean) value);
+            case ICON:
+                return setIcon((String) value);
+            default:
+                break;
+        }
+    } else if (property instanceof CanvasProperty) {
+        switch((CanvasProperty) property) {
+            case AUTORESIZE:
+                return setAutoResize((Boolean) value);
+            case AXESSIZE:
+                return setAxesSize((Integer[]) value);
+            case VIEWPORT:
+                return setViewport((Integer[]) value);
+        }
+    } else if (property instanceof FigureDimensionsProperty) {
+        switch((FigureDimensionsProperty) property) {
+            case POSITION:
+                return setPosition((Integer[]) value);
+            case SIZE:
+                return setSize((Integer[]) value);
+        }
+    } else if (property instanceof FigureNameProperty) {
+        switch((FigureNameProperty) property) {
+            case ID:
+                return setId((Integer) value);
+            case NAME:
+                return setName((String) value);
+        }
+    } else if (property instanceof RenderingModeProperty) {
+        switch((RenderingModeProperty) property) {
+            case ANTIALIASING:
+                return setAntialiasing((Integer) value);
+            case IMMEDIATEDRAWING:
+                return setImmediateDrawing((Boolean) value);
+            case PIXELDRAWINGMODE:
+                return setPixelDrawingMode((Integer) value);
+        }
+    } else if (property instanceof EventHandlerProperty) {
+        switch((EventHandlerProperty) property) {
+            case EVENTHANDLER:
+                return setEventHandlerString((String) value);
+            case EVENTHANDLERENABLE:
+                return setEventHandlerEnable((Boolean) value);
+        }
+    } else {
+        return super.setProperty(property, value);
+    }
+    return UpdateStatus.Success;
+}
+#end_block
+
+#method_before
+public Object getPropertyFromName(int propertyName) {
+    switch(propertyName) {
+        case __GO_CLOSED__:
+            return PolylineProperty.CLOSED;
+        case __GO_ARROW_SIZE_FACTOR__:
+            return PolylineProperty.ARROWSIZEFACTOR;
+        case __GO_POLYLINE_STYLE__:
+            return PolylineProperty.POLYLINESTYLE;
+        case __GO_INTERP_COLOR_VECTOR__:
+            return PolylineProperty.INTERPCOLORVECTOR;
+        case __GO_INTERP_COLOR_VECTOR_SET__:
+            return PolylineProperty.INTERPCOLORVECTORSET;
+        case __GO_INTERP_COLOR_MODE__:
+            return PolylineProperty.INTERPCOLORMODE;
+        case __GO_X_SHIFT__:
+            return PolylineProperty.XSHIFT;
+        case __GO_Y_SHIFT__:
+            return PolylineProperty.YSHIFT;
+        case __GO_Z_SHIFT__:
+            return PolylineProperty.ZSHIFT;
+        case __GO_BAR_WIDTH__:
+            return PolylineProperty.BARWIDTH;
+        case __GO_DATATIPS__:
+            return PolylineProperty.DATATIPS;
+        case __GO_DATATIPS_SIZE__:
+            return PolylineProperty.DATATIPSSIZE;
+        default:
+            return super.getPropertyFromName(propertyName);
+    }
+}
+#method_after
+public Object getPropertyFromName(int propertyName) {
+    switch(propertyName) {
+        case __GO_CLOSED__:
+            return PolylineProperty.CLOSED;
+        case __GO_ARROW_SIZE_FACTOR__:
+            return PolylineProperty.ARROWSIZEFACTOR;
+        case __GO_POLYLINE_STYLE__:
+            return PolylineProperty.POLYLINESTYLE;
+        case __GO_INTERP_COLOR_VECTOR__:
+            return PolylineProperty.INTERPCOLORVECTOR;
+        case __GO_INTERP_COLOR_VECTOR_SET__:
+            return PolylineProperty.INTERPCOLORVECTORSET;
+        case __GO_INTERP_COLOR_MODE__:
+            return PolylineProperty.INTERPCOLORMODE;
+        case __GO_X_SHIFT__:
+            return PolylineProperty.XSHIFT;
+        case __GO_Y_SHIFT__:
+            return PolylineProperty.YSHIFT;
+        case __GO_Z_SHIFT__:
+            return PolylineProperty.ZSHIFT;
+        case __GO_BAR_WIDTH__:
+            return PolylineProperty.BARWIDTH;
+        case __GO_DATATIPS__:
+            return PolylineProperty.DATATIPS;
+        case __GO_DATATIPS_COUNT__:
+            return PolylineProperty.DATATIPSCOUNT;
+        default:
+            return super.getPropertyFromName(propertyName);
+    }
+}
+#end_block
+
+#method_before
+public Object getProperty(Object property) {
+    if (property == PolylineProperty.CLOSED) {
+        return getClosed();
+    } else if (property == PolylineProperty.ARROWSIZEFACTOR) {
+        return getArrowSizeFactor();
+    } else if (property == PolylineProperty.POLYLINESTYLE) {
+        return getPolylineStyle();
+    } else if (property == PolylineProperty.INTERPCOLORVECTOR) {
+        return getInterpColorVector();
+    } else if (property == PolylineProperty.INTERPCOLORVECTORSET) {
+        return getInterpColorVectorSet();
+    } else if (property == PolylineProperty.INTERPCOLORMODE) {
+        return getInterpColorMode();
+    } else if (property == PolylineProperty.XSHIFT) {
+        return getXShift();
+    } else if (property == PolylineProperty.YSHIFT) {
+        return getYShift();
+    } else if (property == PolylineProperty.ZSHIFT) {
+        return getZShift();
+    } else if (property == PolylineProperty.BARWIDTH) {
+        return getBarWidth();
+    } else if (property == PolylineProperty.DATATIPS) {
+        return getDatatips();
+    } else if (property == PolylineProperty.DATATIPSSIZE) {
+        return getDatatipsSize();
+    } else {
+        return super.getProperty(property);
+    }
+}
+#method_after
+public Object getProperty(Object property) {
+    if (property == PolylineProperty.CLOSED) {
+        return getClosed();
+    } else if (property == PolylineProperty.ARROWSIZEFACTOR) {
+        return getArrowSizeFactor();
+    } else if (property == PolylineProperty.POLYLINESTYLE) {
+        return getPolylineStyle();
+    } else if (property == PolylineProperty.INTERPCOLORVECTOR) {
+        return getInterpColorVector();
+    } else if (property == PolylineProperty.INTERPCOLORVECTORSET) {
+        return getInterpColorVectorSet();
+    } else if (property == PolylineProperty.INTERPCOLORMODE) {
+        return getInterpColorMode();
+    } else if (property == PolylineProperty.XSHIFT) {
+        return getXShift();
+    } else if (property == PolylineProperty.YSHIFT) {
+        return getYShift();
+    } else if (property == PolylineProperty.ZSHIFT) {
+        return getZShift();
+    } else if (property == PolylineProperty.BARWIDTH) {
+        return getBarWidth();
+    } else if (property == PolylineProperty.DATATIPS) {
+        return getDatatips();
+    } else if (property == PolylineProperty.DATATIPSCOUNT) {
+        return datatips.size();
+    } else {
+        return super.getProperty(property);
+    }
+}
+#end_block
+
+#method_before
+public UpdateStatus setProperty(Object property, Object value) {
+    synchronized (this) {
+        if (property == PolylineProperty.CLOSED) {
+            setClosed((Boolean) value);
+        } else if (property == PolylineProperty.ARROWSIZEFACTOR) {
+            return setArrowSizeFactor((Double) value);
+        } else if (property == PolylineProperty.POLYLINESTYLE) {
+            return setPolylineStyle((Integer) value);
+        } else if (property == PolylineProperty.INTERPCOLORVECTOR) {
+            setInterpColorVector((Integer[]) value);
+        } else if (property == PolylineProperty.INTERPCOLORVECTORSET) {
+            setInterpColorVectorSet((Boolean) value);
+        } else if (property == PolylineProperty.INTERPCOLORMODE) {
+            return setInterpColorMode((Boolean) value);
+        } else if (property == PolylineProperty.XSHIFT) {
+            setXShift((double[]) value);
+        } else if (property == PolylineProperty.YSHIFT) {
+            setYShift((double[]) value);
+        } else if (property == PolylineProperty.ZSHIFT) {
+            setZShift((double[]) value);
+        } else if (property == PolylineProperty.BARWIDTH) {
+            setBarWidth((Double) value);
+        } else if (property == PolylineProperty.DATATIPS) {
+            setDatatips((Double[]) value);
+        } else {
+            return super.setProperty(property, value);
+        }
+        return UpdateStatus.Success;
+    }
+}
+#method_after
+public UpdateStatus setProperty(Object property, Object value) {
+    synchronized (this) {
+        if (property == PolylineProperty.CLOSED) {
+            setClosed((Boolean) value);
+        } else if (property == PolylineProperty.ARROWSIZEFACTOR) {
+            return setArrowSizeFactor((Double) value);
+        } else if (property == PolylineProperty.POLYLINESTYLE) {
+            return setPolylineStyle((Integer) value);
+        } else if (property == PolylineProperty.INTERPCOLORVECTOR) {
+            setInterpColorVector((Integer[]) value);
+        } else if (property == PolylineProperty.INTERPCOLORVECTORSET) {
+            setInterpColorVectorSet((Boolean) value);
+        } else if (property == PolylineProperty.INTERPCOLORMODE) {
+            return setInterpColorMode((Boolean) value);
+        } else if (property == PolylineProperty.XSHIFT) {
+            setXShift((double[]) value);
+        } else if (property == PolylineProperty.YSHIFT) {
+            setYShift((double[]) value);
+        } else if (property == PolylineProperty.ZSHIFT) {
+            setZShift((double[]) value);
+        } else if (property == PolylineProperty.BARWIDTH) {
+            setBarWidth((Double) value);
+        } else if (property == PolylineProperty.DATATIPS) {
+            setDatatips((Integer[]) value);
+        } else {
+            return super.setProperty(property, value);
+        }
+        return UpdateStatus.Success;
+    }
+}
+#end_block
+
+#method_before
+public void setBarWidth(Double barWidth) {
+    this.barWidth = barWidth;
+}
+#method_after
+public UpdateStatus setBarWidth(Double barWidth) {
+    this.barWidth = barWidth;
+    return UpdateStatus.Success;
+}
+#end_block
+
+#method_before
+public void setClosed(Boolean closed) {
+    this.closed = closed;
+}
+#method_after
+public UpdateStatus setClosed(Boolean closed) {
+    this.closed = closed;
+    return UpdateStatus.Success;
+}
+#end_block
+
+#method_before
+public void setInterpColorVector(Integer[] interpColorVector) {
+    if (interpColorVectorSet == false) {
+        interpColorVectorSet = true;
+    }
+    for (int i = 0; i < interpColorVector.length; i++) {
+        this.interpColorVector[i] = interpColorVector[i];
+    }
+}
+#method_after
+public UpdateStatus setInterpColorVector(Integer[] interpColorVector) {
+    if (interpColorVectorSet == false) {
+        interpColorVectorSet = true;
+    }
+    for (int i = 0; i < interpColorVector.length; i++) {
+        this.interpColorVector[i] = interpColorVector[i];
+    }
+    return UpdateStatus.Success;
+}
+#end_block
+
+#method_before
+public void setInterpColorVectorSet(Boolean interpColorVectorSet) {
+    this.interpColorVectorSet = interpColorVectorSet;
+}
+#method_after
+public UpdateStatus setInterpColorVectorSet(Boolean interpColorVectorSet) {
+    this.interpColorVectorSet = interpColorVectorSet;
+    return UpdateStatus.Success;
+}
+#end_block
+
+#method_before
+public void setXShift(double[] shift) {
+    xShift = shift;
+}
+#method_after
+public UpdateStatus setXShift(double[] shift) {
+    xShift = shift;
+    return UpdateStatus.Success;
+}
+#end_block
+
+#method_before
+public void setYShift(double[] shift) {
+    yShift = shift;
+}
+#method_after
+public UpdateStatus setYShift(double[] shift) {
+    yShift = shift;
+    return UpdateStatus.Success;
+}
+#end_block
+
+#method_before
+public void setZShift(double[] shift) {
+    zShift = shift;
+}
+#method_after
+public UpdateStatus setZShift(double[] shift) {
+    zShift = shift;
+    return UpdateStatus.Success;
+}
+#end_block
+
+#method_before
+public Double[] getDatatips() {
+    return datatips;
+}
+#method_after
+public Integer[] getDatatips() {
+    return datatips.toArray(new Integer[datatips.size()]);
+}
+#end_block
+
+#method_before
+public void setDatatips(Double[] datatips) {
+    this.datatips = datatips;
+}
+#method_after
+private UpdateStatus setDatatips(List<Integer> datatips) {
+    this.datatips = datatips;
+    return UpdateStatus.Success;
+}
+#end_block
+
+#method_before
+public static int createJarArchive(String jarFilePath, String[] filePaths, String filesRootPath, boolean keepAbsolutePaths) throws ScilabJavaException {
+    JarOutputStream jarOutputStream = null;
+    try {
+        List<String> expandedFilePaths = expandPaths(filePaths);
+        String commonPath = null;
+        if ((filesRootPath == null) || (filesRootPath.isEmpty())) {
+            if (!keepAbsolutePaths) {
+                commonPath = getCommonPath(expandedFilePaths);
+            }
+        } else {
+            // Normalize path (Windows short path => long path, remove '..')
+            commonPath = new File(filesRootPath).getCanonicalPath();
+        }
+        // TODO: if jar exists ?
+        FileOutputStream stream = new FileOutputStream(jarFilePath);
+        jarOutputStream = new JarOutputStream(stream, new Manifest());
+        for (String filePath : expandedFilePaths) {
+            File file = new File(filePath);
+            String pathInJar;
+            if ((commonPath != null) && (!commonPath.isEmpty())) {
+                pathInJar = getRelativePath(commonPath, filePath);
+            } else {
+                if (keepAbsolutePaths) {
+                    pathInJar = file.getPath();
+                } else {
+                    pathInJar = file.getName();
+                }
+            }
+            addFileToJarArchive(file, pathInJar, jarOutputStream);
+        }
+        closeJarArchive(jarOutputStream);
+        jarOutputStream = null;
+        return 0;
+    } catch (Exception e) {
+        try {
+            closeJarArchive(jarOutputStream);
+            deleteJarArchive(jarFilePath);
+        } catch (Exception e2) {
+        }
+        e.printStackTrace();
+        throw new ScilabJavaException(String.format("Cannot create jar archive %s : %s\n", jarFilePath, e.getMessage()));
+    }
+}
+#method_after
+public static int createJarArchive(String jarFilePath, String[] filePaths, String filesRootPath, String manifestFilePath, boolean keepAbsolutePaths) throws ScilabJavaException {
+    JarOutputStream jarOutputStream = null;
+    try {
+        // Normalize path (Windows short path => long path, remove '..')
+        String[] normalizedFilePaths = new String[filePaths.length];
+        int i = 0;
+        for (String filePath : filePaths) {
+            normalizedFilePaths[i++] = new File(filePath).getCanonicalPath();
+        }
+        // Use the given root path or compute it
+        String commonPath = null;
+        if ((filesRootPath == null) || (filesRootPath.isEmpty())) {
+            if (!keepAbsolutePaths) {
+                commonPath = getCommonPath(normalizedFilePaths);
+            }
+        } else {
+            // Normalize root path
+            commonPath = new File(filesRootPath).getCanonicalPath();
+        }
+        // Finds all the list of all the files in the directory trees
+        List<String> expandedFilePaths = expandPaths(normalizedFilePaths);
+        // Manifest
+        // if specified take the one given in argument, otherwise take META-INF/MANIFEST.MF
+        // if does not exist, create a manifest
+        Manifest manifest = null;
+        if ((manifestFilePath == null) || (manifestFilePath.isEmpty())) {
+            manifestFilePath = commonPath + File.separator + "META-INF" + File.separator + "MANIFEST.MF";
+        }
+        if (new File(manifestFilePath).exists()) {
+            manifest = new Manifest(new FileInputStream(manifestFilePath));
+        } else {
+            manifest = new Manifest();
+        }
+        // Now create the jar with all the files
+        FileOutputStream stream = new FileOutputStream(jarFilePath);
+        jarOutputStream = new JarOutputStream(stream, manifest);
+        for (String filePath : expandedFilePaths) {
+            File file = new File(filePath);
+            String pathInJar;
+            if ((commonPath != null) && (!commonPath.isEmpty())) {
+                pathInJar = getRelativePath(commonPath, filePath);
+            } else {
+                if (keepAbsolutePaths) {
+                    pathInJar = file.getPath();
+                } else {
+                    pathInJar = file.getName();
+                }
+            }
+            // Skip manifest file, it will be created automatically
+            if (pathInJar.equals("META-INF/MANIFEST.MF")) {
+                continue;
+            }
+            addFileToJarArchive(file, pathInJar, jarOutputStream);
+        }
+        closeJarArchive(jarOutputStream);
+        jarOutputStream = null;
+        return 0;
+    } catch (Exception e) {
+        try {
+            closeJarArchive(jarOutputStream);
+            deleteJarArchive(jarFilePath);
+        } catch (Exception e2) {
+        }
+        e.printStackTrace();
+        throw new ScilabJavaException(String.format("Cannot create jar archive %s : %s\n", jarFilePath, e.getMessage()));
+    }
+}
+#end_block
+
+#method_before
+private static List<String> expandPaths(String... paths) throws IOException {
+    ArrayList<String> expandedPaths = new ArrayList<String>();
+    for (String filePath : paths) {
+        File file = new File(filePath);
+        if (file.isDirectory()) {
+            for (File childFile : file.listFiles()) {
+                expandedPaths.addAll(expandPaths(childFile.getPath()));
+            }
+        } else {
+            // Normalize path (Windows short path => long path, remove '..')
+            expandedPaths.add(new File(filePath).getCanonicalPath());
+        }
+    }
+    return expandedPaths;
+}
+#method_after
+private static List<String> expandPaths(String... paths) throws IOException {
+    ArrayList<String> expandedPaths = new ArrayList<String>();
+    for (String filePath : paths) {
+        File file = new File(filePath);
+        if (file.isDirectory()) {
+            for (File childFile : file.listFiles()) {
+                expandedPaths.addAll(expandPaths(childFile.getPath()));
+            }
+        } else {
+            expandedPaths.add(filePath);
+        }
+    }
+    return expandedPaths;
+}
+#end_block
+
+#method_before
+private static void addFileToJarArchive(File file, String pathInJar, JarOutputStream jar) throws IOException {
+    BufferedInputStream in = null;
+    try {
+        if (!file.exists()) {
+            // TODO throw error
+            return;
+        }
+        if (pathInJar.isEmpty()) {
+            // TODO throw error
+            return;
+        }
+        pathInJar.replace("\\", "/");
+        JarEntry entry = new JarEntry(pathInJar);
+        entry.setTime(file.lastModified());
+        jar.putNextEntry(entry);
+        in = new BufferedInputStream(new FileInputStream(file));
+        byte[] buffer = new byte[4096];
+        while (true) {
+            int count = in.read(buffer);
+            if (count == -1) {
+                break;
+            }
+            jar.write(buffer, 0, count);
+        }
+        jar.closeEntry();
+    } finally {
+        if (in != null) {
+            in.close();
+        }
+    }
+}
+#method_after
+private static void addFileToJarArchive(File file, String pathInJar, JarOutputStream jar) throws IOException {
+    BufferedInputStream in = null;
+    try {
+        pathInJar.replace("\\", "/");
+        JarEntry entry = new JarEntry(pathInJar);
+        entry.setTime(file.lastModified());
+        jar.putNextEntry(entry);
+        in = new BufferedInputStream(new FileInputStream(file));
+        byte[] buffer = new byte[4096];
+        while (true) {
+            int count = in.read(buffer);
+            if (count == -1) {
+                break;
+            }
+            jar.write(buffer, 0, count);
+        }
+        jar.closeEntry();
+    } finally {
+        if (in != null) {
+            in.close();
+        }
+    }
+}
+#end_block
+
+#method_before
+private static String getCommonPath(List<String> paths) throws IOException {
+    int nbPaths = paths.size();
+    if (nbPaths < 2) {
+        return "";
+    }
+    // Escape because Windows backslash crashes split (regexp)
+    String fileSep = java.util.regex.Pattern.quote(System.getProperty("file.separator"));
+    String commonPath = "";
+    String[][] folders = new String[nbPaths][];
+    // Split each path in all its folders
+    int k = 0;
+    for (String path : paths) {
+        String canonicalPath = new File(path).getCanonicalPath();
+        folders[k++] = canonicalPath.split(fileSep);
+    }
+    // For each folder of first path
+    for (int j = 0; j < folders[0].length; j++) {
+        String folderToMatch = folders[0][j];
+        // Compare with the folder at same position in all the other paths
+        boolean allMatched = true;
+        for (int i = 1; i < folders.length && allMatched; i++) {
+            if (j >= folders[i].length) {
+                allMatched = false;
+                return commonPath;
+            }
+            allMatched &= (new File(folders[i][j]).compareTo(new File(folderToMatch)) == 0);
+        }
+        // Update common path
+        if (allMatched) {
+            commonPath += folderToMatch + File.separator;
+        } else {
+            return commonPath;
+        }
+    }
+    return commonPath;
+}
+#method_after
+private static String getCommonPath(String[] paths) throws IOException {
+    int nbPaths = paths.length;
+    if (nbPaths == 0) {
+        return "";
+    } else if (nbPaths == 1) {
+        File path = new File(paths[0]);
+        if (path.isDirectory()) {
+            return path.getAbsolutePath();
+        } else {
+            return path.getParentFile().getAbsolutePath();
+        }
+    }
+    // Escape because Windows backslash crashes split (regexp)
+    String fileSep = java.util.regex.Pattern.quote(System.getProperty("file.separator"));
+    String commonPath = "";
+    String[][] folders = new String[nbPaths][];
+    // Split each path in all its folders
+    int k = 0;
+    for (String path : paths) {
+        folders[k++] = path.split(fileSep);
+    }
+    // For each folder of first path
+    for (int j = 0; j < folders[0].length; j++) {
+        String folderToMatch = folders[0][j];
+        // Compare with the folder at same position in all the other paths
+        boolean allMatched = true;
+        for (int i = 1; i < folders.length && allMatched; i++) {
+            if (j >= folders[i].length) {
+                return commonPath;
+            }
+            allMatched &= (new File(folders[i][j]).compareTo(new File(folderToMatch)) == 0);
+        }
+        // Update common path
+        if (allMatched) {
+            commonPath += folderToMatch + File.separator;
+        } else {
+            return commonPath;
+        }
+    }
+    return commonPath;
+}
+#end_block
+

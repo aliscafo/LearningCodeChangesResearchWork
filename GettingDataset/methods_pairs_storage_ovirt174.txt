@@ -1,0 +1,986 @@
+39
+#method_before
+private void logAlert(Version version, StoragePool storagePool) {
+    AuditLogableBase auditLog = new AuditLogableBase();
+    auditLog.setStoragePool(storagePool);
+    auditLog.addCustomValue("engineVersion", version.toString());
+    auditLog.addCustomValue("dcVersion", storagePool.getCompatibilityVersion().toString());
+    auditLogDirector.log(auditLog, AuditLogType.STORAGE_POOL_LOWER_THAN_ENGINE_HIGHEST_CLUSTER_LEVEL);
+}
+#method_after
+private void logAlert(Version version, StoragePool storagePool) {
+    AuditLogable auditLog = new AuditLogableImpl();
+    auditLog.setStoragePoolId(storagePool.getId());
+    auditLog.setStoragePoolName(storagePool.getName());
+    auditLog.addCustomValue("engineVersion", version.toString());
+    auditLog.addCustomValue("dcVersion", storagePool.getCompatibilityVersion().toString());
+    auditLogDirector.log(auditLog, AuditLogType.STORAGE_POOL_LOWER_THAN_ENGINE_HIGHEST_CLUSTER_LEVEL);
+}
+#end_block
+
+#method_before
+private void initVmTemplate() {
+    List<OvfEntityData> ovfEntityList = unregisteredOVFDataDao.getByEntityIdAndStorageDomain(getParameters().getContainerId(), getParameters().getStorageDomainId());
+    if (!ovfEntityList.isEmpty()) {
+        try {
+            // We should get only one entity, since we fetched the entity with a specific Storage Domain
+            ovfEntityData = ovfEntityList.get(0);
+            vmTemplateFromConfiguration = ovfHelper.readVmTemplateFromOvf(ovfEntityData.getOvfData());
+            vmTemplateFromConfiguration.setClusterId(getParameters().getClusterId());
+            VmHandler.updateMaxMemorySize(vmTemplateFromConfiguration, getEffectiveCompatibilityVersion());
+            setVmTemplate(vmTemplateFromConfiguration);
+            getParameters().setVmTemplate(vmTemplateFromConfiguration);
+            getParameters().setDestDomainId(ovfEntityData.getStorageDomainId());
+            getParameters().setSourceDomainId(ovfEntityData.getStorageDomainId());
+            // For quota, update disks when required
+            if (getParameters().getDiskTemplateMap() != null) {
+                ArrayList imageList = new ArrayList<>(getParameters().getDiskTemplateMap().values());
+                vmTemplateFromConfiguration.setDiskList(imageList);
+                ensureDomainMap(imageList, getParameters().getDestDomainId());
+            }
+        } catch (OvfReaderException e) {
+            log.error("Failed to parse a given ovf configuration: {}:\n{}", e.getMessage(), ovfEntityData.getOvfData());
+            log.debug("Exception", e);
+        }
+    }
+    setClusterId(getParameters().getClusterId());
+    setStoragePoolId(getCluster().getStoragePoolId());
+}
+#method_after
+private void initVmTemplate() {
+    List<OvfEntityData> ovfEntityList = unregisteredOVFDataDao.getByEntityIdAndStorageDomain(getParameters().getContainerId(), getParameters().getStorageDomainId());
+    if (!ovfEntityList.isEmpty()) {
+        try {
+            // We should get only one entity, since we fetched the entity with a specific Storage Domain
+            ovfEntityData = ovfEntityList.get(0);
+            vmTemplateFromConfiguration = ovfHelper.readVmTemplateFromOvf(ovfEntityData.getOvfData());
+            vmTemplateFromConfiguration.setClusterId(getParameters().getClusterId());
+            setVmTemplate(vmTemplateFromConfiguration);
+            setEffectiveCompatibilityVersion(CompatibilityVersionUtils.getEffective(getVmTemplate(), this::getCluster));
+            VmHandler.updateMaxMemorySize(getVmTemplate(), getEffectiveCompatibilityVersion());
+            getParameters().setVmTemplate(vmTemplateFromConfiguration);
+            getParameters().setDestDomainId(ovfEntityData.getStorageDomainId());
+            getParameters().setSourceDomainId(ovfEntityData.getStorageDomainId());
+            // For quota, update disks when required
+            if (getParameters().getDiskTemplateMap() != null) {
+                ArrayList imageList = new ArrayList<>(getParameters().getDiskTemplateMap().values());
+                vmTemplateFromConfiguration.setDiskList(imageList);
+                ensureDomainMap(imageList, getParameters().getDestDomainId());
+            }
+        } catch (OvfReaderException e) {
+            log.error("Failed to parse a given ovf configuration: {}:\n{}", e.getMessage(), ovfEntityData.getOvfData());
+            log.debug("Exception", e);
+        }
+    }
+    setClusterId(getParameters().getClusterId());
+    setStoragePoolId(getCluster().getStoragePoolId());
+}
+#end_block
+
+#method_before
+private String composeObjectId() {
+    return new EventKeyComposer(event, logType).composeObjectId();
+}
+#method_after
+private String composeObjectId() {
+    return EventKeyComposer.composeObjectId(event, logType);
+}
+#end_block
+
+#method_before
+public String composeObjectId() {
+    final StringBuilder builder = new StringBuilder();
+    compose(builder, "type", logType.toString());
+    compose(builder, "sd", nullToEmptyString(event.getStorageDomainId()));
+    compose(builder, "dc", nullToEmptyString(event.getStoragePoolId()));
+    compose(builder, "user", nullToEmptyString(event.getUserId()));
+    compose(builder, "cluster", event.getClusterId().toString());
+    compose(builder, "vds", event.getVdsId().toString());
+    compose(builder, "vm", emptyGuidToEmptyString(event.getVmId()));
+    compose(builder, "template", emptyGuidToEmptyString(event.getVmTemplateId()));
+    compose(builder, "customId", StringUtils.defaultString(event.getCustomId()));
+    return builder.toString();
+}
+#method_after
+public static String composeObjectId(AuditLogable event, AuditLogType logType) {
+    final StringBuilder builder = new StringBuilder();
+    compose(builder, "type", logType.toString());
+    compose(builder, "sd", nullToEmptyString(event.getStorageDomainId()));
+    compose(builder, "dc", nullToEmptyString(event.getStoragePoolId()));
+    compose(builder, "user", nullToEmptyString(event.getUserId()));
+    compose(builder, "cluster", event.getClusterId().toString());
+    compose(builder, "vds", event.getVdsId().toString());
+    compose(builder, "vm", emptyGuidToEmptyString(event.getVmId()));
+    compose(builder, "template", emptyGuidToEmptyString(event.getVmTemplateId()));
+    compose(builder, "customId", StringUtils.defaultString(event.getCustomId()));
+    return builder.toString();
+}
+#end_block
+
+#method_before
+private void compose(StringBuilder builder, String key, String value) {
+    final char DELIMITER = ',';
+    final char NAME_VALUE_SEPARATOR = '=';
+    if (builder.length() > 0) {
+        builder.append(DELIMITER);
+    }
+    builder.append(key).append(NAME_VALUE_SEPARATOR).append(value);
+}
+#method_after
+private static void compose(StringBuilder builder, String key, String value) {
+    final char DELIMITER = ',';
+    final char NAME_VALUE_SEPARATOR = '=';
+    if (builder.length() > 0) {
+        builder.append(DELIMITER);
+    }
+    builder.append(key).append(NAME_VALUE_SEPARATOR).append(value);
+}
+#end_block
+
+#method_before
+private String emptyGuidToEmptyString(Guid guid) {
+    return Guid.Empty.equals(guid) ? "" : guid.toString();
+}
+#method_after
+private static String emptyGuidToEmptyString(Guid guid) {
+    return Guid.Empty.equals(guid) ? "" : guid.toString();
+}
+#end_block
+
+#method_before
+@Override
+protected void teardown() {
+    ThreadPoolUtil.execute(() -> {
+        int sleepTimeInSec = Config.<Integer>getValue(ConfigValues.ServerRebootTimeout);
+        log.info("Waiting {} seconds, for server to finish boot process.", sleepTimeInSec);
+        ThreadUtils.sleep(TimeUnit.SECONDS.toMillis(sleepTimeInSec));
+        if (getParameters().isChangeHostToMaintenanceOnStart()) {
+            setStatus(VDSStatus.Maintenance);
+        } else {
+            setStatus(VDSStatus.NonResponsive);
+        }
+    });
+}
+#method_after
+@Override
+protected void teardown() {
+    runSleepOnReboot();
+}
+#end_block
+
+#method_before
+private boolean checkCertificate(X509Certificate cert, AuditLogType alertExpirationEventType, AuditLogType alertAboutToExpireEventType, AuditLogType warnAboutToExpireEventType, VDS host) {
+    Date expirationDate = cert.getNotAfter();
+    Date certWarnTime = getExpirationDate(expirationDate, ConfigValues.CertExpirationWarnPeriodInDays);
+    Date certAlertTime = getExpirationDate(expirationDate, ConfigValues.CertExpirationAlertPeriodInDays);
+    Date now = new Date();
+    AuditLogType eventType = null;
+    if (now.compareTo(expirationDate) > 0) {
+        eventType = alertExpirationEventType;
+    } else if (now.compareTo(certAlertTime) > 0) {
+        eventType = alertAboutToExpireEventType;
+    } else if (now.compareTo(certWarnTime) > 0) {
+        eventType = warnAboutToExpireEventType;
+    }
+    if (eventType != null) {
+        AuditLogableBase event = Injector.injectMembers(new AuditLogableBase());
+        event.addCustomValue("ExpirationDate", new SimpleDateFormat("yyyy-MM-dd").format(expirationDate));
+        if (host != null) {
+            event.setVds(host);
+        }
+        auditLogDirector.log(event, eventType);
+        return false;
+    }
+    return true;
+}
+#method_after
+private boolean checkCertificate(X509Certificate cert, AuditLogType alertExpirationEventType, AuditLogType alertAboutToExpireEventType, AuditLogType warnAboutToExpireEventType, VDS host) {
+    Date expirationDate = cert.getNotAfter();
+    Date certWarnTime = getExpirationDate(expirationDate, ConfigValues.CertExpirationWarnPeriodInDays);
+    Date certAlertTime = getExpirationDate(expirationDate, ConfigValues.CertExpirationAlertPeriodInDays);
+    Date now = new Date();
+    AuditLogType eventType = null;
+    if (now.compareTo(expirationDate) > 0) {
+        eventType = alertExpirationEventType;
+    } else if (now.compareTo(certAlertTime) > 0) {
+        eventType = alertAboutToExpireEventType;
+    } else if (now.compareTo(certWarnTime) > 0) {
+        eventType = warnAboutToExpireEventType;
+    }
+    if (eventType != null) {
+        AuditLogableBase event = new AuditLogableBase();
+        event.addCustomValue("ExpirationDate", new SimpleDateFormat("yyyy-MM-dd").format(expirationDate));
+        if (host != null) {
+            event.setVdsName(host.getName());
+        }
+        auditLogDirector.log(event, eventType);
+        return false;
+    }
+    return true;
+}
+#end_block
+
+#method_before
+public static void validateScope(List<String> scope, String requestScope) {
+    List<String> requestedScope = strippedScopeAsList(scopeAsList(requestScope));
+    if (!scope.containsAll(requestedScope)) {
+        throw new OAuthException(SsoConstants.ERR_CODE_INVALID_SCOPE, String.format(SsoConstants.ERR_CODE_INVALID_SCOPE_MSG, requestedScope));
+    }
+}
+#method_after
+public static void validateScope(List<String> scope, String requestScope) {
+    List<String> strippedScope = strippedScopeAsList(scope);
+    List<String> requestedScope = strippedScopeAsList(scopeAsList(requestScope));
+    if (!strippedScope.containsAll(requestedScope)) {
+        throw new OAuthException(SsoConstants.ERR_CODE_INVALID_SCOPE, String.format(SsoConstants.ERR_CODE_INVALID_SCOPE_MSG, requestedScope));
+    }
+}
+#end_block
+
+#method_before
+public static String createJWT(HttpServletRequest request, SsoSession ssoSession, String clientId) throws NoSuchAlgorithmException, JOSEException {
+    String serverName = request.getServerName();
+    String issuer = String.format("%s://%s:%s", request.getScheme(), InetAddressUtils.isIPv6Address(serverName) ? String.format("[%s]", serverName) : serverName, request.getServerPort());
+    // Compose the JWT claims set
+    JWTClaimsSet jwtClaims = (new JWTClaimsSet.Builder()).jwtID(ssoSession.getPrincipalRecord().get(Authz.PrincipalRecord.ID)).issueTime(new Date(System.currentTimeMillis())).issuer(issuer).subject(String.format("%s@%s", ssoSession.getUserId(), ssoSession.getProfile())).audience(Collections.singletonList(clientId)).claim("sub", String.format("%s@%s", ssoSession.getUserId(), ssoSession.getProfile())).claim("preferred_username", String.format("%s@%s", ssoSession.getUserId(), ssoSession.getProfile())).claim("email", ssoSession.getPrincipalRecord().<String>get(Authz.PrincipalRecord.EMAIL)).claim("name", ssoSession.getPrincipalRecord().<String>get(Authz.PrincipalRecord.FIRST_NAME)).build();
+    // Create HMAC signer
+    JWSSigner signer = new MACSigner(sharedSecret);
+    SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), jwtClaims);
+    signedJWT.sign(signer);
+    return signedJWT.serialize();
+}
+#method_after
+public static String createJWT(HttpServletRequest request, SsoSession ssoSession, String clientId) throws NoSuchAlgorithmException, JOSEException {
+    String serverName = request.getServerName();
+    String issuer = String.format("%s://%s:%s", request.getScheme(), InetAddressUtils.isIPv6Address(serverName) ? String.format("[%s]", serverName) : serverName, request.getServerPort());
+    // Compose the JWT claims set
+    JWTClaimsSet jwtClaims = (new JWTClaimsSet.Builder()).jwtID(ssoSession.getPrincipalRecord().get(Authz.PrincipalRecord.ID)).issueTime(new Date(System.currentTimeMillis())).issuer(issuer).subject(String.format("%s@%s", ssoSession.getUserId(), ssoSession.getProfile())).audience(clientId).claim("sub", String.format("%s@%s", ssoSession.getUserId(), ssoSession.getProfile())).claim("preferred_username", String.format("%s@%s", ssoSession.getUserId(), ssoSession.getProfile())).claim("email", ssoSession.getPrincipalRecord().<String>get(Authz.PrincipalRecord.EMAIL)).claim("name", ssoSession.getPrincipalRecord().<String>get(Authz.PrincipalRecord.FIRST_NAME)).build();
+    // Create HMAC signer
+    JWSSigner signer = new MACSigner(sharedSecret);
+    SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), jwtClaims);
+    signedJWT.sign(signer);
+    return signedJWT.serialize();
+}
+#end_block
+
+#method_before
+private AuditLogableBase createEvent() {
+    final AuditLogableBase event = new AuditLogableBase();
+    event.setVds(host);
+    return event;
+}
+#method_after
+private AuditLogableBase createEvent() {
+    final AuditLogableBase event = new AuditLogableBase();
+    event.setVdsName(host.getName());
+    return event;
+}
+#end_block
+
+#method_before
+@Test
+public void testCreateManagementNetworkIfRequiredFailsOnDifferentVlanId() {
+    host.setActiveNic(NIC_NAME);
+    nic.setVlanId(NIC_VLAN_ID);
+    managementNetwork.setVlanId(MANAGMENT_NETWORK_VLAN_ID);
+    try {
+        underTest.createManagementNetworkIfRequired();
+    } catch (NetworkConfiguratorException e) {
+        verify(auditLogDirector).log(auditLogableBaseArgumentCaptor.capture(), same(AuditLogType.VLAN_ID_MISMATCH_FOR_MANAGEMENT_NETWORK_CONFIGURATION), anyString());
+        final AuditLogableBase capturedEvent = auditLogableBaseArgumentCaptor.getValue();
+        assertThat(capturedEvent.getVdsName(), is(HOST_NAME));
+        final Map<String, String> capturedCustomValues = capturedEvent.getCustomValues();
+        assertThat(capturedCustomValues, hasEntry("vlanid", String.valueOf(NIC_VLAN_ID)));
+        assertThat(capturedCustomValues, hasEntry("mgmtvlanid", String.valueOf(MANAGMENT_NETWORK_VLAN_ID)));
+        assertThat(capturedCustomValues, hasEntry("interfacename", NIC_NAME));
+        return;
+    }
+    fail("The test should lead to NetworkConfiguratorException");
+}
+#method_after
+@Test
+public void testCreateManagementNetworkIfRequiredFailsOnDifferentVlanId() {
+    host.setActiveNic(NIC_NAME);
+    nic.setVlanId(NIC_VLAN_ID);
+    managementNetwork.setVlanId(MANAGMENT_NETWORK_VLAN_ID);
+    final Map<String, String> capturedCustomValues = verifyAuditLoggableBaseFilledProperly(underTest, AuditLogType.VLAN_ID_MISMATCH_FOR_MANAGEMENT_NETWORK_CONFIGURATION);
+    assertThat(capturedCustomValues, allOf(hasEntry("vlanid", String.valueOf(NIC_VLAN_ID)), hasEntry("mgmtvlanid", String.valueOf(MANAGMENT_NETWORK_VLAN_ID)), hasEntry("interfacename", NIC_NAME)));
+}
+#end_block
+
+#method_before
+private void verifyAuditLoggableBaseFilledProperly(NetworkConfigurator underTest, AuditLogType auditLogType) {
+    try {
+        underTest.createManagementNetworkIfRequired();
+    } catch (NetworkConfiguratorException e) {
+        verify(auditLogDirector).log(auditLogableBaseArgumentCaptor.capture(), eq(auditLogType), anyString());
+        final AuditLogableBase capturedEvent = auditLogableBaseArgumentCaptor.getValue();
+        assertThat(capturedEvent.getVdsName(), is(HOST_NAME));
+        return;
+    }
+    fail("The test should lead to NetworkConfiguratorException");
+}
+#method_after
+private Map<String, String> verifyAuditLoggableBaseFilledProperly(NetworkConfigurator underTest, AuditLogType auditLogType) {
+    try {
+        underTest.createManagementNetworkIfRequired();
+    } catch (NetworkConfiguratorException e) {
+        verify(auditLogDirector).log(auditLogableBaseArgumentCaptor.capture(), eq(auditLogType), anyString());
+        final AuditLogableBase capturedEvent = auditLogableBaseArgumentCaptor.getValue();
+        assertThat(capturedEvent.getVdsName(), is(HOST_NAME));
+        return capturedEvent.getCustomValues();
+    }
+    fail("The test should lead to NetworkConfiguratorException");
+    return null;
+}
+#end_block
+
+#method_before
+protected static DiskImage getVolumeInfoFromVdsm(Guid storagePoolId, Guid newStorageDomainID, Guid newImageGroupId, Guid newImageId) {
+    return (DiskImage) VdsCommandsHelper.runVdsCommandWithFailover(VDSCommandType.GetVolumeInfo, new GetVolumeInfoVDSCommandParameters(storagePoolId, newStorageDomainID, newImageGroupId, newImageId), storagePoolId, null).getReturnValue();
+}
+#method_after
+protected DiskImage getVolumeInfoFromVdsm(Guid storagePoolId, Guid newStorageDomainID, Guid newImageGroupId, Guid newImageId) {
+    return (DiskImage) VdsCommandsHelper.runVdsCommandWithFailover(VDSCommandType.GetVolumeInfo, new GetVolumeInfoVDSCommandParameters(storagePoolId, newStorageDomainID, newImageGroupId, newImageId), storagePoolId, null).getReturnValue();
+}
+#end_block
+
+#method_before
+public QemuImageInfo getQemuImageInfoFromVdsm(Guid storagePoolId, Guid newStorageDomainID, Guid newImageGroupId, Guid newImageId, Guid vdsId, boolean shouldPrepareAndTeardown) {
+    if (vdsId == null) {
+        vdsId = VdsCommandsHelper.getHostForExecution(storagePoolId, Collections.emptyList());
+    }
+    QemuImageInfo qemuImageInfo = null;
+    if (shouldPrepareAndTeardown) {
+        prepareImage(storagePoolId, newStorageDomainID, newImageGroupId, newImageId, vdsId);
+    }
+    try {
+        qemuImageInfo = (QemuImageInfo) resourceManager.runVdsCommand(VDSCommandType.GetQemuImageInfo, new GetVolumeInfoVDSCommandParameters(vdsId, storagePoolId, newStorageDomainID, newImageGroupId, newImageId)).getReturnValue();
+    } catch (Exception e) {
+        log.error("Unable to get qemu image info from storage", e);
+    } finally {
+        if (shouldPrepareAndTeardown) {
+            teardownImage(storagePoolId, newStorageDomainID, newImageGroupId, newImageId, vdsId);
+        }
+    }
+    return qemuImageInfo;
+}
+#method_after
+public QemuImageInfo getQemuImageInfoFromVdsm(Guid storagePoolId, Guid newStorageDomainID, Guid newImageGroupId, Guid newImageId, Guid vdsId, boolean shouldPrepareAndTeardown) {
+    if (vdsId == null) {
+        vdsId = VdsCommandsHelper.getHostForExecution(storagePoolId, Collections.emptyList());
+    }
+    QemuImageInfo qemuImageInfo = null;
+    if (shouldPrepareAndTeardown) {
+        prepareImage(storagePoolId, newStorageDomainID, newImageGroupId, newImageId, vdsId);
+    }
+    try {
+        qemuImageInfo = (QemuImageInfo) resourceManager.runVdsCommand(VDSCommandType.GetQemuImageInfo, new GetVolumeInfoVDSCommandParameters(vdsId, storagePoolId, newStorageDomainID, newImageGroupId, newImageId)).getReturnValue();
+    } catch (Exception e) {
+        log.error("Unable to get qemu image info from storage", e);
+    } finally {
+        if (shouldPrepareAndTeardown) {
+            try {
+                teardownImage(storagePoolId, newStorageDomainID, newImageGroupId, newImageId, vdsId);
+            } catch (Exception e) {
+                log.warn("Unable to tear down image", e);
+            }
+        }
+    }
+    return qemuImageInfo;
+}
+#end_block
+
+#method_before
+public Long determineImageInitialSize(Image sourceImage, VolumeFormat destFormat, Guid storagePoolId, Guid srcDomain, Guid dstDomain, Guid imageGroupID) {
+    // need to pass initial size (it can be only preallocated).
+    if (isInitialSizeSupportedForFormat(destFormat, dstDomain)) {
+        // TODO: inspect if we can rely on the database to get the actual size.
+        DiskImage imageInfoFromStorage = getVolumeInfoFromVdsm(storagePoolId, srcDomain, imageGroupID, sourceImage.getId());
+        // space.
+        return computeCowImageNeededSize(imageInfoFromStorage.getActualSizeInBytes());
+    }
+    return null;
+}
+#method_after
+public Long determineImageInitialSize(Image sourceImage, VolumeFormat destFormat, Guid storagePoolId, Guid srcDomain, Guid dstDomain, Guid imageGroupID) {
+    // need to pass initial size (it can be only preallocated).
+    if (isInitialSizeSupportedForFormat(destFormat, dstDomain)) {
+        // TODO: inspect if we can rely on the database to get the actual size.
+        DiskImage imageInfoFromStorage = getVolumeInfoFromVdsm(storagePoolId, srcDomain, imageGroupID, sourceImage.getId());
+        return computeCowImageNeededSize(sourceImage.getVolumeFormat(), imageInfoFromStorage.getActualSizeInBytes());
+    }
+    return null;
+}
+#end_block
+
+#method_before
+private static long computeCowImageNeededSize(long actualSize) {
+    return Double.valueOf(Math.ceil(actualSize / StorageConstants.QCOW_OVERHEAD_FACTOR)).longValue();
+}
+#method_after
+private static long computeCowImageNeededSize(VolumeFormat sourceFormat, long actualSize) {
+    // space.
+    return sourceFormat == VolumeFormat.COW ? Double.valueOf(Math.ceil(actualSize / StorageConstants.QCOW_OVERHEAD_FACTOR)).longValue() : actualSize;
+}
+#end_block
+
+#method_before
+public Long determineTotalImageInitialSize(DiskImage sourceImage, VolumeFormat destFormat, Guid dstDomain) {
+    if (isInitialSizeSupportedForFormat(destFormat, dstDomain)) {
+        double totalSizeForClonedDisk = getTotalActualSizeOfDisk(sourceImage, storageDomainDao.get(dstDomain).getStorageStaticData());
+        return computeCowImageNeededSize(Double.valueOf(totalSizeForClonedDisk).longValue());
+    }
+    return null;
+}
+#method_after
+public Long determineTotalImageInitialSize(DiskImage sourceImage, VolumeFormat destFormat, Guid dstDomain) {
+    if (isInitialSizeSupportedForFormat(destFormat, dstDomain)) {
+        double totalSizeForClonedDisk = getTotalActualSizeOfDisk(sourceImage, storageDomainDao.get(dstDomain).getStorageStaticData());
+        return computeCowImageNeededSize(sourceImage.getVolumeFormat(), Double.valueOf(totalSizeForClonedDisk).longValue());
+    }
+    return null;
+}
+#end_block
+
+#method_before
+private boolean hasUpServer(Cluster cluster) {
+    if (getClusterUtils().hasMultipleServers(cluster.getId()) && glusterUtil.getUpServer(cluster.getId()) == null) {
+        addNoUpServerMessage(cluster);
+        return false;
+    }
+    return true;
+}
+#method_after
+private boolean hasUpServer(Cluster cluster) {
+    if (clusterUtils.hasMultipleServers(cluster.getId()) && glusterUtil.getUpServer(cluster.getId()) == null) {
+        addNoUpServerMessage(cluster);
+        return false;
+    }
+    return true;
+}
+#end_block
+
+#method_before
+private boolean hasUpServerInTarget(Cluster cluster) {
+    if (getClusterUtils().hasServers(cluster.getId()) && glusterUtil.getUpServer(cluster.getId()) == null) {
+        addNoUpServerMessage(cluster);
+        return false;
+    }
+    return true;
+}
+#method_after
+private boolean hasUpServerInTarget(Cluster cluster) {
+    if (clusterUtils.hasServers(cluster.getId()) && glusterUtil.getUpServer(cluster.getId()) == null) {
+        addNoUpServerMessage(cluster);
+        return false;
+    }
+    return true;
+}
+#end_block
+
+#method_before
+@Override
+protected void executeCommand() {
+    final Guid targetClusterId = getParameters().getClusterId();
+    if (getSourceCluster().getId().equals(targetClusterId)) {
+        setSucceeded(true);
+        return;
+    }
+    // save the new cluster id
+    TransactionSupport.executeInNewTransaction(() -> {
+        VdsStatic staticData = getVds().getStaticData();
+        getCompensationContext().snapshotEntity(staticData);
+        staticData.setClusterId(targetClusterId);
+        vdsStaticDao.update(staticData);
+        getCompensationContext().stateChanged();
+        // remove the server from resource manager and add it back
+        initializeVds();
+        return null;
+    });
+    if (targetStoragePool != null && (getSourceCluster().getStoragePoolId() == null || !targetStoragePool.getId().equals(getSourceCluster().getStoragePoolId()))) {
+        VdsActionParameters addVdsSpmIdParams = new VdsActionParameters(getVdsIdRef());
+        addVdsSpmIdParams.setSessionId(getParameters().getSessionId());
+        addVdsSpmIdParams.setCompensationEnabled(true);
+        VdcReturnValueBase addVdsSpmIdReturn = runInternalAction(VdcActionType.AddVdsSpmId, addVdsSpmIdParams, cloneContext().withoutLock().withoutExecutionContext());
+        if (!addVdsSpmIdReturn.getSucceeded()) {
+            setSucceeded(false);
+            getReturnValue().setFault(addVdsSpmIdReturn.getFault());
+            return;
+        }
+    }
+    if (getSourceCluster().supportsGlusterService() && getClusterUtils().hasServers(getSourceCluster().getId())) {
+        if (!glusterHostRemove(getSourceCluster().getId())) {
+            setSucceeded(false);
+            return;
+        }
+    }
+    if (getTargetCluster().supportsGlusterService() && getClusterUtils().hasMultipleServers(getTargetCluster().getId())) {
+        if (!glusterHostAdd(getTargetCluster().getId())) {
+            setSucceeded(false);
+            return;
+        }
+    }
+    if (getSourceCluster().getStoragePoolId() != null && (targetStoragePool == null || !getSourceCluster().getStoragePoolId().equals(targetStoragePool.getId()))) {
+        vdsSpmIdMapDao.removeByVdsAndStoragePool(getVds().getId(), getSourceCluster().getStoragePoolId());
+    }
+    HostNetworkAttachmentsPersister persister = new HostNetworkAttachmentsPersister(this.networkAttachmentDao, getVdsId(), interfaceDao.getAllInterfacesForVds(getVdsId()), Collections.emptyList(), getTargetClusterNetworks());
+    persister.persistNetworkAttachments();
+    if (VDSStatus.PendingApproval != getVds().getStatus()) {
+        configureNetworks();
+    }
+    setSucceeded(true);
+}
+#method_after
+@Override
+protected void executeCommand() {
+    final Guid targetClusterId = getParameters().getClusterId();
+    if (getSourceCluster().getId().equals(targetClusterId)) {
+        setSucceeded(true);
+        return;
+    }
+    // save the new cluster id
+    TransactionSupport.executeInNewTransaction(() -> {
+        VdsStatic staticData = getVds().getStaticData();
+        getCompensationContext().snapshotEntity(staticData);
+        staticData.setClusterId(targetClusterId);
+        vdsStaticDao.update(staticData);
+        getCompensationContext().stateChanged();
+        // remove the server from resource manager and add it back
+        initializeVds();
+        return null;
+    });
+    if (targetStoragePool != null && (getSourceCluster().getStoragePoolId() == null || !targetStoragePool.getId().equals(getSourceCluster().getStoragePoolId()))) {
+        VdsActionParameters addVdsSpmIdParams = new VdsActionParameters(getVdsIdRef());
+        addVdsSpmIdParams.setSessionId(getParameters().getSessionId());
+        addVdsSpmIdParams.setCompensationEnabled(true);
+        VdcReturnValueBase addVdsSpmIdReturn = runInternalAction(VdcActionType.AddVdsSpmId, addVdsSpmIdParams, cloneContext().withoutLock().withoutExecutionContext());
+        if (!addVdsSpmIdReturn.getSucceeded()) {
+            setSucceeded(false);
+            getReturnValue().setFault(addVdsSpmIdReturn.getFault());
+            return;
+        }
+    }
+    if (getSourceCluster().supportsGlusterService() && clusterUtils.hasServers(getSourceCluster().getId())) {
+        if (!glusterHostRemove(getSourceCluster().getId())) {
+            setSucceeded(false);
+            return;
+        }
+    }
+    if (getTargetCluster().supportsGlusterService() && clusterUtils.hasMultipleServers(getTargetCluster().getId())) {
+        if (!glusterHostAdd(getTargetCluster().getId())) {
+            setSucceeded(false);
+            return;
+        }
+    }
+    if (getSourceCluster().getStoragePoolId() != null && (targetStoragePool == null || !getSourceCluster().getStoragePoolId().equals(targetStoragePool.getId()))) {
+        vdsSpmIdMapDao.removeByVdsAndStoragePool(getVds().getId(), getSourceCluster().getStoragePoolId());
+    }
+    HostNetworkAttachmentsPersister persister = new HostNetworkAttachmentsPersister(this.networkAttachmentDao, getVdsId(), interfaceDao.getAllInterfacesForVds(getVdsId()), Collections.emptyList(), getTargetClusterNetworks());
+    persister.persistNetworkAttachments();
+    if (VDSStatus.PendingApproval != getVds().getStatus()) {
+        configureNetworks();
+    }
+    setSucceeded(true);
+}
+#end_block
+
+#method_before
+public int getServerCount(Guid clusterId) {
+    return getVdsDao().getAllForCluster(clusterId).size();
+}
+#method_after
+public int getServerCount(Guid clusterId) {
+    return vdsDao.getAllForCluster(clusterId).size();
+}
+#end_block
+
+#method_before
+private void alert(AuditLogType logType, String operation) {
+    AuditLogableBase alert = Injector.injectMembers(new AuditLogableBase());
+    alert.setVdsId(getVds().getId());
+    String op = (operation == null) ? getActionType().name() : operation;
+    alert.addCustomValue("Operation", op);
+    AlertDirector.alert(alert, logType, auditLogDirector);
+}
+#method_after
+private void alert(AuditLogType logType, String operation) {
+    AuditLogableBase alert = createAlert(operation);
+    AlertDirector.alert(alert, logType, auditLogDirector);
+}
+#end_block
+
+#method_before
+private void alert(AuditLogType logType, String operation, Throwable throwable) {
+    AuditLogableBase alert = Injector.injectMembers(new AuditLogableBase());
+    alert.setVdsId(getVds().getId());
+    String op = (operation == null) ? getActionType().name() : operation;
+    alert.addCustomValue("Operation", op);
+    alert.updateCallStackFromThrowable(throwable);
+    AlertDirector.alert(alert, logType, auditLogDirector);
+}
+#method_after
+private void alert(AuditLogType logType, String operation, Throwable throwable) {
+    AuditLogableBase alert = createAlert(operation);
+    alert.updateCallStackFromThrowable(throwable);
+    AlertDirector.alert(alert, logType, auditLogDirector);
+}
+#end_block
+
+#method_before
+protected void logSettingVmToDown(Guid vdsId, Guid vmId) {
+    AuditLogableBase logable = Injector.injectMembers(new AuditLogableBase(vdsId, vmId));
+    auditLogDirector.log(logable, AuditLogType.VM_WAS_SET_DOWN_DUE_TO_HOST_REBOOT_OR_MANUAL_FENCE);
+}
+#method_after
+protected void logSettingVmToDown(String vmName) {
+    AuditLogableBase logable = new AuditLogableBase();
+    logable.setVdsName(getVds().getName());
+    logable.setVmName(vmName);
+    auditLogDirector.log(logable, AuditLogType.VM_WAS_SET_DOWN_DUE_TO_HOST_REBOOT_OR_MANUAL_FENCE);
+}
+#end_block
+
+#method_before
+/*
+     * Video device
+     */
+public void updateVideoDevices(VmBase oldVmBase, VmBase newVmBase) {
+    boolean displayTypeChanged = oldVmBase.getDefaultDisplayType() != newVmBase.getDefaultDisplayType();
+    boolean numOfMonitorsChanged = newVmBase.getDefaultDisplayType() == DisplayType.qxl && oldVmBase.getNumOfMonitors() != newVmBase.getNumOfMonitors();
+    boolean singleQxlChanged = oldVmBase.getSingleQxlPci() != newVmBase.getSingleQxlPci();
+    boolean guestOsChanged = oldVmBase.getOsId() != newVmBase.getOsId();
+    if (displayTypeChanged || numOfMonitorsChanged || singleQxlChanged || guestOsChanged) {
+        removeVideoDevices(oldVmBase.getId());
+        addVideoDevices(newVmBase, getNeededNumberOfVideoDevices(newVmBase));
+    }
+}
+#method_after
+/*
+     * Video device
+     */
+public void updateVideoDevices(VmBase oldVmBase, VmBase newVmBase) {
+    boolean displayTypeChanged = oldVmBase.getDefaultDisplayType() != newVmBase.getDefaultDisplayType();
+    boolean numOfMonitorsChanged = newVmBase.getDefaultDisplayType() == DisplayType.qxl && oldVmBase.getNumOfMonitors() != newVmBase.getNumOfMonitors();
+    boolean singleQxlChanged = oldVmBase.getSingleQxlPci() != newVmBase.getSingleQxlPci();
+    boolean guestOsChanged = oldVmBase.getOsId() != newVmBase.getOsId();
+    if (displayTypeChanged || numOfMonitorsChanged || singleQxlChanged || guestOsChanged) {
+        removeVideoDevices(oldVmBase.getId());
+        addVideoDevices(newVmBase, getNeededNumberOfVideoDevices(newVmBase));
+    } else {
+        // fix vm's without video devices
+        addVideoDevicesOnlyIfNoVideoDeviceExists(newVmBase);
+    }
+}
+#end_block
+
+#method_before
+private void updateOptionsNonLocalFS() {
+    if (clusters == null || allStorageDomains == null || attachedStorageDomains == null || isoStorageDomains == null || allHosts == null) {
+        return;
+    }
+    updateAddClusterAvailability();
+    Set<Guid> clusterIds = clusters.stream().map(Cluster::getId).collect(Collectors.toSet());
+    List<VDS> hosts = allHosts.stream().filter(h -> clusterIds.contains(h.getClusterId())).collect(Collectors.toList());
+    List<VDS> availableHosts = allHosts.stream().filter(v -> v.getStatus() == VDSStatus.Maintenance || v.getStatus() == VDSStatus.PendingApproval).filter(v -> doesHostSupportAnyCluster(clusters, v)).collect(Collectors.toList());
+    List<VDS> upHosts = allHosts.stream().filter(v -> v.getStatus() == VDSStatus.Up).filter(h -> clusterIds.contains(h.getClusterId())).collect(Collectors.toList());
+    updateAddAndSelectHostAvailability(hosts, availableHosts);
+    List<StorageDomain> unattachedStorages = getUnattachedStorages();
+    List<StorageDomain> attachedDataStorages = new ArrayList<>();
+    List<StorageDomain> attachedIsoStorages = new ArrayList<>();
+    for (StorageDomain sd : attachedStorageDomains) {
+        if (sd.getStorageDomainType().isDataDomain()) {
+            attachedDataStorages.add(sd);
+        } else if (sd.getStorageDomainType() == StorageDomainType.ISO) {
+            attachedIsoStorages.add(sd);
+        }
+    }
+    updateAddAndAttachDataDomainAvailability(upHosts, unattachedStorages, attachedDataStorages);
+    updateAddAndAttachIsoDomainAvailability(upHosts, attachedDataStorages, attachedIsoStorages);
+    stopProgress();
+}
+#method_after
+private void updateOptionsNonLocalFS() {
+    if (clusters == null || allStorageDomains == null || attachedStorageDomains == null || isoStorageDomains == null || allHosts == null) {
+        return;
+    }
+    updateAddClusterAvailability();
+    Set<Guid> clusterIds = clusters.stream().map(Cluster::getId).collect(Collectors.toSet());
+    List<VDS> hosts = allHosts.stream().filter(h -> clusterIds.contains(h.getClusterId())).collect(Collectors.toList());
+    List<VDS> upHosts = hosts.stream().filter(v -> v.getStatus() == VDSStatus.Up).collect(Collectors.toList());
+    List<VDS> availableHosts = allHosts.stream().filter(v -> v.getStatus() == VDSStatus.Maintenance || v.getStatus() == VDSStatus.PendingApproval).filter(v -> doesHostSupportAnyCluster(clusters, v)).collect(Collectors.toList());
+    updateAddAndSelectHostAvailability(hosts, availableHosts);
+    List<StorageDomain> unattachedStorages = getUnattachedStorages();
+    List<StorageDomain> attachedDataStorages = new ArrayList<>();
+    List<StorageDomain> attachedIsoStorages = new ArrayList<>();
+    for (StorageDomain sd : attachedStorageDomains) {
+        if (sd.getStorageDomainType().isDataDomain()) {
+            attachedDataStorages.add(sd);
+        } else if (sd.getStorageDomainType() == StorageDomainType.ISO) {
+            attachedIsoStorages.add(sd);
+        }
+    }
+    updateAddAndAttachDataDomainAvailability(upHosts, unattachedStorages, attachedDataStorages);
+    updateAddAndAttachIsoDomainAvailability(upHosts, attachedDataStorages, attachedIsoStorages);
+    stopProgress();
+}
+#end_block
+
+#method_before
+@Override
+protected boolean validateImageTransfer(Guid imageId) {
+    DiskImage diskImage = (DiskImage) diskDao.get(imageId);
+    DiskValidator diskValidator = getDiskValidator(diskImage);
+    DiskImagesValidator diskImagesValidator = getDiskImagesValidator(diskImage);
+    StorageDomainValidator StorageDomainValidator = getStorageDomainValidator(storageDomainDao.getForStoragePool(diskImage.getStorageIds().get(0), diskImage.getStoragePoolId()));
+    return validate(diskValidator.isDiskExists()) && validate(diskValidator.isDiskAttachedToAnyVm()) && validate(diskImagesValidator.diskImagesNotIllegal()) && validate(diskImagesValidator.diskImagesNotLocked()) && validate(StorageDomainValidator.isDomainExistAndActive());
+}
+#method_after
+@Override
+protected boolean validateImageTransfer(Guid imageId) {
+    DiskImage diskImage = (DiskImage) diskDao.get(imageId);
+    DiskValidator diskValidator = getDiskValidator(diskImage);
+    DiskImagesValidator diskImagesValidator = getDiskImagesValidator(diskImage);
+    StorageDomainValidator storageDomainValidator = getStorageDomainValidator(storageDomainDao.getForStoragePool(getStorageDomainId(), diskImage.getStoragePoolId()));
+    return validate(diskValidator.isDiskExists()) && validate(diskValidator.isDiskAttachedToAnyVm()) && validate(diskImagesValidator.diskImagesNotIllegal()) && validate(diskImagesValidator.diskImagesNotLocked()) && validate(storageDomainValidator.isDomainExistAndActive());
+}
+#end_block
+
+#method_before
+protected void initializeSuppliedImage() {
+    super.initSuppliedImage(transferImageCommand);
+    StorageDomain storageDomain = new StorageDomain();
+    storageDomain.setId(Guid.newGuid());
+    doReturn(storageDomain).when(storageDomainDao).get(any());
+    DiskImage diskImage = new DiskImage();
+    diskImage.setStorageIds(new ArrayList<>(Collections.singletonList(storageDomain.getId())));
+    doReturn(diskImage).when(diskDao).get(any());
+    doReturn(diskValidator).when(getCommand()).getDiskValidator(any());
+    doReturn(diskImagesValidator).when(getCommand()).getDiskImagesValidator(any());
+    doReturn(StorageDomainValidator).when(getCommand()).getStorageDomainValidator(any());
+}
+#method_after
+protected void initializeSuppliedImage() {
+    super.initSuppliedImage(transferImageCommand);
+    DiskImage diskImage = new DiskImage();
+    doReturn(diskImage).when(diskDao).get(any());
+    doReturn(diskValidator).when(getCommand()).getDiskValidator(any());
+    doReturn(diskImagesValidator).when(getCommand()).getDiskImagesValidator(any());
+    doReturn(storageDomainValidator).when(getCommand()).getStorageDomainValidator(any());
+}
+#end_block
+
+#method_before
+@Test
+public void validateCantUploadToNonActiveDomain() {
+    initializeSuppliedImage();
+    doReturn(new ValidationResult(EngineMessage.ACTION_TYPE_FAILED_STORAGE_DOMAIN_STATUS_ILLEGAL2, "")).when(StorageDomainValidator).isDomainExistAndActive();
+    getCommand().validate();
+    ValidateTestUtils.assertValidationMessages("Can't start a transfer to a non-active storage domain.", getCommand(), EngineMessage.ACTION_TYPE_FAILED_STORAGE_DOMAIN_STATUS_ILLEGAL2);
+}
+#method_after
+@Test
+public void validateCantUploadToNonActiveDomain() {
+    initializeSuppliedImage();
+    doReturn(new ValidationResult(EngineMessage.ACTION_TYPE_FAILED_STORAGE_DOMAIN_STATUS_ILLEGAL2, "")).when(storageDomainValidator).isDomainExistAndActive();
+    ValidateTestUtils.runAndAssertValidateFailure("Can't start a transfer to a non-active storage domain.", getCommand(), EngineMessage.ACTION_TYPE_FAILED_STORAGE_DOMAIN_STATUS_ILLEGAL2);
+}
+#end_block
+
+#method_before
+@Override
+protected void executeCommand() {
+    VM vm = getVm();
+    boolean clusterRemainedTheSame = originalClusterId.equals(newClusterId);
+    if (clusterRemainedTheSame) {
+        setSucceeded(true);
+        return;
+    }
+    // update vm interfaces
+    List<Network> networks = networkDao.getAllForCluster(newClusterId);
+    List<VmNic> interfaces = vmNicDao.getAllForVm(getParameters().getVmId());
+    for (final VmNic iface : interfaces) {
+        if (iface.getVnicProfileId() != null) {
+            final Network network = NetworkHelper.getNetworkByVnicProfileId(iface.getVnicProfileId());
+            boolean networkFoundInCluster = networks.stream().anyMatch(n -> Objects.equals(n.getId(), network.getId()));
+            // interface connection
+            if (!networkFoundInCluster) {
+                iface.setVnicProfileId(null);
+                vmNicDao.update(iface);
+            }
+        }
+    }
+    if (vm.getDedicatedVmForVdsList().size() > 0) {
+        vm.setDedicatedVmForVdsList(Collections.emptyList());
+        dedicatedHostWasCleared = true;
+    }
+    vm.setClusterId(newClusterId);
+    // Set cpu profile from the new cluster
+    cpuProfileHelper.assignFirstCpuProfile(vm.getStaticData(), getUserIdIfExternal());
+    vmStaticDao.update(vm.getStaticData());
+    moveMacsToAnotherMacPoolIfNeeded();
+    // change vm cluster should remove the vm from all associated affinity groups
+    List<AffinityGroup> allAffinityGroupsByVmId = affinityGroupDao.getAllAffinityGroupsByVmId(vm.getId());
+    if (!allAffinityGroupsByVmId.isEmpty()) {
+        String groups = allAffinityGroupsByVmId.stream().map(AffinityGroup::getName).collect(Collectors.joining(" "));
+        log.info("Due to cluster change, removing VM from associated affinity group(s): {}", groups);
+        affinityGroupDao.removeVmFromAffinityGroups(vm.getId());
+    }
+    setSucceeded(true);
+}
+#method_after
+@Override
+protected void executeCommand() {
+    VM vm = getVm();
+    boolean clusterRemainedTheSame = originalClusterId.equals(newClusterId);
+    if (clusterRemainedTheSame) {
+        setSucceeded(true);
+        return;
+    }
+    // update vm interfaces
+    List<Network> networks = networkDao.getAllForCluster(newClusterId);
+    List<VmNic> interfaces = vmNicDao.getAllForVm(getParameters().getVmId());
+    for (final VmNic iface : interfaces) {
+        if (iface.getVnicProfileId() != null) {
+            final Network network = NetworkHelper.getNetworkByVnicProfileId(iface.getVnicProfileId());
+            boolean networkFoundInCluster = networks.stream().anyMatch(n -> Objects.equals(n.getId(), network.getId()));
+            // interface connection
+            if (!networkFoundInCluster) {
+                iface.setVnicProfileId(null);
+                vmNicDao.update(iface);
+            }
+        }
+    }
+    if (vm.getDedicatedVmForVdsList().size() > 0) {
+        vm.setDedicatedVmForVdsList(Collections.emptyList());
+        dedicatedHostWasCleared = true;
+    }
+    vm.setClusterId(newClusterId);
+    // Set cpu profile from the new cluster
+    cpuProfileHelper.assignFirstCpuProfile(vm.getStaticData(), getUserIdIfExternal().orElse(null));
+    vmStaticDao.update(vm.getStaticData());
+    moveMacsToAnotherMacPoolIfNeeded();
+    // change vm cluster should remove the vm from all associated affinity groups
+    List<AffinityGroup> allAffinityGroupsByVmId = affinityGroupDao.getAllAffinityGroupsByVmId(vm.getId());
+    if (!allAffinityGroupsByVmId.isEmpty()) {
+        String groups = allAffinityGroupsByVmId.stream().map(AffinityGroup::getName).collect(Collectors.joining(" "));
+        log.info("Due to cluster change, removing VM from associated affinity group(s): {}", groups);
+        affinityGroupDao.removeVmFromAffinityGroups(vm.getId());
+    }
+    setSucceeded(true);
+}
+#end_block
+
+#method_before
+protected boolean setAndValidateCpuProfile() {
+    return validate(cpuProfileHelper.setAndValidateCpuProfile(getParameters().getVmStaticData(), getUserIdIfExternal()));
+}
+#method_after
+protected boolean setAndValidateCpuProfile() {
+    return validate(cpuProfileHelper.setAndValidateCpuProfile(getParameters().getVmStaticData(), getUserIdIfExternal().orElse(null)));
+}
+#end_block
+
+#method_before
+protected boolean setAndValidateCpuProfile() {
+    return validate(cpuProfileHelper.setAndValidateCpuProfile(getParameters().getVm().getStaticData(), getUserIdIfExternal()));
+}
+#method_after
+protected boolean setAndValidateCpuProfile() {
+    return validate(cpuProfileHelper.setAndValidateCpuProfile(getParameters().getVm().getStaticData(), getUserIdIfExternal().orElse(null)));
+}
+#end_block
+
+#method_before
+@Override
+protected void endActionOnAllImageGroups() {
+    for (VdcActionParametersBase p : getParameters().getImagesParameters()) {
+        p.setTaskGroupSuccess(getParameters().getTaskGroupSuccess());
+        getBackend().endAction(VdcActionType.CopyImageGroup, p, getContext().clone().withoutCompensationContext().withoutExecutionContext().withoutLock());
+        initQcowVersionForDisks(((MoveOrCopyImageGroupParameters) p).getDestImageGroupId());
+    }
+}
+#method_after
+@Override
+protected void endActionOnAllImageGroups() {
+    for (VdcActionParametersBase p : getParameters().getImagesParameters()) {
+        p.setTaskGroupSuccess(getParameters().getTaskGroupSuccess());
+        getBackend().endAction(VdcActionType.CopyImageGroup, p, getContext().clone().withoutCompensationContext().withoutExecutionContext().withoutLock());
+    }
+}
+#end_block
+
+#method_before
+protected boolean setAndValidateCpuProfile() {
+    getVmTemplate().setClusterId(getClusterId());
+    getVmTemplate().setCpuProfileId(getParameters().getCpuProfileId());
+    return validate(cpuProfileHelper.setAndValidateCpuProfile(getVmTemplate(), getUserIdIfExternal()));
+}
+#method_after
+protected boolean setAndValidateCpuProfile() {
+    getVmTemplate().setClusterId(getClusterId());
+    getVmTemplate().setCpuProfileId(getParameters().getCpuProfileId());
+    return validate(cpuProfileHelper.setAndValidateCpuProfile(getVmTemplate(), getUserIdIfExternal().orElse(null)));
+}
+#end_block
+
+#method_before
+public Guid getUserIdIfExternal() {
+    return isInternalExecution() ? null : getUserId();
+}
+#method_after
+protected Optional<Guid> getUserIdIfExternal() {
+    return isInternalExecution() ? Optional.empty() : Optional.ofNullable(getUserId());
+}
+#end_block
+
+#method_before
+protected boolean setAndValidateCpuProfile() {
+    // cpu profile isn't supported for instance types.
+    if (getParameters().getTemplateType() == VmEntityType.INSTANCE_TYPE) {
+        return true;
+    }
+    return validate(cpuProfileHelper.setAndValidateCpuProfile(getParameters().getMasterVm(), getUserIdIfExternal()));
+}
+#method_after
+protected boolean setAndValidateCpuProfile() {
+    // cpu profile isn't supported for instance types.
+    if (getParameters().getTemplateType() == VmEntityType.INSTANCE_TYPE) {
+        return true;
+    }
+    return validate(cpuProfileHelper.setAndValidateCpuProfile(getParameters().getMasterVm(), getUserIdIfExternal().orElse(null)));
+}
+#end_block
+
+#method_before
+protected boolean setAndValidateCpuProfile() {
+    getVm().getStaticData().setClusterId(getClusterId());
+    getVm().getStaticData().setCpuProfileId(getParameters().getCpuProfileId());
+    return validate(cpuProfileHelper.setAndValidateCpuProfile(getVm().getStaticData(), getUserIdIfExternal()));
+}
+#method_after
+protected boolean setAndValidateCpuProfile() {
+    getVm().getStaticData().setClusterId(getClusterId());
+    getVm().getStaticData().setCpuProfileId(getParameters().getCpuProfileId());
+    return validate(cpuProfileHelper.setAndValidateCpuProfile(getVm().getStaticData(), getUserIdIfExternal().orElse(null)));
+}
+#end_block
+
+#method_before
+protected boolean setAndValidateCpuProfile() {
+    // cpu profile isn't supported for instance types nor for blank template.
+    if (isInstanceType() || isBlankTemplate()) {
+        return true;
+    }
+    return validate(cpuProfileHelper.setAndValidateCpuProfile(getVmTemplate(), getUserIdIfExternal()));
+}
+#method_after
+protected boolean setAndValidateCpuProfile() {
+    // cpu profile isn't supported for instance types nor for blank template.
+    if (isInstanceType() || isBlankTemplate()) {
+        return true;
+    }
+    return validate(cpuProfileHelper.setAndValidateCpuProfile(getVmTemplate(), getUserIdIfExternal().orElse(null)));
+}
+#end_block
+

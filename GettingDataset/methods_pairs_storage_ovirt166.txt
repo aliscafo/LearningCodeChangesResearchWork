@@ -1,0 +1,294 @@
+6
+#method_before
+public Map getGuestOsInto() {
+    Map resultMap = map();
+    resultMap.put("kernel", "2.6.32-642.el6.x86_64");
+    resultMap.put("type", "linux");
+    resultMap.put("version", "6.7");
+    resultMap.put("arch", "x86_64");
+    resultMap.put("codename", "Santiago");
+    resultMap.put("distribution", "Red Hat Enterprise Linux Server");
+    return resultMap;
+}
+#method_after
+private Map<String, String> getGuestOsInto() {
+    Map<String, String> resultMap = map();
+    resultMap.put("kernel", "2.6.32-642.el6.x86_64");
+    resultMap.put("type", "linux");
+    resultMap.put("version", "6.7");
+    resultMap.put("arch", "x86_64");
+    resultMap.put("codename", "Santiago");
+    resultMap.put("distribution", "Red Hat Enterprise Linux Server");
+    return resultMap;
+}
+#end_block
+
+#method_before
+public Map getGuestTimeZone() {
+    Map resultMap = map();
+    resultMap.put("zone", "Israel");
+    resultMap.put("offset", "120");
+    return resultMap;
+}
+#method_after
+private Map<String, String> getGuestTimeZone() {
+    Map<String, String> resultMap = map();
+    resultMap.put("zone", "Israel");
+    resultMap.put("offset", "120");
+    return resultMap;
+}
+#end_block
+
+#method_before
+public static JsonCommand createCommand(String methodName) {
+    switch(methodName) {
+        case "Host.getCapabilities":
+            return new GetCapabilitiesCommand();
+        case "Host.getVMList":
+            return new GetVmListCommand();
+        case "Host.getStats":
+            return new GetStatsCommand();
+        case "Host.getAllVmStats":
+            return new GetAllVmStatsCommand();
+        case "Host.getHardwareInfo":
+            return new GetHardwareInfoCommmand();
+        case "Host.getAllTasksStatuses":
+            return new GetAllTasksStatusesCommand();
+        case "Host.getAllTasksInfo":
+            return new GetAllTasksInfoCommand();
+        case "Host.getStorageDomains":
+            return new HostGetStorageDomainsCommand();
+        case "Host.getVMFullList":
+            return new GetFullVmListCommand();
+        case "Host.HostDevListByCaps":
+            return new HostDevListByCaps();
+        case "VM.create":
+            return new VmCreateCommand();
+        case "VM.destroy":
+            return new VmDestroyCommand();
+        case "VM.shutdown":
+            return new VmShutdownCommand();
+        case "VM.getStats":
+            return new VmGetStatsCommand();
+        case "VM.migrate":
+            return new VmMigrateCommand();
+        case "VM.setTicket":
+            return new VmSetTicketCommand();
+        case "StoragePool.spmStart":
+            return new SpmStartCommand();
+        case "StoragePool.spmStop":
+            return new SpmStopCommand();
+        case "StoragePool.getSpmStatus":
+            return new SpmGetStatusCommand();
+        case "StoragePool.connect":
+            return new StoragePoolConnectCommand();
+        case "StoragePool.disconnect":
+            return new StoragePoolDisconnectCommand();
+        case "StoragePool.connectStorageServer":
+            return new StorageServerConnectCommand();
+        case "StoragePool.disconnectStorageServer":
+            return new StorageServerDisconnectCommand();
+        case "StoragePool.getInfo":
+            return new StoragePoolGetInfo();
+        case "StoragePool.refresh":
+            return new StoragePoolRefreshCommand();
+        case "StoragePool.getIsoList":
+            return new StoragePoolGetIsoListCommand();
+        case "StoragePool.create":
+            return new StoragePoolCreateCommand();
+        case "StorageDomain.activate":
+            return new StorageDomainActivateCommand();
+        case "StorageDomain.getInfo":
+            return new StorageDomainGetInfoCommand();
+        case "StorageDomain.getStats":
+            return new StorageDomainGetStatsCommand();
+        case "StorageDomain.create":
+            return new StorageDomainCreateCommand();
+        case "StorageDomain.attach":
+            return new StorageDomainAttache();
+        case "Volume.create":
+            return new VolumeCreateCommand();
+        case "Task.getStatus":
+            return new TaskGetStatusCommand();
+        case "Task.stop":
+            return new TaskStopCommand();
+        case "Task.clear":
+            return new TaskClearCommand();
+        case "Task.revert":
+            return new TaskRevertCommand();
+        case "Image.delete":
+            return new ImageDelete();
+        default:
+            // TODO: Support Host.setMOMPolicyParameters
+            Exception e = new Exception();
+            log.error("Unsupported method " + methodName, e);
+            return new UnsupportedCommand();
+    }
+}
+#method_after
+public static JsonCommand createCommand(String methodName) {
+    switch(methodName) {
+        case "Host.getCapabilities":
+            return new GetCapabilitiesCommand();
+        case "Host.getVMList":
+            return new GetVmListCommand();
+        case "Host.getStats":
+            return new GetStatsCommand();
+        case "Host.getAllVmStats":
+            return new GetAllVmStatsCommand();
+        case "Host.getHardwareInfo":
+            return new GetHardwareInfoCommmand();
+        case "Host.getAllTasksStatuses":
+            return new GetAllTasksStatusesCommand();
+        case "Host.getAllTasksInfo":
+            return new GetAllTasksInfoCommand();
+        case "Host.getStorageDomains":
+            return new HostGetStorageDomainsCommand();
+        case "Host.getVMFullList":
+            return new GetFullVmListCommand();
+        case "Host.HostDevListByCaps":
+            return new HostDevListByCaps();
+        case "VM.create":
+            return new VmCreateCommand();
+        case "VM.destroy":
+            return new VmDestroyCommand();
+        case "VM.shutdown":
+            return new VmShutdownCommand();
+        case "VM.getStats":
+            return new VmGetStatsCommand();
+        case "VM.migrate":
+            return new VmMigrateCommand();
+        case "VM.setTicket":
+            return new VmSetTicketCommand();
+        case "StoragePool.spmStart":
+            return new SpmStartCommand();
+        case "StoragePool.spmStop":
+            return new SpmStopCommand();
+        case "StoragePool.getSpmStatus":
+            return new SpmGetStatusCommand();
+        case "StoragePool.connect":
+            return new StoragePoolConnectCommand();
+        case "StoragePool.disconnect":
+            return new StoragePoolDisconnectCommand();
+        case "StoragePool.connectStorageServer":
+            return new StorageServerConnectCommand();
+        case "StoragePool.disconnectStorageServer":
+            return new StorageServerDisconnectCommand();
+        case "StoragePool.getInfo":
+            return new StoragePoolGetInfo();
+        case "StoragePool.refresh":
+            return new StoragePoolRefreshCommand();
+        case "StoragePool.getIsoList":
+            return new StoragePoolGetIsoListCommand();
+        case "StoragePool.create":
+            return new StoragePoolCreateCommand();
+        case "StorageDomain.activate":
+            return new StorageDomainActivateCommand();
+        case "StorageDomain.getInfo":
+            return new StorageDomainGetInfoCommand();
+        case "StorageDomain.getStats":
+            return new StorageDomainGetStatsCommand();
+        case "StorageDomain.create":
+            return new StorageDomainCreateCommand();
+        case "StorageDomain.attach":
+            return new StorageDomainAttachCommand();
+        case "Volume.create":
+            return new VolumeCreateCommand();
+        case "Task.getStatus":
+            return new TaskGetStatusCommand();
+        case "Task.stop":
+            return new TaskStopCommand();
+        case "Task.clear":
+            return new TaskClearCommand();
+        case "Task.revert":
+            return new TaskRevertCommand();
+        case "Image.delete":
+            return new ImageDelete();
+        default:
+            // TODO: Support Host.setMOMPolicyParameters
+            Exception e = new Exception();
+            log.error("Unsupported method " + methodName, e);
+            return new UnsupportedCommand();
+    }
+}
+#end_block
+
+#method_before
+public void activateClearance(StorageDomain storageDomain) {
+    storageDomain.setDomainStatus(StorageDomain.DomainStatus.ACTIVE);
+    updateStorageDomain(storageDomain);
+}
+#method_after
+private void activateClearance(StorageDomain storageDomain) {
+    storageDomain.setDomainStatus(StorageDomain.DomainStatus.ACTIVE);
+    updateStorageDomain(storageDomain);
+}
+#end_block
+
+#method_before
+public Map activateStorageDomain(String sdUUID, String spUUID) {
+    try {
+        log.info("Activating storage domain, spUUID: {} sdUUID: {}", new Object[] { spUUID, sdUUID });
+        final DataCenter dataCenter = getDataCenterById(spUUID);
+        StorageDomain storageDomain = dataCenter.getStorageDomainMap().get(sdUUID);
+        if (storageDomain != null) {
+            activateClearance(storageDomain);
+        } else {
+            storageDomain = getActiveDomain(sdUUID, spUUID);
+            activateClearance(storageDomain);
+        }
+        return getOKStatus();
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#method_after
+public Map activateStorageDomain(String sdUUID, String spUUID) {
+    try {
+        log.info("Activating storage domain, spUUID: {} sdUUID: {}", new Object[] { spUUID, sdUUID });
+        final StorageDomain storageDomain = getDataCenterById(spUUID).getStorageDomainMap().get(sdUUID);
+        if (storageDomain != null) {
+            activateClearance(storageDomain);
+            log.info("storage were activated {} {}", storageDomain.getName(), sdUUID);
+        } else {
+            log.warn("No storage domains were activated for storage domain '{}' and storage pool '{}'", sdUUID, spUUID);
+        }
+        return getOKStatus();
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#end_block
+
+#method_before
+public void syncSearch(VdcQueryType vdcQueryType, VdcQueryParametersBase vdcQueryParametersBase) {
+    AsyncQuery _asyncQuery = new AsyncQuery();
+    _asyncQuery.setModel(this);
+    _asyncQuery.asyncCallback = new INewAsyncCallback() {
+
+        @Override
+        public void onSuccess(Object model, Object ReturnValue) {
+            setItems((Collection<T>) ((VdcQueryReturnValue) ReturnValue).getReturnValue());
+        }
+    };
+    vdcQueryParametersBase.setRefresh(getIsQueryFirstTime());
+    Frontend.getInstance().runQuery(vdcQueryType, vdcQueryParametersBase, _asyncQuery);
+    setIsQueryFirstTime(false);
+}
+#method_after
+protected void syncSearch(VdcQueryType vdcQueryType, VdcQueryParametersBase vdcQueryParametersBase) {
+    AsyncQuery _asyncQuery = new AsyncQuery();
+    _asyncQuery.setModel(this);
+    _asyncQuery.asyncCallback = new INewAsyncCallback() {
+
+        @Override
+        public void onSuccess(Object model, Object ReturnValue) {
+            setItems((Collection<T>) ((VdcQueryReturnValue) ReturnValue).getReturnValue());
+        }
+    };
+    vdcQueryParametersBase.setRefresh(getIsQueryFirstTime());
+    Frontend.getInstance().runQuery(vdcQueryType, vdcQueryParametersBase, _asyncQuery);
+    setIsQueryFirstTime(false);
+}
+#end_block
+

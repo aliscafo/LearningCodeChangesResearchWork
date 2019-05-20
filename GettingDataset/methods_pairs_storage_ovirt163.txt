@@ -1,0 +1,932 @@
+18
+#method_before
+public synchronized void syncTask(Host host, Task task) {
+    if (host == null) {
+        host = getActiveHost();
+        log.warn("host is null, task {} will be sync by any active host {}", task.getName(), host.getName());
+    }
+    try {
+        host.getRunningTasks().put(task.getId(), task);
+        log.debug("sync task:{} to host:{}", task.getName(), host.getName());
+        TaskProcessor.setTasksMap(host.getName(), task.getId());
+    } catch (Exception e) {
+        log.error("something went wrong durring task sync {}", e);
+    }
+}
+#method_after
+public synchronized void syncTask(Host host, Task task) {
+    if (host == null) {
+        host = getActiveHost();
+        log.debug("host is null, task {} will be sync by any active host {}", task.getName(), host.getName());
+    }
+    try {
+        host.getRunningTasks().put(task.getId(), task);
+        log.debug("sync task:{} to host:{}", task.getName(), host.getName());
+        TaskProcessor.setTasksMap(host.getName(), task.getId());
+    } catch (Exception e) {
+        log.error("something went wrong durring task sync {}", e);
+    }
+}
+#end_block
+
+#method_before
+public Map getStoragePoolInfo(String spUUID) {
+    try {
+        final DataCenter dataCenter = getDataCenterById(spUUID);
+        final Host host = getActiveHost();
+        Map resultMap = getOKStatus();
+        Map infoMap = map();
+        infoMap.put("spm_id", host.getSpmId());
+        // 553c2cb4-54d1-4c30-b2c2-6cb41a03518d
+        infoMap.put("master_uuid", dataCenter.getMasterStorageDomainId());
+        infoMap.put("name", dataCenter.getName());
+        infoMap.put("version", "3");
+        String isoDomainId = null;
+        // StorageDomain masterStorageDomain = null;
+        int i = 0;
+        StringBuilder b = new StringBuilder();
+        for (StorageDomain storageDomain : dataCenter.getStorageDomainMap().values()) {
+            b.append(storageDomain.getId()).append(":").append(storageDomain.getDomainStatus().getName());
+            if (i != dataCenter.getStorageDomainMap().values().size() - 1) {
+                b.append(",");
+            }
+            if (storageDomain.getDomainClass() == StorageDomain.DomainClass.ISO) {
+                isoDomainId = storageDomain.getId();
+            }
+        // if (dataCenter.getMasterStorageDomainId().equals(storageDomain.getId())) {
+        // masterStorageDomain = storageDomain;
+        // }
+        }
+        infoMap.put("domains", b.toString());
+        // 67070f56-027f-4ece-958d-e226639b622b:Active,4a6a6ed3-13f9-4481-8c03-8d217f6baef6:Active,553c2cb4-54d1-4c30-b2c2-6cb41a03518d:Active
+        // connected
+        infoMap.put("pool_status", dataCenter.getPoolStatus());
+        infoMap.put("isoprefix", isoDomainId == null ? "" : "/rhev/data-center/" + spUUID + "/" + isoDomainId + "/images/11111111-1111-1111-1111-111111111111");
+        // NFS
+        infoMap.put("type", dataCenter.getStorageType().toString());
+        infoMap.put("master_ver", dataCenter.getMasterVersion());
+        // Integer.valueOf(2)
+        infoMap.put("lver", host.getSpmLver());
+        Map dominfo = map();
+        for (StorageDomain storageDomain : dataCenter.getStorageDomainMap().values()) {
+            Map dominfoChild = map();
+            // 67070f56-027f-4ece-958d-e226639b622b
+            dominfo.put(storageDomain.getId(), dominfoChild);
+            dominfoChild.put("status", storageDomain.getDomainStatus().getName());
+            dominfoChild.put("diskfree", "59586904064");
+            // empty list
+            dominfoChild.put("alerts", lst());
+            dominfoChild.put("disktotal", "274792972288");
+        }
+        resultMap.put("info", infoMap);
+        resultMap.put("dominfo", dominfo);
+        return resultMap;
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#method_after
+public Map getStoragePoolInfo(String spUUID) {
+    try {
+        final DataCenter dataCenter = getDataCenterById(spUUID);
+        final Host host = getActiveHost();
+        Map resultMap = map();
+        Map infoMap = map();
+        infoMap.put("spm_id", host.getSpmId());
+        // 553c2cb4-54d1-4c30-b2c2-6cb41a03518d
+        infoMap.put("master_uuid", dataCenter.getMasterStorageDomainId());
+        infoMap.put("name", dataCenter.getName());
+        infoMap.put("version", "3");
+        String isoDomainId = null;
+        // StorageDomain masterStorageDomain = null;
+        int i = 0;
+        StringBuilder b = new StringBuilder();
+        for (StorageDomain storageDomain : dataCenter.getStorageDomainMap().values()) {
+            // force ACTIVE Status for storage domain.
+            if (!storageDomain.getDomainStatus().equals(StorageDomain.DomainStatus.ACTIVE)) {
+                storageDomain.setDomainStatus(StorageDomain.DomainStatus.ACTIVE);
+                updateStorageDomain(storageDomain);
+            }
+            // TODO: name of storage domain not sent, API talk with id no naming relations, might be problematic. storageDomain.setName("sd_fake")
+            b.append(storageDomain.getId()).append(":").append(storageDomain.getDomainStatus().getName());
+            if (i != dataCenter.getStorageDomainMap().values().size() - 1) {
+                b.append(",");
+            }
+            if (storageDomain.getDomainClass() == StorageDomain.DomainClass.ISO) {
+                isoDomainId = storageDomain.getId();
+            }
+        // if (dataCenter.getMasterStorageDomainId().equals(storageDomain.getId())) {
+        // masterStorageDomain = storageDomain;
+        // }
+        }
+        infoMap.put("domains", b.toString());
+        // 67070f56-027f-4ece-958d-e226639b622b:Active,4a6a6ed3-13f9-4481-8c03-8d217f6baef6:Active,553c2cb4-54d1-4c30-b2c2-6cb41a03518d:Active
+        // connected
+        infoMap.put("pool_status", dataCenter.getPoolStatus());
+        infoMap.put("isoprefix", isoDomainId == null ? "" : "/rhev/data-center/" + spUUID + "/" + isoDomainId + "/images/11111111-1111-1111-1111-111111111111");
+        // NFS
+        infoMap.put("type", dataCenter.getStorageType().toString());
+        infoMap.put("master_ver", dataCenter.getMasterVersion());
+        // Integer.valueOf(2)
+        infoMap.put("lver", host.getSpmLver());
+        Map dominfo = map();
+        for (StorageDomain storageDomain : dataCenter.getStorageDomainMap().values()) {
+            Map dominfoChild = map();
+            // 67070f56-027f-4ece-958d-e226639b622b
+            dominfo.put(storageDomain.getId(), dominfoChild);
+            dominfoChild.put("status", storageDomain.getDomainStatus().getName());
+            dominfoChild.put("diskfree", "59586904064");
+            // empty list
+            dominfoChild.put("alerts", lst());
+            dominfoChild.put("disktotal", "274792972288");
+        }
+        resultMap.put("info", infoMap);
+        resultMap.put("dominfo", dominfo);
+        return resultMap;
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#end_block
+
+#method_before
+public Map createVolume(String sdUUID, String spUUID, String imgUUID, String size, Integer volFormat, Integer preallocate, Integer diskType, String volUUID, String desc, String srcImgUUID, String srcVolUUID) {
+    try {
+        DataCenter dataCenter = getDataCenterById(spUUID);
+        StorageDomain storageDomain = dataCenter.getStorageDomainMap().get(sdUUID);
+        final Volume volume = new Volume();
+        volume.setId(volUUID);
+        volume.setSize(size);
+        volume.setVolFormat(volFormat);
+        volume.setPreallocate(preallocate);
+        volume.setDiskType(diskType);
+        volume.setImgUUID(imgUUID);
+        volume.setDesc(desc);
+        volume.setSrcImgUUID(srcImgUUID);
+        volume.setSrcVolUUID(srcVolUUID);
+        log.info("Adding volume: {} for sp: {}, sd: {}", new Object[] { volUUID, spUUID, sdUUID });
+        storageDomain.getVolumes().put(volUUID, volume);
+        updateDataCenter(dataCenter);
+        final Map resultMap = getOKStatus();
+        final Task task = new Task(getUuid());
+        resultMap.put("uuid", task.getId());
+        // make the SPM to handle the new volume creation
+        final Host host = VdsmManager.getInstance().getSpmMap().get(spUUID);
+        syncTask(host, task);
+        TaskProcessor.getInstance().addTask(new TaskRequest(TaskType.FINISH_CREATE_VOLUME, 3000l, task));
+        return resultMap;
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#method_after
+public Map createVolume(String sdUUID, String spUUID, String imgUUID, String size, Integer volFormat, Integer preallocate, Integer diskType, String volUUID, String desc, String srcImgUUID, String srcVolUUID) {
+    try {
+        DataCenter dataCenter = getDataCenterById(spUUID);
+        StorageDomain storageDomain = dataCenter.getStorageDomainMap().get(sdUUID);
+        final Volume volume = new Volume();
+        volume.setId(volUUID);
+        volume.setSize(size);
+        volume.setVolFormat(volFormat);
+        volume.setPreallocate(preallocate);
+        volume.setDiskType(diskType);
+        volume.setImgUUID(imgUUID);
+        volume.setDesc(desc);
+        volume.setSrcImgUUID(srcImgUUID);
+        volume.setSrcVolUUID(srcVolUUID);
+        log.info("Adding volume: {} for sp: {}, sd: {}", new Object[] { volUUID, spUUID, sdUUID });
+        storageDomain.getVolumes().put(volUUID, volume);
+        updateDataCenter(dataCenter);
+        final Map resultMap = getOKStatus();
+        final Task task = new Task(getUuid());
+        resultMap.put("uuid", task.getId());
+        syncTask(VdsmManager.getInstance().getSpmHost(spUUID), task);
+        TaskProcessor.getInstance().addTask(new TaskRequest(TaskType.FINISH_CREATE_VOLUME, 3000l, task));
+        return resultMap;
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#end_block
+
+#method_before
+public Map<String, Host> getSpmMap() {
+    return this.spmMap;
+}
+#method_after
+public ConcurrentMap getSpmMap() {
+    return this.spmMap;
+}
+#end_block
+
+#method_before
+public void setSpmMap(String spId, Host host) {
+    spmMap.put(spId, host);
+}
+#method_after
+public void setSpmMap(String spId, Host host) {
+    this.spmMap.put(spId, host);
+}
+#end_block
+
+#method_before
+public void removeSpmFromMap(String spId) {
+    spmMap.remove(spId);
+}
+#method_after
+public void removeSpmFromMap(String spId) {
+    this.spmMap.remove(spId);
+}
+#end_block
+
+#method_before
+public void connect() throws ClientConnectionException {
+    if (isOpen()) {
+        return;
+    }
+    try (LockWrapper wrapper = new LockWrapper(this.lock)) {
+        if (isOpen() && isInInit()) {
+            if (getPostConnectCallback().await(policy.getRetryTimeOut(), policy.getTimeUnit())) {
+                closeChannel();
+                throw new ClientConnectionException("Connection timeout");
+            }
+        }
+        if (isOpen()) {
+            return;
+        }
+        final FutureTask<SocketChannel> task = scheduleTask(new Retryable<SocketChannel>(new Callable<SocketChannel>() {
+
+            @Override
+            public SocketChannel call() throws IOException {
+                InetAddress address = InetAddress.getByName(hostname);
+                log.info("Connecting to " + address);
+                final InetSocketAddress addr = new InetSocketAddress(address, port);
+                final SocketChannel socketChannel = SocketChannel.open();
+                socketChannel.configureBlocking(false);
+                socketChannel.connect(addr);
+                return socketChannel;
+            }
+        }, this.policy));
+        this.channel = task.get();
+        while (!this.channel.finishConnect()) {
+            final long timeout = getTimeout(policy.getRetryTimeOut(), policy.getTimeUnit());
+            final FutureTask<SocketChannel> connectTask = scheduleTask(new Retryable<SocketChannel>(new Callable<SocketChannel>() {
+
+                @Override
+                public SocketChannel call() throws ConnectException {
+                    if (System.currentTimeMillis() >= timeout) {
+                        throw new ConnectException("Connection timeout");
+                    }
+                    return null;
+                }
+            }, this.policy));
+            connectTask.get();
+        }
+        updateLastIncomingHeartbeat();
+        updateLastOutgoingHeartbeat();
+        if (!isOpen()) {
+            throw new ClientConnectionException("Connection failed");
+        }
+        postConnect(getPostConnectCallback());
+    } catch (InterruptedException | ExecutionException e) {
+        logException(log, "Exception during connection", e);
+        final String message = "Connection issue " + e.getMessage();
+        final Callable<Void> disconnectCallable = new Callable<Void>() {
+
+            @Override
+            public Void call() {
+                disconnect(message);
+                return null;
+            }
+        };
+        scheduleTask(disconnectCallable);
+        throw new ClientConnectionException(e);
+    } catch (IOException e) {
+        closeChannel();
+        throw new ClientConnectionException("Connection failed");
+    }
+}
+#method_after
+public void connect() throws ClientConnectionException {
+    if (isOpen()) {
+        return;
+    }
+    try (LockWrapper wrapper = new LockWrapper(this.lock)) {
+        if (isOpen() && isInInit()) {
+            if (!getPostConnectCallback().await(policy.getRetryTimeOut(), policy.getTimeUnit())) {
+                closeChannel();
+                throw new ClientConnectionException("Connection timeout");
+            }
+        }
+        if (isOpen()) {
+            return;
+        }
+        final FutureTask<SocketChannel> task = scheduleTask(new Retryable<SocketChannel>(new Callable<SocketChannel>() {
+
+            @Override
+            public SocketChannel call() throws IOException {
+                InetAddress address = InetAddress.getByName(hostname);
+                log.info("Connecting to " + address);
+                final InetSocketAddress addr = new InetSocketAddress(address, port);
+                final SocketChannel socketChannel = SocketChannel.open();
+                socketChannel.configureBlocking(false);
+                socketChannel.connect(addr);
+                return socketChannel;
+            }
+        }, this.policy));
+        this.channel = task.get();
+        while (!this.channel.finishConnect()) {
+            final long timeout = getTimeout(policy.getRetryTimeOut(), policy.getTimeUnit());
+            final FutureTask<SocketChannel> connectTask = scheduleTask(new Retryable<SocketChannel>(new Callable<SocketChannel>() {
+
+                @Override
+                public SocketChannel call() throws ConnectException {
+                    if (System.currentTimeMillis() >= timeout) {
+                        throw new ConnectException("Connection timeout");
+                    }
+                    return null;
+                }
+            }, this.policy));
+            connectTask.get();
+        }
+        updateLastIncomingHeartbeat();
+        updateLastOutgoingHeartbeat();
+        if (!isOpen()) {
+            throw new ClientConnectionException("Connection failed");
+        }
+        postConnect(getPostConnectCallback());
+    } catch (InterruptedException | ExecutionException e) {
+        logException(log, "Exception during connection", e);
+        final String message = "Connection issue " + e.getMessage();
+        final Callable<Void> disconnectCallable = new Callable<Void>() {
+
+            @Override
+            public Void call() {
+                disconnect(message);
+                return null;
+            }
+        };
+        scheduleTask(disconnectCallable);
+        throw new ClientConnectionException(e);
+    } catch (IOException e) {
+        closeChannel();
+        throw new ClientConnectionException("Connection failed");
+    }
+}
+#end_block
+
+#method_before
+private void closeChannel() {
+    try {
+        if (this.channel != null) {
+            this.channel.close();
+        }
+    } catch (IOException e) {
+    // Ignore
+    } finally {
+        this.channel = null;
+    }
+}
+#method_after
+protected void closeChannel() {
+    try {
+        if (this.channel != null) {
+            this.channel.close();
+        }
+    } catch (IOException e) {
+    // Ignore
+    } finally {
+        this.channel = null;
+    }
+}
+#end_block
+
+#method_before
+public static void flatGroups(ExtMap principal) {
+    HashMap<String, ExtMap> accumulator = new HashMap<>();
+    flatGroups(principal, PrincipalRecord.GROUPS, accumulator);
+    principal.put(PrincipalRecord.GROUPS, new ArrayList<>(accumulator.values()));
+}
+#method_after
+public static void flatGroups(ExtMap principal) {
+    Map<String, ExtMap> accumulator = new HashMap<>();
+    flatGroups(principal, PrincipalRecord.GROUPS, accumulator);
+    principal.put(PrincipalRecord.GROUPS, new ArrayList<>(accumulator.values()));
+}
+#end_block
+
+#method_before
+public Map createStorageDomain(Integer storageType, String sdUUID, String domainName, String typeSpecificArg, Integer domClass, String storageFormatType) {
+    log.info("Storage domain sdUUID: {}, name: {} created.", sdUUID, domainName);
+    StorageDomain storageDomain = getStorageDomainById(sdUUID);
+    storageDomain.setName(domainName);
+    storageDomain.setDomainClass(StorageDomain.DomainClass.getByCode(domClass));
+    storageDomain.setStorageType(StorageDomain.StorageType.getByCode(storageType));
+    // store
+    updateStorageDomain(storageDomain);
+    // send ok
+    return getOKStatus();
+}
+#method_after
+public Map createStorageDomain(Integer storageType, String sdUUID, String domainName, String typeSpecificArg, Integer domClass, String storageFormatType) {
+    log.info("Storage domain sdUUID: {}, name: {} created.", sdUUID, domainName);
+    StorageDomain storageDomain = getStorageDomainById(sdUUID);
+    storageDomain.setName(domainName);
+    storageDomain.setConnection(typeSpecificArg);
+    storageDomain.setDomainClass(StorageDomain.DomainClass.getByCode(domClass));
+    storageDomain.setStorageType(StorageDomain.StorageType.getByCode(storageType));
+    // store
+    updateStorageDomain(storageDomain);
+    // send ok
+    return getOKStatus();
+}
+#end_block
+
+#method_before
+public Map getStoragePoolInfo(String spUUID) {
+    try {
+        final DataCenter dataCenter = getDataCenterById(spUUID);
+        final Host host = getActiveHost();
+        Map resultMap = map();
+        Map infoMap = map();
+        infoMap.put("spm_id", host.getSpmId());
+        // 553c2cb4-54d1-4c30-b2c2-6cb41a03518d
+        infoMap.put("master_uuid", dataCenter.getMasterStorageDomainId());
+        infoMap.put("name", dataCenter.getName());
+        infoMap.put("version", "3");
+        String isoDomainId = null;
+        // StorageDomain masterStorageDomain = null;
+        int i = 0;
+        StringBuilder b = new StringBuilder();
+        for (StorageDomain storageDomain : dataCenter.getStorageDomainMap().values()) {
+            // force ACTIVE Status for storage domain.
+            if (!storageDomain.getDomainStatus().equals(StorageDomain.DomainStatus.ACTIVE)) {
+                storageDomain.setDomainStatus(StorageDomain.DomainStatus.ACTIVE);
+                updateStorageDomain(storageDomain);
+            }
+            // TODO: name of storage domain not sent API talk with id no naming relations, might be problematic. storageDomain.setName("sd_fake")
+            b.append(storageDomain.getId()).append(":").append(storageDomain.getDomainStatus().getName());
+            if (i != dataCenter.getStorageDomainMap().values().size() - 1) {
+                b.append(",");
+            }
+            if (storageDomain.getDomainClass() == StorageDomain.DomainClass.ISO) {
+                isoDomainId = storageDomain.getId();
+            }
+        // if (dataCenter.getMasterStorageDomainId().equals(storageDomain.getId())) {
+        // masterStorageDomain = storageDomain;
+        // }
+        }
+        infoMap.put("domains", b.toString());
+        // 67070f56-027f-4ece-958d-e226639b622b:Active,4a6a6ed3-13f9-4481-8c03-8d217f6baef6:Active,553c2cb4-54d1-4c30-b2c2-6cb41a03518d:Active
+        // connected
+        infoMap.put("pool_status", dataCenter.getPoolStatus());
+        infoMap.put("isoprefix", isoDomainId == null ? "" : "/rhev/data-center/" + spUUID + "/" + isoDomainId + "/images/11111111-1111-1111-1111-111111111111");
+        // NFS
+        infoMap.put("type", dataCenter.getStorageType().toString());
+        infoMap.put("master_ver", dataCenter.getMasterVersion());
+        // Integer.valueOf(2)
+        infoMap.put("lver", host.getSpmLver());
+        Map dominfo = map();
+        for (StorageDomain storageDomain : dataCenter.getStorageDomainMap().values()) {
+            Map dominfoChild = map();
+            // 67070f56-027f-4ece-958d-e226639b622b
+            dominfo.put(storageDomain.getId(), dominfoChild);
+            dominfoChild.put("status", storageDomain.getDomainStatus().getName());
+            dominfoChild.put("diskfree", "59586904064");
+            // empty list
+            dominfoChild.put("alerts", lst());
+            dominfoChild.put("disktotal", "274792972288");
+        }
+        resultMap.put("info", infoMap);
+        resultMap.put("dominfo", dominfo);
+        return resultMap;
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#method_after
+public Map getStoragePoolInfo(String spUUID) {
+    try {
+        final DataCenter dataCenter = getDataCenterById(spUUID);
+        final Host host = getActiveHost();
+        Map resultMap = map();
+        Map infoMap = map();
+        infoMap.put("spm_id", host.getSpmId());
+        // 553c2cb4-54d1-4c30-b2c2-6cb41a03518d
+        infoMap.put("master_uuid", dataCenter.getMasterStorageDomainId());
+        infoMap.put("name", dataCenter.getName());
+        infoMap.put("version", "3");
+        String isoDomainId = null;
+        // StorageDomain masterStorageDomain = null;
+        int i = 0;
+        StringBuilder b = new StringBuilder();
+        for (StorageDomain storageDomain : dataCenter.getStorageDomainMap().values()) {
+            // force ACTIVE Status for storage domain.
+            if (!storageDomain.getDomainStatus().equals(StorageDomain.DomainStatus.ACTIVE)) {
+                storageDomain.setDomainStatus(StorageDomain.DomainStatus.ACTIVE);
+                updateStorageDomain(storageDomain);
+            }
+            // TODO: name of storage domain not sent, API talk with id no naming relations, might be problematic. storageDomain.setName("sd_fake")
+            b.append(storageDomain.getId()).append(":").append(storageDomain.getDomainStatus().getName());
+            if (i != dataCenter.getStorageDomainMap().values().size() - 1) {
+                b.append(",");
+            }
+            if (storageDomain.getDomainClass() == StorageDomain.DomainClass.ISO) {
+                isoDomainId = storageDomain.getId();
+            }
+        // if (dataCenter.getMasterStorageDomainId().equals(storageDomain.getId())) {
+        // masterStorageDomain = storageDomain;
+        // }
+        }
+        infoMap.put("domains", b.toString());
+        // 67070f56-027f-4ece-958d-e226639b622b:Active,4a6a6ed3-13f9-4481-8c03-8d217f6baef6:Active,553c2cb4-54d1-4c30-b2c2-6cb41a03518d:Active
+        // connected
+        infoMap.put("pool_status", dataCenter.getPoolStatus());
+        infoMap.put("isoprefix", isoDomainId == null ? "" : "/rhev/data-center/" + spUUID + "/" + isoDomainId + "/images/11111111-1111-1111-1111-111111111111");
+        // NFS
+        infoMap.put("type", dataCenter.getStorageType().toString());
+        infoMap.put("master_ver", dataCenter.getMasterVersion());
+        // Integer.valueOf(2)
+        infoMap.put("lver", host.getSpmLver());
+        Map dominfo = map();
+        for (StorageDomain storageDomain : dataCenter.getStorageDomainMap().values()) {
+            Map dominfoChild = map();
+            // 67070f56-027f-4ece-958d-e226639b622b
+            dominfo.put(storageDomain.getId(), dominfoChild);
+            dominfoChild.put("status", storageDomain.getDomainStatus().getName());
+            dominfoChild.put("diskfree", "59586904064");
+            // empty list
+            dominfoChild.put("alerts", lst());
+            dominfoChild.put("disktotal", "274792972288");
+        }
+        resultMap.put("info", infoMap);
+        resultMap.put("dominfo", dominfo);
+        return resultMap;
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#end_block
+
+#method_before
+public Map spmStart(String spUUID, String prevID, String prevLVER, String recoveryMode, String scsiFencing) {
+    final Host host = getActiveHost();
+    Map resultMap = getOKStatus();
+    Task task = new Task(getUuid());
+    resultMap.put("uuid", task.getId());
+    task.setTarget(host);
+    getActiveHost().getRunningTasks().put(task.getId(), task);
+    TaskProcessor.getInstance().addTask(new TaskRequest(TaskType.FINISH_START_SPM, 10000l, task));
+    return resultMap;
+}
+#method_after
+public Map spmStart(String spUUID, String prevID, String prevLVER, String recoveryMode, String scsiFencing) {
+    final Host host = getActiveHost();
+    Map resultMap = getOKStatus();
+    Task task = new Task(getUuid());
+    resultMap.put("uuid", task.getId());
+    task.setTarget(host);
+    getActiveHost().getRunningTasks().put(task.getId(), task);
+    TaskProcessor.setTasksMap(host.getName(), task.getId());
+    TaskProcessor.getInstance().addTask(new TaskRequest(TaskType.FINISH_START_SPM, 10000l, task));
+    return resultMap;
+}
+#end_block
+
+#method_before
+public Map createVolume(String sdUUID, String spUUID, String imgUUID, String size, Integer volFormat, Integer preallocate, Integer diskType, String volUUID, String desc, String srcImgUUID, String srcVolUUID) {
+    try {
+        DataCenter dataCenter = getDataCenterById(spUUID);
+        StorageDomain storageDomain = dataCenter.getStorageDomainMap().get(sdUUID);
+        final Volume volume = new Volume();
+        volume.setId(volUUID);
+        volume.setSize(size);
+        volume.setVolFormat(volFormat);
+        volume.setPreallocate(preallocate);
+        volume.setDiskType(diskType);
+        volume.setImgUUID(imgUUID);
+        volume.setDesc(desc);
+        volume.setSrcImgUUID(srcImgUUID);
+        volume.setSrcVolUUID(srcVolUUID);
+        log.info("Adding volume: {} for sp: {}, sd: {}", new Object[] { volUUID, spUUID, sdUUID });
+        storageDomain.getVolumes().put(volUUID, volume);
+        updateDataCenter(dataCenter);
+        final Map resultMap = getOKStatus();
+        final Task task = new Task(getUuid());
+        resultMap.put("uuid", task.getId());
+        getActiveHost().getRunningTasks().put(task.getId(), task);
+        TaskProcessor.getInstance().addTask(new TaskRequest(TaskType.FINISH_CREATE_VOLUME, 5000l, task));
+        return resultMap;
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#method_after
+public Map createVolume(String sdUUID, String spUUID, String imgUUID, String size, Integer volFormat, Integer preallocate, Integer diskType, String volUUID, String desc, String srcImgUUID, String srcVolUUID) {
+    try {
+        DataCenter dataCenter = getDataCenterById(spUUID);
+        StorageDomain storageDomain = dataCenter.getStorageDomainMap().get(sdUUID);
+        final Volume volume = new Volume();
+        volume.setId(volUUID);
+        volume.setSize(size);
+        volume.setVolFormat(volFormat);
+        volume.setPreallocate(preallocate);
+        volume.setDiskType(diskType);
+        volume.setImgUUID(imgUUID);
+        volume.setDesc(desc);
+        volume.setSrcImgUUID(srcImgUUID);
+        volume.setSrcVolUUID(srcVolUUID);
+        log.info("Adding volume: {} for sp: {}, sd: {}", new Object[] { volUUID, spUUID, sdUUID });
+        storageDomain.getVolumes().put(volUUID, volume);
+        updateDataCenter(dataCenter);
+        final Map resultMap = getOKStatus();
+        final Task task = new Task(getUuid());
+        resultMap.put("uuid", task.getId());
+        syncTask(null, task);
+        TaskProcessor.getInstance().addTask(new TaskRequest(TaskType.FINISH_CREATE_VOLUME, 5000l, task));
+        return resultMap;
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#end_block
+
+#method_before
+public Map getStorageDomainInfo(String sdUUID) {
+    try {
+        final Host host = getActiveHost();
+        StorageDomain storageDomain = getStorageDomainById(sdUUID);
+        DataCenter dataCenter = storageDomain.getDataCenter();
+        Map resultMap = getOKStatus();
+        Map infoMap = map();
+        infoMap.put("uuid", storageDomain.getId());
+        infoMap.put("master_ver", dataCenter.getMasterVersion());
+        infoMap.put("lver", host.getSpmLver());
+        infoMap.put("version", "0");
+        infoMap.put("role", storageDomain.getDomainRole().getName());
+        // 10.34.63.202:/mnt/export/nfs/lv1/test/iso
+        infoMap.put("remotePath", storageDomain.getConnection());
+        infoMap.put("spm_id", host.getSpmId());
+        // NFS
+        infoMap.put("type", storageDomain.getStorageType().toString());
+        // Iso
+        infoMap.put("class", storageDomain.getDomainClass().getName());
+        infoMap.put("name", storageDomain.getName());
+        List poolList = lst();
+        poolList.add(dataCenter.getId());
+        poolList.add(getUuid());
+        // TODO: not sure what is it for the value, the response has 3 values, the first is spUuid
+        poolList.add(getUuid());
+        infoMap.put("pool", poolList);
+        resultMap.put("info", infoMap);
+        return resultMap;
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#method_after
+public Map getStorageDomainInfo(String sdUUID) {
+    try {
+        final Host host = getActiveHost();
+        StorageDomain storageDomain = getStorageDomainById(sdUUID);
+        DataCenter dataCenter = storageDomain.getDataCenter();
+        Map resultMap = getOKStatus();
+        Map infoMap = map();
+        infoMap.put("uuid", storageDomain.getId());
+        infoMap.put("lver", host.getSpmLver());
+        infoMap.put("version", "0");
+        infoMap.put("role", storageDomain.getDomainRole().getName());
+        // 10.34.63.202:/mnt/export/nfs/lv1/test/iso
+        infoMap.put("remotePath", storageDomain.getConnection());
+        infoMap.put("spm_id", host.getSpmId());
+        // NFS
+        infoMap.put("type", storageDomain.getStorageType().toString());
+        // Iso
+        infoMap.put("class", storageDomain.getDomainClass().getName());
+        infoMap.put("name", storageDomain.getName());
+        List poolList = lst();
+        if (dataCenter != null) {
+            infoMap.put("master_ver", dataCenter.getMasterVersion());
+            poolList.add(dataCenter.getId());
+            poolList.add(getUuid());
+            // TODO: not sure what is it for the value, the response has 3 values, the
+            poolList.add(getUuid());
+        // first is spUuid
+        }
+        infoMap.put("pool", poolList);
+        resultMap.put("info", infoMap);
+        return resultMap;
+    } catch (Exception e) {
+        throw error(e);
+    }
+}
+#end_block
+
+#method_before
+public List getClusterLevelsList() {
+    List resultList = lst();
+    resultList.add("3.0");
+    resultList.add("3.1");
+    resultList.add("3.2");
+    resultList.add("3.3");
+    resultList.add("3.4");
+    resultList.add("3.5");
+    resultList.add("3.6");
+    return resultList;
+}
+#method_after
+public List getClusterLevelsList() {
+    List resultList = lst();
+    resultList.add("3.0");
+    resultList.add("3.1");
+    resultList.add("3.2");
+    resultList.add("3.3");
+    resultList.add("3.4");
+    resultList.add("3.5");
+    resultList.add("3.6");
+    resultList.add("4.0");
+    return resultList;
+}
+#end_block
+
+#method_before
+public List getSupportedENGINEsList() {
+    List resultList = lst();
+    resultList.add("3.0");
+    resultList.add("3.1");
+    resultList.add("3.2");
+    resultList.add("3.3");
+    resultList.add("3.4");
+    resultList.add("3.5");
+    resultList.add("3.6");
+    return resultList;
+}
+#method_after
+public List getSupportedENGINEsList() {
+    List resultList = lst();
+    resultList.add("3.0");
+    resultList.add("3.1");
+    resultList.add("3.2");
+    resultList.add("3.3");
+    resultList.add("3.4");
+    resultList.add("3.5");
+    resultList.add("3.6");
+    resultList.add("4.0");
+    return resultList;
+}
+#end_block
+
+#method_before
+public void connect() throws ClientConnectionException {
+    if (isOpen()) {
+        return;
+    }
+    try (LockWrapper wrapper = new LockWrapper(this.lock)) {
+        if (isOpen() && isInInit()) {
+            getPostConnectCallback().await();
+        }
+        if (isOpen()) {
+            return;
+        }
+        final FutureTask<SocketChannel> task = scheduleTask(new Retryable<SocketChannel>(new Callable<SocketChannel>() {
+
+            @Override
+            public SocketChannel call() throws IOException {
+                InetAddress address = InetAddress.getByName(hostname);
+                log.info("Connecting to " + address);
+                final InetSocketAddress addr = new InetSocketAddress(address, port);
+                final SocketChannel socketChannel = SocketChannel.open();
+                socketChannel.configureBlocking(false);
+                socketChannel.connect(addr);
+                return socketChannel;
+            }
+        }, this.policy));
+        this.channel = task.get();
+        if (!this.channel.finishConnect()) {
+            while (!this.channel.finishConnect()) {
+                final long timeout = getTimeout(policy.getRetryTimeOut(), policy.getTimeUnit());
+                final FutureTask<SocketChannel> connectTask = scheduleTask(new Retryable<SocketChannel>(new Callable<SocketChannel>() {
+
+                    @Override
+                    public SocketChannel call() throws ConnectException {
+                        if (System.currentTimeMillis() >= timeout) {
+                            throw new ConnectException("Connection timeout");
+                        }
+                        return null;
+                    }
+                }, this.policy));
+                connectTask.get();
+            }
+        }
+        updateLastIncomingHeartbeat();
+        updateLastOutgoingHeartbeat();
+        if (!isOpen()) {
+            throw new ClientConnectionException("Connection failed");
+        }
+        postConnect(getPostConnectCallback());
+    } catch (InterruptedException | ExecutionException e) {
+        logException(log, "Exception during connection", e);
+        final String message = "Connection issue " + e.getMessage();
+        final Callable<Void> disconnectCallable = new Callable<Void>() {
+
+            @Override
+            public Void call() {
+                disconnect(message);
+                return null;
+            }
+        };
+        scheduleTask(disconnectCallable);
+        throw new ClientConnectionException(e);
+    } catch (IOException e) {
+        closeChannel();
+        throw new ClientConnectionException("Connection failed");
+    }
+}
+#method_after
+public void connect() throws ClientConnectionException {
+    if (isOpen()) {
+        return;
+    }
+    try (LockWrapper wrapper = new LockWrapper(this.lock)) {
+        if (isOpen() && isInInit()) {
+            getPostConnectCallback().await();
+        }
+        if (isOpen()) {
+            return;
+        }
+        final FutureTask<SocketChannel> task = scheduleTask(new Retryable<SocketChannel>(new Callable<SocketChannel>() {
+
+            @Override
+            public SocketChannel call() throws IOException {
+                InetAddress address = InetAddress.getByName(hostname);
+                log.info("Connecting to " + address);
+                final InetSocketAddress addr = new InetSocketAddress(address, port);
+                final SocketChannel socketChannel = SocketChannel.open();
+                socketChannel.configureBlocking(false);
+                socketChannel.connect(addr);
+                return socketChannel;
+            }
+        }, this.policy));
+        this.channel = task.get();
+        while (!this.channel.finishConnect()) {
+            final long timeout = getTimeout(policy.getRetryTimeOut(), policy.getTimeUnit());
+            final FutureTask<SocketChannel> connectTask = scheduleTask(new Retryable<SocketChannel>(new Callable<SocketChannel>() {
+
+                @Override
+                public SocketChannel call() throws ConnectException {
+                    if (System.currentTimeMillis() >= timeout) {
+                        throw new ConnectException("Connection timeout");
+                    }
+                    return null;
+                }
+            }, this.policy));
+            connectTask.get();
+        }
+        updateLastIncomingHeartbeat();
+        updateLastOutgoingHeartbeat();
+        if (!isOpen()) {
+            throw new ClientConnectionException("Connection failed");
+        }
+        postConnect(getPostConnectCallback());
+    } catch (InterruptedException | ExecutionException e) {
+        logException(log, "Exception during connection", e);
+        final String message = "Connection issue " + e.getMessage();
+        final Callable<Void> disconnectCallable = new Callable<Void>() {
+
+            @Override
+            public Void call() {
+                disconnect(message);
+                return null;
+            }
+        };
+        scheduleTask(disconnectCallable);
+        throw new ClientConnectionException(e);
+    } catch (IOException e) {
+        closeChannel();
+        throw new ClientConnectionException("Connection failed");
+    }
+}
+#end_block
+
+#method_before
+private static VideoRAMSettings selectVideoRAMSettings(VmBase vmBase) {
+    Version clusterVersion = ClusterUtils.getCompatibilityVersion(vmBase);
+    if (clusterVersion == null) {
+        clusterVersion = Version.getLast();
+    }
+    if (clusterVersion.greaterOrEquals(new Version(3, 6))) {
+        return new VgamemVideoRAMSettings();
+    } else {
+        return new LegacyVideoRAMSettings();
+    }
+}
+#method_after
+private static VideoRAMSettings selectVideoRAMSettings(VmBase vmBase) {
+    if (ClusterUtils.getCompatibilityVersion(vmBase).greaterOrEquals(new Version(3, 6))) {
+        return new VgamemVideoRAMSettings();
+    } else {
+        return new LegacyVideoRAMSettings();
+    }
+}
+#end_block
+

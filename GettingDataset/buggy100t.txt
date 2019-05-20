@@ -1,0 +1,1 @@
+public void METHOD_1 ( TYPE_1 rw , ObjectId id , String VAR_1 ) throws IOException { RevCommit commit = rw . parseCommit ( id ) ; rw . METHOD_2 ( commit ) ; this . commit = commit . name ( ) ; VAR_2 = commit . METHOD_3 ( ) ; this . VAR_1 = VAR_1 ; }

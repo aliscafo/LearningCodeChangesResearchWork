@@ -1,0 +1,2256 @@
+28
+#method_before
+public void undo() {
+    if (compoundEdit != null) {
+        compoundEdit.end();
+        undoManager.addEdit(compoundEdit);
+        compoundEdit = null;
+    }
+    if (undoManager.canUndo()) {
+        undoManager.undo();
+    }
+}
+#method_after
+public void undo() {
+    if (compoundEdit != null) {
+        compoundEdit.end();
+        undoManager.addEdit(compoundEdit);
+        compoundEdit = null;
+    }
+    if (undoManager.canUndo()) {
+        undoManager.undo();
+    }
+    // check if it's the last undoable change
+    if (undoManager.canUndo() == false) {
+        setModified(false);
+    }
+}
+#end_block
+
+#method_before
+@Override
+public IFile getRootDirectory(Context context) {
+    File documentsDirectory = getDocumentsDir();
+    if (!documentsDirectory.exists()) {
+        // see https://developer.android.com/guide/topics/permissions/requesting.html#perm-groups
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            if (!documentsDirectory.mkdirs()) {
+                // fallback to the toplevel dir - might be due to the dir not mounted/used as USB-Mass-Storage or similar
+                // TODO: handle unavailability of the storage/failure of the mkdir properly
+                Log.e("LocalDocumentsProvider", "not sure how we ended up here - if we have read permissions to use it in the first place, we also should have the write-permissions..");
+                documentsDirectory = Environment.getExternalStorageDirectory();
+            }
+        }
+    }
+    return new LocalFile(documentsDirectory);
+}
+#method_after
+@Override
+public IFile getRootDirectory(Context context) {
+    File documentsDirectory = getDocumentsDir();
+    if (!documentsDirectory.exists()) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            if (!documentsDirectory.mkdirs()) {
+                // fallback to the toplevel dir - might be due to the dir not mounted/used as USB-Mass-Storage or similar
+                // TODO: handle unavailability of the storage/failure of the mkdir properly
+                Log.e("LocalDocumentsProvider", "not sure how we ended up here - if we have read permissions to use it in the first place, we also should have the write-permissions..");
+                documentsDirectory = Environment.getExternalStorageDirectory();
+            }
+        }
+    }
+    return new LocalFile(documentsDirectory);
+}
+#end_block
+
+#method_before
+@Override
+public boolean checkProviderAvailability(Context context) {
+    File documentsDirectory = getDocumentsDir();
+    return documentsDirectory.exists() && ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+}
+#method_after
+@Override
+public boolean checkProviderAvailability(Context context) {
+    File documentsDirectory = getDocumentsDir();
+    return documentsDirectory.exists() && ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+}
+#end_block
+
+#method_before
+private void switchToDocumentProvider(IDocumentProvider provider) {
+    new AsyncTask<IDocumentProvider, Void, Void>() {
+
+        @Override
+        protected Void doInBackground(IDocumentProvider... provider) {
+            // a different thread
+            try {
+                documentProvider = provider[0];
+                homeDirectory = documentProvider.getRootDirectory(LibreOfficeUIActivity.this);
+                currentDirectory = homeDirectory;
+                filePaths = currentDirectory.listFiles(FileUtilities.getFileFilter(filterMode));
+            } catch (final RuntimeException e) {
+                final Activity activity = LibreOfficeUIActivity.this;
+                activity.runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        Toast.makeText(activity, e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+                startActivity(new Intent(activity, DocumentProviderSettingsActivity.class));
+                Log.e(LOGTAG, "failed to switch document provider " + e.getMessage(), e.getCause());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            refreshView();
+        }
+    }.execute(provider);
+}
+#method_after
+private void switchToDocumentProvider(IDocumentProvider provider) {
+    new AsyncTask<IDocumentProvider, Void, Void>() {
+
+        @Override
+        protected Void doInBackground(IDocumentProvider... provider) {
+            // a different thread
+            try {
+                documentProvider = provider[0];
+                homeDirectory = documentProvider.getRootDirectory(LibreOfficeUIActivity.this);
+                currentDirectory = homeDirectory;
+                filePaths = currentDirectory.listFiles(FileUtilities.getFileFilter(filterMode));
+            } catch (final RuntimeException e) {
+                final Activity activity = LibreOfficeUIActivity.this;
+                activity.runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        Toast.makeText(activity, e.getMessage(), Toast.LENGTH_SHORT).show();
+                        // switch back to the default provider.
+                        switchToDocumentProvider(documentProviderFactory.getDefaultProvider());
+                    }
+                });
+                startActivity(new Intent(activity, DocumentProviderSettingsActivity.class));
+                Log.e(LOGTAG, "failed to switch document provider " + e.getMessage(), e.getCause());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            refreshView();
+        }
+    }.execute(provider);
+}
+#end_block
+
+#method_before
+public void readPreferences() {
+    prefs = getSharedPreferences(EXPLORER_PREFS_KEY, MODE_PRIVATE);
+    sortMode = prefs.getInt(SORT_MODE_KEY, FileUtilities.SORT_AZ);
+    SharedPreferences defaultPrefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+    viewMode = Integer.valueOf(defaultPrefs.getString(EXPLORER_VIEW_TYPE_KEY, "" + GRID_VIEW));
+    filterMode = Integer.valueOf(defaultPrefs.getString(FILTER_MODE_KEY, "-1"));
+    showHiddenFiles = Boolean.valueOf(defaultPrefs.getBoolean(ENABLE_SHOW_HIDDEN_FILES_KEY, false));
+    Intent i = this.getIntent();
+    if (i.hasExtra(CURRENT_DIRECTORY_KEY)) {
+        try {
+            currentDirectory = documentProvider.createFromUri(this, new URI(i.getStringExtra(CURRENT_DIRECTORY_KEY)));
+        } catch (URISyntaxException e) {
+            currentDirectory = documentProvider.getRootDirectory(this);
+        }
+        Log.d(LOGTAG, CURRENT_DIRECTORY_KEY);
+    }
+    if (i.hasExtra(FILTER_MODE_KEY)) {
+        filterMode = i.getIntExtra(FILTER_MODE_KEY, FileUtilities.ALL);
+        Log.d(LOGTAG, FILTER_MODE_KEY);
+    }
+    if (i.hasExtra(EXPLORER_VIEW_TYPE_KEY)) {
+        viewMode = i.getIntExtra(EXPLORER_VIEW_TYPE_KEY, GRID_VIEW);
+        Log.d(LOGTAG, EXPLORER_VIEW_TYPE_KEY);
+    }
+}
+#method_after
+public void readPreferences() {
+    prefs = getSharedPreferences(EXPLORER_PREFS_KEY, MODE_PRIVATE);
+    sortMode = prefs.getInt(SORT_MODE_KEY, FileUtilities.SORT_AZ);
+    SharedPreferences defaultPrefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+    viewMode = Integer.valueOf(defaultPrefs.getString(EXPLORER_VIEW_TYPE_KEY, "" + GRID_VIEW));
+    filterMode = Integer.valueOf(defaultPrefs.getString(FILTER_MODE_KEY, "-1"));
+    showHiddenFiles = defaultPrefs.getBoolean(ENABLE_SHOW_HIDDEN_FILES_KEY, false);
+    Intent i = this.getIntent();
+    if (i.hasExtra(CURRENT_DIRECTORY_KEY)) {
+        try {
+            currentDirectory = documentProvider.createFromUri(this, new URI(i.getStringExtra(CURRENT_DIRECTORY_KEY)));
+        } catch (URISyntaxException e) {
+            currentDirectory = documentProvider.getRootDirectory(this);
+        }
+        Log.d(LOGTAG, CURRENT_DIRECTORY_KEY);
+    }
+    if (i.hasExtra(FILTER_MODE_KEY)) {
+        filterMode = i.getIntExtra(FILTER_MODE_KEY, FileUtilities.ALL);
+        Log.d(LOGTAG, FILTER_MODE_KEY);
+    }
+    if (i.hasExtra(EXPLORER_VIEW_TYPE_KEY)) {
+        viewMode = i.getIntExtra(EXPLORER_VIEW_TYPE_KEY, GRID_VIEW);
+        Log.d(LOGTAG, EXPLORER_VIEW_TYPE_KEY);
+    }
+}
+#end_block
+
+#method_before
+private void updatePartPageRectangles() {
+    if (mTileProvider == null) {
+        Log.d(LOGTAG, "mTileProvider==null when calling updatePartPageRectangles");
+        return;
+    }
+    String partPageRectString = ((LOKitTileProvider) mTileProvider).getPartPageRectangles();
+    List<RectF> partPageRectangles = mInvalidationHandler.convertPayloadToRectangles(partPageRectString);
+    mContext.getDocumentOverlay().setPartPageRectangles(partPageRectangles);
+    /* render the new page */
+    mTileProvider.updatePageCount();
+    mLayerClient.setPageRect(0, 0, mTileProvider.getPageWidth(), mTileProvider.getPageHeight());
+    mViewportMetrics = mLayerClient.getViewportMetrics();
+    mLayerClient.setViewportMetrics(mViewportMetrics);
+    mLayerClient.forceRedraw();
+    mLayerClient.forceRender();
+    LOKitShell.moveViewportTo(mContext, new PointF(mContext.getCurrentCursorPosition().left, mContext.getCurrentCursorPosition().top), mLayerClient.getViewportMetrics().getZoomFactor());
+}
+#method_after
+private void updatePartPageRectangles() {
+    if (mTileProvider == null) {
+        Log.d(LOGTAG, "mTileProvider==null when calling updatePartPageRectangles");
+        return;
+    }
+    String partPageRectString = ((LOKitTileProvider) mTileProvider).getPartPageRectangles();
+    List<RectF> partPageRectangles = mInvalidationHandler.convertPayloadToRectangles(partPageRectString);
+    mContext.getDocumentOverlay().setPartPageRectangles(partPageRectangles);
+}
+#end_block
+
+#method_before
+private void processEvent(LOEvent event) {
+    switch(event.mType) {
+        case LOEvent.LOAD:
+            loadDocument(event.filePath);
+            break;
+        case LOEvent.LOAD_NEW:
+            loadNewDocument(event.filePath, event.fileType);
+            break;
+        case LOEvent.SAVE_AS:
+            saveDocumentAs(event.filePath, event.fileType);
+            break;
+        case LOEvent.RESUME:
+            resumeDocument(event.mString, event.mPartIndex);
+            break;
+        case LOEvent.CLOSE:
+            closeDocument();
+            break;
+        case LOEvent.SIZE_CHANGED:
+            redraw();
+            break;
+        case LOEvent.CHANGE_PART:
+            changePart(event.mPartIndex);
+            break;
+        case LOEvent.TILE_INVALIDATION:
+            tileInvalidation(event.mInvalidationRect);
+            break;
+        case LOEvent.THUMBNAIL:
+            createThumbnail(event.mTask);
+            break;
+        case LOEvent.TOUCH:
+            touch(event.mTouchType, event.mDocumentCoordinate);
+            break;
+        case LOEvent.KEY_EVENT:
+            keyEvent(event.mKeyEvent);
+            break;
+        case LOEvent.TILE_REEVALUATION_REQUEST:
+            tileReevaluationRequest(event.mComposedTileLayer);
+            break;
+        case LOEvent.CHANGE_HANDLE_POSITION:
+            changeHandlePosition(event.mHandleType, event.mDocumentCoordinate);
+            break;
+        case LOEvent.SWIPE_LEFT:
+            if (null != mTileProvider)
+                onSwipeLeft();
+            break;
+        case LOEvent.SWIPE_RIGHT:
+            if (null != mTileProvider)
+                onSwipeRight();
+            break;
+        case LOEvent.NAVIGATION_CLICK:
+            mInvalidationHandler.changeStateTo(InvalidationHandler.OverlayState.NONE);
+            break;
+        case LOEvent.UNO_COMMAND:
+            if (null == mTileProvider)
+                Log.e(LOGTAG, "no mTileProvider when trying to process " + event.mValue + " from UNO_COMMAND " + event.mString);
+            else
+                mTileProvider.postUnoCommand(event.mString, event.mValue);
+            break;
+        case LOEvent.UPDATE_PART_PAGE_RECT:
+            updatePartPageRectangles();
+            break;
+        case LOEvent.UPDATE_ZOOM_CONSTRAINTS:
+            updateZoomConstraints();
+            break;
+        case LOEvent.UPDATE_CALC_HEADERS:
+            updateCalcHeaders();
+            break;
+        case LOEvent.REFRESH:
+            refresh();
+            break;
+    }
+}
+#method_after
+private void processEvent(LOEvent event) {
+    switch(event.mType) {
+        case LOEvent.LOAD:
+            loadDocument(event.filePath);
+            break;
+        case LOEvent.LOAD_NEW:
+            loadNewDocument(event.filePath, event.fileType);
+            break;
+        case LOEvent.SAVE_AS:
+            saveDocumentAs(event.filePath, event.fileType);
+            break;
+        case LOEvent.RESUME:
+            resumeDocument(event.mString, event.mPartIndex);
+            break;
+        case LOEvent.CLOSE:
+            closeDocument();
+            break;
+        case LOEvent.SIZE_CHANGED:
+            redraw();
+            break;
+        case LOEvent.CHANGE_PART:
+            changePart(event.mPartIndex);
+            break;
+        case LOEvent.TILE_INVALIDATION:
+            tileInvalidation(event.mInvalidationRect);
+            break;
+        case LOEvent.THUMBNAIL:
+            createThumbnail(event.mTask);
+            break;
+        case LOEvent.TOUCH:
+            touch(event.mTouchType, event.mDocumentCoordinate);
+            break;
+        case LOEvent.KEY_EVENT:
+            keyEvent(event.mKeyEvent);
+            break;
+        case LOEvent.TILE_REEVALUATION_REQUEST:
+            tileReevaluationRequest(event.mComposedTileLayer);
+            break;
+        case LOEvent.CHANGE_HANDLE_POSITION:
+            changeHandlePosition(event.mHandleType, event.mDocumentCoordinate);
+            break;
+        case LOEvent.SWIPE_LEFT:
+            if (null != mTileProvider)
+                onSwipeLeft();
+            break;
+        case LOEvent.SWIPE_RIGHT:
+            if (null != mTileProvider)
+                onSwipeRight();
+            break;
+        case LOEvent.NAVIGATION_CLICK:
+            mInvalidationHandler.changeStateTo(InvalidationHandler.OverlayState.NONE);
+            break;
+        case LOEvent.UNO_COMMAND:
+            if (null == mTileProvider)
+                Log.e(LOGTAG, "no mTileProvider when trying to process " + event.mValue + " from UNO_COMMAND " + event.mString);
+            else
+                mTileProvider.postUnoCommand(event.mString, event.mValue);
+            break;
+        case LOEvent.UPDATE_PART_PAGE_RECT:
+            updatePartPageRectangles();
+            break;
+        case LOEvent.UPDATE_ZOOM_CONSTRAINTS:
+            updateZoomConstraints();
+            break;
+        case LOEvent.UPDATE_CALC_HEADERS:
+            updateCalcHeaders();
+            break;
+        case LOEvent.REFRESH:
+            refresh();
+            break;
+        case LOEvent.PAGE_SIZE_CHANGED:
+            updatePageSize(event.mPageWidth, event.mPageHeight);
+            break;
+    }
+}
+#end_block
+
+#method_before
+private void postLoad() {
+    mDocument.setMessageCallback(mMessageCallback);
+    int parts = mDocument.getParts();
+    Log.i(LOGTAG, "Document parts: " + parts);
+    mContext.getDocumentPartView().clear();
+    if (mDocument.getDocumentType() == Document.DOCTYPE_PRESENTATION) {
+        mContext.getToolbarController().disableMenuItem(R.id.action_presentation, false);
+    }
+    // Writer documents always have one part, so hide the navigation drawer.
+    if (mDocument.getDocumentType() != Document.DOCTYPE_TEXT) {
+        for (int i = 0; i < parts; i++) {
+            String partName = mDocument.getPartName(i);
+            if (partName.isEmpty()) {
+                partName = getGenericPartName(i);
+            }
+            Log.i(LOGTAG, "Document part " + i + " name:'" + partName + "'");
+            mDocument.setPart(i);
+            resetDocumentSize();
+            final DocumentPartView partView = new DocumentPartView(i, partName);
+            mContext.getDocumentPartView().add(partView);
+        }
+    } else {
+        mContext.disableNavigationDrawer();
+        mContext.getToolbarController().disableMenuItem(R.id.action_parts, true);
+    }
+    // Enable headers for Calc documents
+    if (mDocument.getDocumentType() == Document.DOCTYPE_SPREADSHEET) {
+        mContext.initializeCalcHeaders();
+    }
+    mDocument.setPart(0);
+    setupDocumentFonts();
+    LOKitShell.getMainHandler().post(new Runnable() {
+
+        @Override
+        public void run() {
+            mContext.getDocumentPartViewListAdapter().notifyDataSetChanged();
+        }
+    });
+    mContext.runOnUiThread(new Runnable() {
+
+        @Override
+        public void run() {
+            if (mContext.pendingInsertGraphic) {
+                mContext.getFormattingController().popCompressImageGradeSelection();
+            }
+        }
+    });
+}
+#method_after
+private void postLoad() {
+    mDocument.setMessageCallback(mMessageCallback);
+    int parts = mDocument.getParts();
+    Log.i(LOGTAG, "Document parts: " + parts);
+    mContext.getDocumentPartView().clear();
+    if (mDocument.getDocumentType() == Document.DOCTYPE_PRESENTATION) {
+        mContext.getToolbarController().disableMenuItem(R.id.action_presentation, false);
+        mContext.getToolbarController().disableMenuItem(R.id.action_add_slide, false);
+    }
+    if (mDocument.getDocumentType() == Document.DOCTYPE_SPREADSHEET) {
+        mContext.getToolbarController().disableMenuItem(R.id.action_add_worksheet, false);
+    }
+    // Writer documents always have one part, so hide the navigation drawer.
+    if (mDocument.getDocumentType() != Document.DOCTYPE_TEXT) {
+        for (int i = 0; i < parts; i++) {
+            String partName = mDocument.getPartName(i);
+            if (partName.isEmpty()) {
+                partName = getGenericPartName(i);
+            }
+            Log.i(LOGTAG, "Document part " + i + " name:'" + partName + "'");
+            mDocument.setPart(i);
+            resetDocumentSize();
+            final DocumentPartView partView = new DocumentPartView(i, partName);
+            mContext.getDocumentPartView().add(partView);
+        }
+    } else {
+        mContext.disableNavigationDrawer();
+        mContext.getToolbarController().disableMenuItem(R.id.action_parts, true);
+    }
+    // Enable headers for Calc documents
+    if (mDocument.getDocumentType() == Document.DOCTYPE_SPREADSHEET) {
+        mContext.initializeCalcHeaders();
+    }
+    mDocument.setPart(0);
+    setupDocumentFonts();
+    LOKitShell.getMainHandler().post(new Runnable() {
+
+        @Override
+        public void run() {
+            mContext.getDocumentPartViewListAdapter().notifyDataSetChanged();
+        }
+    });
+    mContext.runOnUiThread(new Runnable() {
+
+        @Override
+        public void run() {
+            if (mContext.pendingInsertGraphic) {
+                mContext.getFormattingController().popCompressImageGradeSelection();
+            }
+        }
+    });
+}
+#end_block
+
+#method_before
+private void setGraphicSelection(int type, PointF documentCoordinate) {
+    int x = (int) pixelToTwip(documentCoordinate.x, mDPI);
+    int y = (int) pixelToTwip(documentCoordinate.y, mDPI);
+    mDocument.setGraphicSelection(type, x, y);
+}
+#method_after
+private void setGraphicSelection(int type, PointF documentCoordinate) {
+    int x = (int) pixelToTwip(documentCoordinate.x, mDPI);
+    int y = (int) pixelToTwip(documentCoordinate.y, mDPI);
+    LibreOfficeMainActivity.setDocumentChanged(true);
+    mDocument.setGraphicSelection(type, x, y);
+}
+#end_block
+
+#method_before
+public void setDocumentChanged(boolean changed) {
+    isDocumentChanged = changed;
+}
+#method_after
+public static void setDocumentChanged(boolean changed) {
+    isDocumentChanged = changed;
+}
+#end_block
+
+#method_before
+private void setGraphicSelection(int type, PointF documentCoordinate) {
+    int x = (int) pixelToTwip(documentCoordinate.x, mDPI);
+    int y = (int) pixelToTwip(documentCoordinate.y, mDPI);
+    mDocument.setGraphicSelection(type, x, y);
+}
+#method_after
+private void setGraphicSelection(int type, PointF documentCoordinate) {
+    int x = (int) pixelToTwip(documentCoordinate.x, mDPI);
+    int y = (int) pixelToTwip(documentCoordinate.y, mDPI);
+    LibreOfficeMainActivity.setDocumentChanged(true);
+    mDocument.setGraphicSelection(type, x, y);
+}
+#end_block
+
+#method_before
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    Log.w(LOGTAG, "onCreate..");
+    super.onCreate(savedInstanceState);
+    SettingsListenerModel.getInstance().setListener(this);
+    SharedPreferences sPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    mIsExperimentalMode = sPrefs.getBoolean(ENABLE_EXPERIMENTAL_PREFS_KEY, false);
+    if (sPrefs.getInt(ASSETS_EXTRACTED_PREFS_KEY, 0) != BuildConfig.VERSION_CODE) {
+        if (copyFromAssets(getAssets(), "unpack", getApplicationInfo().dataDir)) {
+            sPrefs.edit().putInt(ASSETS_EXTRACTED_PREFS_KEY, BuildConfig.VERSION_CODE).apply();
+        }
+    }
+    setContentView(R.layout.activity_main);
+    toolbarTop = findViewById(R.id.toolbar);
+    hideBottomToolbar();
+    mToolbarController = new ToolbarController(this, toolbarTop);
+    mFormattingController = new FormattingController(this);
+    toolbarTop.setNavigationOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View view) {
+            LOKitShell.sendNavigationClickEvent();
+        }
+    });
+    mFontController = new FontController(this);
+    mSearchController = new SearchController(this);
+    loKitThread = new LOKitThread(this);
+    loKitThread.start();
+    mLayerClient = new GeckoLayerClient(this);
+    LayerView layerView = findViewById(R.id.layer_view);
+    mLayerClient.setView(layerView);
+    layerView.setInputConnectionHandler(new LOKitInputConnectionHandler());
+    mLayerClient.notifyReady();
+    layerView.setOnKeyListener(new View.OnKeyListener() {
+
+        @Override
+        public boolean onKey(View view, int i, KeyEvent keyEvent) {
+            if (keyEvent.getKeyCode() != KeyEvent.KEYCODE_BACK) {
+                isDocumentChanged = true;
+            }
+            return false;
+        }
+    });
+    // create TextCursorLayer
+    mDocumentOverlay = new DocumentOverlay(this, layerView);
+    // New document type string is not null, meaning we want to open a new document
+    if (getIntent().getStringExtra(LibreOfficeUIActivity.NEW_DOC_TYPE_KEY) != null) {
+        String newDocumentType = getIntent().getStringExtra(LibreOfficeUIActivity.NEW_DOC_TYPE_KEY);
+        String newFilePath = getIntent().getStringExtra(LibreOfficeUIActivity.NEW_FILE_PATH_KEY);
+        // Load the new document
+        loadNewDocument(newFilePath, newDocumentType);
+    }
+    if (getIntent().getData() != null) {
+        if (getIntent().getData().getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+            if (copyFileToTemp() && mTempFile != null) {
+                mInputFile = mTempFile;
+                Log.d(LOGTAG, "SCHEME_CONTENT: getPath(): " + getIntent().getData().getPath());
+                toolbarTop.setTitle(mInputFile.getName());
+            } else {
+                // TODO: can't open the file
+                Log.e(LOGTAG, "couldn't create temporary file from " + getIntent().getData());
+            }
+        } else if (getIntent().getData().getScheme().equals(ContentResolver.SCHEME_FILE)) {
+            mInputFile = new File(getIntent().getData().getPath());
+            Log.d(LOGTAG, "SCHEME_FILE: getPath(): " + getIntent().getData().getPath());
+            toolbarTop.setTitle(mInputFile.getName());
+            // Gather data to rebuild IFile object later
+            providerId = getIntent().getIntExtra("org.libreoffice.document_provider_id", 0);
+            documentUri = (URI) getIntent().getSerializableExtra("org.libreoffice.document_uri");
+        }
+    } else {
+        if (!isNewDocument) {
+            mInputFile = new File(DEFAULT_DOC_PATH);
+        }
+    }
+    mDrawerLayout = findViewById(R.id.drawer_layout);
+    if (mDocumentPartViewListAdapter == null) {
+        mDrawerList = findViewById(R.id.left_drawer);
+        mDocumentPartViewListAdapter = new DocumentPartViewListAdapter(this, R.layout.document_part_list_layout, mDocumentPartView);
+        mDrawerList.setAdapter(mDocumentPartViewListAdapter);
+        mDrawerList.setOnItemClickListener(new DocumentPartClickListener());
+    }
+    mToolbarController.setupToolbars();
+    TabHost host = findViewById(R.id.toolbarTabHost);
+    host.setup();
+    TabHost.TabSpec spec = host.newTabSpec("Character");
+    spec.setContent(R.id.tab_character);
+    spec.setIndicator("Character");
+    host.addTab(spec);
+    spec = host.newTabSpec("Paragraph");
+    spec.setContent(R.id.tab_paragraph);
+    spec.setIndicator("Paragraph");
+    host.addTab(spec);
+    spec = host.newTabSpec("Insert");
+    spec.setContent(R.id.tab_insert);
+    spec.setIndicator("Insert");
+    host.addTab(spec);
+    LinearLayout bottomToolbarLayout = findViewById(R.id.toolbar_bottom);
+    LinearLayout toolbarColorPickerLayout = findViewById(R.id.toolbar_color_picker);
+    bottomToolbarSheetBehavior = BottomSheetBehavior.from(bottomToolbarLayout);
+    toolbarColorPickerBottomSheetBehavior = BottomSheetBehavior.from(toolbarColorPickerLayout);
+    bottomToolbarSheetBehavior.setHideable(true);
+    toolbarColorPickerBottomSheetBehavior.setHideable(true);
+}
+#method_after
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    Log.w(LOGTAG, "onCreate..");
+    super.onCreate(savedInstanceState);
+    SettingsListenerModel.getInstance().setListener(this);
+    SharedPreferences sPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    mIsExperimentalMode = sPrefs.getBoolean(ENABLE_EXPERIMENTAL_PREFS_KEY, false);
+    if (sPrefs.getInt(ASSETS_EXTRACTED_PREFS_KEY, 0) != BuildConfig.VERSION_CODE) {
+        if (copyFromAssets(getAssets(), "unpack", getApplicationInfo().dataDir)) {
+            sPrefs.edit().putInt(ASSETS_EXTRACTED_PREFS_KEY, BuildConfig.VERSION_CODE).apply();
+        }
+    }
+    setContentView(R.layout.activity_main);
+    toolbarTop = findViewById(R.id.toolbar);
+    hideBottomToolbar();
+    mToolbarController = new ToolbarController(this, toolbarTop);
+    mFormattingController = new FormattingController(this);
+    toolbarTop.setNavigationOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View view) {
+            LOKitShell.sendNavigationClickEvent();
+        }
+    });
+    mFontController = new FontController(this);
+    mSearchController = new SearchController(this);
+    loKitThread = new LOKitThread(this);
+    loKitThread.start();
+    mLayerClient = new GeckoLayerClient(this);
+    LayerView layerView = findViewById(R.id.layer_view);
+    mLayerClient.setView(layerView);
+    layerView.setInputConnectionHandler(new LOKitInputConnectionHandler());
+    mLayerClient.notifyReady();
+    layerView.setOnKeyListener(new View.OnKeyListener() {
+
+        @Override
+        public boolean onKey(View view, int i, KeyEvent keyEvent) {
+            if (keyEvent.getKeyCode() != KeyEvent.KEYCODE_BACK) {
+                isDocumentChanged = true;
+            }
+            return false;
+        }
+    });
+    // create TextCursorLayer
+    mDocumentOverlay = new DocumentOverlay(this, layerView);
+    // New document type string is not null, meaning we want to open a new document
+    if (getIntent().getStringExtra(LibreOfficeUIActivity.NEW_DOC_TYPE_KEY) != null) {
+        String newDocumentType = getIntent().getStringExtra(LibreOfficeUIActivity.NEW_DOC_TYPE_KEY);
+        String newFilePath = getIntent().getStringExtra(LibreOfficeUIActivity.NEW_FILE_PATH_KEY);
+        // Load the new document
+        loadNewDocument(newFilePath, newDocumentType);
+    }
+    if (getIntent().getData() != null) {
+        if (getIntent().getData().getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+            if (copyFileToTemp() && mTempFile != null) {
+                mInputFile = mTempFile;
+                Log.d(LOGTAG, "SCHEME_CONTENT: getPath(): " + getIntent().getData().getPath());
+                toolbarTop.setTitle(mInputFile.getName());
+            } else {
+                // TODO: can't open the file
+                Log.e(LOGTAG, "couldn't create temporary file from " + getIntent().getData());
+            }
+        } else if (getIntent().getData().getScheme().equals(ContentResolver.SCHEME_FILE)) {
+            mInputFile = new File(getIntent().getData().getPath());
+            Log.d(LOGTAG, "SCHEME_FILE: getPath(): " + getIntent().getData().getPath());
+            toolbarTop.setTitle(mInputFile.getName());
+            // Gather data to rebuild IFile object later
+            providerId = getIntent().getIntExtra("org.libreoffice.document_provider_id", 0);
+            documentUri = (URI) getIntent().getSerializableExtra("org.libreoffice.document_uri");
+        }
+    } else {
+        if (!isNewDocument) {
+            mInputFile = new File(DEFAULT_DOC_PATH);
+        }
+    }
+    mDrawerLayout = findViewById(R.id.drawer_layout);
+    if (mDocumentPartViewListAdapter == null) {
+        mDrawerList = findViewById(R.id.left_drawer);
+        mDocumentPartViewListAdapter = new DocumentPartViewListAdapter(this, R.layout.document_part_list_layout, mDocumentPartView);
+        mDrawerList.setAdapter(mDocumentPartViewListAdapter);
+        mDrawerList.setOnItemClickListener(new DocumentPartClickListener());
+    }
+    mToolbarController.setupToolbars();
+    TabHost host = findViewById(R.id.toolbarTabHost);
+    host.setup();
+    TabHost.TabSpec spec = host.newTabSpec("Character");
+    spec.setContent(R.id.tab_character);
+    spec.setIndicator("Character");
+    host.addTab(spec);
+    spec = host.newTabSpec("Paragraph");
+    spec.setContent(R.id.tab_paragraph);
+    spec.setIndicator("Paragraph");
+    host.addTab(spec);
+    spec = host.newTabSpec("Insert");
+    spec.setContent(R.id.tab_insert);
+    spec.setIndicator("Insert");
+    host.addTab(spec);
+    LinearLayout bottomToolbarLayout = findViewById(R.id.toolbar_bottom);
+    LinearLayout toolbarColorPickerLayout = findViewById(R.id.toolbar_color_picker);
+    LinearLayout toolbarBackColorPickerLayout = findViewById(R.id.toolbar_back_color_picker);
+    bottomToolbarSheetBehavior = BottomSheetBehavior.from(bottomToolbarLayout);
+    toolbarColorPickerBottomSheetBehavior = BottomSheetBehavior.from(toolbarColorPickerLayout);
+    toolbarBackColorPickerBottomSheetBehavior = BottomSheetBehavior.from(toolbarBackColorPickerLayout);
+    bottomToolbarSheetBehavior.setHideable(true);
+    toolbarColorPickerBottomSheetBehavior.setHideable(true);
+    toolbarBackColorPickerBottomSheetBehavior.setHideable(true);
+}
+#end_block
+
+#method_before
+public void saveDocument() {
+    if (!mInputFile.exists()) {
+        // Needed for handling null in case new document is not created.
+        mInputFile = new File(DEFAULT_DOC_PATH);
+    }
+    final long lastModified = mInputFile.lastModified();
+    final Activity activity = LibreOfficeMainActivity.this;
+    Toast.makeText(this, R.string.message_saving, Toast.LENGTH_SHORT).show();
+    // local save
+    LOKitShell.sendEvent(new LOEvent(LOEvent.UNO_COMMAND, ".uno:Save"));
+    final AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                // rebuild the IFile object from the data passed in the Intent
+                IFile mStorageFile = DocumentProviderFactory.getInstance().getProvider(providerId).createFromUri(documentUri);
+                // call document provider save operation
+                mStorageFile.saveDocument(mInputFile);
+            } catch (final RuntimeException e) {
+                activity.runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        Toast.makeText(activity, e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+                Log.e(LOGTAG, e.getMessage(), e.getCause());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void param) {
+            Toast.makeText(activity, R.string.message_saved, Toast.LENGTH_SHORT).show();
+            isDocumentChanged = false;
+        }
+    };
+    // Delay the call to document provider save operation and check the
+    // modification time periodically to ensure the local file has been saved.
+    // TODO: ideally the save operation should have a callback
+    Runnable runTask = new Runnable() {
+
+        private int timesRun = 0;
+
+        @Override
+        public void run() {
+            if (lastModified < mInputFile.lastModified()) {
+                // we are sure local save is complete, push changes to cloud
+                task.execute();
+            } else {
+                timesRun++;
+                if (timesRun < 4) {
+                    new Handler().postDelayed(this, 5000);
+                } else {
+                    // 20 seconds later, the local file has not changed,
+                    // maybe there were no changes at all
+                    Toast.makeText(activity, R.string.message_save_incomplete, Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    };
+    new Handler().postDelayed(runTask, 5000);
+}
+#method_after
+public void saveDocument() {
+    if (!mInputFile.exists()) {
+        // Needed for handling null in case new document is not created.
+        mInputFile = new File(DEFAULT_DOC_PATH);
+    }
+    final long lastModified = mInputFile.lastModified();
+    final Activity activity = LibreOfficeMainActivity.this;
+    Toast.makeText(this, R.string.message_saving, Toast.LENGTH_SHORT).show();
+    // local save
+    LOKitShell.sendEvent(new LOEvent(LOEvent.UNO_COMMAND, ".uno:Save"));
+    final AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>() {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                // rebuild the IFile object from the data passed in the Intent
+                IFile mStorageFile = DocumentProviderFactory.getInstance().getProvider(providerId).createFromUri(LibreOfficeMainActivity.this, documentUri);
+                // call document provider save operation
+                mStorageFile.saveDocument(mInputFile);
+            } catch (final RuntimeException e) {
+                activity.runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        Toast.makeText(activity, e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+                Log.e(LOGTAG, e.getMessage(), e.getCause());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void param) {
+            Toast.makeText(activity, R.string.message_saved, Toast.LENGTH_SHORT).show();
+            isDocumentChanged = false;
+        }
+    };
+    // Delay the call to document provider save operation and check the
+    // modification time periodically to ensure the local file has been saved.
+    // TODO: ideally the save operation should have a callback
+    Runnable runTask = new Runnable() {
+
+        private int timesRun = 0;
+
+        @Override
+        public void run() {
+            if (lastModified < mInputFile.lastModified()) {
+                // we are sure local save is complete, push changes to cloud
+                task.execute();
+            } else {
+                timesRun++;
+                if (timesRun < 4) {
+                    new Handler().postDelayed(this, 5000);
+                } else {
+                    // 20 seconds later, the local file has not changed,
+                    // maybe there were no changes at all
+                    Toast.makeText(activity, R.string.message_save_incomplete, Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    };
+    new Handler().postDelayed(runTask, 5000);
+}
+#end_block
+
+#method_before
+public void hideBottomToolbar() {
+    LOKitShell.getMainHandler().post(new Runnable() {
+
+        @Override
+        public void run() {
+            bottomToolbarSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            toolbarColorPickerBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            findViewById(R.id.search_toolbar).setVisibility(View.GONE);
+            isFormattingToolbarOpen = false;
+            isSearchToolbarOpen = false;
+        }
+    });
+}
+#method_after
+public void hideBottomToolbar() {
+    LOKitShell.getMainHandler().post(new Runnable() {
+
+        @Override
+        public void run() {
+            bottomToolbarSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            toolbarColorPickerBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            toolbarBackColorPickerBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            findViewById(R.id.search_toolbar).setVisibility(View.GONE);
+            isFormattingToolbarOpen = false;
+            isSearchToolbarOpen = false;
+        }
+    });
+}
+#end_block
+
+#method_before
+public void showSearchToolbar() {
+    LOKitShell.getMainHandler().post(new Runnable() {
+
+        @Override
+        public void run() {
+            if (isSearchToolbarOpen) {
+                hideSearchToolbar();
+            } else {
+                showBottomToolbar();
+                findViewById(R.id.formatting_toolbar).setVisibility(View.GONE);
+                toolbarColorPickerBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                findViewById(R.id.search_toolbar).setVisibility(View.VISIBLE);
+                hideSoftKeyboardDirect();
+                isFormattingToolbarOpen = false;
+                isSearchToolbarOpen = true;
+            }
+        }
+    });
+}
+#method_after
+public void showSearchToolbar() {
+    LOKitShell.getMainHandler().post(new Runnable() {
+
+        @Override
+        public void run() {
+            if (isSearchToolbarOpen) {
+                hideSearchToolbar();
+            } else {
+                showBottomToolbar();
+                findViewById(R.id.formatting_toolbar).setVisibility(View.GONE);
+                toolbarColorPickerBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                toolbarBackColorPickerBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                findViewById(R.id.search_toolbar).setVisibility(View.VISIBLE);
+                hideSoftKeyboardDirect();
+                isFormattingToolbarOpen = false;
+                isSearchToolbarOpen = true;
+            }
+        }
+    });
+}
+#end_block
+
+#method_before
+private void postLoad() {
+    mDocument.setMessageCallback(mMessageCallback);
+    int parts = mDocument.getParts();
+    Log.i(LOGTAG, "Document parts: " + parts);
+    mContext.getDocumentPartView().clear();
+    if (mDocument.getDocumentType() == Document.DOCTYPE_PRESENTATION) {
+        mContext.getToolbarController().disableMenuItem(R.id.action_presentation, false);
+    }
+    // Writer documents always have one part, so hide the navigation drawer.
+    if (mDocument.getDocumentType() != Document.DOCTYPE_TEXT) {
+        for (int i = 0; i < parts; i++) {
+            String partName = mDocument.getPartName(i);
+            if (partName.isEmpty()) {
+                partName = getGenericPartName(i);
+            }
+            Log.i(LOGTAG, "Document part " + i + " name:'" + partName + "'");
+            mDocument.setPart(i);
+            resetDocumentSize();
+            final DocumentPartView partView = new DocumentPartView(i, partName);
+            mContext.getDocumentPartView().add(partView);
+        }
+    } else {
+        mContext.disableNavigationDrawer();
+        mContext.getToolbarController().disableMenuItem(R.id.action_parts, true);
+    }
+    // Enable headers for Calc documents
+    if (mDocument.getDocumentType() == Document.DOCTYPE_SPREADSHEET) {
+        mContext.initializeCalcHeaders();
+    }
+    mDocument.setPart(0);
+    setupDocumentFonts();
+    LOKitShell.getMainHandler().post(new Runnable() {
+
+        @Override
+        public void run() {
+            mContext.getDocumentPartViewListAdapter().notifyDataSetChanged();
+        }
+    });
+    mContext.runOnUiThread(new Runnable() {
+
+        @Override
+        public void run() {
+            if (mContext.pendingInsertGraphic) {
+                mContext.getFormattingController().popCompressImageGradeSelection();
+            }
+        }
+    });
+}
+#method_after
+private void postLoad() {
+    mDocument.setMessageCallback(mMessageCallback);
+    int parts = mDocument.getParts();
+    Log.i(LOGTAG, "Document parts: " + parts);
+    mContext.getDocumentPartView().clear();
+    if (mDocument.getDocumentType() == Document.DOCTYPE_PRESENTATION) {
+        mContext.getToolbarController().disableMenuItem(R.id.action_presentation, false);
+        mContext.getToolbarController().disableMenuItem(R.id.action_add_slide, false);
+    }
+    // Writer documents always have one part, so hide the navigation drawer.
+    if (mDocument.getDocumentType() != Document.DOCTYPE_TEXT) {
+        for (int i = 0; i < parts; i++) {
+            String partName = mDocument.getPartName(i);
+            if (partName.isEmpty()) {
+                partName = getGenericPartName(i);
+            }
+            Log.i(LOGTAG, "Document part " + i + " name:'" + partName + "'");
+            mDocument.setPart(i);
+            resetDocumentSize();
+            final DocumentPartView partView = new DocumentPartView(i, partName);
+            mContext.getDocumentPartView().add(partView);
+        }
+    } else {
+        mContext.disableNavigationDrawer();
+        mContext.getToolbarController().disableMenuItem(R.id.action_parts, true);
+    }
+    // Enable headers for Calc documents
+    if (mDocument.getDocumentType() == Document.DOCTYPE_SPREADSHEET) {
+        mContext.initializeCalcHeaders();
+    }
+    mDocument.setPart(0);
+    setupDocumentFonts();
+    LOKitShell.getMainHandler().post(new Runnable() {
+
+        @Override
+        public void run() {
+            mContext.getDocumentPartViewListAdapter().notifyDataSetChanged();
+        }
+    });
+    mContext.runOnUiThread(new Runnable() {
+
+        @Override
+        public void run() {
+            if (mContext.pendingInsertGraphic) {
+                mContext.getFormattingController().popCompressImageGradeSelection();
+            }
+        }
+    });
+}
+#end_block
+
+#method_before
+private void showInfoNonModal(String sTitle, String sMessage) {
+    // couldn't be implemented really using the toolkit ...
+    // Because we need a parent anytime.
+    // And showing e.g. a java dialog can make some trouble
+    // inside office ... but we have no chance here.
+    final String sFinalTitle = sTitle;
+    final String sFinalMessage = sMessage;
+    // On Mac OS X, AWT/Swing must not be accessed from the AppKit thread, so call
+    // SwingUtilities.invokeLater always on a fresh thread to avoid that problem
+    // (also, the current thread must not wait for that fresh thread to terminate,
+    // as that would cause a deadlock if this thread is the AppKit thread):
+    final Runnable doRun = new Runnable() {
+
+        public void run() {
+            javax.swing.JOptionPane.showMessageDialog(null, sFinalMessage, sFinalTitle, javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        }
+    };
+    new Thread(doRun) {
+
+        @Override
+        public void run() {
+            javax.swing.SwingUtilities.invokeLater(doRun);
+        }
+    }.start();
+}
+#method_after
+private void showInfoNonModal(String sTitle, String sMessage) {
+    // Couldn't be implemented really using the toolkit...
+    // Because we need a parent anytime.
+    // And showing e.g. a Java dialog can make some trouble
+    // inside office... but we have no chance here.
+    final String sFinalTitle = sTitle;
+    final String sFinalMessage = sMessage;
+    // On Mac OS X, AWT/Swing must not be accessed from the AppKit thread, so call
+    // SwingUtilities.invokeLater always on a fresh thread to avoid that problem
+    // (also, the current thread must not wait for that fresh thread to terminate,
+    // as that would cause a deadlock if this thread is the AppKit thread):
+    final Runnable doRun = new Runnable() {
+
+        public void run() {
+            javax.swing.JOptionPane.showMessageDialog(null, sFinalMessage, sFinalTitle, javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        }
+    };
+    new Thread(doRun) {
+
+        @Override
+        public void run() {
+            javax.swing.SwingUtilities.invokeLater(doRun);
+        }
+    }.start();
+}
+#end_block
+
+#method_before
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    Log.w(LOGTAG, "onCreate..");
+    super.onCreate(savedInstanceState);
+    SharedPreferences sPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    mIsExperimentalMode = sPrefs.getBoolean(ENABLE_EXPERIMENTAL_PREFS_KEY, false);
+    if (sPrefs.getInt(ASSETS_EXTRACTED_PREFS_KEY, 0) != BuildConfig.VERSION_CODE) {
+        if (copyFromAssets(getAssets(), "unpack", getApplicationInfo().dataDir)) {
+            sPrefs.edit().putInt(ASSETS_EXTRACTED_PREFS_KEY, BuildConfig.VERSION_CODE).apply();
+        }
+    }
+    setContentView(R.layout.activity_main);
+    toolbarTop = (Toolbar) findViewById(R.id.toolbar);
+    hideBottomToolbar();
+    mToolbarController = new ToolbarController(this, toolbarTop);
+    mFormattingController = new FormattingController(this);
+    toolbarTop.setNavigationOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View view) {
+            LOKitShell.sendNavigationClickEvent();
+        }
+    });
+    mFontController = new FontController(this);
+    mSearchController = new SearchController(this);
+    loKitThread = new LOKitThread(this);
+    loKitThread.start();
+    mLayerClient = new GeckoLayerClient(this);
+    LayerView layerView = (LayerView) findViewById(R.id.layer_view);
+    mLayerClient.setView(layerView);
+    layerView.setInputConnectionHandler(new LOKitInputConnectionHandler());
+    mLayerClient.notifyReady();
+    layerView.setOnKeyListener(new View.OnKeyListener() {
+
+        @Override
+        public boolean onKey(View view, int i, KeyEvent keyEvent) {
+            if (keyEvent.getKeyCode() != KeyEvent.KEYCODE_BACK) {
+                isDocumentChanged = true;
+            }
+            return false;
+        }
+    });
+    // create TextCursorLayer
+    mDocumentOverlay = new DocumentOverlay(this, layerView);
+    // New document type string is not null, meaning we want to open a new document
+    if (getIntent().getStringExtra(LibreOfficeUIActivity.NEW_DOC_TYPE_KEY) != null) {
+        String newDocumentType = getIntent().getStringExtra(LibreOfficeUIActivity.NEW_DOC_TYPE_KEY);
+        String newFilePath = getIntent().getStringExtra(LibreOfficeUIActivity.NEW_FILE_PATH_KEY);
+        // Load the new document
+        loadNewDocument(newFilePath, newDocumentType);
+    }
+    if (getIntent().getData() != null) {
+        if (getIntent().getData().getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+            if (copyFileToTemp() && mTempFile != null) {
+                mInputFile = mTempFile;
+                Log.d(LOGTAG, "SCHEME_CONTENT: getPath(): " + getIntent().getData().getPath());
+                toolbarTop.setTitle(mInputFile.getName());
+            } else {
+                // TODO: can't open the file
+                Log.e(LOGTAG, "couldn't create temporary file from " + getIntent().getData());
+            }
+        } else if (getIntent().getData().getScheme().equals(ContentResolver.SCHEME_FILE)) {
+            mInputFile = new File(getIntent().getData().getPath());
+            Log.d(LOGTAG, "SCHEME_FILE: getPath(): " + getIntent().getData().getPath());
+            toolbarTop.setTitle(mInputFile.getName());
+            // Gather data to rebuild IFile object later
+            providerId = getIntent().getIntExtra("org.libreoffice.document_provider_id", 0);
+            documentUri = (URI) getIntent().getSerializableExtra("org.libreoffice.document_uri");
+        }
+    } else {
+        if (!isNewDocument) {
+            mInputFile = new File(DEFAULT_DOC_PATH);
+        }
+    }
+    mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+    if (mDocumentPartViewListAdapter == null) {
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+        mDocumentPartViewListAdapter = new DocumentPartViewListAdapter(this, R.layout.document_part_list_layout, mDocumentPartView);
+        mDrawerList.setAdapter(mDocumentPartViewListAdapter);
+        mDrawerList.setOnItemClickListener(new DocumentPartClickListener());
+    }
+    mToolbarController.setupToolbars();
+    TabHost host = (TabHost) findViewById(R.id.toolbarTabHost);
+    host.setup();
+    TabHost.TabSpec spec = host.newTabSpec("Character");
+    spec.setContent(R.id.tab_character);
+    spec.setIndicator("Character");
+    host.addTab(spec);
+    spec = host.newTabSpec("Paragraph");
+    spec.setContent(R.id.tab_paragraph);
+    spec.setIndicator("Paragraph");
+    host.addTab(spec);
+    spec = host.newTabSpec("Insert");
+    spec.setContent(R.id.tab_insert);
+    spec.setIndicator("Insert");
+    host.addTab(spec);
+    LinearLayout bottomToolbarLayout = (LinearLayout) findViewById(R.id.toolbar_bottom);
+    LinearLayout toolbarColorPickerLayout = (LinearLayout) findViewById(R.id.toolbar_color_picker);
+    bottomToolbarSheetBehavior = BottomSheetBehavior.from(bottomToolbarLayout);
+    toolbarColorPickerBottomSheetBehavior = BottomSheetBehavior.from(toolbarColorPickerLayout);
+    bottomToolbarSheetBehavior.setHideable(true);
+    toolbarColorPickerBottomSheetBehavior.setHideable(true);
+}
+#method_after
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    Log.w(LOGTAG, "onCreate..");
+    super.onCreate(savedInstanceState);
+    SettingsListenerModel.getInstance().setListener(this);
+    SharedPreferences sPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    mIsExperimentalMode = sPrefs.getBoolean(ENABLE_EXPERIMENTAL_PREFS_KEY, false);
+    if (sPrefs.getInt(ASSETS_EXTRACTED_PREFS_KEY, 0) != BuildConfig.VERSION_CODE) {
+        if (copyFromAssets(getAssets(), "unpack", getApplicationInfo().dataDir)) {
+            sPrefs.edit().putInt(ASSETS_EXTRACTED_PREFS_KEY, BuildConfig.VERSION_CODE).apply();
+        }
+    }
+    setContentView(R.layout.activity_main);
+    toolbarTop = (Toolbar) findViewById(R.id.toolbar);
+    hideBottomToolbar();
+    mToolbarController = new ToolbarController(this, toolbarTop);
+    mFormattingController = new FormattingController(this);
+    toolbarTop.setNavigationOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View view) {
+            LOKitShell.sendNavigationClickEvent();
+        }
+    });
+    mFontController = new FontController(this);
+    mSearchController = new SearchController(this);
+    loKitThread = new LOKitThread(this);
+    loKitThread.start();
+    mLayerClient = new GeckoLayerClient(this);
+    LayerView layerView = (LayerView) findViewById(R.id.layer_view);
+    mLayerClient.setView(layerView);
+    layerView.setInputConnectionHandler(new LOKitInputConnectionHandler());
+    mLayerClient.notifyReady();
+    layerView.setOnKeyListener(new View.OnKeyListener() {
+
+        @Override
+        public boolean onKey(View view, int i, KeyEvent keyEvent) {
+            if (keyEvent.getKeyCode() != KeyEvent.KEYCODE_BACK) {
+                isDocumentChanged = true;
+            }
+            return false;
+        }
+    });
+    // create TextCursorLayer
+    mDocumentOverlay = new DocumentOverlay(this, layerView);
+    // New document type string is not null, meaning we want to open a new document
+    if (getIntent().getStringExtra(LibreOfficeUIActivity.NEW_DOC_TYPE_KEY) != null) {
+        String newDocumentType = getIntent().getStringExtra(LibreOfficeUIActivity.NEW_DOC_TYPE_KEY);
+        String newFilePath = getIntent().getStringExtra(LibreOfficeUIActivity.NEW_FILE_PATH_KEY);
+        // Load the new document
+        loadNewDocument(newFilePath, newDocumentType);
+    }
+    if (getIntent().getData() != null) {
+        if (getIntent().getData().getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+            if (copyFileToTemp() && mTempFile != null) {
+                mInputFile = mTempFile;
+                Log.d(LOGTAG, "SCHEME_CONTENT: getPath(): " + getIntent().getData().getPath());
+                toolbarTop.setTitle(mInputFile.getName());
+            } else {
+                // TODO: can't open the file
+                Log.e(LOGTAG, "couldn't create temporary file from " + getIntent().getData());
+            }
+        } else if (getIntent().getData().getScheme().equals(ContentResolver.SCHEME_FILE)) {
+            mInputFile = new File(getIntent().getData().getPath());
+            Log.d(LOGTAG, "SCHEME_FILE: getPath(): " + getIntent().getData().getPath());
+            toolbarTop.setTitle(mInputFile.getName());
+            // Gather data to rebuild IFile object later
+            providerId = getIntent().getIntExtra("org.libreoffice.document_provider_id", 0);
+            documentUri = (URI) getIntent().getSerializableExtra("org.libreoffice.document_uri");
+        }
+    } else {
+        if (!isNewDocument) {
+            mInputFile = new File(DEFAULT_DOC_PATH);
+        }
+    }
+    mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+    if (mDocumentPartViewListAdapter == null) {
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+        mDocumentPartViewListAdapter = new DocumentPartViewListAdapter(this, R.layout.document_part_list_layout, mDocumentPartView);
+        mDrawerList.setAdapter(mDocumentPartViewListAdapter);
+        mDrawerList.setOnItemClickListener(new DocumentPartClickListener());
+    }
+    mToolbarController.setupToolbars();
+    TabHost host = (TabHost) findViewById(R.id.toolbarTabHost);
+    host.setup();
+    TabHost.TabSpec spec = host.newTabSpec("Character");
+    spec.setContent(R.id.tab_character);
+    spec.setIndicator("Character");
+    host.addTab(spec);
+    spec = host.newTabSpec("Paragraph");
+    spec.setContent(R.id.tab_paragraph);
+    spec.setIndicator("Paragraph");
+    host.addTab(spec);
+    spec = host.newTabSpec("Insert");
+    spec.setContent(R.id.tab_insert);
+    spec.setIndicator("Insert");
+    host.addTab(spec);
+    LinearLayout bottomToolbarLayout = (LinearLayout) findViewById(R.id.toolbar_bottom);
+    LinearLayout toolbarColorPickerLayout = (LinearLayout) findViewById(R.id.toolbar_color_picker);
+    bottomToolbarSheetBehavior = BottomSheetBehavior.from(bottomToolbarLayout);
+    toolbarColorPickerBottomSheetBehavior = BottomSheetBehavior.from(toolbarColorPickerLayout);
+    bottomToolbarSheetBehavior.setHideable(true);
+    toolbarColorPickerBottomSheetBehavior.setHideable(true);
+}
+#end_block
+
+#method_before
+@Override
+protected void onDestroy() {
+    Log.i(LOGTAG, "onDestroy..");
+    mLayerClient.destroy();
+    super.onDestroy();
+    if (isFinishing()) {
+        // Not an orientation change
+        if (mTempFile != null) {
+            // noinspection ResultOfMethodCallIgnored
+            mTempFile.delete();
+        }
+    }
+}
+#method_after
+@Override
+protected void onDestroy() {
+    Log.i(LOGTAG, "onDestroy..");
+    mLayerClient.destroy();
+    super.onDestroy();
+    if (isFinishing()) {
+        // Not an orientation change
+        if (mTempFile != null) {
+            // noinspection ResultOfMethodCallIgnored
+            mTempFile.delete();
+        }
+        if (mTempSlideShowFile != null && mTempSlideShowFile.exists()) {
+            // noinspection ResultOfMethodCallIgnored
+            mTempSlideShowFile.delete();
+        }
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void messageRetrieved(int messageID, String payload) {
+    if (!LOKitShell.isEditingEnabled()) {
+        // enable handling of hyperlinks even in the Viewer
+        if (messageID != Document.CALLBACK_INVALIDATE_TILES && messageID != Document.CALLBACK_HYPERLINK_CLICKED)
+            return;
+    }
+    switch(messageID) {
+        case Document.CALLBACK_INVALIDATE_TILES:
+            invalidateTiles(payload);
+            break;
+        case Document.CALLBACK_INVALIDATE_VISIBLE_CURSOR:
+            invalidateCursor(payload);
+            break;
+        case Document.CALLBACK_TEXT_SELECTION:
+            textSelection(payload);
+            break;
+        case Document.CALLBACK_TEXT_SELECTION_START:
+            textSelectionStart(payload);
+            break;
+        case Document.CALLBACK_TEXT_SELECTION_END:
+            textSelectionEnd(payload);
+            break;
+        case Document.CALLBACK_CURSOR_VISIBLE:
+            cursorVisibility(payload);
+            break;
+        case Document.CALLBACK_GRAPHIC_SELECTION:
+            graphicSelection(payload);
+            break;
+        case Document.CALLBACK_HYPERLINK_CLICKED:
+            if (!payload.startsWith("http://") && !payload.startsWith("https://")) {
+                payload = "http://" + payload;
+            }
+            Intent urlIntent = new Intent(Intent.ACTION_VIEW);
+            urlIntent.setData(Uri.parse(payload));
+            mContext.startActivity(urlIntent);
+            break;
+        case Document.CALLBACK_STATE_CHANGED:
+            stateChanged(payload);
+            break;
+        case Document.CALLBACK_SEARCH_RESULT_SELECTION:
+            searchResultSelection(payload);
+            break;
+        case Document.CALLBACK_SEARCH_NOT_FOUND:
+            Log.d(LOGTAG, "LOK_CALLBACK: Search not found.");
+            // this callback is never caught. Hope someone fix this.
+            break;
+        default:
+            Log.d(LOGTAG, "LOK_CALLBACK uncaught: " + messageID + " : " + payload);
+    }
+}
+#method_after
+@Override
+public void messageRetrieved(int messageID, String payload) {
+    if (!LOKitShell.isEditingEnabled()) {
+        // enable handling of hyperlinks even in the Viewer
+        if (messageID != Document.CALLBACK_INVALIDATE_TILES && messageID != Document.CALLBACK_HYPERLINK_CLICKED)
+            return;
+    }
+    switch(messageID) {
+        case Document.CALLBACK_INVALIDATE_TILES:
+            invalidateTiles(payload);
+            break;
+        case Document.CALLBACK_INVALIDATE_VISIBLE_CURSOR:
+            invalidateCursor(payload);
+            break;
+        case Document.CALLBACK_TEXT_SELECTION:
+            textSelection(payload);
+            break;
+        case Document.CALLBACK_TEXT_SELECTION_START:
+            textSelectionStart(payload);
+            break;
+        case Document.CALLBACK_TEXT_SELECTION_END:
+            textSelectionEnd(payload);
+            break;
+        case Document.CALLBACK_CURSOR_VISIBLE:
+            cursorVisibility(payload);
+            break;
+        case Document.CALLBACK_GRAPHIC_SELECTION:
+            graphicSelection(payload);
+            break;
+        case Document.CALLBACK_HYPERLINK_CLICKED:
+            if (!payload.startsWith("http://") && !payload.startsWith("https://")) {
+                payload = "http://" + payload;
+            }
+            Intent urlIntent = new Intent(Intent.ACTION_VIEW);
+            urlIntent.setData(Uri.parse(payload));
+            mContext.startActivity(urlIntent);
+            break;
+        case Document.CALLBACK_STATE_CHANGED:
+            stateChanged(payload);
+            break;
+        case Document.CALLBACK_SEARCH_RESULT_SELECTION:
+            searchResultSelection(payload);
+            break;
+        case Document.CALLBACK_SEARCH_NOT_FOUND:
+            Log.d(LOGTAG, "LOK_CALLBACK: Search not found.");
+            // this callback is never caught. Hope someone fix this.
+            break;
+        case Document.CALLBACK_CELL_CURSOR:
+            invalidateCellCursor(payload);
+            break;
+        case Document.CALLBACK_INVALIDATE_HEADER:
+            invalidateHeader();
+            break;
+        default:
+            Log.d(LOGTAG, "LOK_CALLBACK uncaught: " + messageID + " : " + payload);
+    }
+}
+#end_block
+
+#method_before
+private synchronized void textSelection(String payload) {
+    if (payload.isEmpty() || payload.equals("EMPTY")) {
+        if (mState == OverlayState.SELECTION) {
+            changeStateTo(OverlayState.TRANSITION);
+        }
+        mDocumentOverlay.changeSelections(Collections.EMPTY_LIST);
+    } else {
+        List<RectF> rectangles = convertPayloadToRectangles(payload);
+        if (mState != OverlayState.SELECTION) {
+            changeStateTo(OverlayState.TRANSITION);
+        }
+        changeStateTo(OverlayState.SELECTION);
+        mDocumentOverlay.changeSelections(rectangles);
+    }
+}
+#method_after
+private synchronized void textSelection(String payload) {
+    if (payload.isEmpty() || payload.equals("EMPTY")) {
+        if (mState == OverlayState.SELECTION) {
+            changeStateTo(OverlayState.TRANSITION);
+        }
+        mDocumentOverlay.changeSelections(Collections.EMPTY_LIST);
+        if (mContext.isSpreadsheet()) {
+            mDocumentOverlay.showHeaderSelection(null);
+        }
+    } else {
+        List<RectF> rectangles = convertPayloadToRectangles(payload);
+        if (mState != OverlayState.SELECTION) {
+            changeStateTo(OverlayState.TRANSITION);
+        }
+        changeStateTo(OverlayState.SELECTION);
+        mDocumentOverlay.changeSelections(rectangles);
+        if (mContext.isSpreadsheet()) {
+            mDocumentOverlay.showHeaderSelection(rectangles.get(0));
+        }
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void onClick(View v) {
+    int id = v.getId();
+    switch(id) {
+        case R.id.editFAB:
+            if (isFabMenuOpen) {
+                collapseFabMenu();
+            } else {
+                expandFabMenu();
+            }
+            break;
+        case R.id.newWriterFAB:
+            open(NEW_WRITER_STRING_KEY);
+            break;
+        case R.id.newImpressFAB:
+            open(NEW_IMPRESS_STRING_KEY);
+            break;
+        case R.id.newCalcFAB:
+            open(NEW_CALC_STRING_KEY);
+            break;
+        case R.id.newDrawFAB:
+            open(NEW_DRAW_STRING_KEY);
+            break;
+    }
+}
+#method_after
+@Override
+public void onClick(View v) {
+    int id = v.getId();
+    switch(id) {
+        case R.id.editFAB:
+            if (isFabMenuOpen) {
+                collapseFabMenu();
+            } else {
+                expandFabMenu();
+            }
+            break;
+        case R.id.newWriterFAB:
+            createNewFileInputDialog(getString(R.string.default_document_name) + FileUtilities.DEFAULT_WRITER_EXTENSION, NEW_WRITER_STRING_KEY);
+            break;
+        case R.id.newImpressFAB:
+            createNewFileInputDialog(getString(R.string.default_document_name) + FileUtilities.DEFAULT_IMPRESS_EXTENSION, NEW_IMPRESS_STRING_KEY);
+            break;
+        case R.id.newCalcFAB:
+            createNewFileInputDialog(getString(R.string.default_document_name) + FileUtilities.DEFAULT_SPREADSHEET_EXTENSION, NEW_CALC_STRING_KEY);
+            break;
+        case R.id.newDrawFAB:
+            createNewFileInputDialog(getString(R.string.default_document_name) + FileUtilities.DEFAULT_DRAWING_EXTENSION, NEW_DRAW_STRING_KEY);
+            break;
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    Log.w(LOGTAG, "onCreate..");
+    super.onCreate(savedInstanceState);
+    SharedPreferences sPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    mIsExperimentalMode = sPrefs.getBoolean(ENABLE_EXPERIMENTAL_PREFS_KEY, false);
+    if (sPrefs.getInt(ASSETS_EXTRACTED_PREFS_KEY, 0) != BuildConfig.VERSION_CODE) {
+        if (copyFromAssets(getAssets(), "unpack", getApplicationInfo().dataDir)) {
+            sPrefs.edit().putInt(ASSETS_EXTRACTED_PREFS_KEY, BuildConfig.VERSION_CODE).apply();
+        }
+    }
+    setContentView(R.layout.activity_main);
+    toolbarTop = (Toolbar) findViewById(R.id.toolbar);
+    hideBottomToolbar();
+    mToolbarController = new ToolbarController(this, toolbarTop);
+    mFormattingController = new FormattingController(this);
+    toolbarTop.setNavigationOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View view) {
+            LOKitShell.sendNavigationClickEvent();
+        }
+    });
+    mFontController = new FontController(this);
+    mSearchController = new SearchController(this);
+    // New document type string is not null, it means we want to open a new document
+    if (getIntent().getStringExtra(LibreOfficeUIActivity.NEW_DOC_TYPE_KEY) != null) {
+        newDocumentType = getIntent().getStringExtra(LibreOfficeUIActivity.NEW_DOC_TYPE_KEY);
+        if (newDocumentType.matches(LibreOfficeUIActivity.NEW_WRITER_STRING_KEY))
+            newFileName = newFileName + ".odt";
+        else if (newDocumentType.matches(LibreOfficeUIActivity.NEW_IMPRESS_STRING_KEY))
+            newFileName = newFileName + ".odp";
+        else if (newDocumentType.matches(LibreOfficeUIActivity.NEW_CALC_STRING_KEY))
+            newFileName = newFileName + ".ods";
+        else
+            newFileName = newFileName + ".odg";
+        // This is a new file, we also have current directory path in the intent extras
+        newFileDirectory = getIntent().getStringExtra(LibreOfficeUIActivity.CURRENT_DIRECTORY_KEY);
+        // We want to create a new Document, create an alert dialogue to name the new file.
+        openNewFileInputDialog();
+        isNewDocument = true;
+    }
+    if (getIntent().getData() != null) {
+        if (getIntent().getData().getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+            if (copyFileToTemp() && mTempFile != null) {
+                mInputFile = mTempFile;
+                Log.e(LOGTAG, "SCHEME_CONTENT: getPath(): " + getIntent().getData().getPath());
+                toolbarTop.setTitle(mInputFile.getName());
+            } else {
+                // TODO: can't open the file
+                Log.e(LOGTAG, "couldn't create temporary file from " + getIntent().getData());
+            }
+        } else if (getIntent().getData().getScheme().equals(ContentResolver.SCHEME_FILE)) {
+            mInputFile = new File(getIntent().getData().getPath());
+            Log.e(LOGTAG, "SCHEME_FILE: getPath(): " + getIntent().getData().getPath());
+            toolbarTop.setTitle(mInputFile.getName());
+            // Gather data to rebuild IFile object later
+            providerId = getIntent().getIntExtra("org.libreoffice.document_provider_id", 0);
+            documentUri = (URI) getIntent().getSerializableExtra("org.libreoffice.document_uri");
+        }
+    } else if (isNewDocument) {
+        toolbarTop.setTitle(newFileName);
+    } else {
+        mInputFile = new File(DEFAULT_DOC_PATH);
+    }
+    mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+    if (mDocumentPartViewListAdapter == null) {
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+        mDocumentPartViewListAdapter = new DocumentPartViewListAdapter(this, R.layout.document_part_list_layout, mDocumentPartView);
+        mDrawerList.setAdapter(mDocumentPartViewListAdapter);
+        mDrawerList.setOnItemClickListener(new DocumentPartClickListener());
+    }
+    loKitThread = new LOKitThread(this);
+    loKitThread.start();
+    mLayerClient = new GeckoLayerClient(this);
+    mLayerClient.setZoomConstraints(new ZoomConstraints(true));
+    LayerView layerView = (LayerView) findViewById(R.id.layer_view);
+    mLayerClient.setView(layerView);
+    layerView.setInputConnectionHandler(new LOKitInputConnectionHandler());
+    mLayerClient.notifyReady();
+    layerView.setOnKeyListener(new View.OnKeyListener() {
+
+        @Override
+        public boolean onKey(View view, int i, KeyEvent keyEvent) {
+            if (keyEvent.getKeyCode() != KeyEvent.KEYCODE_BACK) {
+                isDocumentChanged = true;
+            }
+            return false;
+        }
+    });
+    // create TextCursorLayer
+    mDocumentOverlay = new DocumentOverlay(this, layerView);
+    mToolbarController.setupToolbars();
+    TabHost host = (TabHost) findViewById(R.id.toolbarTabHost);
+    host.setup();
+    TabHost.TabSpec spec = host.newTabSpec("Character");
+    spec.setContent(R.id.tab_character);
+    spec.setIndicator("Character");
+    host.addTab(spec);
+    spec = host.newTabSpec("Paragraph");
+    spec.setContent(R.id.tab_paragraph);
+    spec.setIndicator("Paragraph");
+    host.addTab(spec);
+    spec = host.newTabSpec("Insert");
+    spec.setContent(R.id.tab_insert);
+    spec.setIndicator("Insert");
+    host.addTab(spec);
+}
+#method_after
+@Override
+public void onCreate(Bundle savedInstanceState) {
+    Log.w(LOGTAG, "onCreate..");
+    super.onCreate(savedInstanceState);
+    SharedPreferences sPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    mIsExperimentalMode = sPrefs.getBoolean(ENABLE_EXPERIMENTAL_PREFS_KEY, false);
+    if (sPrefs.getInt(ASSETS_EXTRACTED_PREFS_KEY, 0) != BuildConfig.VERSION_CODE) {
+        if (copyFromAssets(getAssets(), "unpack", getApplicationInfo().dataDir)) {
+            sPrefs.edit().putInt(ASSETS_EXTRACTED_PREFS_KEY, BuildConfig.VERSION_CODE).apply();
+        }
+    }
+    setContentView(R.layout.activity_main);
+    toolbarTop = (Toolbar) findViewById(R.id.toolbar);
+    hideBottomToolbar();
+    mToolbarController = new ToolbarController(this, toolbarTop);
+    mFormattingController = new FormattingController(this);
+    toolbarTop.setNavigationOnClickListener(new View.OnClickListener() {
+
+        @Override
+        public void onClick(View view) {
+            LOKitShell.sendNavigationClickEvent();
+        }
+    });
+    mFontController = new FontController(this);
+    mSearchController = new SearchController(this);
+    loKitThread = new LOKitThread(this);
+    loKitThread.start();
+    mLayerClient = new GeckoLayerClient(this);
+    LayerView layerView = (LayerView) findViewById(R.id.layer_view);
+    mLayerClient.setView(layerView);
+    layerView.setInputConnectionHandler(new LOKitInputConnectionHandler());
+    mLayerClient.notifyReady();
+    layerView.setOnKeyListener(new View.OnKeyListener() {
+
+        @Override
+        public boolean onKey(View view, int i, KeyEvent keyEvent) {
+            if (keyEvent.getKeyCode() != KeyEvent.KEYCODE_BACK) {
+                isDocumentChanged = true;
+            }
+            return false;
+        }
+    });
+    // create TextCursorLayer
+    mDocumentOverlay = new DocumentOverlay(this, layerView);
+    // New document type string is not null, meaning we want to open a new document
+    if (getIntent().getStringExtra(LibreOfficeUIActivity.NEW_DOC_TYPE_KEY) != null) {
+        String newDocumentType = getIntent().getStringExtra(LibreOfficeUIActivity.NEW_DOC_TYPE_KEY);
+        String newFilePath = getIntent().getStringExtra(LibreOfficeUIActivity.NEW_FILE_PATH_KEY);
+        // Load the new document
+        loadNewDocument(newFilePath, newDocumentType);
+    }
+    if (getIntent().getData() != null) {
+        if (getIntent().getData().getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+            if (copyFileToTemp() && mTempFile != null) {
+                mInputFile = mTempFile;
+                Log.e(LOGTAG, "SCHEME_CONTENT: getPath(): " + getIntent().getData().getPath());
+                toolbarTop.setTitle(mInputFile.getName());
+            } else {
+                // TODO: can't open the file
+                Log.e(LOGTAG, "couldn't create temporary file from " + getIntent().getData());
+            }
+        } else if (getIntent().getData().getScheme().equals(ContentResolver.SCHEME_FILE)) {
+            mInputFile = new File(getIntent().getData().getPath());
+            Log.e(LOGTAG, "SCHEME_FILE: getPath(): " + getIntent().getData().getPath());
+            toolbarTop.setTitle(mInputFile.getName());
+            // Gather data to rebuild IFile object later
+            providerId = getIntent().getIntExtra("org.libreoffice.document_provider_id", 0);
+            documentUri = (URI) getIntent().getSerializableExtra("org.libreoffice.document_uri");
+        }
+    } else {
+        if (!isNewDocument) {
+            mInputFile = new File(DEFAULT_DOC_PATH);
+        }
+    }
+    mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+    if (mDocumentPartViewListAdapter == null) {
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+        mDocumentPartViewListAdapter = new DocumentPartViewListAdapter(this, R.layout.document_part_list_layout, mDocumentPartView);
+        mDrawerList.setAdapter(mDocumentPartViewListAdapter);
+        mDrawerList.setOnItemClickListener(new DocumentPartClickListener());
+    }
+    mToolbarController.setupToolbars();
+    TabHost host = (TabHost) findViewById(R.id.toolbarTabHost);
+    host.setup();
+    TabHost.TabSpec spec = host.newTabSpec("Character");
+    spec.setContent(R.id.tab_character);
+    spec.setIndicator("Character");
+    host.addTab(spec);
+    spec = host.newTabSpec("Paragraph");
+    spec.setContent(R.id.tab_paragraph);
+    spec.setIndicator("Paragraph");
+    host.addTab(spec);
+    spec = host.newTabSpec("Insert");
+    spec.setContent(R.id.tab_insert);
+    spec.setIndicator("Insert");
+    host.addTab(spec);
+}
+#end_block
+
+#method_before
+@Override
+public void onBackPressed() {
+    if (!isDocumentChanged) {
+        super.onBackPressed();
+        return;
+    }
+    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            switch(which) {
+                case DialogInterface.BUTTON_POSITIVE:
+                    if (isNewDocument) {
+                        saveAs();
+                    } else {
+                        saveDocument();
+                    }
+                    isDocumentChanged = false;
+                    onBackPressed();
+                    break;
+                case DialogInterface.BUTTON_NEGATIVE:
+                    // CANCEL
+                    break;
+                case DialogInterface.BUTTON_NEUTRAL:
+                    // NO
+                    isDocumentChanged = false;
+                    onBackPressed();
+                    break;
+            }
+        }
+    };
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setMessage(R.string.save_alert_dialog_title).setPositiveButton(R.string.save_document, dialogClickListener).setNegativeButton(R.string.cancel_save_document, dialogClickListener).setNeutralButton(R.string.no_save_document, dialogClickListener).show();
+}
+#method_after
+@Override
+public void onBackPressed() {
+    if (!isDocumentChanged) {
+        super.onBackPressed();
+        return;
+    }
+    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            switch(which) {
+                case DialogInterface.BUTTON_POSITIVE:
+                    if (isNewDocument) {
+                        saveAs();
+                    } else {
+                        saveDocument();
+                    }
+                    isDocumentChanged = false;
+                    onBackPressed();
+                    break;
+                case DialogInterface.BUTTON_NEGATIVE:
+                    // CANCEL
+                    break;
+                case DialogInterface.BUTTON_NEUTRAL:
+                    // NO
+                    isDocumentChanged = false;
+                    onBackPressed();
+                    break;
+            }
+        }
+    };
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setMessage(R.string.save_alert_dialog_title).setPositiveButton(R.string.save_document, dialogClickListener).setNegativeButton(R.string.action_cancel, dialogClickListener).setNeutralButton(R.string.no_save_document, dialogClickListener).show();
+}
+#end_block
+
+#method_before
+public void setFrame(com.sun.star.frame.XFrame xFrame) {
+    if (xFrame == null)
+        return;
+    // create some listener on given frame for available status events
+    // Created listener instances will register herself on this frame and
+    // show her received information automatically on set UI controls.
+    m_aFontListener = new StatusListener(m_laFontValue, FONT_ON, FONT_OFF, xFrame, FEATUREURL_FONT);
+    m_aSizeListener = new StatusListener(m_laSizeValue, SIZE_ON, SIZE_OFF, xFrame, FEATUREURL_SIZE);
+    m_aBoldListener = new StatusListener(m_laBoldValue, BOLD_ON, BOLD_OFF, xFrame, FEATUREURL_BOLD);
+    m_aItalicListener = new StatusListener(m_laItalicValue, ITALIC_ON, ITALIC_OFF, xFrame, FEATUREURL_ITALIC);
+    m_aUnderlineListener = new StatusListener(m_laUnderlineValue, UNDERLINE_ON, UNDERLINE_OFF, xFrame, FEATUREURL_UNDERLINE);
+    m_aFontListener.startListening();
+    m_aSizeListener.startListening();
+    m_aBoldListener.startListening();
+    m_aItalicListener.startListening();
+    m_aUnderlineListener.startListening();
+}
+#method_after
+public void setFrame(com.sun.star.frame.XFrame xFrame) {
+    if (xFrame == null)
+        return;
+    // create some listener on given frame for available status events
+    // Created listener instances will register themselves on this frame and
+    // show it received information automatically on set UI controls.
+    m_aFontListener = new StatusListener(m_laFontValue, FONT_ON, FONT_OFF, xFrame, FEATUREURL_FONT);
+    m_aSizeListener = new StatusListener(m_laSizeValue, SIZE_ON, SIZE_OFF, xFrame, FEATUREURL_SIZE);
+    m_aBoldListener = new StatusListener(m_laBoldValue, BOLD_ON, BOLD_OFF, xFrame, FEATUREURL_BOLD);
+    m_aItalicListener = new StatusListener(m_laItalicValue, ITALIC_ON, ITALIC_OFF, xFrame, FEATUREURL_ITALIC);
+    m_aUnderlineListener = new StatusListener(m_laUnderlineValue, UNDERLINE_ON, UNDERLINE_OFF, xFrame, FEATUREURL_UNDERLINE);
+    m_aFontListener.startListening();
+    m_aSizeListener.startListening();
+    m_aBoldListener.startListening();
+    m_aItalicListener.startListening();
+    m_aUnderlineListener.startListening();
+}
+#end_block
+
+#method_before
+public void createUI() {
+    setContentView(R.layout.activity_document_browser);
+    Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+    setSupportActionBar(toolbar);
+    ActionBar actionBar = getSupportActionBar();
+    if (actionBar != null) {
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        // make the navigation spinner
+        Context context = actionBar.getThemedContext();
+        AppCompatSpinner toolbarSpinner = (AppCompatSpinner) findViewById(R.id.toolbar_spinner);
+        ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(context, R.array.file_view_modes, android.R.layout.simple_spinner_item);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        toolbarSpinner.setAdapter(spinnerAdapter);
+        toolbarSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long id) {
+                // bit of a hack, I know. -1 is ALL 0 Docs etc
+                filterMode = pos - 1;
+                // Uses filter mode
+                openDirectory(currentDirectory);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                filterMode = FileUtilities.ALL;
+                openDirectory(currentDirectory);
+            }
+        });
+    }
+    recentRecyclerView = (RecyclerView) findViewById(R.id.list_recent);
+    Set<String> recentFileStrings = prefs.getStringSet(RECENT_DOCUMENTS_KEY, new HashSet<String>());
+    final ArrayList<IFile> recentFiles = new ArrayList<IFile>();
+    for (String recentFileString : recentFileStrings) {
+        try {
+            recentFiles.add(documentProvider.createFromUri(new URI(recentFileString)));
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        }
+    }
+    recentRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+    recentRecyclerView.setAdapter(new RecentFilesAdapter(this, recentFiles));
+    fileRecyclerView = (RecyclerView) findViewById(R.id.file_recycler_view);
+    // This should be tested because it possibly disables view recycling
+    fileRecyclerView.setNestedScrollingEnabled(false);
+    openDirectory(currentDirectory);
+    registerForContextMenu(fileRecyclerView);
+    // Setting up navigation drawer
+    drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+    navigationDrawer = (NavigationView) findViewById(R.id.navigation_drawer);
+    /*
+         * These are the currently-known document providers (for which icons are assigned).
+         * This is to ensure that there is an icon available if the provider is recognized, while
+         * the unrecognized ones still appear, but without an icon. If there is a document provider
+         * not on this list, it should be added and an icon assigned to it, in the if-else ladder
+         * bellow. This is a hacky implementation, maybe we could make something better in the
+         * future, i.e. we could move this into the menu file and load it that way.
+         */
+    final String LOCAL_DOCUMENTS_NAME = "Local documents";
+    final String LOCAL_FILE_SYSTEM_NAME = "Local file system";
+    final String EXTERNAL_SD_NAME = "External SD";
+    final String OTG_FILE_SYSTEM_NAME = "OTG device (experimental)";
+    final String OWNCLOUD_NAME = "Remote server";
+    // Provider names are wrapped as a ArrayList so indexOf(Object) method could be used
+    final ArrayList<CharSequence> providerNames = new ArrayList<CharSequence>(Arrays.asList(documentProviderFactory.getNames()));
+    for (CharSequence name : providerNames) {
+        int iconRes = 0;
+        if (name.equals(LOCAL_DOCUMENTS_NAME)) {
+            iconRes = R.drawable.ic_insert_drive_file_black_24dp;
+        } else if (name.equals(LOCAL_FILE_SYSTEM_NAME)) {
+            iconRes = R.drawable.ic_storage_black_24dp;
+        } else if (name.equals(EXTERNAL_SD_NAME)) {
+            iconRes = R.drawable.ic_sd_card_black_24dp;
+        } else if (name.equals(OTG_FILE_SYSTEM_NAME)) {
+            iconRes = R.drawable.ic_usb_black_24dp;
+        } else if (name.equals(OWNCLOUD_NAME)) {
+            iconRes = R.drawable.ic_cloud_black_24dp;
+        }
+        MenuItem item = navigationDrawer.getMenu().add(R.id.group_providers, Menu.NONE, Menu.NONE, name).setCheckable(true);
+        if (iconRes != 0) {
+            item.setIcon(iconRes);
+        }
+    }
+    // needed for anonymous method below
+    final Context context = this;
+    navigationDrawer.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            if (item.getItemId() == R.id.menu_storage_preferences) {
+                startActivity(new Intent(context, DocumentProviderSettingsActivity.class));
+                return true;
+            }
+            int position = providerNames.indexOf(item.getTitle());
+            switchToDocumentProvider(documentProviderFactory.getProvider(position));
+            return true;
+        }
+    });
+    drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, R.string.document_locations, R.string.close_document_locations) {
+
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            supportInvalidateOptionsMenu();
+            // Make keypad navigation easier
+            navigationDrawer.requestFocus();
+        }
+
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+            supportInvalidateOptionsMenu();
+        }
+    };
+    drawerToggle.setDrawerIndicatorEnabled(true);
+    drawerLayout.addDrawerListener(drawerToggle);
+    drawerToggle.syncState();
+}
+#method_after
+public void createUI() {
+    setContentView(R.layout.activity_document_browser);
+    Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+    setSupportActionBar(toolbar);
+    ActionBar actionBar = getSupportActionBar();
+    if (actionBar != null) {
+        actionBar.setDisplayHomeAsUpEnabled(true);
+    }
+    recentRecyclerView = (RecyclerView) findViewById(R.id.list_recent);
+    Set<String> recentFileStrings = prefs.getStringSet(RECENT_DOCUMENTS_KEY, new HashSet<String>());
+    final ArrayList<IFile> recentFiles = new ArrayList<IFile>();
+    for (String recentFileString : recentFileStrings) {
+        try {
+            recentFiles.add(documentProvider.createFromUri(new URI(recentFileString)));
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        }
+    }
+    recentRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+    recentRecyclerView.setAdapter(new RecentFilesAdapter(this, recentFiles));
+    fileRecyclerView = (RecyclerView) findViewById(R.id.file_recycler_view);
+    // This should be tested because it possibly disables view recycling
+    fileRecyclerView.setNestedScrollingEnabled(false);
+    openDirectory(currentDirectory);
+    registerForContextMenu(fileRecyclerView);
+    // Setting up navigation drawer
+    drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+    navigationDrawer = (NavigationView) findViewById(R.id.navigation_drawer);
+    /*
+         * These are the currently-known document providers (for which icons are assigned).
+         * This is to ensure that there is an icon available if the provider is recognized, while
+         * the unrecognized ones still appear, but without an icon. If there is a document provider
+         * not on this list, it should be added and an icon assigned to it, in the if-else ladder
+         * bellow. This is a hacky implementation, maybe we could make something better in the
+         * future, i.e. we could move this into the menu file and load it that way.
+         */
+    final String LOCAL_DOCUMENTS_NAME = "Local documents";
+    final String LOCAL_FILE_SYSTEM_NAME = "Local file system";
+    final String EXTERNAL_SD_NAME = "External SD";
+    final String OTG_FILE_SYSTEM_NAME = "OTG device (experimental)";
+    final String OWNCLOUD_NAME = "Remote server";
+    // Provider names are wrapped as a ArrayList so indexOf(Object) method could be used
+    final ArrayList<CharSequence> providerNames = new ArrayList<CharSequence>(Arrays.asList(documentProviderFactory.getNames()));
+    for (CharSequence name : providerNames) {
+        int iconRes = 0;
+        if (name.equals(LOCAL_DOCUMENTS_NAME)) {
+            iconRes = R.drawable.ic_insert_drive_file_black_24dp;
+        } else if (name.equals(LOCAL_FILE_SYSTEM_NAME)) {
+            iconRes = R.drawable.ic_storage_black_24dp;
+        } else if (name.equals(EXTERNAL_SD_NAME)) {
+            iconRes = R.drawable.ic_sd_card_black_24dp;
+        } else if (name.equals(OTG_FILE_SYSTEM_NAME)) {
+            iconRes = R.drawable.ic_usb_black_24dp;
+        } else if (name.equals(OWNCLOUD_NAME)) {
+            iconRes = R.drawable.ic_cloud_black_24dp;
+        }
+        MenuItem item = navigationDrawer.getMenu().add(R.id.group_providers, Menu.NONE, Menu.NONE, name).setCheckable(true);
+        if (iconRes != 0) {
+            item.setIcon(iconRes);
+        }
+    }
+    // needed for anonymous method below
+    final Context context = this;
+    navigationDrawer.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            if (item.getItemId() == R.id.menu_storage_preferences) {
+                startActivity(new Intent(context, DocumentProviderSettingsActivity.class));
+                return true;
+            }
+            int position = providerNames.indexOf(item.getTitle());
+            switchToDocumentProvider(documentProviderFactory.getProvider(position));
+            return true;
+        }
+    });
+    drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, R.string.document_locations, R.string.close_document_locations) {
+
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            super.onDrawerOpened(drawerView);
+            supportInvalidateOptionsMenu();
+            // Make keypad navigation easier
+            navigationDrawer.requestFocus();
+        }
+
+        @Override
+        public void onDrawerClosed(View drawerView) {
+            super.onDrawerClosed(drawerView);
+            supportInvalidateOptionsMenu();
+        }
+    };
+    drawerToggle.setDrawerIndicatorEnabled(true);
+    drawerLayout.addDrawerListener(drawerToggle);
+    drawerToggle.syncState();
+}
+#end_block
+
+#method_before
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.view_menu, menu);
+    MenuItem item = menu.findItem(R.id.menu_sort_size);
+    if (sortMode == FileUtilities.SORT_LARGEST) {
+        item.setTitle(R.string.sort_smallest);
+    } else {
+        item.setTitle(R.string.sort_largest);
+    }
+    item = menu.findItem(R.id.menu_sort_az);
+    if (sortMode == FileUtilities.SORT_AZ) {
+        item.setTitle(R.string.sort_za);
+    } else {
+        item.setTitle(R.string.sort_az);
+    }
+    item = menu.findItem(R.id.menu_sort_modified);
+    if (sortMode == FileUtilities.SORT_NEWEST) {
+        item.setTitle(R.string.sort_oldest);
+    } else {
+        item.setTitle(R.string.sort_newest);
+    }
+    return true;
+}
+#method_after
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.view_menu, menu);
+    MenuItem item = menu.findItem(R.id.menu_sort_size);
+    if (sortMode == FileUtilities.SORT_LARGEST) {
+        item.setTitle(R.string.sort_smallest);
+    } else {
+        item.setTitle(R.string.sort_largest);
+    }
+    item = menu.findItem(R.id.menu_sort_az);
+    if (sortMode == FileUtilities.SORT_AZ) {
+        item.setTitle(R.string.sort_za);
+    } else {
+        item.setTitle(R.string.sort_az);
+    }
+    item = menu.findItem(R.id.menu_sort_modified);
+    if (sortMode == FileUtilities.SORT_NEWEST) {
+        item.setTitle(R.string.sort_oldest);
+    } else {
+        item.setTitle(R.string.sort_newest);
+    }
+    switch(filterMode) {
+        case FileUtilities.ALL:
+            menu.findItem(R.id.menu_filter_everything).setChecked(true);
+            break;
+        case FileUtilities.DOC:
+            menu.findItem(R.id.menu_filter_documents).setChecked(true);
+            break;
+        case FileUtilities.CALC:
+            menu.findItem(R.id.menu_filter_presentations).setChecked(true);
+            break;
+        case FileUtilities.IMPRESS:
+            menu.findItem(R.id.menu_filter_presentations).setChecked(true);
+            break;
+        case FileUtilities.DRAWING:
+            menu.findItem(R.id.menu_filter_drawings).setChecked(true);
+            break;
+    }
+    return true;
+}
+#end_block
+
+#method_before
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Will close the drawer if the home button is pressed
+    if (drawerToggle.onOptionsItemSelected(item)) {
+        return true;
+    }
+    switch(item.getItemId()) {
+        case android.R.id.home:
+            if (!currentDirectory.equals(homeDirectory)) {
+                openParentDirectory();
+            }
+            break;
+        case R.id.menu_sort_size:
+        case R.id.menu_sort_az:
+        case R.id.menu_sort_modified:
+            sortFiles(item);
+            break;
+        case R.id.action_about:
+            {
+                AboutDialogFragment aboutDialogFragment = new AboutDialogFragment();
+                aboutDialogFragment.show(getSupportFragmentManager(), "AboutDialogFragment");
+            }
+            return true;
+        case R.id.action_settings:
+            startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+    }
+    return true;
+}
+#method_after
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    // Will close the drawer if the home button is pressed
+    if (drawerToggle.onOptionsItemSelected(item)) {
+        return true;
+    }
+    switch(item.getItemId()) {
+        case android.R.id.home:
+            if (!currentDirectory.equals(homeDirectory)) {
+                openParentDirectory();
+            }
+            break;
+        case R.id.menu_filter_everything:
+            item.setChecked(true);
+            filterMode = FileUtilities.ALL;
+            openDirectory(currentDirectory);
+            break;
+        case R.id.menu_filter_documents:
+            item.setChecked(true);
+            filterMode = FileUtilities.DOC;
+            openDirectory(currentDirectory);
+            break;
+        case R.id.menu_filter_spreadsheets:
+            item.setChecked(true);
+            filterMode = FileUtilities.CALC;
+            openDirectory(currentDirectory);
+            break;
+        case R.id.menu_filter_presentations:
+            item.setChecked(true);
+            filterMode = FileUtilities.IMPRESS;
+            openDirectory(currentDirectory);
+            break;
+        case R.id.menu_filter_drawings:
+            item.setChecked(true);
+            filterMode = FileUtilities.DRAWING;
+            openDirectory(currentDirectory);
+            break;
+        case R.id.menu_sort_size:
+        case R.id.menu_sort_az:
+        case R.id.menu_sort_modified:
+            sortFiles(item);
+            break;
+        case R.id.action_about:
+            {
+                AboutDialogFragment aboutDialogFragment = new AboutDialogFragment();
+                aboutDialogFragment.show(getSupportFragmentManager(), "AboutDialogFragment");
+            }
+            return true;
+        case R.id.action_settings:
+            startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+    }
+    return true;
+}
+#end_block
+

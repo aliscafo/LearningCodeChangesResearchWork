@@ -1,0 +1,1131 @@
+31
+#method_before
+@Override
+public void visit(Figure figure) {
+    synchronized (figure) {
+        if (figure.getVisible() && figure.getImmediateDrawing()) {
+            /**
+             * Set the current {@see ColorMap}.
+             */
+            colorMap = figure.getColorMap();
+            drawingTools.clear(ColorFactory.createColor(colorMap, figure.getBackground()));
+            drawingTools.clearDepthBuffer();
+            askAcceptVisitor(figure.getChildren());
+        }
+    }
+}
+#method_after
+@Override
+public void visit(Figure figure) {
+    synchronized (figure) {
+        /**
+         * Set the current {@see ColorMap}.
+         */
+        colorMap = figure.getColorMap();
+        drawingTools.clear(ColorFactory.createColor(colorMap, figure.getBackground()));
+        drawingTools.clearDepthBuffer();
+        if (figure.getVisible() && figure.getImmediateDrawing()) {
+            askAcceptVisitor(figure.getChildren());
+        }
+    }
+}
+#end_block
+
+#method_before
+private static void generatePreLoadedIcon(final PreLoaded current) {
+    final List<PaletteBlock> blocks = current.getBlock();
+    for (final PaletteBlock paletteBlock : blocks) {
+        try {
+            final BasicBlock block = new PaletteBlockCtrl(paletteBlock).loadBlock();
+            generateIcon(block, paletteBlock.getIcon().getEvaluatedPath());
+            if (LOG.isLoggable(Level.FINEST)) {
+                LOG.finest(String.format("%s has been generated", paletteBlock.getIcon()));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ScicosFormatException e) {
+            e.printStackTrace();
+        }
+    }
+}
+#method_after
+private static void generatePreLoadedIcon(final PreLoaded current) {
+    final List<PaletteBlock> blocks = current.getBlock();
+    for (final PaletteBlock paletteBlock : blocks) {
+        new PaletteBlockCtrl(paletteBlock).loadBlock(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                try {
+                    generateIcon((BasicBlock) event.getSource(), paletteBlock.getIcon().getEvaluatedPath());
+                    if (LOG.isLoggable(Level.FINEST)) {
+                        LOG.finest(String.format("%s has been generated", paletteBlock.getIcon()));
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+}
+#end_block
+
+#method_before
+private void installActionListeners(JButton cancelButton, JButton okButton) {
+    /*
+         * The cancel button just exit without doing anything
+         */
+    cancelButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            dispose();
+        }
+    });
+    /*
+         * The ok button parse the contextArea, reconstruct the real context and
+         * set the scicosParameters before exiting.
+         */
+    okButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                final String[] context = contextArea.getText().split(SHARED_NEW_LINE);
+                parameters.setContext(context);
+                /*
+                         * Validate the context
+                         */
+                final ScilabDirectHandler handler = ScilabDirectHandler.acquire();
+                if (handler == null) {
+                    return;
+                }
+                try {
+                    handler.writeContext(context);
+                    ScilabInterpreterManagement.putCommandInScilabQueue("script2var(" + ScilabDirectHandler.CONTEXT + ", struct()); ");
+                } finally {
+                    handler.release();
+                }
+                dispose();
+            } catch (PropertyVetoException e2) {
+                Logger.getLogger(SetContextAction.class.getName()).severe(e2.toString());
+            }
+            /*
+                     * if superblock is concerned, then regenerate child diagram.
+                     */
+            if (rootGraph instanceof SuperBlockDiagram) {
+                SuperBlockDiagram superBlockDiagram = (SuperBlockDiagram) rootGraph;
+                superBlockDiagram.getContainer().invalidateRpar();
+                superBlockDiagram.getContainer().getRealParameters();
+            }
+        }
+    });
+}
+#method_after
+private void installActionListeners(JButton cancelButton, JButton okButton) {
+    /*
+         * The cancel button just exit without doing anything
+         */
+    cancelButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            dispose();
+        }
+    });
+    /*
+         * The ok button parse the contextArea, reconstruct the real context and
+         * set the scicosParameters before exiting.
+         */
+    okButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                final String[] context = contextArea.getText().split(SHARED_NEW_LINE);
+                parameters.setContext(context);
+                /*
+                         * Validate the context
+                         */
+                final ScilabDirectHandler handler = ScilabDirectHandler.acquire();
+                if (handler == null) {
+                    return;
+                }
+                try {
+                    handler.writeContext(context);
+                    ScilabInterpreterManagement.putCommandInScilabQueue("script2var(" + ScilabDirectHandler.CONTEXT + ", struct()); ");
+                } finally {
+                    handler.release();
+                }
+                dispose();
+            } catch (PropertyVetoException e2) {
+                Logger.getLogger(SetContextAction.class.getName()).severe(e2.toString());
+            }
+            /*
+                     * if superblock is concerned, then regenerate child diagram.
+                     */
+            if (rootGraph instanceof SuperBlockDiagram) {
+                SuperBlockDiagram superBlockDiagram = (SuperBlockDiagram) rootGraph;
+                superBlockDiagram.getContainer().invalidateRpar();
+            }
+        }
+    });
+}
+#end_block
+
+#method_before
+public static final <T> T getObjectFromValue(final Class<T> clazz, final ScilabType value) {
+    ScilabTypeConverter converter;
+    if (value == null) {
+        return StringConverters.getObjectFromValue(clazz, null);
+    }
+    if (clazz != String.class && value.getType() == ScilabTypeEnum.sci_strings) {
+        converter = null;
+    } else {
+        converter = converters.get(clazz);
+    }
+    if (converter == null) {
+        String str = null;
+        if (value != null && value.getType() == ScilabTypeEnum.sci_strings && !value.isEmpty()) {
+            str = ((ScilabString) value).getData()[0][0];
+        }
+        return StringConverters.getObjectFromValue(clazz, str);
+    }
+    return (T) converter.convert(value);
+}
+#method_after
+public static final <T> T getObjectFromValue(final Class<T> clazz, final ScilabType value) {
+    ScilabTypeConverter converter;
+    if (value == null) {
+        return StringConverters.getObjectFromValue(clazz, null);
+    }
+    if (clazz != String.class && value.getType() == ScilabTypeEnum.sci_strings) {
+        // We have a Scilab string in input so we will use a String converter (since the target is not a string)
+        converter = null;
+    } else {
+        converter = converters.get(clazz);
+    }
+    if (converter == null) {
+        String str = null;
+        if (value != null && value.getType() == ScilabTypeEnum.sci_strings && !value.isEmpty()) {
+            str = ((ScilabString) value).getData()[0][0];
+        }
+        return StringConverters.getObjectFromValue(clazz, str);
+    }
+    return (T) converter.convert(value);
+}
+#end_block
+
+#method_before
+public Component createOpenGLComponent(boolean isCanvas) {
+    if (isCanvas) {
+        return new GLCanvas();
+    } else {
+        // } else {
+        return new GLJPanel();
+    // }
+    }
+}
+#method_after
+public Component createOpenGLComponent(boolean isCanvas) {
+    if (isCanvas) {
+        return new GLCanvas();
+    } else {
+        return new GLJPanel();
+    }
+}
+#end_block
+
+#method_before
+public static String createDatatip(String figureUid, Integer coordIntX, Integer coordIntY) {
+    Integer[] pixelMouseCoordInt = { coordIntX, coordIntY };
+    String axesUid = datatipAxesHandler(figureUid, pixelMouseCoordInt);
+    double[] pixelMouseCoordDouble = transformPixelCoordToDouble(pixelMouseCoordInt);
+    double[] graphicCoord = transformPixelCoordToGraphic(axesUid, pixelMouseCoordDouble);
+    String newDatatip = askToCreateObject();
+    String[] datatipLabel = setDatatipLabel(graphicCoord);
+    datatipBounds = getDatatipBounds(datatipLabel);
+    datatipPosition = setDatatipPosition(graphicCoord);
+    GraphicController.getController().setGraphicObjectRelationship(axesUid, newDatatip);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_TEXT_ARRAY_DIMENSIONS__, datatipBounds);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_TEXT_STRINGS__, datatipLabel);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_BOX__, true);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_CLIP_STATE__, 1);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_POSITION__, datatipPosition);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_LINE_MODE__, true);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_FILL_MODE__, true);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_BACKGROUND__, 8);
+    return newDatatip;
+}
+#method_after
+public static String createDatatip(String figureUid, Integer coordIntX, Integer coordIntY) {
+    Integer[] pixelMouseCoordInt = { coordIntX, coordIntY };
+    String axesUid = datatipAxesHandler(figureUid, pixelMouseCoordInt);
+    double[] pixelMouseCoordDouble = transformPixelCoordToDouble(pixelMouseCoordInt);
+    double[] graphicCoord = transformPixelCoordToGraphic(axesUid, pixelMouseCoordDouble);
+    String newDatatip = datatipProperties(graphicCoord, axesUid);
+    return newDatatip;
+}
+#end_block
+
+#method_before
+public static String createDatatipProgramCoord(String polylineUid, double[] coordDoubleXY) {
+    String compoundUid = (String) GraphicController.getController().getProperty(polylineUid, GraphicObjectProperties.__GO_PARENT__);
+    String axesUid = (String) GraphicController.getController().getProperty(compoundUid, GraphicObjectProperties.__GO_PARENT__);
+    String figureUid = (String) GraphicController.getController().getProperty(axesUid, GraphicObjectProperties.__GO_PARENT__);
+    graphCoordDouble[0] = coordDoubleXY[0];
+    graphCoordDouble[1] = coordDoubleXY[1];
+    graphCoordDouble[2] = 0.0;
+    double[] pixelCoordinates = CallRenderer.getPixelFrom2dViewCoordinates(axesUid, graphCoordDouble);
+    double tempX = pixelCoordinates[0];
+    double tempY = pixelCoordinates[1];
+    int xInt = (int) tempX;
+    int yInt = (int) tempY;
+    Integer xInteger = (Integer) xInt;
+    Integer yInteger = (Integer) yInt;
+    String polylineUidTest = ep.pick(figureUid, xInteger, yInteger);
+    if (polylineUidTest == null) {
+        double[] DataX = (double[]) PolylineData.getDataX(polylineUid);
+        double[] DataY = (double[]) PolylineData.getDataY(polylineUid);
+        int maxLength = DataX.length;
+        for (int i = 0; i < (maxLength - 1); i++) {
+            if (coordDoubleXY[0] >= DataX[i]) {
+                if (coordDoubleXY[0] <= DataX[i + 1]) {
+                    coordDoubleXY[0] = DataX[i];
+                    coordDoubleXY[1] = DataY[i];
+                }
+            }
+        }
+        if (coordDoubleXY[0] < DataX[0]) {
+            coordDoubleXY[0] = DataX[0];
+            coordDoubleXY[1] = DataY[0];
+        }
+        if (coordDoubleXY[0] > DataX[maxLength - 1]) {
+            coordDoubleXY[0] = DataX[maxLength - 1];
+            coordDoubleXY[1] = DataY[maxLength - 1];
+        }
+    }
+    String newDatatip = askToCreateObject();
+    String[] datatipLabel = setDatatipLabel(coordDoubleXY);
+    datatipBounds = getDatatipBounds(datatipLabel);
+    datatipPosition = setDatatipPosition(coordDoubleXY);
+    GraphicController.getController().setGraphicObjectRelationship(axesUid, newDatatip);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_TEXT_ARRAY_DIMENSIONS__, datatipBounds);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_TEXT_STRINGS__, datatipLabel);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_BOX__, true);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_CLIP_STATE__, 1);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_POSITION__, datatipPosition);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_LINE_MODE__, true);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_FILL_MODE__, true);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_BACKGROUND__, 8);
+    return newDatatip;
+}
+#method_after
+public static String createDatatipProgramCoord(String polylineUid, double[] coordDoubleXY) {
+    String compoundUid = (String) GraphicController.getController().getProperty(polylineUid, GraphicObjectProperties.__GO_PARENT__);
+    String axesUid = (String) GraphicController.getController().getProperty(compoundUid, GraphicObjectProperties.__GO_PARENT__);
+    String figureUid = (String) GraphicController.getController().getProperty(axesUid, GraphicObjectProperties.__GO_PARENT__);
+    /*Convert input coordinates to Integer*/
+    graphCoordDouble[0] = coordDoubleXY[0];
+    graphCoordDouble[1] = coordDoubleXY[1];
+    graphCoordDouble[2] = 0.0;
+    double[] pixelCoordinates = CallRenderer.getPixelFrom2dViewCoordinates(axesUid, graphCoordDouble);
+    double tempX = pixelCoordinates[0];
+    double tempY = pixelCoordinates[1];
+    int xInt = (int) tempX;
+    int yInt = (int) tempY;
+    Integer xInteger = (Integer) xInt;
+    Integer yInteger = (Integer) yInt;
+    /*Check if input coordinates is over polyline*/
+    String polylineUidTest = ep.pick(figureUid, xInteger, yInteger);
+    if (polylineUidTest == null) {
+        /*Put the new datatip in the closest point if it is not over polyline*/
+        double[] DataX = (double[]) PolylineData.getDataX(polylineUid);
+        double[] DataY = (double[]) PolylineData.getDataY(polylineUid);
+        int maxLength = DataX.length;
+        for (int i = 0; i < (maxLength - 1); i++) {
+            if (coordDoubleXY[0] >= DataX[i]) {
+                if (coordDoubleXY[0] <= DataX[i + 1]) {
+                    coordDoubleXY[0] = DataX[i];
+                    coordDoubleXY[1] = DataY[i];
+                }
+            }
+        }
+        if (coordDoubleXY[0] < DataX[0]) {
+            coordDoubleXY[0] = DataX[0];
+            coordDoubleXY[1] = DataY[0];
+        }
+        if (coordDoubleXY[0] > DataX[maxLength - 1]) {
+            coordDoubleXY[0] = DataX[maxLength - 1];
+            coordDoubleXY[1] = DataY[maxLength - 1];
+        }
+    }
+    /*Create the new datatip*/
+    String newDatatip = datatipProperties(coordDoubleXY, axesUid);
+    String newMarker = MarkerCreate.markerProperties(coordDoubleXY, axesUid);
+    return newDatatip;
+}
+#end_block
+
+#method_before
+public static String createDatatipProgramIndex(String polylineUid, int indexPoint) {
+    String compoundUid = (String) GraphicController.getController().getProperty(polylineUid, GraphicObjectProperties.__GO_PARENT__);
+    String axesUid = (String) GraphicController.getController().getProperty(compoundUid, GraphicObjectProperties.__GO_PARENT__);
+    String figureUid = (String) GraphicController.getController().getProperty(axesUid, GraphicObjectProperties.__GO_PARENT__);
+    double[] DataX = (double[]) PolylineData.getDataX(polylineUid);
+    double[] DataY = (double[]) PolylineData.getDataY(polylineUid);
+    if (indexPoint > (DataX.length - 1)) {
+        indexPoint = DataX.length - 1;
+    } else if (indexPoint < 0) {
+        indexPoint = 0;
+    }
+    coordDoubleXY[0] = DataX[indexPoint];
+    coordDoubleXY[1] = DataY[indexPoint];
+    String newDatatip = askToCreateObject();
+    String[] datatipLabel = setDatatipLabel(coordDoubleXY);
+    datatipBounds = getDatatipBounds(datatipLabel);
+    datatipPosition = setDatatipPosition(coordDoubleXY);
+    GraphicController.getController().setGraphicObjectRelationship(axesUid, newDatatip);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_TEXT_ARRAY_DIMENSIONS__, datatipBounds);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_TEXT_STRINGS__, datatipLabel);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_BOX__, true);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_CLIP_STATE__, 1);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_POSITION__, datatipPosition);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_LINE_MODE__, true);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_FILL_MODE__, true);
+    GraphicController.getController().setProperty(newDatatip, GraphicObjectProperties.__GO_BACKGROUND__, 8);
+    return newDatatip;
+}
+#method_after
+public static String createDatatipProgramIndex(String polylineUid, int indexPoint) {
+    String compoundUid = (String) GraphicController.getController().getProperty(polylineUid, GraphicObjectProperties.__GO_PARENT__);
+    String axesUid = (String) GraphicController.getController().getProperty(compoundUid, GraphicObjectProperties.__GO_PARENT__);
+    String figureUid = (String) GraphicController.getController().getProperty(axesUid, GraphicObjectProperties.__GO_PARENT__);
+    double[] DataX = (double[]) PolylineData.getDataX(polylineUid);
+    double[] DataY = (double[]) PolylineData.getDataY(polylineUid);
+    if (indexPoint > (DataX.length - 1)) {
+        indexPoint = DataX.length - 1;
+    } else if (indexPoint < 0) {
+        indexPoint = 0;
+    }
+    coordDoubleXY[0] = DataX[indexPoint];
+    coordDoubleXY[1] = DataY[indexPoint];
+    String newDatatip = datatipProperties(coordDoubleXY, axesUid);
+    String newMarker = MarkerCreate.markerProperties(coordDoubleXY, axesUid);
+    return newDatatip;
+}
+#end_block
+
+#method_before
+public void onRightMouseClick(MouseEvent event) {
+    if (!dataEditEnabled) {
+        boolean b = ScilabClipboard.getInstance().canPaste();
+        paste.setEnabled(b);
+        boolean notBlank = AxesHandler.isAxesNotBlank(figureUid);
+        clipboardCopy.setEnabled(notBlank);
+        undo.setEnabled(editorHistory.isUndoEnabled());
+        redo.setEnabled(editorHistory.isRedoEnabled());
+        pasteStyle.setEnabled(ScilabClipboard.getInstance().canPasteStyle());
+        menu.show(event.getComponent(), event.getX(), event.getY());
+        lastClick[0] = event.getX();
+        lastClick[1] = event.getY();
+        dialogComponent = (Component) event.getComponent();
+    } else {
+        dataEditor.onRightClick(event);
+    }
+}
+#method_after
+public void onRightMouseClick(MouseEvent event) {
+    if (!dataEditEnabled) {
+        boolean b = ScilabClipboard.getInstance().canPaste();
+        paste.setEnabled(b);
+        boolean notBlank = AxesHandler.isAxesNotBlank(figureUid);
+        clipboardCopy.setEnabled(notBlank);
+        undo.setEnabled(editorHistory.isUndoEnabled());
+        redo.setEnabled(editorHistory.isRedoEnabled());
+        menu.show(event.getComponent(), event.getX(), event.getY());
+        lastClick[0] = event.getX();
+        lastClick[1] = event.getY();
+        dialogComponent = (Component) event.getComponent();
+    } else {
+        dataEditor.onRightClick(event);
+    }
+}
+#end_block
+
+#method_before
+public void onLeftMouseDown(MouseEvent event) {
+    lastClick[0] = event.getX();
+    lastClick[1] = event.getY();
+    if (!dataEditEnabled) {
+        switch(event.getClickCount()) {
+            case 1:
+                /*try pick a legend*/
+                selectedLegend = entityPicker.pickLegend(figureUid, lastClick);
+                if (selectedLegend != null) {
+                    isLegend = true;
+                    setSelected(selectedLegend.legend);
+                } else {
+                    /*try pick a polyline*/
+                    isLegend = false;
+                    setSelected(entityPicker.pick(figureUid, lastClick[0], lastClick[1]));
+                }
+                break;
+            case 2:
+                /*there is a polyline selected? if yes start dataEditor*/
+                if (selected != null && !isLegend && dataModifyEnabled) {
+                    enterDataEditor();
+                } else /*on double click over a legend or label open dialog*/
+                if (selectedLegend != null) {
+                    onClickInsert(selectedLegend.polyline);
+                } else {
+                    /*try pick a label and open the dialog*/
+                    onClickLabel(entityPicker.pickLabel(figureUid, lastClick));
+                }
+                break;
+            default:
+                break;
+        }
+    } else {
+        /*data editor is enabled, pass event to it*/
+        switch(event.getClickCount()) {
+            case 1:
+                dataEditor.onLeftMouseDown(event);
+                break;
+            case 2:
+                dataEditor.onLeftDoubleClick(event);
+                break;
+            default:
+                break;
+        }
+    }
+    dragClick[0] = lastClick[0];
+    dragClick[1] = lastClick[1];
+}
+#method_after
+public void onLeftMouseDown(MouseEvent event) {
+    lastClick[0] = event.getX();
+    lastClick[1] = event.getY();
+    if (!dataEditEnabled) {
+        switch(event.getClickCount()) {
+            case 1:
+                setSelected(tryPickAnyObject(lastClick));
+                break;
+            case 2:
+                /*there is a polyline selected? if yes start dataEditor*/
+                if (selected != null && selectedType == SelectionType.POLYLINE && dataModifyEnabled) {
+                    enterDataEditor();
+                } else /*on double click over a legend or label open dialog*/
+                if (selectedLegend != null) {
+                    onClickInsert(selectedLegend.polyline);
+                } else {
+                    /*try pick a label and open the dialog*/
+                    onClickLabel(entityPicker.pickLabel(figureUid, lastClick));
+                }
+                break;
+            default:
+                break;
+        }
+    } else {
+        /*data editor is enabled, pass event to it*/
+        switch(event.getClickCount()) {
+            case 1:
+                dataEditor.onLeftMouseDown(event);
+                break;
+            case 2:
+                dataEditor.onLeftDoubleClick(event);
+                break;
+            default:
+                break;
+        }
+    }
+    dragClick[0] = lastClick[0];
+    dragClick[1] = lastClick[1];
+}
+#end_block
+
+#method_before
+public void onLeftMouseRelease(MouseEvent event) {
+    String object = getSelected();
+    if (dataModifyEnabled && !dataEditEnabled && object != null) {
+        editorHistory.addAction(new ActionMove(object, lastClick, dragClick, isLegend));
+    } else {
+        dataEditor.onLeftMouseRelease(event);
+    }
+}
+#method_after
+public void onLeftMouseRelease(MouseEvent event) {
+    String object = getSelected();
+    if (dataModifyEnabled && !dataEditEnabled && object != null) {
+        editorHistory.addAction(new ActionMove(object, lastClick, dragClick, (selectedType == SelectionType.LEGEND)));
+    } else {
+        dataEditor.onLeftMouseRelease(event);
+    }
+}
+#end_block
+
+#method_before
+public void onMouseDragged(MouseEvent event) {
+    Integer[] newClick = { event.getX(), event.getY() };
+    if (dataModifyEnabled) {
+        if (!dataEditEnabled) {
+            String objUID = getSelected();
+            if (objUID != null) {
+                if (isLegend) {
+                    LegendHandler.dragLegend(objUID, dragClick, newClick);
+                } else {
+                    PolylineHandler.getInstance().dragPolyline(objUID, dragClick, newClick);
+                }
+            }
+        } else {
+            dataEditor.onDrag(dragClick, newClick);
+        }
+    }
+    dragClick[0] = newClick[0];
+    dragClick[1] = newClick[1];
+}
+#method_after
+public void onMouseDragged(MouseEvent event) {
+    Integer[] newClick = { event.getX(), event.getY() };
+    if (dataModifyEnabled) {
+        if (!dataEditEnabled) {
+            String objUID = getSelected();
+            if (objUID != null) {
+                if (selectedType == SelectionType.LEGEND) {
+                    LegendHandler.dragLegend(objUID, dragClick, newClick);
+                } else if (selectedType == SelectionType.POLYLINE) {
+                    PolylineHandler.getInstance().dragPolyline(objUID, dragClick, newClick);
+                }
+            }
+        } else {
+            dataEditor.onDrag(dragClick, newClick);
+        }
+    }
+    dragClick[0] = newClick[0];
+    dragClick[1] = newClick[1];
+}
+#end_block
+
+#method_before
+public void setSelected(String uid) {
+    if (CommonHandler.objectExists(selected)) {
+        CommonHandler.setColor(selected, oriColor);
+    }
+    selected = uid;
+    if (selected != null) {
+        oriColor = CommonHandler.setColor(selected, -3);
+        if (!isLegend) {
+            copy.setEnabled(true);
+            cut.setEnabled(true);
+            delete.setEnabled(true);
+            hide.setEnabled(true);
+            legends.setEnabled(true);
+            editdata.setEnabled(true);
+        }
+        delete.setEnabled(true);
+    } else {
+        copy.setEnabled(false);
+        cut.setEnabled(false);
+        delete.setEnabled(false);
+        hide.setEnabled(false);
+        legends.setEnabled(false);
+        editdata.setEnabled(false);
+    }
+}
+#method_after
+public void setSelected(String uid) {
+    if (CommonHandler.objectExists(selected)) {
+        CommonHandler.setColor(selected, oriColor);
+    }
+    selected = uid;
+    if (selected != null) {
+        oriColor = CommonHandler.setColor(selected, -3);
+        boolean spl = selectedType == SelectionType.SURFACE || selectedType == SelectionType.POLYLINE || selectedType == SelectionType.LEGEND;
+        boolean sp = selectedType == SelectionType.SURFACE || selectedType == SelectionType.POLYLINE;
+        boolean p = selectedType == SelectionType.POLYLINE;
+        /* Enable delete if object is surface or polyline or legend*/
+        delete.setEnabled(true && spl);
+        /* Enable copy, cut, hide if object is surface or polyline*/
+        copy.setEnabled(true && sp);
+        cut.setEnabled(true && sp);
+        hide.setEnabled(true && sp);
+        /* Enable editdata, add legend if object is  polyline*/
+        legends.setEnabled(true && p);
+        editdata.setEnabled(true && p);
+    } else {
+        copy.setEnabled(false);
+        cut.setEnabled(false);
+        delete.setEnabled(false);
+        hide.setEnabled(false);
+        legends.setEnabled(false);
+        editdata.setEnabled(false);
+    }
+}
+#end_block
+
+#method_before
+public void onClickCopy() {
+    if (!isLegend) {
+        ScilabClipboard.getInstance().copy(getSelected());
+        ScilabClipboard.getInstance().setCopiedColor(oriColor);
+    }
+}
+#method_after
+public void onClickCopy() {
+    if (selectedType != SelectionType.LEGEND) {
+        ScilabClipboard.getInstance().copy(getSelected());
+        ScilabClipboard.getInstance().setCopiedColor(oriColor);
+    }
+}
+#end_block
+
+#method_before
+public void onClickPaste() {
+    String currentObject, newObject, currentParent, newParent;
+    boolean isDuplicated = false;
+    currentObject = ScilabClipboard.getInstance().getCurrentObject();
+    currentParent = CommonHandler.getParent(currentObject);
+    newObject = ScilabClipboard.getInstance().paste(figureUid, lastClick);
+    newParent = CommonHandler.getParent(newObject);
+    if (newObject == currentObject) {
+        isDuplicated = false;
+    }
+    editorHistory.addAction(new ActionPaste(newObject, currentParent, newParent, isDuplicated));
+}
+#method_after
+public void onClickPaste() {
+    String currentObject, newObject, currentParent, newParent;
+    boolean isDuplicated = false;
+    currentObject = ScilabClipboard.getInstance().getCurrentObject();
+    currentParent = CommonHandler.getParent(currentObject);
+    String oldFigure = CommonHandler.getParentFigure(currentObject);
+    if (!CommonHandler.cmpColorMap(figureUid, oldFigure)) {
+        String msg = "The colormap from source figure seems to be different from the destination figure." + "\nThis may influence the final appearence from the object." + "\nDo you want copy the color map too?";
+        int i = JOptionPane.showConfirmDialog(dialogComponent, msg, "Warning", JOptionPane.YES_NO_OPTION);
+        if (i == JOptionPane.YES_OPTION) {
+            CommonHandler.cloneColorMap(oldFigure, figureUid);
+        }
+    }
+    AxesHandler.pasteRotationAngles(currentObject, figureUid, lastClick);
+    newObject = ScilabClipboard.getInstance().paste(figureUid, lastClick);
+    newParent = CommonHandler.getParent(newObject);
+    if (newObject == currentObject) {
+        isDuplicated = false;
+    }
+    editorHistory.addAction(new ActionPaste(newObject, currentParent, newParent, isDuplicated));
+}
+#end_block
+
+#method_before
+public void onClickCut() {
+    String s = getSelected();
+    if (s != null && !isLegend) {
+        setSelected(null);
+        ScilabClipboard.getInstance().cut(s);
+        ScilabClipboard.getInstance().setCopiedColor(oriColor);
+    }
+}
+#method_after
+public void onClickCut() {
+    String s = getSelected();
+    if (s != null && selectedType != SelectionType.LEGEND) {
+        setSelected(null);
+        ScilabClipboard.getInstance().cut(s);
+        ScilabClipboard.getInstance().setCopiedColor(oriColor);
+    }
+}
+#end_block
+
+#method_before
+public void onClickHide() {
+    if (getSelected() != null) {
+        PolylineHandler.getInstance().visible(selected, false);
+        setSelected(null);
+    }
+}
+#method_after
+public void onClickHide() {
+    if (getSelected() != null) {
+        CommonHandler.setVisible(selected, false);
+        setSelected(null);
+    }
+}
+#end_block
+
+#method_before
+public void onClickUnhide() {
+    PolylineHandler.getInstance().visible(figureUid, true);
+}
+#method_after
+public void onClickUnhide() {
+    CommonHandler.unhideAll(figureUid);
+}
+#end_block
+
+#method_before
+public void enterDataEditor() {
+    if (!dataEditEnabled && !isLegend) {
+        dataEditor.beginEdit(selected);
+        dataEditEnabled = true;
+    }
+}
+#method_after
+public void enterDataEditor() {
+    if (!dataEditEnabled && selectedType == SelectionType.POLYLINE) {
+        dataEditor.beginEdit(selected);
+        dataEditEnabled = true;
+    }
+}
+#end_block
+
+#method_before
+public void onClickGED() {
+    Inspector.getInspector("Figure", figureUid);
+}
+#method_after
+public void onClickGED() {
+    String picked = tryPickAnyObject(lastClick);
+    if (picked != null) {
+        setSelected(picked);
+    }
+    if (getSelected() != null) {
+        switch(selectedType) {
+            case LEGEND:
+                /*not implemented yet*/
+                break;
+            case POLYLINE:
+                Inspector.getInspector("curve", selected, 0, 0);
+                break;
+            case SURFACE:
+                /*not implemented yet*/
+                break;
+        }
+    } else {
+        Inspector.getInspector("axes or figure", figureUid, lastClick[0], lastClick[1]);
+    }
+}
+#end_block
+
+#method_before
+public void onClickPasteStyle() {
+    String axes = AxesHandler.clickedAxes(figureUid, lastClick);
+    ScilabClipboard.getInstance().pasteStyle(axes);
+}
+#method_after
+public void onClickPasteStyle() {
+    Double[] oldColorMap = CommonHandler.getColorMap(figureUid);
+    Integer backgroundColor = CommonHandler.getBackground(figureUid);
+    String oldAxes = AxesHandler.clickedAxes(figureUid, lastClick);
+    String newAxes = ScilabClipboard.getInstance().pasteStyle(oldAxes);
+    editorHistory.addAction(new ActionPasteStyle(newAxes, oldAxes, oldColorMap, backgroundColor));
+}
+#end_block
+
+#method_before
+public void pasteStyle(String objectUID) {
+    if (!canPasteStyle()) {
+        return;
+    }
+    AxesHandler.copyAxesStyle(copyStyle, objectUID);
+}
+#method_after
+public String pasteStyle(String objectUID) {
+    if (!canPasteStyle()) {
+        return null;
+    }
+    String newAxes = AxesHandler.cloneAxesWithStyle(copyStyle);
+    String figureFrom = CommonHandler.getParentFigure(copyStyle);
+    String figureTo = CommonHandler.getParentFigure(objectUID);
+    CommonHandler.cloneColorMap(figureFrom, figureTo);
+    CommonHandler.cloneBackgroundColor(figureFrom, figureTo);
+    AxesHandler.pasteAxesStyle(newAxes, objectUID);
+    return newAxes;
+}
+#end_block
+
+#method_before
+public void onClickPaste() {
+    String currentObject, newObject, currentParent, newParent;
+    boolean isDuplicated = false;
+    currentObject = ScilabClipboard.getInstance().getCurrentObject();
+    currentParent = CommonHandler.getParent(currentObject);
+    newObject = ScilabClipboard.getInstance().paste(figureUid, lastClick);
+    newParent = CommonHandler.getParent(newObject);
+    if (newObject == currentObject) {
+        isDuplicated = false;
+    }
+    editorHistory.addAction(new ActionPaste(newObject, currentParent, newParent, isDuplicated));
+}
+#method_after
+public void onClickPaste() {
+    String currentObject, newObject, currentParent, newParent;
+    boolean isDuplicated = false;
+    currentObject = ScilabClipboard.getInstance().getCurrentObject();
+    currentParent = CommonHandler.getParent(currentObject);
+    String oldFigure = CommonHandler.getParentFigure(currentObject);
+    if (!CommonHandler.cmpColorMap(figureUid, oldFigure)) {
+        String msg = "The colormap from source figure seems to be different from the destination figure." + "\nThis may influence the final appearence from the object." + "\nDo you want copy the color map too?";
+        int i = JOptionPane.showConfirmDialog(dialogComponent, msg, "Warning", JOptionPane.YES_NO_OPTION);
+        if (i == JOptionPane.YES_OPTION) {
+            CommonHandler.cloneColorMap(oldFigure, figureUid);
+        }
+    }
+    newObject = ScilabClipboard.getInstance().paste(figureUid, lastClick);
+    newParent = CommonHandler.getParent(newObject);
+    if (newObject == currentObject) {
+        isDuplicated = false;
+    }
+    editorHistory.addAction(new ActionPaste(newObject, currentParent, newParent, isDuplicated));
+}
+#end_block
+
+#method_before
+public void addMenus(String parentId) {
+    // delete old menus
+    for (String childId : (String[]) GraphicController.getController().getProperty(parentId, GraphicObjectProperties.__GO_CHILDREN__)) {
+        if (GraphicController.getController().getProperty(childId, GraphicObjectProperties.__GO_TYPE__) == "uimenu")
+            GraphicController.getController().removeRelationShipAndDelete(childId);
+    }
+    NodeList menus = dom.getElementsByTagName(MENU);
+    for (int i = 0; i < menus.getLength(); i++) {
+        // Create the menu
+        String menuId = null;
+        if (isParentValid) {
+            menuId = GraphicController.getController().askObject(Type.UIMENU);
+        } else {
+            menuId = GraphicController.getController().askObject(Type.UIMENUMODEL);
+        }
+        // The menu is not visible in Scilab view by default
+        GraphicController.getController().setProperty(menuId, __GO_HIDDEN__, true);
+        // Set the label
+        String menuLabel = Messages.gettext(menus.item(i).getAttributes().getNamedItem(LABEL).getNodeValue());
+        GraphicController.getController().setProperty(menuId, __GO_UI_LABEL__, menuLabel);
+        // Set the mnemonic if given
+        if (menus.item(i).getAttributes().getNamedItem(MNEMONIC) != null) {
+            String mnemonicString = menus.item(i).getAttributes().getNamedItem(MNEMONIC).getNodeValue();
+            GraphicController.getController().setProperty(menuId, __GO_UI_MNEMONIC__, mnemonicString);
+        }
+        // Set the icon if given
+        if (menus.item(i).getAttributes().getNamedItem(ICON) != null) {
+            String iconName = menus.item(i).getNodeValue();
+            GraphicController.getController().setProperty(menuId, __GO_UI_ICON__, iconName);
+        }
+        // Set the enable status if given
+        if (menus.item(i).getAttributes().getNamedItem(ENABLED) != null) {
+            boolean enabled = menus.item(i).getAttributes().getNamedItem(ENABLED).getNodeValue().equals(TRUE);
+            GraphicController.getController().setProperty(menuId, __GO_UI_ENABLE__, enabled);
+        }
+        // Set the menu parent
+        GraphicController.getController().setGraphicObjectRelationship(parentId, menuId);
+        addSubMenus(menuId, i);
+    }
+}
+#method_after
+public void addMenus(String parentId) {
+    // delete old menus
+    for (String childId : (String[]) GraphicController.getController().getProperty(parentId, GraphicObjectProperties.__GO_CHILDREN__)) {
+        if (GraphicController.getController().getProperty(childId, GraphicObjectProperties.__GO_TYPE__).equals(__GO_UIMENU__))
+            GraphicController.getController().removeRelationShipAndDelete(childId);
+    }
+    NodeList menus = dom.getElementsByTagName(MENU);
+    for (int i = 0; i < menus.getLength(); i++) {
+        // Create the menu
+        String menuId = null;
+        if (isParentValid) {
+            menuId = GraphicController.getController().askObject(Type.UIMENU);
+        } else {
+            menuId = GraphicController.getController().askObject(Type.UIMENUMODEL);
+        }
+        // The menu is not visible in Scilab view by default
+        GraphicController.getController().setProperty(menuId, __GO_HIDDEN__, true);
+        // Set the label
+        String menuLabel = Messages.gettext(menus.item(i).getAttributes().getNamedItem(LABEL).getNodeValue());
+        GraphicController.getController().setProperty(menuId, __GO_UI_LABEL__, menuLabel);
+        // Set the mnemonic if given
+        if (menus.item(i).getAttributes().getNamedItem(MNEMONIC) != null) {
+            String mnemonicString = menus.item(i).getAttributes().getNamedItem(MNEMONIC).getNodeValue();
+            GraphicController.getController().setProperty(menuId, __GO_UI_MNEMONIC__, mnemonicString);
+        }
+        // Set the icon if given
+        if (menus.item(i).getAttributes().getNamedItem(ICON) != null) {
+            String iconName = menus.item(i).getNodeValue();
+            GraphicController.getController().setProperty(menuId, __GO_UI_ICON__, iconName);
+        }
+        // Set the enable status if given
+        if (menus.item(i).getAttributes().getNamedItem(ENABLED) != null) {
+            boolean enabled = menus.item(i).getAttributes().getNamedItem(ENABLED).getNodeValue().equals(TRUE);
+            GraphicController.getController().setProperty(menuId, __GO_UI_ENABLE__, enabled);
+        }
+        // Set the menu parent
+        GraphicController.getController().setGraphicObjectRelationship(parentId, menuId);
+        addSubMenus(menuId, i);
+    }
+}
+#end_block
+
+#method_before
+@Override
+public boolean exists() {
+    if (GraphicController.getController().getObjectFromId(parentUID) != null) {
+        return true;
+    } else {
+        return false;
+    }
+}
+#method_after
+@Override
+public boolean exists() {
+    GraphicObject object = GraphicController.getController().getObjectFromId(parentUID);
+    if (object != null) {
+        return true;
+    } else {
+        return false;
+    }
+}
+#end_block
+
+#method_before
+public void undo() {
+    if (exists()) {
+        GraphicController.getController().setProperty(objectUID, GraphicObjectProperties.__GO_TEXT_STRINGS__, FText);
+    } else {
+        objectUID = null;
+    }
+}
+#method_after
+public void undo() {
+    if (exists()) {
+        GraphicController.getController().setProperty(objectUID, GraphicObjectProperties.__GO_TEXT_STRINGS__, oldText);
+    } else {
+        objectUID = null;
+    }
+}
+#end_block
+
+#method_before
+public void redo() {
+    if (exists()) {
+        GraphicController.getController().setProperty(objectUID, GraphicObjectProperties.__GO_TEXT_STRINGS__, TText);
+    } else {
+        objectUID = null;
+    }
+}
+#method_after
+public void redo() {
+    if (exists()) {
+        GraphicController.getController().setProperty(objectUID, GraphicObjectProperties.__GO_TEXT_STRINGS__, newText);
+    } else {
+        objectUID = null;
+    }
+}
+#end_block
+
+#method_before
+/**
+ * Set the text of label x, y or z.
+ *
+ * @param axes The axes that will recieve the label.
+ * @param text An array of text to set.
+ * @param axis The axis to set x, y or z.
+ */
+public static String setLabel(String axes, String[] text, AxesHandler.axisTo axis) {
+    String label = null;
+    switch(axis) {
+        case __X__:
+            label = (String) GraphicController.getController().getProperty(axes, GraphicObjectProperties.__GO_X_AXIS_LABEL__);
+            break;
+        case __Y__:
+            label = (String) GraphicController.getController().getProperty(axes, GraphicObjectProperties.__GO_Y_AXIS_LABEL__);
+            break;
+        case __Z__:
+            label = (String) GraphicController.getController().getProperty(axes, GraphicObjectProperties.__GO_Z_AXIS_LABEL__);
+            break;
+        default:
+            return null;
+    }
+    if (label != null) {
+        GraphicController.getController().setProperty(label, GraphicObjectProperties.__GO_TEXT_STRINGS__, text);
+    }
+    return label;
+}
+#method_after
+/**
+ * Set the text of label x, y or z.
+ *
+ * @param axes The axes that will recieve the label.
+ * @param text An array of text to set.
+ * @param axis The axis to set x, y or z.
+ * @return The Label that was setted
+ */
+public static String setLabel(String axes, String[] text, AxesHandler.axisTo axis) {
+    String label = null;
+    switch(axis) {
+        case __X__:
+            label = (String) GraphicController.getController().getProperty(axes, GraphicObjectProperties.__GO_X_AXIS_LABEL__);
+            break;
+        case __Y__:
+            label = (String) GraphicController.getController().getProperty(axes, GraphicObjectProperties.__GO_Y_AXIS_LABEL__);
+            break;
+        case __Z__:
+            label = (String) GraphicController.getController().getProperty(axes, GraphicObjectProperties.__GO_Z_AXIS_LABEL__);
+            break;
+        default:
+            return null;
+    }
+    if (label != null) {
+        GraphicController.getController().setProperty(label, GraphicObjectProperties.__GO_TEXT_STRINGS__, text);
+    }
+    return label;
+}
+#end_block
+
+#method_before
+public void redo() {
+    if (exists()) {
+        setRelation(objectUID, TParent);
+    } else {
+        objectUID = null;
+    }
+}
+#method_after
+public void redo() {
+    if (exists()) {
+        setRelation(objectUID, pastedParent);
+    } else {
+        objectUID = null;
+    }
+}
+#end_block
+
+#method_before
+public boolean isUndoEnabled() {
+    if (history.size() > 0 && head < (history.size() - 1) && head >= 0) {
+        return true;
+    }
+    return false;
+}
+#method_after
+public boolean isUndoEnabled() {
+    if (history.size() > 0 && head < history.size() && head >= 0) {
+        return true;
+    }
+    return false;
+}
+#end_block
+
+#method_before
+public boolean isRedoEnabled() {
+    if (history.size() > 0 && head > 0 && head < history.size()) {
+        return true;
+    }
+    return false;
+}
+#method_after
+public boolean isRedoEnabled() {
+    if (history.size() > 0 && head > 0 && head <= history.size()) {
+        return true;
+    }
+    return false;
+}
+#end_block
+

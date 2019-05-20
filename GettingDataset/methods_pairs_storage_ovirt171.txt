@@ -1,0 +1,918 @@
+15
+#method_before
+@Test
+public void testExecuteQueryWithNotExistingIscsiBond() {
+    IscsiBond iscsiBond = new IscsiBond();
+    iscsiBond.setId(Guid.newGuid());
+    when(getQueryParameters().getId()).thenReturn(iscsiBondId);
+    getQuery().executeQueryCommand();
+    IscsiBond result = getQuery().getQueryReturnValue().getReturnValue();
+    assertNull(result);
+}
+#method_after
+@Test
+public void testExecuteQueryWithNotExistingIscsiBond() {
+    when(getQueryParameters().getId()).thenReturn(iscsiBondId);
+    getQuery().executeQueryCommand();
+    IscsiBond result = getQuery().getQueryReturnValue().getReturnValue();
+    assertNull(result);
+}
+#end_block
+
+#method_before
+public ValidationResult bondNotUpdatedAndRemovedSimultaneously() {
+    List<CreateOrUpdateBond> duplicateBonds = params.getCreateOrUpdateBonds().stream().filter(bond -> params.getRemovedBonds().contains(bond.getId())).collect(Collectors.toList());
+    if (CollectionUtils.isNotEmpty(duplicateBonds)) {
+        EngineMessage engineMessage = EngineMessage.BOND_UPDATED_AND_REMOVED_SIMULTANEOUSLY;
+        return new ValidationResult(engineMessage, ReplacementUtils.getListVariableAssignmentString(engineMessage, duplicateBonds.stream().map(CreateOrUpdateBond::getName).collect(Collectors.toList())));
+    }
+    return ValidationResult.VALID;
+}
+#method_after
+public ValidationResult bondNotUpdatedAndRemovedSimultaneously() {
+    List<String> bondsUpdatedAndRemovedSimultaneously = params.getCreateOrUpdateBonds().stream().filter(bond -> params.getRemovedBonds().contains(bond.getId())).map(CreateOrUpdateBond::getName).collect(Collectors.toList());
+    if (CollectionUtils.isNotEmpty(bondsUpdatedAndRemovedSimultaneously)) {
+        EngineMessage engineMessage = EngineMessage.BONDS_UPDATED_AND_REMOVED_SIMULTANEOUSLY;
+        return new ValidationResult(engineMessage, ReplacementUtils.getListVariableAssignmentString(engineMessage, bondsUpdatedAndRemovedSimultaneously));
+    }
+    return ValidationResult.VALID;
+}
+#end_block
+
+#method_before
+@Test
+public void testBondNotUpdatedAndRemovedSimultaneouslyNotValid() {
+    HostSetupNetworksParameters params = new ParametersBuilder().addBonds(CreateOrUpdateBond.fromBond(bond)).addRemovedBonds(bond.getId()).build();
+    HostSetupNetworksValidator validator = new HostSetupNetworksValidatorBuilder().setParams(params).build();
+    EngineMessage engineMessage = EngineMessage.BOND_UPDATED_AND_REMOVED_SIMULTANEOUSLY;
+    assertThat(validator.bondNotUpdatedAndRemovedSimultaneously(), failsWith(engineMessage, ReplacementUtils.getListVariableAssignmentString(engineMessage, Collections.singletonList(bond.getName()))));
+}
+#method_after
+@Test
+public void testBondNotUpdatedAndRemovedSimultaneouslyNotValid() {
+    HostSetupNetworksParameters params = new ParametersBuilder().addBonds(CreateOrUpdateBond.fromBond(bond)).addRemovedBonds(bond.getId()).build();
+    HostSetupNetworksValidator validator = new HostSetupNetworksValidatorBuilder().setParams(params).build();
+    EngineMessage engineMessage = EngineMessage.BONDS_UPDATED_AND_REMOVED_SIMULTANEOUSLY;
+    assertThat(validator.bondNotUpdatedAndRemovedSimultaneously(), failsWith(engineMessage, ReplacementUtils.getListVariableAssignmentString(engineMessage, Collections.singletonList(bond.getName()))));
+}
+#end_block
+
+#method_before
+public static void deserialize(SerializationStreamReader streamReader, VdcQueryReturnValue instance) throws SerializationException {
+    instance.setSucceeded(streamReader.readBoolean());
+    instance.setExceptionString(streamReader.readString());
+    String type = streamReader.readString();
+    if (type.equals("java.lang.String")) {
+        instance.setReturnValue(streamReader.readString());
+    } else if (type.equals("java.lang.Integer")) {
+        instance.setReturnValue(streamReader.readInt());
+    } else if (type.equals("java.lang.Boolean")) {
+        instance.setReturnValue(streamReader.readBoolean());
+    } else if (type.equals("java.lang.Double")) {
+        instance.setReturnValue(streamReader.readDouble());
+    } else if (type.equals("java.lang.Float")) {
+        instance.setReturnValue(streamReader.readFloat());
+    } else if (type.equals("java.lang.Character")) {
+        instance.setReturnValue(streamReader.readChar());
+    } else if (type.equals("java.lang.Short")) {
+        instance.setReturnValue(streamReader.readShort());
+    } else if (type.equals("java.lang.Byte")) {
+        instance.setReturnValue(streamReader.readByte());
+    } else if (type.equals("java.util.List")) {
+        instance.setReturnValue(streamReader.readObject());
+    } else if (type.equals("java.util.Map")) {
+        instance.setReturnValue(streamReader.readObject());
+    } else if (type.equals("java.util.Set")) {
+        instance.setReturnValue(streamReader.readObject());
+    } else if (type.equals("IVdcQueryable")) {
+        instance.setReturnValue(streamReader.readObject());
+    } else if (type.equals("UNKNOWN")) {
+        instance.setReturnValue(streamReader.readObject());
+    }
+}
+#method_after
+public static void deserialize(SerializationStreamReader streamReader, VdcQueryReturnValue instance) throws SerializationException {
+    instance.setSucceeded(streamReader.readBoolean());
+    instance.setExceptionString(streamReader.readString());
+    String type = streamReader.readString();
+    if (type == null) {
+    // a null return value
+    } else if (type.equals("java.lang.String")) {
+        instance.setReturnValue(streamReader.readString());
+    } else if (type.equals("java.lang.Integer")) {
+        instance.setReturnValue(streamReader.readInt());
+    } else if (type.equals("java.lang.Boolean")) {
+        instance.setReturnValue(streamReader.readBoolean());
+    } else if (type.equals("java.lang.Double")) {
+        instance.setReturnValue(streamReader.readDouble());
+    } else if (type.equals("java.lang.Float")) {
+        instance.setReturnValue(streamReader.readFloat());
+    } else if (type.equals("java.lang.Character")) {
+        instance.setReturnValue(streamReader.readChar());
+    } else if (type.equals("java.lang.Short")) {
+        instance.setReturnValue(streamReader.readShort());
+    } else if (type.equals("java.lang.Byte")) {
+        instance.setReturnValue(streamReader.readByte());
+    } else if (type.equals("java.util.List")) {
+        instance.setReturnValue(streamReader.readObject());
+    } else if (type.equals("java.util.Map")) {
+        instance.setReturnValue(streamReader.readObject());
+    } else if (type.equals("java.util.Set")) {
+        instance.setReturnValue(streamReader.readObject());
+    } else if (type.equals("IVdcQueryable")) {
+        instance.setReturnValue(streamReader.readObject());
+    } else if (type.equals("UNKNOWN")) {
+        instance.setReturnValue(streamReader.readObject());
+    }
+}
+#end_block
+
+#method_before
+@Override
+public void update(final VDS host) {
+    Collection<String> packages = getPackagesForCheckUpdate(host.getVdsType(), host.getClusterCompatibilityVersion());
+    try (final VdsDeploy hostPackagesManager = createPackagesManager(host, true)) {
+        hostPackagesManager.addUnit(new VdsDeployPackagesUnit(packages, false));
+        hostPackagesManager.execute();
+    } catch (final Exception e) {
+        log.error("Failed to update host '{}' packages '{}'.", host.getName(), StringUtils.join(packages, ", "));
+        log.error("Exception", e.getMessage());
+        log.debug("Exception", e);
+        throw new RuntimeException(e);
+    }
+}
+#method_after
+@Override
+public void update(final VDS host) {
+    Collection<String> packages = getPackagesForCheckUpdate(host.getVdsType(), host.getClusterCompatibilityVersion());
+    try (final VdsDeploy hostPackagesManager = createPackagesManager(host, true)) {
+        hostPackagesManager.addUnit(new VdsDeployPackagesUnit(packages, false));
+        hostPackagesManager.execute();
+    } catch (final Exception e) {
+        log.error("Failed to update host '{}' packages '{}': {}", host.getName(), StringUtils.join(packages, ", "), e.getMessage());
+        log.debug("Exception", e);
+        throw new RuntimeException(e);
+    }
+}
+#end_block
+
+#method_before
+private String getNextRunMessage(String field) {
+    if (field.equals("minAllocatedMem")) {
+        // $NON-NLS-1$
+        String translated = nextRunMessages.minAllocatedMem();
+        try {
+            // $NON-NLS-1$
+            translated = nextRunMessages.getString("minAllocatedMem");
+        } catch (MissingResourceException e) {
+        // ignore
+        }
+        return translated;
+    }
+    return field;
+}
+#method_after
+private String getNextRunMessage(String field) {
+    try {
+        return nextRunMessages.getString(field);
+    } catch (MissingResourceException e) {
+    // ignore
+    }
+    return field;
+}
+#end_block
+
+#method_before
+public void sparsifyNotSupportedWhenWipeAfterDeleteIsOn() {
+    createStorageDomainForDisk(StorageType.ISCSI);
+    disk.setWipeAfterDelete(true);
+    assertThat(validator.isSparsifySupported(), failsWith(EngineMessage.ACTION_TYPE_FAILED_DISK_SPARSIFY_NOT_SUPPORTED_BY_UNDERLYING_STORAGE_WHEN_WAD_IS_ENABLED));
+}
+#method_after
+@Test
+public void sparsifyNotSupportedWhenWipeAfterDeleteIsOn() {
+    StorageDomain storageDomain = createStorageDomainForDisk(StorageType.ISCSI);
+    disk.setWipeAfterDelete(true);
+    storageDomain.setSupportsDiscardZeroesData(false);
+    assertThat(validator.isSparsifySupported(), failsWith(EngineMessage.ACTION_TYPE_FAILED_DISK_SPARSIFY_NOT_SUPPORTED_BY_UNDERLYING_STORAGE_WHEN_WAD_IS_ENABLED));
+}
+#end_block
+
+#method_before
+public ValidationResult isSparsifySupported() {
+    if (disk.getDiskStorageType() == DiskStorageType.IMAGE) {
+        StorageDomain diskStorageDomain = Injector.get(StorageDomainDao.class).get(((DiskImage) disk).getStorageIds().get(0));
+        if (diskStorageDomain.getStorageType().isFileDomain()) {
+            return ValidationResult.VALID;
+        } else if (diskStorageDomain.getStorageType().isBlockDomain()) {
+            if (disk.isWipeAfterDelete() && !diskStorageDomain.getSupportsDiscardZeroesData()) {
+                return new ValidationResult(EngineMessage.ACTION_TYPE_FAILED_DISK_SPARSIFY_NOT_SUPPORTED_BY_UNDERLYING_STORAGE_WHEN_WAD_IS_ENABLED, getStorageDomainNameVarReplacement(diskStorageDomain), getDiskAliasVarReplacement());
+            }
+            return ValidationResult.VALID;
+        }
+        return new ValidationResult(EngineMessage.ACTION_TYPE_FAILED_DISK_SPARSIFY_NOT_SUPPORTED_BY_STORAGE_TYPE, getDiskAliasVarReplacement(), getStorageDomainNameVarReplacement(diskStorageDomain), ReplacementUtils.createSetVariableString("storageType", diskStorageDomain.getStorageType()));
+    }
+    return new ValidationResult(EngineMessage.ACTION_TYPE_FAILED_DISK_SPARSIFY_NOT_SUPPORTED_BY_DISK_STORAGE_TYPE, getDiskAliasVarReplacement(), ReplacementUtils.createSetVariableString("diskStorageType", disk.getDiskStorageType()));
+}
+#method_after
+public ValidationResult isSparsifySupported() {
+    if (disk.getDiskStorageType() != DiskStorageType.IMAGE) {
+        return new ValidationResult(EngineMessage.ACTION_TYPE_FAILED_DISK_SPARSIFY_NOT_SUPPORTED_BY_DISK_STORAGE_TYPE, getDiskAliasVarReplacement(), ReplacementUtils.createSetVariableString("diskStorageType", disk.getDiskStorageType()));
+    }
+    StorageDomain diskStorageDomain = Injector.get(StorageDomainDao.class).get(((DiskImage) disk).getStorageIds().get(0));
+    if (diskStorageDomain.getStorageType().isFileDomain()) {
+        return ValidationResult.VALID;
+    }
+    if (diskStorageDomain.getStorageType().isBlockDomain()) {
+        if (disk.isWipeAfterDelete() && !diskStorageDomain.getSupportsDiscardZeroesData()) {
+            return new ValidationResult(EngineMessage.ACTION_TYPE_FAILED_DISK_SPARSIFY_NOT_SUPPORTED_BY_UNDERLYING_STORAGE_WHEN_WAD_IS_ENABLED, getStorageDomainNameVarReplacement(diskStorageDomain), getDiskAliasVarReplacement());
+        }
+        return ValidationResult.VALID;
+    }
+    return new ValidationResult(EngineMessage.ACTION_TYPE_FAILED_DISK_SPARSIFY_NOT_SUPPORTED_BY_STORAGE_TYPE, getDiskAliasVarReplacement(), getStorageDomainNameVarReplacement(diskStorageDomain), ReplacementUtils.createSetVariableString("storageType", diskStorageDomain.getStorageType()));
+}
+#end_block
+
+#method_before
+@Override
+protected boolean validate() {
+    if (!super.validate()) {
+        return false;
+    }
+    macPool = getMacPool();
+    Map<Guid, StorageDomain> domainsMap = new HashMap<>();
+    if (!validateBeforeCloneVm(domainsMap)) {
+        return false;
+    }
+    if (getParameters().isImportAsNewEntity()) {
+        initImportClonedVm();
+        if (getVm().getInterfaces().size() > macPool.getAvailableMacsCount()) {
+            return failValidation(EngineMessage.MAC_POOL_NOT_ENOUGH_MAC_ADDRESSES);
+        }
+    }
+    if (!validateBallonDevice()) {
+        return false;
+    }
+    if (!validateSoundDevice()) {
+        return false;
+    }
+    if (!validate(VmHandler.validateMaxMemorySize(getVmTemplate(), getEffectiveCompatibilityVersion()))) {
+        return false;
+    }
+    return validateAfterCloneVm(domainsMap);
+}
+#method_after
+@Override
+protected boolean validate() {
+    if (!super.validate()) {
+        return false;
+    }
+    macPool = getMacPool();
+    Map<Guid, StorageDomain> domainsMap = new HashMap<>();
+    if (!validateBeforeCloneVm(domainsMap)) {
+        return false;
+    }
+    // Since methods #validateBeforeCloneVm > #validateAndSetVmFromExportDomain > #setVmFromExportDomain may
+    // change this.vm instance, following code can't be in #init() method and has to follow call of
+    // #validateBeforeCloneVm.
+    VmHandler.updateMaxMemorySize(getVm().getStaticData(), getEffectiveCompatibilityVersion());
+    if (getParameters().isImportAsNewEntity()) {
+        initImportClonedVm();
+        if (getVm().getInterfaces().size() > macPool.getAvailableMacsCount()) {
+            return failValidation(EngineMessage.MAC_POOL_NOT_ENOUGH_MAC_ADDRESSES);
+        }
+    }
+    if (!validateBallonDevice()) {
+        return false;
+    }
+    if (!validateSoundDevice()) {
+        return false;
+    }
+    if (!validate(VmHandler.validateMaxMemorySize(getVm().getStaticData(), getEffectiveCompatibilityVersion()))) {
+        return false;
+    }
+    return validateAfterCloneVm(domainsMap);
+}
+#end_block
+
+#method_before
+protected boolean validateBeforeCloneVm(Map<Guid, StorageDomain> domainsMap) {
+    if (getVm() != null) {
+        setDescription(getVmName());
+    }
+    if (getStoragePool() == null) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_STORAGE_POOL_NOT_EXIST);
+    }
+    Set<Guid> destGuids = new HashSet<>(imageToDestinationDomainMap.values());
+    for (Guid destGuid : destGuids) {
+        StorageDomain storageDomain = getStorageDomain(destGuid);
+        StorageDomainValidator validator = new StorageDomainValidator(storageDomain);
+        if (!validate(validator.isDomainExistAndActive()) || !validate(validator.domainIsValidDestination())) {
+            return false;
+        }
+        domainsMap.put(destGuid, storageDomain);
+    }
+    if (!isImagesAlreadyOnTarget() && getParameters().isImportAsNewEntity() && isCopyCollapseDisabledWithSnapshotsOrWithTemplate()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_IMPORT_CLONE_NOT_COLLAPSED, String.format("$VmName %1$s", getVmName()));
+    }
+    // Register can never happen with copyCollapse = true since there's no copy operation involved.
+    if (isImagesAlreadyOnTarget() && getParameters().getCopyCollapse()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_IMPORT_UNREGISTERED_NOT_COLLAPSED);
+    }
+    if (!isImagesAlreadyOnTarget()) {
+        setSourceDomainId(getParameters().getSourceDomainId());
+        StorageDomainValidator validator = new StorageDomainValidator(getSourceDomain());
+        if (validator.isDomainExistAndActive().isValid() && getSourceDomain().getStorageDomainType() != StorageDomainType.ImportExport) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_STORAGE_DOMAIN_TYPE_ILLEGAL);
+        }
+        if (!validateAndSetVmFromExportDomain()) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_VM_NOT_FOUND_ON_EXPORT_DOMAIN);
+        }
+    }
+    if (!validateImages(domainsMap)) {
+        return false;
+    }
+    return true;
+}
+#method_after
+protected boolean validateBeforeCloneVm(Map<Guid, StorageDomain> domainsMap) {
+    if (getVm() != null) {
+        setDescription(getVmName());
+    }
+    if (getStoragePool() == null) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_STORAGE_POOL_NOT_EXIST);
+    }
+    Set<Guid> destGuids = new HashSet<>(imageToDestinationDomainMap.values());
+    for (Guid destGuid : destGuids) {
+        StorageDomain storageDomain = getStorageDomain(destGuid);
+        StorageDomainValidator validator = new StorageDomainValidator(storageDomain);
+        if (!validate(validator.isDomainExistAndActive()) || !validate(validator.domainIsValidDestination())) {
+            return false;
+        }
+        domainsMap.put(destGuid, storageDomain);
+    }
+    if (!isImagesAlreadyOnTarget() && getParameters().isImportAsNewEntity() && isCopyCollapseDisabledWithSnapshotsOrWithTemplate()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_IMPORT_CLONE_NOT_COLLAPSED, String.format("$VmName %1$s", getVmName()));
+    }
+    // Register can never happen with copyCollapse = true since there's no copy operation involved.
+    if (isImagesAlreadyOnTarget() && getParameters().getCopyCollapse()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_IMPORT_UNREGISTERED_NOT_COLLAPSED);
+    }
+    if (!isImagesAlreadyOnTarget()) {
+        setSourceDomainId(getParameters().getSourceDomainId());
+        StorageDomainValidator validator = new StorageDomainValidator(getSourceDomain());
+        if (validator.isDomainExistAndActive().isValid() && getSourceDomain().getStorageDomainType() != StorageDomainType.ImportExport) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_STORAGE_DOMAIN_TYPE_ILLEGAL);
+        }
+        if (!validateAndSetVmFromExportDomain()) {
+            return failValidation(EngineMessage.ACTION_TYPE_FAILED_VM_NOT_FOUND_ON_EXPORT_DOMAIN);
+        }
+    }
+    if (!validateImages(domainsMap)) {
+        return false;
+    }
+    List<VmNetworkInterface> vmNetworkInterfaces = getVm().getInterfaces();
+    vmNicMacsUtils.replaceInvalidEmptyStringMacAddressesWithNull(vmNetworkInterfaces);
+    return true;
+}
+#end_block
+
+#method_before
+@Override
+protected void executeVmCommand() {
+    if (!addVmLease(getVm().getLeaseStorageDomainId(), getVm().getId())) {
+        getVm().setLeaseStorageDomainId(null);
+    }
+    super.executeVmCommand();
+}
+#method_after
+@Override
+protected void executeVmCommand() {
+    if (shouldAddLease(getVm().getStaticData())) {
+        if (FeatureSupported.isVmLeasesSupported(getEffectiveCompatibilityVersion())) {
+            if (validateLeaseStorageDomain(getVm().getLeaseStorageDomainId())) {
+                if (!addVmLease(getVm().getLeaseStorageDomainId(), getVm().getId())) {
+                    getVm().setLeaseStorageDomainId(null);
+                }
+            } else {
+                getVm().setLeaseStorageDomainId(null);
+                auditLogDirector.log(this, AuditLogType.CANNOT_IMPORT_VM_WITH_LEASE_STORAGE_DOMAIN);
+            }
+        } else {
+            getVm().setLeaseStorageDomainId(null);
+            auditLogDirector.log(this, AuditLogType.CANNOT_IMPORT_VM_WITH_LEASE_COMPAT_VERSION);
+        }
+    }
+    super.executeVmCommand();
+}
+#end_block
+
+#method_before
+@Override
+public void init() {
+    super.init();
+    setEffectiveCompatibilityVersion(CompatibilityVersionUtils.getEffective(getVmTemplate(), this::getCluster));
+    ImportUtils.updateGraphicsDevices(getVmTemplate(), getEffectiveCompatibilityVersion());
+    ImportUtils.updateMaxMemorySize(getVmTemplate(), getEffectiveCompatibilityVersion());
+}
+#method_after
+@Override
+public void init() {
+    super.init();
+    setEffectiveCompatibilityVersion(CompatibilityVersionUtils.getEffective(getVmTemplate(), this::getCluster));
+    ImportUtils.updateGraphicsDevices(getVmTemplate(), getEffectiveCompatibilityVersion());
+    VmHandler.updateMaxMemorySize(getVmTemplate(), getEffectiveCompatibilityVersion());
+}
+#end_block
+
+#method_before
+@Override
+protected boolean validate() {
+    if (getVmTemplate() == null) {
+        return false;
+    }
+    setDescription(getVmTemplateName());
+    // check that the storage pool is valid
+    if (!checkStoragePool() || !validateTemplateArchitecture() || !isClusterCompatible()) {
+        return false;
+    }
+    // set the source domain and check that it is ImportExport type and active
+    setSourceDomainId(getParameters().getSourceDomainId());
+    StorageDomainValidator sourceDomainValidator = new StorageDomainValidator(getSourceDomain());
+    if (!validate(sourceDomainValidator.isDomainExistAndActive())) {
+        return false;
+    }
+    if ((getSourceDomain().getStorageDomainType() != StorageDomainType.ImportExport) && !getParameters().isImagesExistOnTargetStorageDomain()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_STORAGE_DOMAIN_TYPE_ILLEGAL);
+    }
+    if (!getParameters().isImagesExistOnTargetStorageDomain()) {
+        // Set the template images from the Export domain and change each image id storage is to the import domain
+        GetAllFromExportDomainQueryParameters tempVar = new GetAllFromExportDomainQueryParameters(getParameters().getStoragePoolId(), getParameters().getSourceDomainId());
+        VdcQueryReturnValue qretVal = runInternalQuery(VdcQueryType.GetTemplatesFromExportDomain, tempVar);
+        if (!qretVal.getSucceeded()) {
+            return false;
+        }
+        Map<VmTemplate, List<DiskImage>> templates = qretVal.getReturnValue();
+        ArrayList<DiskImage> images = new ArrayList<>();
+        for (Map.Entry<VmTemplate, List<DiskImage>> entry : templates.entrySet()) {
+            if (entry.getKey().getId().equals(getVmTemplate().getId())) {
+                images = new ArrayList<>(entry.getValue());
+                getVmTemplate().setInterfaces(entry.getKey().getInterfaces());
+                getVmTemplate().setOvfVersion(entry.getKey().getOvfVersion());
+                break;
+            }
+        }
+        getParameters().setImages(images);
+        getVmTemplate().setImages(images);
+        ensureDomainMap(getImages(), getParameters().getDestDomainId());
+        HashMap<Guid, DiskImage> imageMap = new HashMap<>();
+        for (DiskImage image : images) {
+            if (Guid.Empty.equals(image.getVmSnapshotId())) {
+                return failValidation(EngineMessage.ACTION_TYPE_FAILED_CORRUPTED_VM_SNAPSHOT_ID);
+            }
+            StorageDomain storageDomain = getStorageDomain(imageToDestinationDomainMap.get(image.getId()));
+            StorageDomainValidator validator = new StorageDomainValidator(storageDomain);
+            if (!validate(validator.isDomainExistAndActive()) || !validate(validator.domainIsValidDestination())) {
+                return false;
+            }
+            StorageDomainStatic targetDomain = storageDomain.getStorageStaticData();
+            changeRawToCowIfSparseOnBlockDevice(targetDomain.getStorageType(), image);
+            if (!ImagesHandler.checkImageConfiguration(targetDomain, image, getReturnValue().getValidationMessages())) {
+                return false;
+            }
+            image.setStoragePoolId(getParameters().getStoragePoolId());
+            image.setStorageIds(new ArrayList<>(Collections.singletonList(storageDomain.getId())));
+            imageMap.put(image.getImageId(), image);
+        }
+        getVmTemplate().setDiskImageMap(imageMap);
+    }
+    sourceTemplateId = getVmTemplateId();
+    if (getParameters().isImportAsNewEntity()) {
+        initImportClonedTemplate();
+    }
+    VmTemplate duplicateTemplate = vmTemplateDao.get(getParameters().getVmTemplate().getId());
+    // check that the template does not exists in the target domain
+    if (duplicateTemplate != null) {
+        return failValidation(EngineMessage.VMT_CANNOT_IMPORT_TEMPLATE_EXISTS, String.format("$TemplateName %1$s", duplicateTemplate.getName()));
+    }
+    if (getVmTemplate().isBaseTemplate() && isVmTemplateWithSameNameExist()) {
+        return failValidation(EngineMessage.VM_CANNOT_IMPORT_TEMPLATE_NAME_EXISTS);
+    }
+    if (!validateNoDuplicateDiskImages(getImages())) {
+        return false;
+    }
+    if (getImages() != null && !getImages().isEmpty() && !getParameters().isImagesExistOnTargetStorageDomain()) {
+        if (!validateSpaceRequirements(getImages())) {
+            return false;
+        }
+    }
+    if (!validate(vmNicMacsUtils.validateMacAddress(getVmTemplate().getInterfaces()))) {
+        return false;
+    }
+    // if this is a template version, check base template exist
+    if (!getVmTemplate().isBaseTemplate()) {
+        VmTemplate baseTemplate = vmTemplateDao.get(getVmTemplate().getBaseTemplateId());
+        if (baseTemplate == null) {
+            return failValidation(EngineMessage.VMT_CANNOT_IMPORT_TEMPLATE_VERSION_MISSING_BASE);
+        }
+    }
+    if (!setAndValidateDiskProfiles()) {
+        return false;
+    }
+    if (!setAndValidateCpuProfile()) {
+        return false;
+    }
+    if (!validate(VmHandler.validateMaxMemorySize(getVmTemplate(), getEffectiveCompatibilityVersion()))) {
+        return false;
+    }
+    return true;
+}
+#method_after
+@Override
+protected boolean validate() {
+    if (getVmTemplate() == null) {
+        return false;
+    }
+    setDescription(getVmTemplateName());
+    // check that the storage pool is valid
+    if (!checkStoragePool() || !validateTemplateArchitecture() || !isClusterCompatible()) {
+        return false;
+    }
+    // set the source domain and check that it is ImportExport type and active
+    setSourceDomainId(getParameters().getSourceDomainId());
+    StorageDomainValidator sourceDomainValidator = new StorageDomainValidator(getSourceDomain());
+    if (!validate(sourceDomainValidator.isDomainExistAndActive())) {
+        return false;
+    }
+    if ((getSourceDomain().getStorageDomainType() != StorageDomainType.ImportExport) && !getParameters().isImagesExistOnTargetStorageDomain()) {
+        return failValidation(EngineMessage.ACTION_TYPE_FAILED_STORAGE_DOMAIN_TYPE_ILLEGAL);
+    }
+    if (!getParameters().isImagesExistOnTargetStorageDomain()) {
+        // Set the template images from the Export domain and change each image id storage is to the import domain
+        GetAllFromExportDomainQueryParameters tempVar = new GetAllFromExportDomainQueryParameters(getParameters().getStoragePoolId(), getParameters().getSourceDomainId());
+        VdcQueryReturnValue qretVal = runInternalQuery(VdcQueryType.GetTemplatesFromExportDomain, tempVar);
+        if (!qretVal.getSucceeded()) {
+            return false;
+        }
+        Map<VmTemplate, List<DiskImage>> templates = qretVal.getReturnValue();
+        ArrayList<DiskImage> images = new ArrayList<>();
+        for (Map.Entry<VmTemplate, List<DiskImage>> entry : templates.entrySet()) {
+            if (entry.getKey().getId().equals(getVmTemplate().getId())) {
+                images = new ArrayList<>(entry.getValue());
+                getVmTemplate().setInterfaces(entry.getKey().getInterfaces());
+                getVmTemplate().setOvfVersion(entry.getKey().getOvfVersion());
+                break;
+            }
+        }
+        getParameters().setImages(images);
+        getVmTemplate().setImages(images);
+        ensureDomainMap(getImages(), getParameters().getDestDomainId());
+        HashMap<Guid, DiskImage> imageMap = new HashMap<>();
+        for (DiskImage image : images) {
+            if (Guid.Empty.equals(image.getVmSnapshotId())) {
+                return failValidation(EngineMessage.ACTION_TYPE_FAILED_CORRUPTED_VM_SNAPSHOT_ID);
+            }
+            StorageDomain storageDomain = getStorageDomain(imageToDestinationDomainMap.get(image.getId()));
+            StorageDomainValidator validator = new StorageDomainValidator(storageDomain);
+            if (!validate(validator.isDomainExistAndActive()) || !validate(validator.domainIsValidDestination())) {
+                return false;
+            }
+            StorageDomainStatic targetDomain = storageDomain.getStorageStaticData();
+            changeRawToCowIfSparseOnBlockDevice(targetDomain.getStorageType(), image);
+            if (!ImagesHandler.checkImageConfiguration(targetDomain, image, getReturnValue().getValidationMessages())) {
+                return false;
+            }
+            image.setStoragePoolId(getParameters().getStoragePoolId());
+            image.setStorageIds(new ArrayList<>(Collections.singletonList(storageDomain.getId())));
+            imageMap.put(image.getImageId(), image);
+        }
+        getVmTemplate().setDiskImageMap(imageMap);
+    }
+    sourceTemplateId = getVmTemplateId();
+    if (getParameters().isImportAsNewEntity()) {
+        initImportClonedTemplate();
+    }
+    VmTemplate duplicateTemplate = vmTemplateDao.get(getParameters().getVmTemplate().getId());
+    // check that the template does not exists in the target domain
+    if (duplicateTemplate != null) {
+        return failValidation(EngineMessage.VMT_CANNOT_IMPORT_TEMPLATE_EXISTS, String.format("$TemplateName %1$s", duplicateTemplate.getName()));
+    }
+    if (getVmTemplate().isBaseTemplate() && isVmTemplateWithSameNameExist()) {
+        return failValidation(EngineMessage.VM_CANNOT_IMPORT_TEMPLATE_NAME_EXISTS);
+    }
+    if (!validateNoDuplicateDiskImages(getImages())) {
+        return false;
+    }
+    if (getImages() != null && !getImages().isEmpty() && !getParameters().isImagesExistOnTargetStorageDomain()) {
+        if (!validateSpaceRequirements(getImages())) {
+            return false;
+        }
+    }
+    List<VmNetworkInterface> vmNetworkInterfaces = getVmTemplate().getInterfaces();
+    vmNicMacsUtils.replaceInvalidEmptyStringMacAddressesWithNull(vmNetworkInterfaces);
+    if (!validate(vmNicMacsUtils.validateMacAddress(vmNetworkInterfaces))) {
+        return false;
+    }
+    // if this is a template version, check base template exist
+    if (!getVmTemplate().isBaseTemplate()) {
+        VmTemplate baseTemplate = vmTemplateDao.get(getVmTemplate().getBaseTemplateId());
+        if (baseTemplate == null) {
+            return failValidation(EngineMessage.VMT_CANNOT_IMPORT_TEMPLATE_VERSION_MISSING_BASE);
+        }
+    }
+    if (!setAndValidateDiskProfiles()) {
+        return false;
+    }
+    if (!setAndValidateCpuProfile()) {
+        return false;
+    }
+    if (!validate(VmHandler.validateMaxMemorySize(getVmTemplate(), getEffectiveCompatibilityVersion()))) {
+        return false;
+    }
+    return true;
+}
+#end_block
+
+#method_before
+@Override
+protected void executeCommand() {
+    TransactionSupport.executeInNewTransaction(() -> {
+        initImportClonedTemplateDisks();
+        addVmTemplateToDb();
+        updateOriginalTemplateNameOnDerivedVms();
+        addVmInterfaces();
+        getCompensationContext().stateChanged();
+        vmHandler.addVmInitToDB(getVmTemplate());
+        return null;
+    });
+    boolean doesVmTemplateContainImages = !getImages().isEmpty();
+    if (doesVmTemplateContainImages && !getParameters().isImagesExistOnTargetStorageDomain()) {
+        moveOrCopyAllImageGroups(getVmTemplateId(), getImages());
+    }
+    getVmDeviceUtils().addImportedDevices(getVmTemplate(), getParameters().isImportAsNewEntity());
+    if (!doesVmTemplateContainImages || getParameters().isImagesExistOnTargetStorageDomain()) {
+        endMoveOrCopyCommand();
+    }
+    checkTrustedService();
+    setSucceeded(true);
+}
+#method_after
+@Override
+protected void executeCommand() {
+    TransactionSupport.executeInNewTransaction(() -> {
+        initImportClonedTemplateDisks();
+        addVmTemplateToDb();
+        updateOriginalTemplateNameOnDerivedVms();
+        addVmInterfaces();
+        getCompensationContext().stateChanged();
+        vmHandler.addVmInitToDB(getVmTemplate());
+        return null;
+    });
+    boolean doesVmTemplateContainImages = !getImages().isEmpty();
+    if (doesVmTemplateContainImages && !getParameters().isImagesExistOnTargetStorageDomain()) {
+        moveOrCopyAllImageGroups(getVmTemplateId(), getImages());
+    }
+    getVmDeviceUtils().addImportedDevices(getVmTemplate(), getParameters().isImportAsNewEntity());
+    if (!doesVmTemplateContainImages || getParameters().isImagesExistOnTargetStorageDomain()) {
+        endMoveOrCopyCommand();
+    }
+    discardHelper.logIfDisksWithIllegalPassDiscardExist(getVmTemplateId());
+    checkTrustedService();
+    setSucceeded(true);
+}
+#end_block
+
+#method_before
+@SuppressWarnings("unchecked")
+@Override
+protected TreeItem createLeafNode(ListModel leafModel) {
+    TreeItem item = new TreeItem();
+    List<LunModel> items = (List<LunModel>) leafModel.getItems();
+    if (hideLeaf || items.isEmpty()) {
+        item.setUserObject(Boolean.TRUE);
+        return item;
+    }
+    final EntityModelCellTable<ListModel<LunModel>> table = new EntityModelCellTable<>(multiSelection, (Resources) GWT.create(SanStorageListLunTableResources.class));
+    AbstractLunSelectionColumn lunSelectionColumn = new AbstractLunSelectionColumn(multiSelection) {
+
+        @Override
+        public LunModel getValue(LunModel object) {
+            return object;
+        }
+    };
+    // $NON-NLS-1$
+    table.setCustomSelectionColumn(lunSelectionColumn, "30px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getLunId();
+        }
+    }, constants.lunIdSanStorage());
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            // $NON-NLS-1$
+            return String.valueOf(model.getSize()) + "GB";
+        }
+    }, constants.devSizeSanStorage(), // $NON-NLS-1$
+    "70px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return String.valueOf(model.getMultipathing());
+        }
+    }, constants.pathSanStorage(), // $NON-NLS-1$
+    "55px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getVendorId();
+        }
+    }, constants.vendorIdSanStorage(), // $NON-NLS-1$
+    "100px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getProductId();
+        }
+    }, constants.productIdSanStorage(), // $NON-NLS-1$
+    "100px");
+    table.addColumn(new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getSerial();
+        }
+    }, constants.serialSanStorage(), // $NON-NLS-1$
+    "120px");
+    table.setRowData(items);
+    Object selectedItem = leafModel.getSelectedItem();
+    leafModel.setSelectedItem(null);
+    table.asEditor().edit(leafModel);
+    leafModel.setSelectedItem(selectedItem);
+    // $NON-NLS-1$
+    table.setWidth("100%", true);
+    if (!multiSelection) {
+        for (LunModel lunModel : items) {
+            if (lunModel.getIsSelected()) {
+                table.getSelectionModel().setSelected(lunModel, true);
+            }
+        }
+        table.getSelectionModel().addSelectionChangeHandler(new Handler() {
+
+            @Override
+            public void onSelectionChange(SelectionChangeEvent event) {
+                SingleSelectionModel SingleSelectionModel = (SingleSelectionModel) event.getSource();
+                LunModel selectedLunModel = (LunModel) SingleSelectionModel.getSelectedObject();
+                if (selectedLunModel != null) {
+                    updateSelectedLunWarning(selectedLunModel);
+                }
+            }
+        });
+    } else {
+        for (LunModel lunModel : items) {
+            table.getSelectionModel().setSelected(lunModel, lunModel.getIsSelected());
+        }
+    }
+    ScrollPanel panel = new ScrollPanel();
+    panel.add(table);
+    item.setWidget(panel);
+    // Display LUNs as grayed-out if needed
+    for (LunModel lunModel : items) {
+        if (lunModel.getIsGrayedOut()) {
+            grayOutItem(lunModel.getGrayedOutReasons(), lunModel, table);
+        }
+    }
+    return item;
+}
+#method_after
+@SuppressWarnings("unchecked")
+@Override
+protected TreeItem createLeafNode(ListModel leafModel) {
+    TreeItem item = new TreeItem();
+    List<LunModel> items = (List<LunModel>) leafModel.getItems();
+    if (hideLeaf || items.isEmpty()) {
+        item.setUserObject(Boolean.TRUE);
+        return item;
+    }
+    final SortedListModel sortedLeafModel = new SortedListModel();
+    sortedLeafModel.setItems(items);
+    final EntityModelCellTable<ListModel<LunModel>> table = new EntityModelCellTable<>(multiSelection, (Resources) GWT.create(SanStorageListLunTableResources.class));
+    table.initModelSortHandler(sortedLeafModel);
+    AbstractLunSelectionColumn lunSelectionColumn = new AbstractLunSelectionColumn(multiSelection) {
+
+        @Override
+        public LunModel getValue(LunModel object) {
+            return object;
+        }
+    };
+    // $NON-NLS-1$
+    table.setCustomSelectionColumn(lunSelectionColumn, "30px");
+    AbstractLunTextColumn lunIdColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getLunId();
+        }
+    };
+    lunIdColumn.makeSortable();
+    table.addColumn(lunIdColumn, constants.lunIdSanStorage());
+    AbstractLunTextColumn devSizeColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            // $NON-NLS-1$
+            return String.valueOf(model.getSize()) + "GB";
+        }
+    };
+    devSizeColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(devSizeColumn, constants.devSizeSanStorage(), "70px");
+    AbstractLunTextColumn path = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return String.valueOf(model.getMultipathing());
+        }
+    };
+    path.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(path, constants.pathSanStorage(), "55px");
+    AbstractLunTextColumn vendorIdColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getVendorId();
+        }
+    };
+    vendorIdColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(vendorIdColumn, constants.vendorIdSanStorage(), "100px");
+    AbstractLunTextColumn productIdColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getProductId();
+        }
+    };
+    productIdColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(productIdColumn, constants.productIdSanStorage(), "100px");
+    AbstractLunTextColumn serialNumColumn = new AbstractLunTextColumn() {
+
+        @Override
+        public String getRawValue(LunModel model) {
+            return model.getSerial();
+        }
+    };
+    serialNumColumn.makeSortable();
+    // $NON-NLS-1$
+    table.addColumn(serialNumColumn, constants.serialSanStorage(), "120px");
+    table.setRowData(items);
+    final Object selectedItem = sortedLeafModel.getSelectedItem();
+    sortedLeafModel.setSelectedItem(null);
+    table.asEditor().edit(sortedLeafModel);
+    sortedLeafModel.setSelectedItem(selectedItem);
+    // $NON-NLS-1$
+    table.setWidth("100%", true);
+    if (!multiSelection) {
+        for (LunModel lunModel : items) {
+            if (lunModel.getIsSelected()) {
+                table.getSelectionModel().setSelected(lunModel, true);
+            }
+        }
+        table.getSelectionModel().addSelectionChangeHandler(new Handler() {
+
+            @Override
+            public void onSelectionChange(SelectionChangeEvent event) {
+                SingleSelectionModel SingleSelectionModel = (SingleSelectionModel) event.getSource();
+                selectedLunModel = SingleSelectionModel.getSelectedObject() == null ? selectedLunModel : (LunModel) SingleSelectionModel.getSelectedObject();
+                if (selectedLunModel != null) {
+                    updateSelectedLunWarning(selectedLunModel);
+                    sortedLeafModel.setSelectedItem(selectedLunModel);
+                }
+            }
+        });
+    } else {
+        for (LunModel lunModel : items) {
+            table.getSelectionModel().setSelected(lunModel, lunModel.getIsSelected());
+        }
+    }
+    ScrollPanel panel = new ScrollPanel();
+    panel.add(table);
+    item.setWidget(panel);
+    // Display LUNs as grayed-out if needed
+    for (LunModel lunModel : items) {
+        if (lunModel.getIsGrayedOut()) {
+            grayOutItem(lunModel.getGrayedOutReasons(), lunModel, table);
+        }
+    }
+    return item;
+}
+#end_block
+

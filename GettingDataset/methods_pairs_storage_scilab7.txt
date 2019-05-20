@@ -1,0 +1,1785 @@
+38
+#method_before
+public static MenuItem createMenu(String label, SciNotes editor, KeyStroke key) {
+    return createMenu(label, null, new CapitalizeAction(label, editor), key);
+}
+#method_after
+public static MenuItem createMenu(String label, final SciNotes editor, KeyStroke key) {
+    StringTokenizer token = new StringTokenizer(label, ";");
+    final String label1 = token.nextToken();
+    final String label2 = token.nextToken();
+    return createMenu(label1, label2, editor, key, new CapitalizeAction(label1, editor));
+}
+#end_block
+
+#method_before
+public static MenuItem createMenu(String label, SciNotes editor, KeyStroke key) {
+    return createMenu(label, null, new CapitalizeAction(label, editor), key);
+}
+#method_after
+protected static MenuItem createMenu(final String label1, final String label2, final SciNotes editor, KeyStroke key, final CapitalizeAction hoka) {
+    final MenuItem menuitem = createMenu(label1, null, hoka, key);
+    ((JMenuItem) menuitem.getAsSimpleMenuItem()).addPropertyChangeListener(new PropertyChangeListener() {
+
+        public void propertyChange(PropertyChangeEvent e) {
+            if (editor.getTextPane() != null) {
+                String select = editor.getTextPane().getSelectedText();
+                if (select == null) {
+                    menuitem.setText(label2);
+                } else {
+                    menuitem.setText(label1);
+                }
+            }
+        }
+    });
+    return menuitem;
+}
+#end_block
+
+#method_before
+public Object getObjectFromId(String id) {
+    Object object;
+    object = GraphicModel.getModel().getObjectFromId(id);
+    return object;
+}
+#method_after
+public GraphicObject getObjectFromId(String id) {
+    return GraphicModel.getModel().getObjectFromId(id);
+}
+#end_block
+
+#method_before
+public boolean setProperty(String id, String prop, Object value) {
+    if (GraphicModel.getModel().setProperty(id, prop, value) == true) {
+        objectUpdate(id, prop);
+        return true;
+    }
+    return false;
+}
+#method_after
+public boolean setProperty(String id, String prop, Object value) {
+    if (GraphicModel.getModel().setProperty(id, prop, value)) {
+        objectUpdate(id, prop);
+        return true;
+    }
+    return false;
+}
+#end_block
+
+#method_before
+public GraphicObject clone() {
+    GraphicObject copy = null;
+    try {
+        copy = (GraphicObject) super.clone();
+    } catch (CloneNotSupportedException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
+    List newchildren = new ArrayList<String>(0);
+    for (int i = 0; i < children.size(); i++) {
+        String childclone = GraphicController.getController().cloneObject(children.get(i));
+        newchildren.add(childclone);
+        GraphicObject clone = (GraphicObject) GraphicController.getController().getObjectFromId(childclone);
+        clone.setParentIdentifier(copy.getIdentifier());
+    }
+    copy.setChildren(newchildren);
+    return (GraphicObject) copy;
+}
+#method_after
+public GraphicObject clone() {
+    GraphicObject copy = null;
+    try {
+        copy = (GraphicObject) super.clone();
+    } catch (CloneNotSupportedException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
+    /*
+             * Creating an empty list is done to avoid
+             * still referencing the original object's own list,
+             * which occurs when the Figure model is cloned.
+             */
+    copy.setChildren(new ArrayList<String>(0));
+    /*
+             * Avoids keeping the Figure model as a parent
+             * when the Axes model is cloned.
+             */
+    copy.setParent("");
+    return (GraphicObject) copy;
+}
+#end_block
+
+#method_before
+public Object getPropertyFromName(String propertyName) {
+    if (propertyName.equals(__GO_PARENT__)) {
+        return GraphicObjectPropertyType.PARENT;
+    } else if (propertyName.equals(__GO_CHILDREN__)) {
+        return GraphicObjectPropertyType.CHILDREN;
+    } else if (propertyName.equals(__GO_CHILDREN_COUNT__)) {
+        return GraphicObjectPropertyType.CHILDREN_COUNT;
+    } else if (propertyName.equals(__GO_VISIBLE__)) {
+        return GraphicObjectPropertyType.VISIBLE;
+    } else if (propertyName.equals(__GO_USER_DATA__)) {
+        return GraphicObjectPropertyType.USERDATA;
+    } else if (propertyName.equals(__GO_USER_DATA_SIZE__)) {
+        return GraphicObjectPropertyType.USERDATASIZE;
+    } else if (propertyName.equals(__GO_REFERENCED__)) {
+        return GraphicObjectPropertyType.REFERENCED;
+    } else if (propertyName.equals(__GO_VALID__)) {
+        return GraphicObjectPropertyType.VALID;
+    } else if (propertyName.equals(__GO_TYPE__)) {
+        return GraphicObjectPropertyType.TYPE;
+    } else {
+        return GraphicObjectPropertyType.UNKNOWNPROPERTY;
+    }
+}
+#method_after
+public Object getPropertyFromName(String propertyName) {
+    if (propertyName.equals(__GO_PARENT__)) {
+        return GraphicObjectPropertyType.PARENT;
+    } else if (propertyName.equals(__GO_CHILDREN__)) {
+        return GraphicObjectPropertyType.CHILDREN;
+    } else if (propertyName.equals(__GO_CHILDREN_COUNT__)) {
+        return GraphicObjectPropertyType.CHILDREN_COUNT;
+    } else if (propertyName.equals(__GO_VISIBLE__)) {
+        return GraphicObjectPropertyType.VISIBLE;
+    } else if (propertyName.equals(__GO_USER_DATA__)) {
+        return GraphicObjectPropertyType.USERDATA;
+    } else if (propertyName.equals(__GO_USER_DATA_SIZE__)) {
+        return GraphicObjectPropertyType.USERDATASIZE;
+    } else if (propertyName.equals(__GO_REFERENCED__)) {
+        return GraphicObjectPropertyType.REFERENCED;
+    } else if (propertyName.equals(__GO_VALID__)) {
+        return GraphicObjectPropertyType.VALID;
+    } else if (propertyName.equals(__GO_TYPE__)) {
+        return GraphicObjectPropertyType.TYPE;
+    } else if (propertyName.equals(__GO_DATA_MODEL__)) {
+        return GraphicObjectPropertyType.DATA;
+    } else {
+        return GraphicObjectPropertyType.UNKNOWNPROPERTY;
+    }
+}
+#end_block
+
+#method_before
+public Object getProperty(Object property) {
+    if (property == GraphicObjectPropertyType.PARENT) {
+        return getParent();
+    } else if (property == GraphicObjectPropertyType.CHILDREN) {
+        return getChildren();
+    } else if (property == GraphicObjectPropertyType.CHILDREN_COUNT) {
+        return getChildren().length;
+    } else if (property == GraphicObjectPropertyType.VISIBLE) {
+        return getVisible();
+    } else if (property == GraphicObjectPropertyType.USERDATA) {
+        return getUserData();
+    } else if (property == GraphicObjectPropertyType.USERDATASIZE) {
+        return getUserDataSize();
+    } else if (property == GraphicObjectPropertyType.TYPE) {
+        return getType();
+    } else if (property == GraphicObjectPropertyType.UNKNOWNPROPERTY) {
+        return null;
+    } else {
+        return null;
+    }
+}
+#method_after
+public Object getProperty(Object property) {
+    if (property == GraphicObjectPropertyType.PARENT) {
+        return getParent();
+    } else if (property == GraphicObjectPropertyType.CHILDREN) {
+        return getChildren();
+    } else if (property == GraphicObjectPropertyType.CHILDREN_COUNT) {
+        return getChildren().length;
+    } else if (property == GraphicObjectPropertyType.VISIBLE) {
+        return getVisible();
+    } else if (property == GraphicObjectPropertyType.USERDATA) {
+        return getUserData();
+    } else if (property == GraphicObjectPropertyType.USERDATASIZE) {
+        return getUserDataSize();
+    } else if (property == GraphicObjectPropertyType.TYPE) {
+        return getType();
+    } else if (property == GraphicObjectPropertyType.DATA) {
+        return getIdentifier();
+    } else if (property == GraphicObjectPropertyType.UNKNOWNPROPERTY) {
+        return null;
+    } else {
+        return null;
+    }
+}
+#end_block
+
+#method_before
+public boolean setProperty(Object property, Object value) {
+    if (property == GraphicObjectPropertyType.PARENT) {
+        setParent((String) value);
+    } else if (property == GraphicObjectPropertyType.CHILDREN) {
+        setChildren((List<String>) value);
+    } else if (property == GraphicObjectPropertyType.VISIBLE) {
+        setVisible((Boolean) value);
+    } else if (property == GraphicObjectPropertyType.USERDATA) {
+        setUserData(value);
+    } else if (property == GraphicObjectPropertyType.USERDATASIZE) {
+        return false;
+    } else if (property == GraphicObjectPropertyType.UNKNOWNPROPERTY) {
+        return false;
+    }
+    return true;
+}
+#method_after
+public boolean setProperty(Object property, Object value) {
+    if (property == GraphicObjectPropertyType.PARENT) {
+        setParent((String) value);
+    } else if (property == GraphicObjectPropertyType.CHILDREN) {
+        setChildren((List<String>) value);
+    } else if (property == GraphicObjectPropertyType.VISIBLE) {
+        setVisible((Boolean) value);
+    } else if (property == GraphicObjectPropertyType.USERDATA) {
+        setUserData(value);
+    } else if (property == GraphicObjectPropertyType.USERDATASIZE) {
+        return false;
+    } else if (property == GraphicObjectPropertyType.DATA) {
+        return true;
+    } else if (property == GraphicObjectPropertyType.UNKNOWNPROPERTY) {
+        return false;
+    }
+    return true;
+}
+#end_block
+
+#method_before
+public void keyTyped(KeyEvent e) {
+    char c = e.getKeyChar();
+    ScilabEditorPane textPane = ScilabEditorPane.getFocusedPane();
+    ScilabDocument doc = (ScilabDocument) textPane.getDocument();
+    if (keywords && c != KeyEvent.CHAR_UNDEFINED && textPane.getSelectionStart() == textPane.getSelectionEnd()) {
+        int pos = textPane.getCaretPosition();
+        if (c == ' ' && e.getModifiers() == 0) {
+            int end = doc.getDefaultRootElement().getElement(doc.getDefaultRootElement().getElementIndex(pos)).getEndOffset() - 1;
+            /* the following test is used to know if an insertion in the line is done */
+            if (pos == end) {
+                try {
+                    doc.insertString(pos, " ", null);
+                    e.consume();
+                    KeywordEvent kwe = textPane.getKeywordEvent(pos);
+                    int[] ret;
+                    String kw;
+                    switch(kwe.getType()) {
+                        case ScilabLexerConstants.OSKEYWORD:
+                            kw = doc.getText(kwe.getStart(), kwe.getLength());
+                            if ("if".equals(kw)) {
+                                doc.insertString(pos + 1, " then\nend", null);
+                                ret = textPane.getIndentManager().indentDoc(pos + 1, pos + 9);
+                            } else {
+                                doc.insertString(pos + 1, "\nend", null);
+                                ret = textPane.getIndentManager().indentDoc(pos + 1, pos + 4);
+                            }
+                            textPane.setCaretPosition(ret[0]);
+                            break;
+                        case ScilabLexerConstants.SKEYWORD:
+                            kw = doc.getText(kwe.getStart(), kwe.getLength());
+                            if ("elseif".equals(kw)) {
+                                doc.insertString(pos + 1, " then", null);
+                                textPane.setCaretPosition(pos + 1);
+                            }
+                            break;
+                        case ScilabLexerConstants.FKEYWORD:
+                            /* We have 'function' or 'endfunction' */
+                            if ("f".equals(doc.getText(kwe.getStart(), 1))) {
+                                doc.insertString(pos + 1, "()\nendfunction", null);
+                                textPane.getIndentManager().indentDoc(pos + 3, pos + 14);
+                                textPane.setCaretPosition(pos + 1);
+                            }
+                            break;
+                        default:
+                    }
+                } catch (BadLocationException exc) {
+                    System.out.println("hello");
+                }
+            }
+        } else if (openers) {
+            String str = null;
+            switch(c) {
+                case '(':
+                    str = "()";
+                    break;
+                case '[':
+                    str = "[]";
+                    break;
+                case '{':
+                    str = "{}";
+                    break;
+                case '\"':
+                    str = "\"\"";
+                    break;
+                default:
+            }
+            if (str != null) {
+                try {
+                    doc.insertString(pos, str, null);
+                    e.consume();
+                    textPane.setCaretPosition(pos + 1);
+                } catch (BadLocationException exc) {
+                }
+            }
+        }
+    }
+}
+#method_after
+public void keyTyped(KeyEvent e) {
+    char c = e.getKeyChar();
+    ScilabEditorPane textPane = ScilabEditorPane.getFocusedPane();
+    ScilabDocument doc = (ScilabDocument) textPane.getDocument();
+    if (keywords && c != KeyEvent.CHAR_UNDEFINED && textPane.getSelectionStart() == textPane.getSelectionEnd()) {
+        int pos = textPane.getCaretPosition();
+        if (c == ' ' && e.getModifiers() == 0) {
+            int end = doc.getDefaultRootElement().getElement(doc.getDefaultRootElement().getElementIndex(pos)).getEndOffset() - 1;
+            /* the following test is used to know if an insertion in the line is done */
+            if (pos == end) {
+                try {
+                    doc.insertString(pos, " ", null);
+                    e.consume();
+                    KeywordEvent kwe = textPane.getKeywordEvent(pos);
+                    int[] ret;
+                    String kw;
+                    switch(kwe.getType()) {
+                        case ScilabLexerConstants.OSKEYWORD:
+                            kw = doc.getText(kwe.getStart(), kwe.getLength());
+                            if ("if".equals(kw)) {
+                                doc.insertString(pos + 1, " then\nend", null);
+                                ret = textPane.getIndentManager().indentDoc(pos + 1, pos + 9);
+                            } else {
+                                doc.insertString(pos + 1, "\nend", null);
+                                ret = textPane.getIndentManager().indentDoc(pos + 1, pos + 4);
+                            }
+                            textPane.setCaretPosition(ret[0]);
+                            break;
+                        case ScilabLexerConstants.SKEYWORD:
+                            kw = doc.getText(kwe.getStart(), kwe.getLength());
+                            if ("elseif".equals(kw)) {
+                                doc.insertString(pos + 1, " then", null);
+                                textPane.setCaretPosition(pos + 1);
+                            }
+                            break;
+                        case ScilabLexerConstants.FKEYWORD:
+                            /* We have 'function' or 'endfunction' */
+                            if ("f".equals(doc.getText(kwe.getStart(), 1))) {
+                                doc.insertString(pos + 1, "()\nendfunction", null);
+                                textPane.getIndentManager().indentDoc(pos + 3, pos + 14);
+                                textPane.setCaretPosition(pos + 1);
+                            }
+                            break;
+                        default:
+                    }
+                } catch (BadLocationException exc) {
+                }
+            }
+        } else if (openers) {
+            String str = null;
+            switch(c) {
+                case '(':
+                    str = "()";
+                    break;
+                case '[':
+                    str = "[]";
+                    break;
+                case '{':
+                    str = "{}";
+                    break;
+                case '\"':
+                    str = "\"\"";
+                    break;
+                default:
+            }
+            if (str != null) {
+                try {
+                    doc.insertString(pos, str, null);
+                    e.consume();
+                    textPane.setCaretPosition(pos + 1);
+                } catch (BadLocationException exc) {
+                }
+            }
+        }
+    }
+}
+#end_block
+
+#method_before
+public String chooseFileToSave(String title) {
+    return chooseFileToSave(title, null);
+}
+#method_after
+public String chooseFileToSave(String title) {
+    String extension = new String();
+    String initialDirectoryPath = getTextPane().getName();
+    if (initialDirectoryPath == null) {
+        initialDirectoryPath = ConfigManager.getLastOpenedDirectory();
+    }
+    SciFileFilter sceFilter = new SciFileFilter(ALL_SCE_FILES, null, 0);
+    SciFileFilter sciFilter = new SciFileFilter(ALL_SCI_FILES, null, 1);
+    SciFileFilter scxFilter = new SciFileFilter(ALL_SCX_FILES, null, 2);
+    SciFileFilter tstFilter = new SciFileFilter(ALL_TST_FILES, null, 3);
+    SciFileFilter startFilter = new SciFileFilter(ALL_START_FILES, null, 4);
+    SciFileFilter quitFilter = new SciFileFilter(ALL_QUIT_FILES, null, 5);
+    SciFileFilter demFilter = new SciFileFilter(ALL_DEM_FILES, null, 6);
+    SciFileFilter allFilter = new SciFileFilter(ALL_FILES, null, 7);
+    SciFileFilter allScilabFilter = new SciFileFilter(ALL_SCILAB, null, 8);
+    SwingScilabFileChooser fileChooser = ((SwingScilabFileChooser) ScilabFileChooser.createFileChooser().getAsSimpleFileChooser());
+    fileChooser.setInitialDirectory(ConfigManager.getLastOpenedDirectory());
+    fileChooser.setAcceptAllFileFilterUsed(false);
+    fileChooser.setInitialDirectory(initialDirectoryPath);
+    fileChooser.setUiDialogType(Juigetfile.SAVE_DIALOG);
+    // order is also important here
+    fileChooser.addChoosableFileFilter(sceFilter);
+    fileChooser.addChoosableFileFilter(sciFilter);
+    fileChooser.addChoosableFileFilter(scxFilter);
+    fileChooser.addChoosableFileFilter(tstFilter);
+    fileChooser.addChoosableFileFilter(startFilter);
+    fileChooser.addChoosableFileFilter(quitFilter);
+    fileChooser.addChoosableFileFilter(demFilter);
+    fileChooser.addChoosableFileFilter(allFilter);
+    fileChooser.addChoosableFileFilter(allScilabFilter);
+    // select default file type
+    fileChooser.setFileFilter(sceFilter);
+    fileChooser.setTitle(title);
+    String name = ((ScilabDocument) getTextPane().getDocument()).getFirstFunctionName();
+    if (name != null) {
+        fileChooser.setSelectedFile(new File(name + SCI_EXTENSION));
+    }
+    int retval = fileChooser.showSaveDialog(this);
+    if (retval == JFileChooser.APPROVE_OPTION) {
+        File f = fileToCanonicalFile(fileChooser.getSelectedFile());
+        initialDirectoryPath = f.getPath();
+        if (f.exists()) {
+            if (ScilabModalDialog.show(this, SciNotesMessages.REPLACE_FILE_TITLE, SciNotesMessages.FILE_ALREADY_EXIST, IconType.QUESTION_ICON, ButtonType.YES_NO) == AnswerOption.NO_OPTION) {
+                return chooseFileToSave(SciNotesMessages.SAVE);
+            }
+        }
+        /*we test if the file has already a scilab extension*/
+        boolean hasNoExtension = true;
+        // if the file name is like this : any character , a dot , then 2,3or 4 characters, then
+        // we consider the file has already an extension
+        // we previously only check for .sci and .sce extension, but what if the user open a txt file
+        String fileName = f.getName();
+        if (fileName.lastIndexOf(DOT) != -1) {
+            if (fileName.substring(fileName.lastIndexOf(DOT), fileName.length()).length() >= 2 && fileName.substring(fileName.lastIndexOf(DOT), fileName.length()).length() <= 4) {
+                hasNoExtension = false;
+            }
+        }
+        /*if no extension , we add it */
+        if (hasNoExtension) {
+            if (fileChooser.getFileFilter() == sciFilter) {
+                extension = SCI_EXTENSION;
+            } else if (fileChooser.getFileFilter() == sceFilter) {
+                extension = SCE_EXTENSION;
+            } else if (fileChooser.getFileFilter() == scxFilter) {
+                extension = SCE_EXTENSION;
+            } else if (fileChooser.getFileFilter() == tstFilter) {
+                extension = TST_EXTENSION;
+            } else if (fileChooser.getFileFilter() == startFilter) {
+                extension = START_EXTENSION;
+            } else if (fileChooser.getFileFilter() == quitFilter) {
+                extension = QUIT_EXTENSION;
+            } else if (fileChooser.getFileFilter() == demFilter) {
+                extension = DEM_EXTENSION;
+            } else {
+                extension = "";
+            }
+            return f.getPath() + extension;
+        }
+        return f.getPath();
+    } else if (retval == JFileChooser.CANCEL_OPTION) {
+        return "";
+    }
+    return null;
+}
+#end_block
+
+#method_before
+public boolean saveAs(String path) {
+    String filename = chooseFileToSave(SciNotesMessages.SAVE_AS, path);
+    if (filename == null || filename.length() == 0) {
+        return true;
+    }
+    File f = new File(filename);
+    ScilabDocument styledDocument = (ScilabDocument) getTextPane().getDocument();
+    if (!SaveFile.doSave(getTextPane(), f, editorKit)) {
+        return false;
+    }
+    if (getTextPane().getName() == null) {
+        String name = getTabPane().getTitleAt(getTabPane().getSelectedIndex());
+        String index = name.substring(name.length() - 1, name.length());
+        tabList.remove(Integer.valueOf(index));
+        closedTabList.add(Integer.valueOf(index));
+    }
+    ConfigManager.saveLastOpenedDirectory(f.getPath());
+    ConfigSciNotesManager.saveToRecentOpenedFiles(f.getPath());
+    ConfigSciNotesManager.renameOpenFilesItem(f.getPath(), this, getTextPane());
+    getTextPane().setName(f.getPath());
+    getTabPane().setTitleAt(getTabPane().getSelectedIndex(), f.getName());
+    setTitle(getTextPane().getTitle());
+    RecentFileAction.updateRecentOpenedFilesMenu(this);
+    NavigatorWindow.updateNavigator(styledDocument);
+    styledDocument.setContentModified(false);
+    getTextPane().setLastModified(f.lastModified());
+    getTextPane().setReadOnly(false);
+    getInfoBar().setText(getTextPane().getInfoBarText());
+    // Get current file path for Execute file into Scilab
+    fileFullPath = f.getAbsolutePath();
+    return true;
+}
+#method_after
+public boolean saveAs() {
+    String filename = chooseFileToSave(SciNotesMessages.SAVE_AS);
+    if (filename == null || filename.length() == 0) {
+        return true;
+    }
+    File f = new File(filename);
+    ScilabDocument styledDocument = (ScilabDocument) getTextPane().getDocument();
+    if (!SaveFile.doSave(getTextPane(), f, editorKit)) {
+        return false;
+    }
+    if (getTextPane().getName() == null) {
+        String name = getTabPane().getTitleAt(getTabPane().getSelectedIndex());
+        String index = name.substring(name.length() - 1, name.length());
+        tabList.remove(Integer.valueOf(index));
+        closedTabList.add(Integer.valueOf(index));
+    }
+    ConfigManager.saveLastOpenedDirectory(f.getPath());
+    ConfigSciNotesManager.saveToRecentOpenedFiles(f.getPath());
+    ConfigSciNotesManager.renameOpenFilesItem(f.getPath(), this, getTextPane());
+    getTextPane().setName(f.getPath());
+    getTabPane().setTitleAt(getTabPane().getSelectedIndex(), f.getName());
+    setTitle(getTextPane().getTitle());
+    RecentFileAction.updateRecentOpenedFilesMenu(this);
+    NavigatorWindow.updateNavigator(styledDocument);
+    styledDocument.setContentModified(false);
+    getTextPane().setLastModified(f.lastModified());
+    getTextPane().setReadOnly(false);
+    getInfoBar().setText(getTextPane().getInfoBarText());
+    // Get current file path for Execute file into Scilab
+    fileFullPath = f.getAbsolutePath();
+    return true;
+}
+#end_block
+
+#method_before
+@Override
+public void propertyChange(final PropertyChangeEvent evt) {
+    final ScilabType data = (ScilabType) evt.getNewValue();
+    final ContextUpdate ioBlock = (ContextUpdate) evt.getSource();
+    if (!data.isEmpty()) {
+        final int newIndex = (int) ((ScilabDouble) data).getRealPart()[0][0];
+        int oldIndex;
+        if (evt.getOldValue() instanceof ScilabDouble && !((ScilabDouble) evt.getOldValue()).isEmpty()) {
+            oldIndex = (int) ((ScilabDouble) evt.getOldValue()).getRealPart()[0][0];
+        } else {
+            oldIndex = -1;
+        }
+        ioBlock.setValue(newIndex);
+        if (ioBlock.getParentDiagram() != null) {
+            ioBlock.getParentDiagram().fireEvent(new mxEventObject(XcosEvent.IO_PORT_VALUE_UPDATED, "block", ioBlock, "oldIndex", oldIndex, "newIndex", newIndex));
+        }
+    }
+}
+#method_after
+@Override
+public void propertyChange(PropertyChangeEvent evt) {
+    ScilabType data = (ScilabType) evt.getNewValue();
+    ContextUpdate ioBlock = (ContextUpdate) evt.getSource();
+    if (!data.isEmpty()) {
+        int newIndex = (int) ((ScilabDouble) data).getRealPart()[0][0];
+        int oldIndex;
+        if (evt.getOldValue() instanceof ScilabDouble && !((ScilabDouble) evt.getOldValue()).isEmpty()) {
+            oldIndex = (int) ((ScilabDouble) evt.getOldValue()).getRealPart()[0][0];
+        } else {
+            oldIndex = -1;
+        }
+        ioBlock.setValue(newIndex);
+        if (ioBlock.getParentDiagram() != null) {
+            ioBlock.getParentDiagram().fireEvent(new mxEventObject(XcosEvent.IO_PORT_VALUE_UPDATED, "block", ioBlock, "oldIndex", oldIndex, "newIndex", newIndex));
+        }
+    }
+}
+#end_block
+
+#method_before
+public void onContextChange(final String[] context) {
+    // prevent to open twice
+    if (isLocked()) {
+        return;
+    }
+    // do not evaluate context is the block is not context dependent.
+    if (!isContextDependent) {
+        return;
+    }
+    LOG_LOCAL.trace("Update the I/O value from the context");
+    final File tempOutput;
+    final File tempInput;
+    final File tempContext;
+    try {
+        tempInput = FileUtils.createTempFile();
+        tempInput.deleteOnExit();
+        // Write scs_m
+        tempOutput = exportBlockStruct();
+        // Write context
+        tempContext = exportContext(context);
+        final String cmd = ScilabInterpreterManagement.buildCall("xcosBlockEval", tempOutput.getAbsolutePath(), tempInput.getAbsolutePath(), getInterfaceFunctionName().toCharArray(), tempContext.getAbsolutePath());
+        try {
+            ScilabInterpreterManagement.synchronousScilabExec(cmd);
+        } catch (final InterpreterException e) {
+            e.printStackTrace();
+        }
+        final BasicBlock modifiedBlock = new H5RWHandler(tempInput).readBlock();
+        updateBlockSettings(modifiedBlock);
+    } catch (final IOException e) {
+        LOG_LOCAL.error(e);
+    }
+}
+#method_after
+public void onContextChange(String[] context) {
+    // prevent to open twice
+    if (isLocked()) {
+        return;
+    }
+    // do not evaluate context is the block is not context dependent.
+    if (!isContextDependent) {
+        return;
+    }
+    LOG_LOCAL.trace("Update the I/O value from the context");
+    File tempOutput;
+    File tempInput;
+    File tempContext;
+    try {
+        tempInput = FileUtils.createTempFile();
+        tempInput.deleteOnExit();
+        // Write scs_m
+        tempOutput = exportBlockStruct();
+        // Write context
+        tempContext = exportContext(context);
+        String cmd = ScilabInterpreterManagement.buildCall("xcosBlockEval", tempOutput.getAbsolutePath(), tempInput.getAbsolutePath(), getInterfaceFunctionName().toCharArray(), tempContext.getAbsolutePath());
+        try {
+            ScilabInterpreterManagement.synchronousScilabExec(cmd);
+        } catch (InterpreterException e) {
+            e.printStackTrace();
+        }
+        BasicBlock modifiedBlock = new H5RWHandler(tempInput).readBlock();
+        updateBlockSettings(modifiedBlock);
+    } catch (IOException e) {
+        LOG_LOCAL.error(e);
+    }
+}
+#end_block
+
+#method_before
+public void paint(Graphics g) {
+    if (isVisible() && overwriteMode) {
+        Rectangle r = null;
+        int pos = editor.getCaretPosition();
+        try {
+            r = editor.modelToView(pos);
+        } catch (BadLocationException e) {
+        }
+        if (r != null && (r.width != 0 || r.height != 0)) {
+            if ((x != r.x) || (y != r.y)) {
+                repaint();
+                x = r.x;
+                y = r.y;
+                height = r.height;
+                if (editor instanceof ScilabEditorPane) {
+                    width = ((ScilabEditorPane) editor).getWhiteWidth() + 1;
+                } else {
+                    width = editor.getFontMetrics(editor.getFont()).charWidth('W') + 1;
+                }
+            } else {
+                g.setColor(editor.getCaretColor());
+                g.setXORMode(editor.getBackground());
+                g.fillRect(x, y, width, height);
+            }
+        }
+    } else {
+        super.paint(g);
+    }
+}
+#method_after
+public void paint(Graphics g) {
+    if (isVisible() && overwriteMode) {
+        Rectangle r = null;
+        int pos = editor.getCaretPosition();
+        try {
+            r = editor.modelToView(pos);
+        } catch (BadLocationException e) {
+        }
+        if (r != null && (r.width != 0 || r.height != 0)) {
+            if ((x != r.x) || (y != r.y)) {
+                repaint();
+                x = r.x;
+                y = r.y;
+                height = r.height;
+                width = editor.getFontMetrics(editor.getFont()).charWidth('W') + 1;
+            } else {
+                g.setColor(editor.getCaretColor());
+                g.setXORMode(editor.getBackground());
+                g.fillRect(x, y, width, height);
+            }
+        }
+    } else {
+        super.paint(g);
+    }
+}
+#end_block
+
+#method_before
+private void initScilab(String SCI) throws InitializationException {
+    /* Let Scilab engine knows that he is run through the Javasci API */
+    Call_Scilab.SetFromJavaToON();
+    if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+        File f = new File(SCI);
+        if (!f.isDirectory()) {
+            throw new InitializationException("Could not find directory " + f.getAbsolutePath());
+        }
+        this.SCI = SCI;
+    }
+}
+#method_after
+private void initScilab(String SCI) throws InitializationException {
+    if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+        File f = new File(SCI);
+        if (!f.isDirectory()) {
+            throw new InitializationException("Could not find directory " + f.getAbsolutePath());
+        }
+        this.SCI = SCI;
+    }
+}
+#end_block
+
+#method_before
+public boolean open() throws JavasciException, AlreadyRunningException, InitializationException {
+    int res = Call_Scilab.Call_ScilabOpen(this.SCI, null, -1);
+    switch(res) {
+        case -1:
+            throw new AlreadyRunningException("Javasci already running.");
+        case -2:
+            /* Should not occurd (processed before) */
+            throw new InitializationException("Could not find SCI.");
+        case -3:
+            throw new InitializationException("No existing directory.");
+    }
+    return true;
+}
+#method_after
+public boolean open() throws InitializationException {
+    int res = Call_Scilab.Call_ScilabOpen(this.SCI, null, -1);
+    switch(res) {
+        case -1:
+            throw new InitializationException("Javasci already running");
+        case -2:
+            /* Should not occurd (processed before) */
+            throw new InitializationException("Could not find SCI");
+        case -3:
+            throw new InitializationException("No existing directory");
+    }
+    return true;
+}
+#end_block
+
+#method_before
+public boolean open(String job) throws JavasciException {
+    if (!this.open()) {
+        return false;
+    }
+    return this.exec(job);
+}
+#method_after
+public boolean open(String job) throws InitializationException {
+    if (!this.open()) {
+        return false;
+    }
+    return this.exec(job);
+}
+#end_block
+
+#method_before
+public boolean open(String[] jobs) throws JavasciException {
+    if (!this.open()) {
+        return false;
+    }
+    return this.exec(jobs);
+}
+#method_after
+public boolean open(String[] jobs) throws InitializationException {
+    if (!this.open()) {
+        return false;
+    }
+    return this.exec(jobs);
+}
+#end_block
+
+#method_before
+public boolean open(File scriptFilename) throws JavasciException, FileNotFoundException {
+    if (!this.open()) {
+        return false;
+    }
+    return this.exec(scriptFilename);
+}
+#method_after
+public boolean open(File scriptFilename) throws InitializationException, FileNotFoundException {
+    if (!this.open()) {
+        return false;
+    }
+    return this.exec(scriptFilename);
+}
+#end_block
+
+#method_before
+public boolean isExistingVariable(String varname) {
+    return Call_Scilab.isExistingVariable(varname);
+}
+#method_after
+public boolean isExistingVariable(String varname) {
+    return true;
+}
+#end_block
+
+#method_before
+public boolean isGraphicOpened() {
+    return Call_Scilab.isGraphicOpened();
+}
+#method_after
+public boolean isGraphicOpened() {
+    return false;
+}
+#end_block
+
+#method_before
+public ScilabTypeEnum getVariableType(String varName) throws JavasciException {
+    ScilabTypeEnum variableType = null;
+    try {
+        variableType = Call_Scilab.getVariableType(varName);
+        if (variableType == null) {
+            throw new UndefinedVariableException("Could not find the type of the variable '" + varName + "'");
+        }
+    } catch (IllegalArgumentException e) {
+        String lastWord = e.getMessage().substring(e.getMessage().lastIndexOf(' ') + 1);
+        if (lastWord.equals("-2")) {
+            /* Crappy workaround. Parse the exception */
+            throw new UndefinedVariableException("Could not find variable '" + varName + "'");
+        }
+        throw new UnknownTypeException("Type of " + varName + " unknown");
+    }
+    return variableType;
+}
+#method_after
+public ScilabTypeEnum getVariableType(String varName) throws JavasciException {
+    ScilabTypeEnum variableType = null;
+    try {
+        variableType = Call_Scilab.getVariableType(varName);
+        if (variableType == null) {
+            throw new UndefinedVariableException("Could not find the type of the variable '" + varName + "'");
+        }
+    } catch (IllegalArgumentException e) {
+        String lastWord = e.getMessage().substring(e.getMessage().lastIndexOf(' ') + 1);
+        if (lastWord.equals("-2")) {
+            /* Crappy workaround. Parse the exception */
+            throw new UndefinedVariableException("Could not find variable '" + varName + "'");
+        }
+        throw new UnknownTypeException("Type of " + varName + " unkown");
+    }
+    return variableType;
+}
+#end_block
+
+#method_before
+public static int Call_ScilabOpen(String SCIpath, String ScilabStartup, SWIGTYPE_p_int Stacksize) {
+    return Call_ScilabJNI.Call_ScilabOpen(SCIpath, ScilabStartup, SWIGTYPE_p_int.getCPtr(Stacksize));
+}
+#method_after
+public static int Call_ScilabOpen(String SCIpath, String ScilabStartup, int Stacksize) {
+    return Call_ScilabJNI.Call_ScilabOpen(SCIpath, ScilabStartup, Stacksize);
+}
+#end_block
+
+#method_before
+public boolean open() throws InitializationException {
+    // System.out.println("SCI : " + SCI);
+    int res = Call_Scilab.Call_ScilabOpen(this.SCI, null, null);
+    switch(res) {
+        case -1:
+            /* @TODO : update this exception for a new one (already running) */
+            System.err.println("Javasci already running");
+            throw new InitializationException("Javasci already running");
+        case -2:
+            /* Should not occurd (processed before) */
+            throw new InitializationException("Could not find SCI");
+        case -3:
+            throw new InitializationException("No existing directory");
+    }
+    return true;
+// return Call_Scilab.Call_ScilabOpen(this.SCI, null, null) == 0;
+}
+#method_after
+public boolean open() throws InitializationException {
+    int res = Call_Scilab.Call_ScilabOpen(this.SCI, null, -1);
+    switch(res) {
+        case -1:
+            throw new InitializationException("Javasci already running");
+        case -2:
+            /* Should not occurd (processed before) */
+            throw new InitializationException("Could not find SCI");
+        case -3:
+            throw new InitializationException("No existing directory");
+    }
+    return true;
+// return Call_Scilab.Call_ScilabOpen(this.SCI, null, null) == 0;
+}
+#end_block
+
+#method_before
+public boolean open(File scriptFilename) throws InitializationException {
+    if (!this.open()) {
+        return false;
+    }
+    return this.exec(scriptFilename);
+}
+#method_after
+public boolean open(File scriptFilename) throws InitializationException, FileNotFoundException {
+    if (!this.open()) {
+        return false;
+    }
+    return this.exec(scriptFilename);
+}
+#end_block
+
+#method_before
+public boolean exec(File scriptFilename) {
+    // @TODO: rajouter le check du fichier et lancer une nosuch file exception
+    return this.exec("exec('" + scriptFilename + "');");
+}
+#method_after
+public boolean exec(File scriptFilename) throws FileNotFoundException {
+    if (!scriptFilename.exists()) {
+        throw new FileNotFoundException("Could not find " + scriptFilename);
+    }
+    return this.exec("exec('" + scriptFilename + "');");
+}
+#end_block
+
+#method_before
+public boolean put(String varname, ScilabType theVariable) {
+    int err = -999;
+    if (theVariable instanceof ScilabDouble) {
+        ScilabDouble sciDouble = (ScilabDouble) theVariable;
+        if (sciDouble.isReal()) {
+            err = Call_Scilab.putDouble(varname, sciDouble.getRealPart());
+        } else {
+            // Special case. Serialize the matrix from Scilab same way Scilab stores them
+            // (columns by columns)
+            // plus the complex values at the second part of the array
+            err = Call_Scilab.putDoubleComplex(varname, sciDouble.getSerializedComplexMatrix(), sciDouble.getHeight(), sciDouble.getWidth());
+        }
+    }
+    if (theVariable instanceof ScilabInteger) {
+        ScilabInteger sciInteger = (ScilabInteger) theVariable;
+        switch(sciInteger.getPrec()) {
+            case // byte
+            TYPE8:
+                if (sciInteger.isUnsigned()) {
+                    err = Call_Scilab.putUnsignedByte(varname, sciInteger.getDataAsByte());
+                } else {
+                    err = Call_Scilab.putByte(varname, sciInteger.getDataAsByte());
+                }
+                break;
+            case // short
+            TYPE16:
+                if (sciInteger.isUnsigned()) {
+                    err = Call_Scilab.putUnsignedShort(varname, sciInteger.getDataAsShort());
+                } else {
+                    err = Call_Scilab.putShort(varname, sciInteger.getDataAsShort());
+                }
+                break;
+            case // int
+            TYPE32:
+                if (sciInteger.isUnsigned()) {
+                    err = Call_Scilab.putUnsignedInt(varname, sciInteger.getDataAsInt());
+                } else {
+                    err = Call_Scilab.putInt(varname, sciInteger.getDataAsInt());
+                }
+                break;
+            case // long. unsupported by Scilab 5.X
+            TYPE64:
+                break;
+        }
+    // Call_Scilab.putLong(varname, sciInteger.getData_());
+    }
+    if (theVariable instanceof ScilabBoolean) {
+        ScilabBoolean sciBoolean = (ScilabBoolean) theVariable;
+        err = Call_Scilab.putBoolean(varname, sciBoolean.getData());
+    }
+    if (theVariable instanceof ScilabString) {
+        ScilabString sciString = (ScilabString) theVariable;
+        err = Call_Scilab.putString(varname, sciString.getData());
+    }
+    // throw new UnsupportedTypeException();
+    if (err == -999) {
+        // Exception a lancer
+        System.err.println("Type not managed: " + theVariable.getClass());
+    } else {
+        if (err != 0) {
+            // Exception a lancer
+            System.err.println("put failed");
+        }
+    }
+    return true;
+}
+#method_after
+public boolean put(String varname, ScilabType theVariable) {
+    int err = -999;
+    if (theVariable instanceof ScilabDouble) {
+        ScilabDouble sciDouble = (ScilabDouble) theVariable;
+        if (sciDouble.isReal()) {
+            err = Call_Scilab.putDouble(varname, sciDouble.getRealPart());
+        } else {
+            // Special case. Serialize the matrix from Scilab same way Scilab stores them
+            // (columns by columns)
+            // plus the complex values at the second part of the array
+            err = Call_Scilab.putDoubleComplex(varname, sciDouble.getSerializedComplexMatrix(), sciDouble.getHeight(), sciDouble.getWidth());
+        }
+    }
+    if (theVariable instanceof ScilabInteger) {
+        ScilabInteger sciInteger = (ScilabInteger) theVariable;
+        switch(sciInteger.getPrec()) {
+            case sci_uint8:
+                err = Call_Scilab.putUnsignedByte(varname, sciInteger.getDataAsByte());
+                break;
+            case sci_int8:
+                err = Call_Scilab.putByte(varname, sciInteger.getDataAsByte());
+                break;
+            case sci_uint16:
+                err = Call_Scilab.putUnsignedShort(varname, sciInteger.getDataAsShort());
+                break;
+            case sci_int16:
+                err = Call_Scilab.putShort(varname, sciInteger.getDataAsShort());
+                break;
+            case sci_uint32:
+                err = Call_Scilab.putUnsignedInt(varname, sciInteger.getDataAsInt());
+            case sci_int32:
+                err = Call_Scilab.putInt(varname, sciInteger.getDataAsInt());
+                break;
+            case sci_uint64:
+            // err = Call_Scilab.putUnsignedLong(varname, sciInteger.getData_());
+            case sci_int64:
+                // err = Call_Scilab.putLong(varname, sciInteger.getData_());
+                break;
+        }
+    }
+    if (theVariable instanceof ScilabBoolean) {
+        ScilabBoolean sciBoolean = (ScilabBoolean) theVariable;
+        err = Call_Scilab.putBoolean(varname, sciBoolean.getData());
+    }
+    if (theVariable instanceof ScilabString) {
+        ScilabString sciString = (ScilabString) theVariable;
+        err = Call_Scilab.putString(varname, sciString.getData());
+    }
+    // throw new UnsupportedTypeException();
+    if (err == -999) {
+        // Exception a lancer
+        System.err.println("Type not managed: " + theVariable.getClass());
+    } else {
+        if (err != 0) {
+            // Exception a lancer
+            System.err.println("put failed");
+        }
+    }
+    return true;
+}
+#end_block
+
+#method_before
+@Override
+public Object decode(mxCodec dec, Node node, Object into) {
+    ScilabInteger obj = null;
+    try {
+        if (node.getNodeType() != Node.ELEMENT_NODE) {
+            throw new UnrecognizeFormatException();
+        }
+        obj = (ScilabInteger) cloneTemplate(node);
+        // attrs = {"as", "height", "width"}
+        final NamedNodeMap attrs = node.getAttributes();
+        if (attrs == null) {
+            throw new UnrecognizeFormatException();
+        }
+        final int height = getHeight(attrs);
+        final int width = getWidth(attrs);
+        if (height * width == 0) {
+            return obj;
+        }
+        final Node precNode = attrs.getNamedItem(PRECISION);
+        ScilabIntegerTypeEnum precision = ScilabIntegerTypeEnum.valueOf(precNode.getNodeValue());
+        final Node prec = attrs.getNamedItem(PREC);
+        if (prec != null) {
+            /* Old version, we have to convert to the new one */
+            final Node u = attrs.getNamedItem(BUNSIGNED);
+            final boolean unsigned;
+            /*
+                 * the default boolean value is false, this value is not serialized
+                 * by jgraphx this if we doesn't have attribute the value is
+                 * "false".
+                 */
+            unsigned = u != null;
+            precision = ScilabInteger.convertOldType(prec.getNodeValue(), unsigned);
+        }
+        switch(precision) {
+            case sci_int8:
+            case sci_uint8:
+                final byte[][] data8 = new byte[height][width];
+                fillData(node, data8);
+                obj.setData(data8, precision == ScilabIntegerTypeEnum.sci_uint8);
+                break;
+            case sci_int16:
+            case sci_uint16:
+                final short[][] data16 = new short[height][width];
+                fillData(node, data16);
+                obj.setData(data16, precision == ScilabIntegerTypeEnum.sci_uint16);
+                break;
+            case sci_int32:
+            case sci_uint32:
+                final int[][] data32 = new int[height][width];
+                fillData(node, data32);
+                obj.setData(data32, precision == ScilabIntegerTypeEnum.sci_uint32);
+                break;
+            default:
+                final long[][] data64 = new long[height][width];
+                fillData(node, data64);
+                obj.setData(data64, precision == ScilabIntegerTypeEnum.sci_uint64);
+                break;
+        }
+    } catch (UnrecognizeFormatException e) {
+        LogFactory.getLog(ScilabIntegerCodec.class).error(e);
+    } catch (NumberFormatException e) {
+        LogFactory.getLog(ScilabIntegerCodec.class).error(e);
+    }
+    return obj;
+}
+#method_after
+@Override
+public Object decode(mxCodec dec, Node node, Object into) {
+    ScilabInteger obj = null;
+    try {
+        if (node.getNodeType() != Node.ELEMENT_NODE) {
+            throw new UnrecognizeFormatException();
+        }
+        obj = (ScilabInteger) cloneTemplate(node);
+        // attrs = {"as", "height", "width"}
+        final NamedNodeMap attrs = node.getAttributes();
+        if (attrs == null) {
+            throw new UnrecognizeFormatException();
+        }
+        final int height = getHeight(attrs);
+        final int width = getWidth(attrs);
+        if (height * width == 0) {
+            return obj;
+        }
+        final Node precNode = attrs.getNamedItem(PRECISION);
+        ScilabIntegerTypeEnum precision = ScilabIntegerTypeEnum.valueOf(precNode.getNodeValue());
+        final Node prec = attrs.getNamedItem(PREC);
+        if (prec != null) {
+            /* Old version, we have to convert to the new one */
+            final Node u = attrs.getNamedItem(BUNSIGNED);
+            final boolean unsigned;
+            /*
+				 * the default boolean value is false, this value is not serialized
+				 * by jgraphx this if we doesn't have attribute the value is
+				 * "false".
+				 */
+            unsigned = u != null;
+            precision = ScilabInteger.convertOldType(prec.getNodeValue(), unsigned);
+        }
+        switch(precision) {
+            case sci_int8:
+            case sci_uint8:
+                final byte[][] data8 = new byte[height][width];
+                fillData(node, data8);
+                obj.setData(data8, precision == ScilabIntegerTypeEnum.sci_uint8);
+                break;
+            case sci_int16:
+            case sci_uint16:
+                final short[][] data16 = new short[height][width];
+                fillData(node, data16);
+                obj.setData(data16, precision == ScilabIntegerTypeEnum.sci_uint16);
+                break;
+            case sci_int32:
+            case sci_uint32:
+                final int[][] data32 = new int[height][width];
+                fillData(node, data32);
+                obj.setData(data32, precision == ScilabIntegerTypeEnum.sci_uint32);
+                break;
+            default:
+                final long[][] data64 = new long[height][width];
+                fillData(node, data64);
+                obj.setData(data64, precision == ScilabIntegerTypeEnum.sci_uint64);
+                break;
+        }
+    } catch (UnrecognizeFormatException e) {
+        LogFactory.getLog(ScilabIntegerCodec.class).error(e);
+    } catch (NumberFormatException e) {
+        LogFactory.getLog(ScilabIntegerCodec.class).error(e);
+    }
+    return obj;
+}
+#end_block
+
+#method_before
+public BasicBlock decode(SimulinkBlock from, BasicBlock into) {
+    /**
+     * mutable field used to share decoded BasicBlock with submethods
+     */
+    BasicBlock base = into;
+    validate();
+    LOG.debug("Setting up graphics of:" + into.getInterfaceFunctionName());
+    /*
+		 * without this some blocks style weren't set properly
+		 */
+    if (base.getStyle().isEmpty()) {
+        base.setStyle(into.getInterfaceFunctionName());
+    }
+    /*
+		 * fill the data
+		 */
+    fillDimension(from, base);
+    fillOrigin(from, base);
+    fillFlipAndRotation(from, base);
+    fillColors(from, base);
+    return base;
+}
+#method_after
+public BasicBlock decode(SimulinkBlock from, BasicBlock into) {
+    /**
+     * mutable field used to share decoded BasicBlock with submethods
+     */
+    BasicBlock base = into;
+    validate();
+    /*
+		 * without this some blocks style weren't set properly
+		 */
+    if (base.getStyle().isEmpty()) {
+        base.setStyle(into.getInterfaceFunctionName());
+    }
+    /*
+		 * fill the data
+		 */
+    fillDimension(from, base);
+    fillOrigin(from, base);
+    fillFlipAndRotation(from, base);
+    fillColors(from, base);
+    BlockPositioning.updateBlockView(into);
+    return base;
+}
+#end_block
+
+#method_before
+private void fillFlipAndRotation(SimulinkBlock from, BasicBlock into) {
+    // TODO: Add Flip handling
+    if (from.getParameter("BlockMirror") != null) {
+        if (from.getParameter("BlockMirror").equals("on")) {
+            into.setFlip(true);
+            BlockPositioning.updateBlockView(into);
+            LOG.debug("true " + into.getFlip());
+        } else {
+            into.setFlip(false);
+            BlockPositioning.updateBlockView(into);
+            LOG.debug("false " + into.getFlip());
+        }
+    }
+    if (from.getParameter("Orientation") != null) {
+        /*
+			 * up, down, right
+			 */
+        if (from.getParameter("Orientation").equals("left")) {
+            into.setFlip(true);
+            BlockPositioning.updateBlockView(into);
+            LOG.debug("true " + into.getFlip());
+        } else if (from.getParameter("Orientation").equals("up")) {
+            into.setAngle(90);
+            BlockPositioning.updateBlockView(into);
+            LOG.debug("false " + into.getAngle());
+        } else if (from.getParameter("Orientation").equals("down")) {
+            into.setAngle(240);
+            BlockPositioning.updateBlockView(into);
+            LOG.debug("false " + into.getAngle());
+        }
+    }
+    // into.setMirror(false);
+    String rotation = from.getParameter("BlockRotation");
+    if (rotation != null) {
+        int theta = Integer.parseInt(rotation);
+        theta = BlockPositioning.roundAngle(theta);
+        into.setAngle(theta);
+    }
+}
+#method_after
+private void fillFlipAndRotation(SimulinkBlock from, BasicBlock into) {
+    // TODO: Add Flip handling
+    if (from.getParameter("Orientation") != null) {
+        /*
+			 * left, up, down, (else - right)
+			 */
+        if (from.getParameter("Orientation").equals("left")) {
+            into.setAngle(180);
+        // LOG.debug("true " + into.getFlip());
+        } else if (from.getParameter("Orientation").equals("up")) {
+            into.setAngle(90);
+        // LOG.debug("false " + into.getAngle());
+        } else if (from.getParameter("Orientation").equals("down")) {
+            into.setAngle(240);
+        // LOG.debug("false " + into.getAngle());
+        } else {
+            into.setAngle(0);
+            into.setFlip(false);
+        }
+        if (from.getParameter("BlockMirror") != null) {
+            if (from.getParameter("BlockMirror").equals("on")) {
+                into.setFlip(true);
+            // LOG.debug("true " + into.getFlip());
+            } else {
+                into.setFlip(false);
+            // LOG.debug("false " + into.getFlip());
+            }
+        }
+    }
+    // into.setMirror(false);
+    String rotation = from.getParameter("BlockRotation");
+    if (rotation != null) {
+        int theta = Integer.parseInt(rotation);
+        theta = BlockPositioning.roundAngle(theta);
+        into.setAngle(theta);
+    }
+}
+#end_block
+
+#method_before
+public void doUpdateBlockSettings(BasicBlock modifiedBlock) {
+    // FIXME: Somwhere here Null pointers
+    if (LOG.isTraceEnabled()) {
+        LOG.trace("Updating block settings.");
+    }
+    setDependsOnT(modifiedBlock.isDependsOnT());
+    setDependsOnU(modifiedBlock.isDependsOnU());
+    setExprs(modifiedBlock.getExprs());
+    setRealParameters(modifiedBlock.getRealParameters());
+    setIntegerParameters(modifiedBlock.getIntegerParameters());
+    setObjectsParameters(modifiedBlock.getObjectsParameters());
+    try {
+        setState(modifiedBlock.getState());
+        setDState(modifiedBlock.getDState());
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("OdState:" + modifiedBlock.getODState());
+        }
+        if (modifiedBlock != null && modifiedBlock.getODState() != null) {
+            setODState(modifiedBlock.getODState());
+        } else {
+            setODState(new ScilabList());
+        }
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Equations:" + modifiedBlock.getEquations());
+        }
+        setEquations(modifiedBlock.getEquations());
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Settings update completed.");
+        }
+    } catch (NullPointerException ne) {
+        LOG.error("Error!");
+    }
+    // Update the children according to the modified block children. We are
+    // working on the last index in order to simplify the List.remove()
+    // call.
+    final int oldChildCount = getChildCount();
+    final int newChildCount = modifiedBlock.getChildCount();
+    final int portStep = newChildCount - oldChildCount;
+    if (portStep > 0) {
+        for (int i = portStep - 1; i >= 0; i--) {
+            addPort((BasicPort) modifiedBlock.getChildAt(oldChildCount + i - 1));
+        }
+    } else {
+        for (int i = -portStep - 1; i >= 0; i--) {
+            removePort((BasicPort) getChildAt(newChildCount + i));
+        }
+    }
+    if (LOG.isTraceEnabled()) {
+        LOG.trace("Updating ports completed.");
+    }
+    /*
+		 * If the block is in a superblock then update it.
+		 */
+    if (getParentDiagram() instanceof SuperBlockDiagram) {
+        BasicBlock parentBlock = ((SuperBlockDiagram) getParentDiagram()).getContainer();
+        parentBlock.getParentDiagram().fireEvent(new mxEventObject(XcosEvent.SUPER_BLOCK_UPDATED, XcosConstants.EVENT_BLOCK_UPDATED, parentBlock));
+    }
+    if (LOG.isTraceEnabled()) {
+        LOG.trace("Updating superblock completed.");
+    }
+}
+#method_after
+public void doUpdateBlockSettings(BasicBlock modifiedBlock) {
+    // FIXME: Somwhere here Null pointers
+    if (LOG.isTraceEnabled()) {
+        LOG.trace("Updating block settings.");
+    }
+    setDependsOnT(modifiedBlock.isDependsOnT());
+    setDependsOnU(modifiedBlock.isDependsOnU());
+    setExprs(modifiedBlock.getExprs());
+    setRealParameters(modifiedBlock.getRealParameters());
+    setIntegerParameters(modifiedBlock.getIntegerParameters());
+    setObjectsParameters(modifiedBlock.getObjectsParameters());
+    setState(modifiedBlock.getState());
+    setDState(modifiedBlock.getDState());
+    setODState(modifiedBlock.getODState());
+    setEquations(modifiedBlock.getEquations());
+    // Update the children according to the modified block children. We are
+    // working on the last index in order to simplify the List.remove()
+    // call.
+    final int oldChildCount = getChildCount();
+    final int newChildCount = modifiedBlock.getChildCount();
+    final int portStep = newChildCount - oldChildCount;
+    if (LOG.isTraceEnabled()) {
+        LOG.trace("Updating ports.");
+    }
+    if (portStep > 0) {
+        for (int i = portStep - 1; i >= 0; i--) {
+            addPort((BasicPort) modifiedBlock.getChildAt(oldChildCount + i - 1));
+        }
+    } else {
+        for (int i = -portStep - 1; i >= 0; i--) {
+            removePort((BasicPort) getChildAt(newChildCount + i));
+        }
+    }
+    /*
+		 * If the block is in a superblock then update it.
+		 */
+    if (LOG.isTraceEnabled()) {
+        LOG.trace("Updating superblock.");
+    }
+    if (getParentDiagram() instanceof SuperBlockDiagram) {
+        SuperBlock parentBlock = ((SuperBlockDiagram) getParentDiagram()).getContainer();
+        parentBlock.getParentDiagram().fireEvent(new mxEventObject(XcosEvent.SUPER_BLOCK_UPDATED, XcosConstants.EVENT_BLOCK_UPDATED, parentBlock));
+    }
+}
+#end_block
+
+#method_before
+private void decodeSubBlocks(BasicBlock block) {
+    /*
+		 * TODO: remember about getting subsystems to work (below)
+		 * 		 add also everything about ports and lines to subsystems
+		 */
+    if (block.getInterfaceFunctionName().equals("SUPER_f")) {
+        SuperBlockDiagram child = new SuperBlockDiagram();
+        DiagramElement diagram = new DiagramElement();
+        child.setContainer(block);
+        child.installListeners();
+        try {
+            diagram.decode(base, child);
+        } catch (SimulinkFormatException e1) {
+            LogFactory.getLog(ImportMdl.class).error(e1);
+        }
+        block.setChild(child);
+    }
+}
+#method_after
+private void decodeSubBlocks(BasicBlock block) {
+    /*
+		 * TODO: remember about getting subsystems to work (below)
+		 * 		 add also everything about ports and lines to subsystems
+		 */
+    if (block instanceof SuperBlock) {
+        SuperBlock sBlock = (SuperBlock) block;
+        SuperBlockDiagram child = new SuperBlockDiagram();
+        DiagramElement diagram = new DiagramElement();
+        child.setContainer(sBlock);
+        child.installListeners();
+        try {
+            diagram.decode(base, child);
+        } catch (SimulinkFormatException e1) {
+            LogFactory.getLog(ImportMdl.class).error(e1);
+        }
+        sBlock.setChild(child);
+    }
+}
+#end_block
+
+#method_before
+public static double[] decode(String from) {
+    int width, height;
+    String[] rows = from.split(";");
+    width = rows.length;
+    String[] cells = rows[0].replaceAll("[\\[\\];,]", " ").trim().split("\\s+");
+    height = cells.length;
+    double[] into = new double[height * width];
+    for (int i = 0; i < rows.length; i++) {
+        cells = rows[i].replaceAll("[\\[\\];,]", " ").trim().split("\\s+");
+        for (int j = 0; j < cells.length; j++) {
+            if (cells[j].equals("inf") || cells[j].equals("-inf")) {
+                into[i * cells.length + j] = 10000;
+            } else {
+                into[i * cells.length + j] = Double.parseDouble(cells[j]);
+            }
+            if (LOG.isTraceEnabled()) {
+                LOG.trace(into[i * cells.length + j]);
+            }
+        }
+    }
+    return into;
+}
+#method_after
+public static double[] decode(String from) {
+    int width, height;
+    String[] rows = from.split(";");
+    width = rows.length;
+    String[] cells = rows[0].replaceAll("[\\[\\];,]", " ").trim().split("\\s+");
+    height = cells.length;
+    double[] into = new double[height * width];
+    for (int i = 0; i < rows.length; i++) {
+        cells = rows[i].replaceAll("[\\[\\];,]", " ").trim().split("\\s+");
+        for (int j = 0; j < cells.length; j++) {
+            if (cells[j].equals("inf")) {
+                into[i * cells.length + j] = Double.MAX_VALUE;
+            } else if (cells[j].equals("-inf")) {
+                into[i * cells.length + j] = Double.MIN_VALUE;
+            } else {
+                /*
+					 * should be able to handle expressions like sqrt(1/2)
+					 */
+                try {
+                    into[i * cells.length + j] = Double.parseDouble(cells[j].replaceAll("\\w", ""));
+                } catch (NumberFormatException fe) {
+                    into[i * cells.length + j] = 0;
+                }
+            }
+            if (LOG.isTraceEnabled()) {
+                LOG.trace(into[i * cells.length + j]);
+            }
+        }
+    }
+    return into;
+}
+#end_block
+
+#method_before
+public static void doExit(SciNotes editor) {
+    ScilabWindow scinotesWindow = (ScilabWindow) UIElementMapper.getCorrespondingUIElement(editor.getParentWindowId());
+    int numberOfTab = editor.getTabPane().getComponentCount();
+    boolean wantToClose = true;
+    int k = 0;
+    if (editor.isOnlyInstance()) {
+        editor.setProtectOpenFileList(true);
+    }
+    for (int i = 0; i < numberOfTab; i++) {
+        // close and save all editors if they are modified
+        boolean response = editor.closeTabAt(k);
+        if (!response) {
+            k++;
+        }
+        wantToClose &= response;
+    }
+    editor.setProtectOpenFileList(false);
+    if (wantToClose) {
+        scinotesWindow.getAsSimpleWindow().removeTab(editor);
+        editor.closeSciNotes();
+    }
+}
+#method_after
+public static void doExit(SciNotes editor) {
+    ScilabWindow scinotesWindow = (ScilabWindow) UIElementMapper.getCorrespondingUIElement(editor.getParentWindowId());
+    int numberOfTab = editor.getTabPane().getComponentCount();
+    boolean wantToClose = true;
+    int k = 0;
+    editor.setProtectOpenFileList(true);
+    for (int i = 0; i < numberOfTab; i++) {
+        // close and save all editors if they are modified
+        boolean response = editor.closeTabAt(k);
+        if (!response) {
+            k++;
+        }
+        wantToClose &= response;
+    }
+    editor.setProtectOpenFileList(false);
+    if (wantToClose) {
+        scinotesWindow.getAsSimpleWindow().removeTab(editor);
+        editor.closeSciNotes();
+    }
+}
+#end_block
+
+#method_before
+public static void displayDialog(JFrame owner) {
+    selectedFiles = null;
+    int dimX = 450;
+    int dimY = 300;
+    dialog = new JDialog(owner);
+    dialog.setPreferredSize(new Dimension(dimX, dimY));
+    dialog.setLocationRelativeTo(owner);
+    JButton ok = new JButton(SciNotesMessages.OK);
+    JButton cancel = new JButton(SciNotesMessages.CANCEL);
+    ok.setPreferredSize(cancel.getPreferredSize());
+    Object[] buttons = new Object[2];
+    ok.addActionListener(new ActionListener() {
+
+        public void actionPerformed(ActionEvent e) {
+            selectedFiles = getOpenedFiles();
+            dialog.dispose();
+        }
+    });
+    cancel.addActionListener(new ActionListener() {
+
+        public void actionPerformed(ActionEvent e) {
+            List<UUID> editorID = ConfigSciNotesManager.getOpenFilesEditorList();
+            for (int i = 0; i < editorID.size(); i++) {
+                // Remove these files from the list of open files
+                ConfigSciNotesManager.removeFromOpenFiles(editorID.get(i));
+            }
+            dialog.dispose();
+        }
+    });
+    if (isWindows()) {
+        buttons[0] = ok;
+        buttons[1] = cancel;
+    } else {
+        buttons[0] = cancel;
+        buttons[1] = ok;
+    }
+    JOptionPane jop = new JOptionPane(SciNotesMessages.RESTORE_FILES_QUERY, JOptionPane.QUESTION_MESSAGE, JOptionPane.CANCEL_OPTION, null, buttons);
+    JPanel panel = new JPanel();
+    panel.setPreferredSize(new Dimension(dimX, dimY));
+    panel.setLayout(new GridBagLayout());
+    GridBagConstraints c = new GridBagConstraints();
+    c.gridheight = 1;
+    c.gridwidth = 1;
+    c.gridx = 0;
+    c.gridy = 0;
+    c.weighty = 0.5;
+    c.anchor = GridBagConstraints.PAGE_START;
+    c.fill = GridBagConstraints.HORIZONTAL;
+    panel.add(jop, c);
+    c.gridx = 0;
+    c.gridy = 1;
+    c.gridheight = GridBagConstraints.REMAINDER;
+    c.fill = GridBagConstraints.HORIZONTAL;
+    fillTree();
+    JScrollPane scroll = new JScrollPane(tree);
+    scroll.setMinimumSize(new Dimension(dimX - 2 * GAP, dimY / 2));
+    panel.add(scroll, c);
+    dialog.setContentPane(panel);
+    dialog.pack();
+    dialog.setIconImage(((ImageIcon) SCILAB_ICON).getImage());
+    dialog.setTitle(SciNotesMessages.RESTORE_FILES_TITLE);
+    dialog.setModalityType(ModalityType.APPLICATION_MODAL);
+    dialog.setResizable(false);
+    dialog.setVisible(true);
+}
+#method_after
+public static void displayDialog(JFrame owner) {
+    selectedFiles = null;
+    int dimX = 450;
+    int dimY = 300;
+    dialog = new JDialog(owner);
+    dialog.setPreferredSize(new Dimension(dimX, dimY));
+    JButton ok = new JButton(SciNotesMessages.OK);
+    JButton cancel = new JButton(SciNotesMessages.CANCEL);
+    ok.setPreferredSize(cancel.getPreferredSize());
+    Object[] buttons = new Object[2];
+    ok.addActionListener(new ActionListener() {
+
+        public void actionPerformed(ActionEvent e) {
+            selectedFiles = getOpenedFiles();
+            dialog.dispose();
+        }
+    });
+    cancel.addActionListener(new ActionListener() {
+
+        public void actionPerformed(ActionEvent e) {
+            List<UUID> editorID = ConfigSciNotesManager.getOpenFilesEditorList();
+            for (int i = 0; i < editorID.size(); i++) {
+                // Remove these files from the list of open files
+                ConfigSciNotesManager.removeFromOpenFiles(editorID.get(i));
+            }
+            dialog.dispose();
+        }
+    });
+    if (isWindows()) {
+        buttons[0] = ok;
+        buttons[1] = cancel;
+    } else {
+        buttons[0] = cancel;
+        buttons[1] = ok;
+    }
+    JOptionPane jop = new JOptionPane(SciNotesMessages.RESTORE_FILES_QUERY, JOptionPane.QUESTION_MESSAGE, JOptionPane.CANCEL_OPTION, null, buttons);
+    JPanel panel = new JPanel();
+    panel.setPreferredSize(new Dimension(dimX, dimY));
+    panel.setLayout(new GridBagLayout());
+    GridBagConstraints c = new GridBagConstraints();
+    c.gridheight = 1;
+    c.gridwidth = 1;
+    c.gridx = 0;
+    c.gridy = 0;
+    c.weighty = 0.5;
+    c.anchor = GridBagConstraints.PAGE_START;
+    c.fill = GridBagConstraints.HORIZONTAL;
+    panel.add(jop, c);
+    c.gridx = 0;
+    c.gridy = 1;
+    c.gridheight = GridBagConstraints.REMAINDER;
+    c.fill = GridBagConstraints.HORIZONTAL;
+    fillTree();
+    JScrollPane scroll = new JScrollPane(tree);
+    scroll.setMinimumSize(new Dimension(dimX - 2 * GAP, dimY / 2));
+    panel.add(scroll, c);
+    dialog.setContentPane(panel);
+    dialog.pack();
+    dialog.setIconImage(((ImageIcon) SCILAB_ICON).getImage());
+    dialog.setTitle(SciNotesMessages.RESTORE_FILES_TITLE);
+    dialog.setModalityType(ModalityType.APPLICATION_MODAL);
+    dialog.setResizable(false);
+    dialog.setLocationRelativeTo(owner);
+    dialog.setVisible(true);
+}
+#end_block
+
+#method_before
+public static double[] getGraphicObjectPropertyAsDouble(String id, String propertyName) {
+    double[] result = new double[1];
+    result[0] = (Double) getGraphicObjectProperty(id, propertyName);
+    return result;
+}
+#method_after
+public static double getGraphicObjectPropertyAsDouble(String id, String propertyName) {
+    return (Double) getGraphicObjectProperty(id, propertyName);
+}
+#end_block
+
+#method_before
+public static int[] getGraphicObjectPropertyAsInteger(String id, String propertyName) {
+    int[] result = new int[1];
+    result[0] = (Integer) getGraphicObjectProperty(id, propertyName);
+    return result;
+}
+#method_after
+public static int getGraphicObjectPropertyAsInteger(String id, String propertyName) {
+    return (Integer) getGraphicObjectProperty(id, propertyName);
+}
+#end_block
+
+#method_before
+public static int[] getGraphicObjectPropertyAsBoolean(String id, String propertyName) {
+    int[] result = new int[1];
+    Boolean tmpValue = (Boolean) getGraphicObjectProperty(id, propertyName);
+    result[0] = tmpValue ? 1 : 0;
+    return result;
+}
+#method_after
+public static int getGraphicObjectPropertyAsBoolean(String id, String propertyName) {
+    int result;
+    Boolean tmpValue = (Boolean) getGraphicObjectProperty(id, propertyName);
+    result = tmpValue ? 1 : 0;
+    return result;
+}
+#end_block
+

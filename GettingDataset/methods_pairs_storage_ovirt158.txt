@@ -1,0 +1,163 @@
+6
+#method_before
+private VolumeFormat getTargetVolumeFormat(VolumeFormat volumeFormat, VolumeType volumeType, Guid storageDomainId) {
+    if (volumeFormat == VolumeFormat.RAW && volumeType == VolumeType.Sparse) {
+        // 
+        StorageDomainStatic destDomain = getStorageDomainStaticDAO().get(storageDomainId);
+        if (destDomain.getStorageType().isBlockDomain()) {
+            return VolumeFormat.COW;
+        }
+    }
+    return volumeFormat;
+}
+#method_after
+private VolumeFormat getTargetVolumeFormat(VolumeFormat volumeFormat, VolumeType volumeType, Guid storageDomainId) {
+    if (volumeFormat == VolumeFormat.RAW && volumeType == VolumeType.Sparse) {
+        StorageDomainStatic destDomain = getStorageDomainStaticDAO().get(storageDomainId);
+        if (destDomain.getStorageType().isBlockDomain()) {
+            return VolumeFormat.COW;
+        }
+    }
+    return volumeFormat;
+}
+#end_block
+
+#method_before
+private VolumeFormat getTargetVolumeFormat(VolumeFormat volumeFormat, VolumeType volumeType, Guid storageDomainId) {
+    if (volumeFormat == VolumeFormat.RAW && volumeType == VolumeType.Sparse) {
+        // 
+        StorageDomainStatic destDomain = getStorageDomainStaticDAO().get(storageDomainId);
+        if (destDomain.getStorageType().isBlockDomain()) {
+            return VolumeFormat.COW;
+        }
+    }
+    return volumeFormat;
+}
+#method_after
+private VolumeFormat getTargetVolumeFormat(VolumeFormat volumeFormat, VolumeType volumeType, Guid storageDomainId) {
+    if (volumeFormat == VolumeFormat.RAW && volumeType == VolumeType.Sparse) {
+        StorageDomainStatic destDomain = getStorageDomainStaticDAO().get(storageDomainId);
+        if (destDomain.getStorageType().isBlockDomain()) {
+            return VolumeFormat.COW;
+        }
+    }
+    return volumeFormat;
+}
+#end_block
+
+#method_before
+public ValidationResult isReadOnlyPropertyCompatibleWithLunInterface() {
+    if (Boolean.TRUE.equals(disk.getReadOnly()) && disk.getDiskInterface() == DiskInterface.VirtIO_SCSI && disk.getDiskStorageType() == DiskStorageType.LUN) {
+        return new ValidationResult(VdcBllMessages.ACTION_TYPE_FAILED_VIRT_IO_SCSI_INTERFACE_FOR_LUN_DISKS_DOES_NOT_SUPPORT_READ_ONLY_ATTR);
+    }
+    return ValidationResult.VALID;
+}
+#method_after
+public ValidationResult isReadOnlyPropertyCompatibleWithLunInterface() {
+    if (Boolean.TRUE.equals(disk.getReadOnly()) && disk.getDiskInterface() == DiskInterface.VirtIO_SCSI) {
+        return new ValidationResult(VdcBllMessages.ACTION_TYPE_FAILED_VIRT_IO_SCSI_INTERFACE_FOR_LUN_DISKS_DOES_NOT_SUPPORT_READ_ONLY_ATTR);
+    }
+    return ValidationResult.VALID;
+}
+#end_block
+
+#method_before
+private Map<String, Object> generateNetworks() {
+    Map<String, Object> networks = new HashMap<String, Object>();
+    NetworkQoSDao qosDao = getDbFacade().getQosDao();
+    for (Network network : getParameters().getNetworks()) {
+        Map<String, Object> opts = new HashMap<String, Object>();
+        VdsNetworkInterface iface = findNetworkInterface(network.getName(), getParameters().getInterfaces(), getParameters().getBonds());
+        String ifaceNameWithoutVlan = NetworkUtils.stripVlan(iface.getName());
+        Boolean bonded = findInterfaceByName(ifaceNameWithoutVlan).getBonded();
+        String type = (bonded != null && bonded) ? "bonding" : "nic";
+        opts.put(type, ifaceNameWithoutVlan);
+        if (NetworkUtils.isVlan(network)) {
+            opts.put("vlan", network.getVlanId().toString());
+        }
+        if (iface.getBootProtocol() != null) {
+            addBootProtocol(opts, iface);
+        }
+        if (network.getMtu() != 0) {
+            opts.put("mtu", String.valueOf(network.getMtu()));
+        }
+        opts.put("bridged", Boolean.toString(network.isVmNetwork()));
+        if (network.isVmNetwork()) {
+            opts.put(VdsProperties.STP, network.getStp() ? "yes" : "no");
+        }
+        Version version = getDbFacade().getVdsDao().get(getParameters().getVdsId()).getVdsGroupCompatibilityVersion();
+        if (qosConfiguredOnInterface(iface, network) && FeatureSupported.hostNetworkQos(version)) {
+            NetworkQosMapper qosMapper = new NetworkQosMapper(opts, VdsProperties.HOST_QOS_INBOUND, VdsProperties.HOST_QOS_OUTBOUND);
+            qosMapper.serialize(iface.isQosOverridden() ? iface.getQos() : qosDao.get(network.getQosId()));
+        }
+        if (FeatureSupported.defaultRoute(version) && NetworkUtils.isManagementNetwork(network) && (iface.getBootProtocol() == NetworkBootProtocol.DHCP || iface.getBootProtocol() == NetworkBootProtocol.STATIC_IP && StringUtils.isNotEmpty(iface.getGateway()))) {
+            opts.put(DEFAULT_ROUTE, Boolean.TRUE);
+        }
+        networks.put(network.getName(), opts);
+    }
+    for (String net : getParameters().getRemovedNetworks()) {
+        networks.put(net, REMOVE_OBJ);
+    }
+    return networks;
+}
+#method_after
+private Map<String, Object> generateNetworks() {
+    Map<String, Object> networks = new HashMap<String, Object>();
+    NetworkQoSDao qosDao = getDbFacade().getQosDao();
+    for (Network network : getParameters().getNetworks()) {
+        Map<String, Object> opts = new HashMap<String, Object>();
+        VdsNetworkInterface iface = findNetworkInterface(network.getName(), getParameters().getInterfaces(), getParameters().getBonds());
+        String ifaceNameWithoutVlan = NetworkUtils.stripVlan(iface.getName());
+        Boolean bonded = findInterfaceByName(ifaceNameWithoutVlan).getBonded();
+        String type = (bonded != null && bonded) ? "bonding" : "nic";
+        opts.put(type, ifaceNameWithoutVlan);
+        if (NetworkUtils.isVlan(network)) {
+            opts.put("vlan", network.getVlanId().toString());
+        }
+        if (iface.getBootProtocol() != null) {
+            addBootProtocol(opts, iface);
+        }
+        if (network.getMtu() != 0) {
+            opts.put("mtu", String.valueOf(network.getMtu()));
+        }
+        opts.put("bridged", Boolean.toString(network.isVmNetwork()));
+        if (network.isVmNetwork()) {
+            opts.put(VdsProperties.STP, network.getStp() ? "yes" : "no");
+        }
+        Version version = getDbFacade().getVdsDao().get(getParameters().getVdsId()).getVdsGroupCompatibilityVersion();
+        if (qosConfiguredOnInterface(iface, network) && FeatureSupported.hostNetworkQos(version)) {
+            NetworkQosMapper qosMapper = new NetworkQosMapper(opts, VdsProperties.HOST_QOS_INBOUND, VdsProperties.HOST_QOS_OUTBOUND);
+            qosMapper.serialize(iface.isQosOverridden() ? iface.getQos() : qosDao.get(network.getQosId()));
+        }
+        if (FeatureSupported.defaultRoute(version) && NetworkUtils.isManagementNetwork(network) && (iface.getBootProtocol() == NetworkBootProtocol.DHCP || (iface.getBootProtocol() == NetworkBootProtocol.STATIC_IP && StringUtils.isNotEmpty(iface.getGateway())))) {
+            opts.put(DEFAULT_ROUTE, Boolean.TRUE);
+        }
+        networks.put(network.getName(), opts);
+    }
+    for (String net : getParameters().getRemovedNetworks()) {
+        networks.put(net, REMOVE_OBJ);
+    }
+    return networks;
+}
+#end_block
+
+#method_before
+public static boolean supportedInConfig(ConfigValues feature, Version version) {
+    return Config.<Boolean>getValue(feature, version.getValue());
+}
+#method_after
+public static boolean supportedInConfig(ConfigValues feature, Version version, ArchitectureType arch) {
+    return Boolean.parseBoolean(((Map<String, String>) Config.<Map>getValue(feature, version.getValue())).get(arch.name()));
+}
+#end_block
+
+#method_before
+public static boolean antiMacSpoofing(Version version) {
+    return supportedInConfig(ConfigValues.EnableMACAntiSpoofingFilterRules, version);
+}
+#method_after
+public static boolean antiMacSpoofing(Version version) {
+    return supportedInConfig(ConfigValues.MacAntiSpoofingFilterRulesSupported, version);
+}
+#end_block
+
