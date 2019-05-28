@@ -27,29 +27,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
 
-/**
- * Seen:
- * 5600 + 400 1
- * 5200 + 400 2
- * 4800 + 400 3
- * 4400 + 400 4
- * 4000 + 400 5
- * 3600 + 400 6
- * 3200 + 400 7
- * 2800 + 400 8
- * 2400 + 400 9
- * 2000 + 400 10
- * 1600 + 400 11
- * 1200 + 400 12
- * 800 + 400 13
- * 400 + 400 14
- * 0 + 400 15
- */
-
-
-// comment:"yes"
-    // try android
-
 public class GerritCrawler {
     private static String QUERY = "status:merged is:reviewed java";
     private static String HOST_NAME = "https://review.gzospgzr.com";
@@ -73,10 +50,6 @@ public class GerritCrawler {
             for (String fileBefore : filesBefore.keySet()) {
                 System.out.println(fileBefore);
 
-                if (fileBefore.startsWith("platform%2Fdalvik~master~Ifd49e3e81bccb3a0317e9f5677f73d4c5445965e_dx/tests")) {
-                    continue;
-                }
-
                 Map<String, String> beforeMethodsStorage = new HashMap<>();
                 Map<String, String> beforeMethodsStorageWithParams = new HashMap<>();
 
@@ -84,9 +57,8 @@ public class GerritCrawler {
                 try {
                     compilationUnitBefore = StaticJavaParser.parse(filesBefore.get(fileBefore));
                 } catch (ParseProblemException exception) {
-                    System.out.println("PARSE PROBLEM EXCEPTION:\n_________________ ");
+                    System.out.println("PARSE PROBLEM EXCEPTION:");
                     System.out.println(filesBefore.get(fileBefore));
-                    System.out.println("__________________");
                     continue;
                 }
                 addBeforeMethodsToStorage(compilationUnitBefore.findRootNode(),
@@ -122,9 +94,6 @@ public class GerritCrawler {
     public static void main(String[] args) throws IOException, RestApiException {
         int fileNum = 1;
 
-        //QUERY = "status:merged is:reviewed java comment:\"does\"";
-
-
         for (START = 0; START >= 0; START -= LIMIT) {
             GerritCrawler crawler = new GerritCrawler();
             List<MethodsPair> res = crawler.getPairsOfMethods();
@@ -134,30 +103,19 @@ public class GerritCrawler {
             fileNum++;
 
             if (res.size() == 0) {
-                System.out.println("__________________________________________________________RES = 0");
-                //break;
+                System.out.println("___________ RES = 0 ___________");
                 continue;
             }
 
             clearFile(path);
             appendUsingPrintWriter(path, String.valueOf(res.size()) + "\n");
 
-            //int i = 0;
-
             for (MethodsPair pair : res) {
-                //System.out.println(pair.getBeforeMethod());
-                //System.out.println("\n");
-                //System.out.println(pair.getAfterMethod());
-                //System.out.println("___________________________________");
-
-                //appendUsingPrintWriter(path, String.valueOf(i) + "\n");
                 appendUsingPrintWriter(path, "#method_before\n");
                 appendUsingPrintWriter(path, pair.getBeforeMethod() + "\n");
                 appendUsingPrintWriter(path, "#method_after\n");
                 appendUsingPrintWriter(path, pair.getAfterMethod() + "\n");
                 appendUsingPrintWriter(path, "#end_block\n\n");
-
-                //i++;
             }
         }
     }
@@ -184,25 +142,6 @@ public class GerritCrawler {
                 e.printStackTrace();
             }
         }
-    }
-
-    public static void main55(String[] args) {
-        CompilationUnit compilationUnit = StaticJavaParser.parse("interface MyInterface\n" +
-                "{\n" +
-                "   /* compiler will treat them as: \n" +
-                "    * public abstract void method1();\n" +
-                "    * public abstract void method2();\n" +
-                "    */\n" +
-                "   public void method1();\n" +
-                "   public void method2();\n" +
-                "}");
-
-        Node root = compilationUnit.findRootNode();
-        Map<String, String> storage = new HashMap<>();
-
-        dfs(root, storage);
-
-        System.out.println("SIZE: " + storage.size());
     }
 
     private static void dfs(Node curNode, Map<String, String> storage) {
@@ -357,9 +296,6 @@ public class GerritCrawler {
     private List<ChangeInfo> getChanges(GerritApi gerritApi, int start, int limit) throws UnsupportedEncodingException, RestApiException {
         String query = QUERY;
 
-        //int n = result.size();
-        //System.out.println(n);
-
         return gerritApi.changes()
                 .query(URLEncoder.encode(query, "UTF-8")).withLimit(limit).withStart(start).get();
     }
@@ -434,27 +370,6 @@ public class GerritCrawler {
             if (changeInfo.revisions == null) {
                 continue;
             }
-
-            /* SECOND WAY TO DETERMINE LAST_COMMENTED (using many get-queries)
-
-            int lastCommented = changeInfo.revisions.size();
-
-            while (lastCommented >= 1) {
-                System.out.println("     lastCommented: " + lastCommented);
-
-                RevisionApi revisionApi = gerritApi.changes().id(changeInfo.id).revision(lastCommented);
-
-                if (!revisionApi.comments().isEmpty()) {
-                    break;
-                }
-
-                lastCommented --;
-            }
-
-            if (lastCommented == 0 || lastCommented == changeInfo.revisions.size()) {
-                continue;
-            }
-            */
 
             int firstCommented = -1;
             Map<String, List<CommentInfo>> commentInfos = changeApi.comments();
@@ -586,7 +501,7 @@ public class GerritCrawler {
         return res;
     }
 
-    public static void main7(String[] args) throws RestApiException, IOException {
+    public static void testMain(String[] args) throws RestApiException, IOException {
         GerritRestApiFactory gerritRestApiFactory = new GerritRestApiFactory();
         GerritAuthData.Basic authData = new GerritAuthData.Basic("https://gerrit.ovirt.org");
         GerritApi gerritApi = gerritRestApiFactory.create(authData);
@@ -773,13 +688,5 @@ public class GerritCrawler {
         public void setAfterMethod(String afterMethod) {
             this.afterMethod = afterMethod;
         }
-    }
-
-    public static void main2(String[] args) throws IOException, RestApiException {
-        GerritCrawler gerritCrawler = new GerritCrawler();
-        List<MinedPR> list = gerritCrawler.getMinedPRs();
-
-        System.out.println("__________________\n\n RESULT: " + list.size());
-
     }
 }

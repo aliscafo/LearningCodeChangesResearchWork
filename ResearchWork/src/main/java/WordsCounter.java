@@ -30,7 +30,6 @@ public class WordsCounter {
     }
 
     private void addWordsFromRepos() throws IOException {
-        /*
         for (int i = 1; i <= 15; i++) {
             String filename = METHODS_STORAGE_FILE_GOOGLE + String.valueOf(i) + ".txt";
             addWordsFromFile(filename);
@@ -88,7 +87,6 @@ public class WordsCounter {
             String filename = METHODS_STORAGE_FILE_ONOSPROJECT + String.valueOf(i) + ".txt";
             addWordsFromFile(filename);
         }
-        */
         for (int i = 131; i <= 140; i++) {
             String filename = METHODS_STORAGE_FILE_OVIRT + String.valueOf(i) + ".txt";
             addWordsFromFile(filename);
@@ -107,15 +105,12 @@ public class WordsCounter {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2,
                                 LinkedHashMap::new));
 
-        //System.out.println(sorted);
-
         int num = 0;
 
         for (Map.Entry<String, Integer> entry : sorted.entrySet()) {
             if (num > 800) {
                 break;
             }
-            //System.out.println(entry.getKey());
             System.out.println(entry.getKey() + " " + entry.getValue());
             num++;
         }

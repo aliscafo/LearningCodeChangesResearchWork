@@ -1,0 +1,662 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="26810a9c-4dec-4f2b-9be7-fdb567d9a191" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/GettingDataset/.gradle/4.8/fileChanges/last-build.bin" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/.gradle/4.8/fileChanges/last-build.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/.gradle/4.8/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/.gradle/4.8/fileHashes/fileHashes.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/.gradle/4.8/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/.gradle/4.8/fileHashes/fileHashes.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/.gradle/4.8/taskHistory/taskHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/.gradle/4.8/taskHistory/taskHistory.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/.gradle/4.8/taskHistory/taskHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/.gradle/4.8/taskHistory/taskHistory.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/.gradle/buildOutputCleanup/cache.properties" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/.gradle/buildOutputCleanup/cache.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/.gradle/vcsWorkingDirs/gc.properties" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/.gradle/vcsWorkingDirs/gc.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/after.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/after.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/after_output.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/after_output.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/before.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/before.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/before_output.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/before_output.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/before_output.txt.map" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/before_output.txt.map" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/buggy.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/buggy.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/buggy100.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/buggy100.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/buggy100_ex.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/buggy100_ex.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/buggy100_final.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/buggy100_final.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/buggy100_params.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/buggy100_params.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/buggy100_unique.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/buggy100_unique.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/buggy100t.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/buggy100t.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/buggy50.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/buggy50.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/buggy50_ex.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/buggy50_ex.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/buggy50_final.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/buggy50_final.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/buggy50_params.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/buggy50_params.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/buggy50_unique.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/buggy50_unique.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/buggy50 — копия.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/buggy50 — копия.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/clustering_result" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/clustering_result" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/cur_verdict.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/cur_verdict.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/cur_verdict2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/cur_verdict2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/cur_verdict3.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/cur_verdict3.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/cur_verdict4.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/cur_verdict4.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/cur_verdict5.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/cur_verdict5.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/cur_verdict6.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/cur_verdict6.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/cur_verdict7.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/cur_verdict7.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/cur_verdict8.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/cur_verdict8.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/data.tmp" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/data.tmp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/dataset/eval/buggy.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/dataset/eval/buggy.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/dataset/eval/fixed.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/dataset/eval/fixed.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/dataset/test/buggy.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/dataset/test/buggy.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/dataset/test/fixed.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/dataset/test/fixed.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/dataset/train/buggy.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/dataset/train/buggy.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/dataset/train/fixed.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/dataset/train/fixed.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/dataset2/eval/buggy.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/dataset2/eval/buggy.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/dataset2/eval/fixed.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/dataset2/eval/fixed.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/dataset2/test/buggy.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/dataset2/test/buggy.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/dataset2/test/fixed.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/dataset2/test/fixed.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/dataset2/train/buggy.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/dataset2/train/buggy.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/dataset2/train/fixed.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/dataset2/train/fixed.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/fff.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/fff.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/fixed.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/fixed.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/fixed100.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/fixed100.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/fixed100_ex.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/fixed100_ex.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/fixed100_final.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/fixed100_final.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/fixed100_params.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/fixed100_params.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/fixed100_unique.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/fixed100_unique.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/fixed100t.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/fixed100t.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/fixed50.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/fixed50.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/fixed50_ex.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/fixed50_ex.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/fixed50_final.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/fixed50_final.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/fixed50_params.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/fixed50_params.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/fixed50_unique.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/fixed50_unique.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/fixed50 — копия.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/fixed50 — копия.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/full_verdict.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/full_verdict.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/gradle/wrapper/gradle-wrapper.jar" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/gradle/wrapper/gradle-wrapper.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/gradle/wrapper/gradle-wrapper.properties" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/gradlew" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/gradlew" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/gradlew.bat" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/gradlew.bat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/idioms/final_idioms.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/idioms/final_idioms.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/idioms/idioms-empty.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/idioms/idioms-empty.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/idioms/idioms-review.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/idioms/idioms-review.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/idioms/idioms.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/idioms/idioms.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/idioms/my-idioms.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/idioms/my-idioms.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/idioms/storage_idioms.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/idioms/storage_idioms.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/log_methods100.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/log_methods100.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/log_methods50.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/log_methods50.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/dataset/events.out.tfevents.1557234858.ip-172-31-45-10" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/dataset/events.out.tfevents.1557234858.ip-172-31-45-10" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/dataset/model.ckpt-50005.index" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/dataset/model.ckpt-50005.index" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/log.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/log2.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/log2.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/log3.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/log3.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/pred/predictions.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/pred/predictions.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/pred_10/beams.npz" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/pred_10/beams.npz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/pred_10/predictions.beam.mul.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/pred_10/predictions.beam.mul.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/pred_10/predictions.beam.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/pred_10/predictions.beam.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/pred_10/predictions.beam.vis.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/pred_10/predictions.beam.vis.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/pred_10/vocab.fixed.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/pred_10/vocab.fixed.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/pred_5/beams.npz" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/pred_5/beams.npz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/pred_5/predictions.beam.mul.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/pred_5/predictions.beam.mul.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/pred_5/predictions.beam.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/pred_5/predictions.beam.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/pred_5/predictions.beam.vis.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/pred_5/predictions.beam.vis.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/model/pred_5/vocab.fixed.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/model/pred_5/vocab.fixed.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/out/production/classes/GerritCrawler$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/out/production/classes/GerritCrawler$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/out/production/classes/GerritCrawler$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/out/production/classes/GerritCrawler$2.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/out/production/classes/GerritCrawler$MethodsPair.class" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/out/production/classes/GerritCrawler$MethodsPair.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/out/production/classes/GerritCrawler$MinedPR.class" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/out/production/classes/GerritCrawler$MinedPR.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/out/production/classes/GerritCrawler.class" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/out/production/classes/GerritCrawler.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/out/production/classes/GettingPerfectPredictions.class" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/out/production/classes/GettingPerfectPredictions.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/out/production/classes/MakingCSV.class" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/out/production/classes/MakingCSV.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/out/production/classes/MethodAbstractionTool$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/out/production/classes/MethodAbstractionTool$1.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/out/production/classes/MethodAbstractionTool.class" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/out/production/classes/MethodAbstractionTool.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/out/production/classes/MethodAbstractorWithExternalTool.class" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/out/production/classes/MethodAbstractorWithExternalTool.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/out/production/classes/SplittingDataset$MethodPair.class" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/out/production/classes/SplittingDataset$MethodPair.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/out/production/classes/SplittingDataset.class" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/out/production/classes/SplittingDataset.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/out/production/classes/UniqueMethodsMaker.class" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/out/production/classes/UniqueMethodsMaker.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/out/production/classes/WordsCounter.class" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/out/production/classes/WordsCounter.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/parsing_result" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/parsing_result" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/perfect_after.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/perfect_after.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/perfect_before.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/perfect_before.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/result.csv" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/result.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/settings.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/src/main/java/GerritCrawler.java" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/src/main/java/GerritCrawler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/src/main/java/GettingPerfectPredictions.java" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/src/main/java/GettingPerfectPredictions.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/src/main/java/MakingCSV.java" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/src/main/java/MakingCSV.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/src/main/java/MethodAbstractionTool.java" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/src/main/java/MethodAbstractionTool.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/src/main/java/MethodAbstractorWithExternalTool.java" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/src/main/java/MethodAbstractorWithExternalTool.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/src/main/java/SplittingDataset.java" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/src/main/java/SplittingDataset.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/src/main/java/UniqueMethodsMaker.java" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/src/main/java/UniqueMethodsMaker.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/src/main/java/WordsCounter.java" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/src/main/java/WordsCounter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/src2abs-0.1-jar-with-dependencies.jar" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/src2abs-0.1-jar-with-dependencies.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GettingDataset/verdict.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ResearchWork/verdict.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android1.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android10.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android101.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android102.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android103.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android104.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android105.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android106.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android107.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android108.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android109.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android11.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android110.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android12.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android13.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android14.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android15.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android16.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android2.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android3.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android4.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android5.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android6.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android7.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android8.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_android9.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_aospa1.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_asterix12.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_asterix13.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_asterix14.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_asterix15.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_cloudera11.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_cloudera12.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_cloudera13.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_cloudera14.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_cloudera15.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_dirtyunicorns15.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_first_commented1.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_first_commented10.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_first_commented11.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_first_commented12.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_first_commented13.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_first_commented14.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_first_commented15.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_first_commented2.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_first_commented3.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_first_commented4.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_first_commented5.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_first_commented6.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_first_commented7.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_first_commented8.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_first_commented9.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google10.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google11.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google12.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google13.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google15.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google16.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google25.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google26.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google27.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google28.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google29.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google30.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google31.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google32.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google40.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google41.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google42.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google43.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google44.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google45.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google46.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google47.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google48.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google49.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google5.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google50.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google51.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google52.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google6.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google7.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google8.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_google9.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_gzospgzr1.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_libreoffice14.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_libreoffice15.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_lineageos10.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_lineageos11.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_lineageos12.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_lineageos13.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_lineageos14.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_lineageos15.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_lineageos7.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_lineageos8.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_lineageos9.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_omapzoom14.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_omapzoom15.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_omnirom14.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_omnirom15.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject1.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject10.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject100.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject101.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject102.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject103.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject11.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject12.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject13.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject14.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject15.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject2.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject3.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject4.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject5.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject6.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject7.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject8.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_onosproject9.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_opencord1.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_opendev10.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_opendev11.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_opendev12.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_opendev13.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_opendev14.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_opendev8.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_opendev9.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt1.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt10.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt101.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt102.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt103.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt104.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt105.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt106.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt107.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt108.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt109.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt11.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt110.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt111.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt112.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt113.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt114.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt115.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt116.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt117.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt118.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt119.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt12.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt120.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt121.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt122.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt123.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt124.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt125.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt126.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt127.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt128.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt129.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt13.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt131.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt132.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt133.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt134.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt135.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt136.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt137.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt138.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt139.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt14.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt140.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt141.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt142.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt143.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt144.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt145.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt146.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt147.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt148.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt149.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt15.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt150.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt151.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt152.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt153.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt154.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt155.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt156.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt157.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt158.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt159.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt160.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt161.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt162.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt163.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt164.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt165.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt166.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt167.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt168.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt169.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt170.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt171.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt172.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt173.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt174.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt175.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt176.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt177.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt178.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt179.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt180.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt181.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt182.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt183.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt184.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt2.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt3.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt4.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt5.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt6.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt7.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt8.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_ovirt9.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_scilab10.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_scilab11.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_scilab12.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_scilab13.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_scilab14.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_scilab15.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_scilab6.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_scilab7.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_scilab8.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_scilab9.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_slimroms14.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_slimroms15.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ResearchWork/methods_pairs_storage_typo31.txt" beforeDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FUSProjectUsageTrigger">
+    <session id="-1173723936">
+      <usages-collector id="statistics.lifecycle.project">
+        <counts>
+          <entry key="project.open.time.3" value="1" />
+          <entry key="project.opened" value="1" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.open">
+        <counts>
+          <entry key="java" value="8" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.open">
+        <counts>
+          <entry key="JAVA" value="8" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.edit">
+        <counts>
+          <entry key="java" value="17" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.edit">
+        <counts>
+          <entry key="JAVA" value="17" />
+        </counts>
+      </usages-collector>
+    </session>
+  </component>
+  <component name="FileEditorManager">
+    <leaf>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/ResearchWork/src/main/java/WordsCounter.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1695">
+              <caret line="113" selection-start-line="113" selection-end-line="113" />
+              <folding>
+                <element signature="imports" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GradleLocalSettings">
+    <option name="projectSyncType">
+      <map>
+        <entry key="$PROJECT_DIR$/../bugs-classification" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../common-changes/bugs-classification" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../master_clustering/bugs-classification" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../sd/SD-HW/bash" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../sd/Software-Design/grep" value="PREVIEW" />
+      </map>
+    </option>
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/ResearchWork/src/main/java/GerritCrawler.java" />
+        <option value="$PROJECT_DIR$/ResearchWork/src/main/java/MethodAbstractionTool.java" />
+        <option value="$PROJECT_DIR$/ResearchWork/src/main/java/WordsCounter.java" />
+      </list>
+    </option>
+  </component>
+  <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsGulpfileManager">
+    <detection-done>true</detection-done>
+    <sorting>DEFINITION_ORDER</sorting>
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="y" value="23" />
+    <option name="width" value="1440" />
+    <option name="height" value="806" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="LearningCodeChangesResearchWork" type="b2602c69:ProjectViewProjectNode" />
+              <item name="LearningCodeChangesResearchWork" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="LearningCodeChangesResearchWork" type="b2602c69:ProjectViewProjectNode" />
+              <item name="LearningCodeChangesResearchWork" type="462c0819:PsiDirectoryNode" />
+              <item name="ResearchWork" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="LearningCodeChangesResearchWork" type="b2602c69:ProjectViewProjectNode" />
+              <item name="LearningCodeChangesResearchWork" type="462c0819:PsiDirectoryNode" />
+              <item name="ResearchWork" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="LearningCodeChangesResearchWork" type="b2602c69:ProjectViewProjectNode" />
+              <item name="LearningCodeChangesResearchWork" type="462c0819:PsiDirectoryNode" />
+              <item name="ResearchWork" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="LearningCodeChangesResearchWork" type="b2602c69:ProjectViewProjectNode" />
+              <item name="LearningCodeChangesResearchWork" type="462c0819:PsiDirectoryNode" />
+              <item name="ResearchWork" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="PackagesPane" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1559036323245" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="26810a9c-4dec-4f2b-9be7-fdb567d9a191" name="Default Changelist" comment="" />
+      <created>1559035723129</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1559035723129</updated>
+      <workItem from="1559035725580" duration="588000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="588000" />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="0" y="23" width="1440" height="806" extended-state="0" />
+    <editor active="true" />
+    <layout>
+      <window_info id="Image Layers" />
+      <window_info id="Designer" />
+      <window_info id="UI Designer" />
+      <window_info id="Capture Tool" />
+      <window_info id="Favorites" side_tool="true" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24964234" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info anchor="bottom" id="Database Changes" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" />
+      <window_info anchor="bottom" id="Terminal" />
+      <window_info anchor="bottom" id="Event Log" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="right" id="Palette" />
+      <window_info anchor="right" id="Theme Preview" />
+      <window_info anchor="right" id="Capture Analysis" />
+      <window_info anchor="right" id="Palette&#9;" />
+      <window_info anchor="right" id="Database" />
+      <window_info anchor="right" id="Maven Projects" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/ResearchWork/src/main/java/GerritCrawler.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="547">
+          <caret line="690" column="5" selection-start-line="690" selection-start-column="5" selection-end-line="690" selection-end-column="5" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ResearchWork/src/main/java/GettingPerfectPredictions.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-578">
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ResearchWork/src/main/java/MakingCSV.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-263" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ResearchWork/src/main/java/MethodAbstractionTool.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="390">
+          <caret line="224" column="13" lean-forward="true" selection-start-line="224" selection-start-column="13" selection-end-line="224" selection-end-column="13" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ResearchWork/src/main/java/MethodAbstractorWithExternalTool.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-3128" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ResearchWork/src/main/java/SplittingDataset.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-713">
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ResearchWork/src/main/java/UniqueMethodsMaker.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ResearchWork/src/main/java/WordsCounter.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1695">
+          <caret line="113" selection-start-line="113" selection-end-line="113" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ProjectJDKs.UI">
+        <settings>
+          <last-edited>1.8</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+    </states>
+  </component>
+</project>
